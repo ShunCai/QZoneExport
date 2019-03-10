@@ -1,0 +1,54 @@
+{
+    "manifest_version": 2,
+    "name": "QQ空间导出助手",
+    "description": "QQ空间导出助手，用于备份QQ空间的日志、说说、相册、留言板为文件，供永久保存",
+    "version": "0.0.1",
+    "icons": {
+        "128": "static/img/icon-128.png"
+    },
+    "homepage_url": "http://www.lvshuncai.com",
+    "background": {
+        "persistent": true,
+        "scripts": [
+            "static/js/background.js"
+        ]
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*.qzone.qq.com/*"
+            ],
+            "js": [
+                "static/vendor/jquery/jquery-3.3.1.min.js",
+                "static/vendor/turndown/turndown.js",
+                "static/vendor/filer/filer.min.js",
+                "static/vendor/jquery/jquery.modal.min.js",
+                "static/vendor/jszip/jszip.min.js",
+                "static/vendor/jszip/jszip-utils.min.js",
+                "static/vendor/FileSaver/FileSaver.min.js",
+                "static/js/common.js",
+                "static/js/content-script.js"
+            ],
+            "css": [
+                "static/vendor/jquery/jquery.modal.min.css",
+                "static/css/content.css"
+            ]
+        }
+    ],
+    "page_action": {
+        "default_icon": "static/img/icon-128.png",
+        "default_title": "QQ空间导出助手",
+        "default_popup": "static/html/popup.html"
+    },
+    "permissions": [
+        "activeTab",
+        "cookies",
+		"notifications",
+        "storage",
+        "unlimitedStorage",
+        "declarativeContent",
+        "webRequest",
+        "https://*.qpic.cn/",
+        "https://*.qq.com/"
+    ]
+}
