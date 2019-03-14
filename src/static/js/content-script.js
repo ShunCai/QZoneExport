@@ -1,5 +1,3 @@
-const DEBUG = true;
-const BLOG_PER_PAGE = 15;
 const IMAGE_FOLDER_NAME = 'image';
 const MODAL_HTML = `
     <div class="modal">
@@ -67,6 +65,7 @@ function createOperator() {
                 break;
             case 'fetch_blog':
                 // 如果图片还没下载完，弄个会动的提示，让用户知道不是页面卡死
+                // while (statusIndicator.downloadedImageCnt + statusIndicator.failedImageCnt != window.qzone.blog.imgCount) {
                 while (statusIndicator.downloadingImageCnt > 0) {
                     var dot = '';
                     if (Math.random() > 0.5) {
@@ -179,7 +178,7 @@ function showModal() {
     var blobLink = $('#downloadBtn');
     var downloadWithBlob = function () {
         blobLink.attr('disabled', true);
-        blobLink.text('正在生成压缩文件...');
+        blobLink.text('正在下载...');
         window.qzone.zip.generateAsync({ type: "blob" }).then(function (blob) {
             saveAs(blob, "QQ空间导出-" + window.qzone.uin + ".zip");
             blobLink.text('已导出');
@@ -240,7 +239,7 @@ function fetchAllBlogList() {
     var nextListFunc = function (page, result, err) {
         statusIndicator.update();
         if (err != null) {
-            statusIndicator.hasError("获取列表 " + (page * BLOG_PER_PAGE) + "-" + ((page + 1) * BLOG_PER_PAGE) + "失败, 如果只是某段错误，可稍后再试");
+            statusIndicator.hasError("获取列表 " + (page * CONFIG.BLOG_PER_PAGE) + "-" + ((page + 1) * CONFIG.BLOG_PER_PAGE) + "失败, 如果只是某段错误，可稍后再试");
         }
         // TODO error
         if (window.qzone.blog.list.length < window.qzone.blog.totalNum) {
@@ -287,26 +286,21 @@ function fetchAllBlog() {
  * @param {function} nextFunc
  */
 function fetchBlogList(uin, page, nextFunc) {
-    $.ajax({
-        url: APP.Blog.getBlogList(uin, page)
-    })
-        .done(function (data) {
-            // 去掉函数，保留json
-            data = data.replace(/^_Callback\(/, "");
-            data = data.replace(/\);$/, "");
-            result = JSON.parse(data);
-            window.qzone.blog.totalNum = result.data.totalNum;
-            result.data.list.forEach(function (item) {
-                var i = { blogId: item.blogId, pubTime: item.pubTime, title: item.title };
-                window.qzone.blog.list.push(i);
-            });
-
-            nextFunc(page, result, null);
-        })
-        .fail(function (jqXHR, textStatus) {
-            nextFunc(page, [], textStatus);
+    APP.Blog.list(uin, page, function (data) {
+        // 去掉函数，保留json
+        data = data.replace(/^_Callback\(/, "");
+        data = data.replace(/\);$/, "");
+        result = JSON.parse(data);
+        window.qzone.blog.totalNum = result.data.totalNum;
+        result.data.list.forEach(function (item) {
+            var i = { blogId: item.blogId, pubTime: item.pubTime, title: item.title };
+            window.qzone.blog.list.push(i);
         });
+
+        nextFunc(page, result, null);
+    }, nextFunc);
 }
+
 
 /**
  * 获取一篇日志的内容
@@ -320,9 +314,8 @@ function fetchBlog(uin, idx, nextFunc) {
     var postTime = window.qzone.blog.list[idx].pubTime;
     var title = window.qzone.blog.list[idx].title;
 
-    $.ajax({
-        url: APP.Blog.getBlogData(uin, blogid)
-    }).done(function (data) {
+
+    APP.Blog.info(uin, blogid, function (data) {
         var blogPage = jQuery(data);
         var blogData = null;
         var blogInfo = {}
@@ -350,16 +343,14 @@ function fetchBlog(uin, idx, nextFunc) {
         var markdown = turndownService.turndown(blogContentHtml);
         if (markdown) {
             // 合并标题正文评论
-            var blogMd = constructBlog(title, postTime, markdown, blogInfo);
+            var blogMd = constructBlog(idx, title, postTime, markdown, blogInfo);
             saveBlog(idx, title, postTime, blogMd);
             nextFunc(idx, null);
         } else {
             nextFunc(idx, err);
         }
 
-    }).fail(function (jqXHR, textStatus) {
-        nextFunc(idx, textStatus);
-    });
+    }, nextFunc);
 }
 
 
@@ -371,7 +362,7 @@ function fetchBlog(uin, idx, nextFunc) {
  * @param {string} markdown 转换为 mardown 格式的日志
  * @param {dictionary} blogInfo 日志的信息，用于获取评论 
  */
-function constructBlog(title, postTime, markdown, blogInfo) {
+function constructBlog(index, title, postTime, markdown, blogInfo) {
     // 拼接标题，日期，内容
     var result = "# " + title + "\r\n\r\n";
     result = result + postTime + "\r\n\r\n";
@@ -379,9 +370,9 @@ function constructBlog(title, postTime, markdown, blogInfo) {
     // 拼接评论
     result = result + "### 评论:\r\n\r\n";
     blogInfo.data.comments.forEach(function (entry) {
-        var content = "* " + entry.poster.name + ": " + entry.content + "\r\n";
+        var content = "* " + entry.poster.name + ": " + APP.Blog.parseMentionFormat(entry.content,'MD') + "\r\n";
         entry.replies.forEach(function (rep) {
-            var c = "\t* " + rep.poster.name + ": " + rep.content + "\r\n";
+            var c = "\t* " + rep.poster.name + ": " + APP.Blog.parseMentionFormat(rep.content,'MD') + "\r\n";
             content = content + c;
         });
         result = result + content;
@@ -391,15 +382,23 @@ function constructBlog(title, postTime, markdown, blogInfo) {
     var imageLinkM = /!\[.*?\]\((.+?)\)/g;
     var match;
     var tmpResult = result;
+    var images = [];
     while (match = imageLinkM.exec(tmpResult)) {
-        var filename, filepath, url;
-        filename = postTime + "_" + APP.Common.guid();
-        filename = APP.Common.filenameValidate(filename);
-        filepath = IMAGE_FOLDER_NAME + "/" + filename;
-        // filepath = decodeURI(filepath);
-        result = result.split(match[1]).join(filepath);
-        url = match[1].replace(/http:\//, "https:/")
-        operator.downloadImage(url, window.qzone.blog.root + filepath, title);
+        var imageInfo = {};
+        imageInfo.filename = postTime + "_" + APP.Common.guid();
+        imageInfo.filename = APP.Common.filenameValidate(imageInfo.filename);
+        imageInfo.filepath = IMAGE_FOLDER_NAME + "/" + imageInfo.filename;
+        result = result.split(match[1]).join(imageInfo.filepath);
+        imageInfo.url = match[1].replace(/http:\//, "https:/")
+        imageInfo.title = title;
+        images.push(imageInfo);
+    }
+    window.qzone.blog.list[index].images = images;
+    // 日志的所有图片数，用于识别图片是否下载完成
+    window.qzone.blog.imgCount = (window.qzone.blog.imgCount || 0) + images.length;
+    for (var i = 0; i < images.length; i++) {
+        var imageInfo = images[i];
+        operator.downloadImage(imageInfo.url, window.qzone.blog.root + imageInfo.filepath, title);
     }
     return result;
 }
@@ -417,7 +416,6 @@ function saveBlog(idx, title, postTime, blog) {
     var orderNum = APP.Common.prefixNumber(idx + 1, window.qzone.blog.totalNum.toString().length);
     filename = APP.Common.filenameValidate(orderNum + "_" + postTime + "_【" + title + "】");
     filepath = window.qzone.blog.root + filename + ".md";
-    // filepath = decodeURI(filepath);
 
     window.qzone.filer.write(filepath, { data: blog, type: "text/plain" }, function (fileEntry) {
         statusIndicator.blogDownloaded();
@@ -440,7 +438,7 @@ function downloadImage(url, savePath, title) {
         var xhr = new XMLHttpRequest();
         xhr.open("GET", url, true);
         xhr.responseType = "arraybuffer";
-
+        xhr.timeout = 10000;
         xhr.onload = function (oEvent) {
             var arrayBuffer = xhr.response;
             var byteArray = new Uint8Array(arrayBuffer);
@@ -469,11 +467,11 @@ function downloadImage(url, savePath, title) {
  * 压缩下载下来的日志和图片以待用户下载
  */
 function zipQzone() {
+    statusIndicator.updateTitle("已完成，正在打包...");
     window.qzone.zip = new JSZip();
     var zipOneFile = function (entry) {
         var newName = encodeURIComponent(entry.name);
         var fullPath = entry.fullPath.replace(entry.name, newName);
-        console.info(fullPath);
         window.qzone.filer.open(fullPath, function (f) {
             var reader = new FileReader();
             reader.onload = function (event) {
@@ -493,7 +491,6 @@ function zipQzone() {
                 var entry = entries[i];
                 if (entry.isDirectory) {
                     cl(path + entry.name + '/');
-                    // cl(path + entry.name);
                 } else {
                     zipOneFile(entry);
                 }
