@@ -387,7 +387,7 @@ APP.Blog = {
                     result = "<a href='https://user.qzone.qq.com/'" + uin + " target='_blank'>@" + APP.Blog.decode(name) + "</a>";
                     break;
                 case 'MD':
-                    result = '[' + name + '](https://user.qzone.qq.com/' + uin + ')';
+                    result = '[@' + name + '](https://user.qzone.qq.com/' + uin + ')';
                     break;
             }
             return result;
