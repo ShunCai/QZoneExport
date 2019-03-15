@@ -16,7 +16,8 @@
     "content_scripts": [
         {
             "matches": [
-                "https://*.qzone.qq.com/*"
+                "https://*.qzone.qq.com/*",
+                "https://*.qun.qq.com/*"
             ],
             "js": [
                 "static/vendor/jquery/jquery-3.3.1.min.js",
@@ -43,11 +44,10 @@
     "permissions": [
         "activeTab",
         "cookies",
-		"notifications",
+        "notifications",
         "storage",
         "unlimitedStorage",
         "declarativeContent",
-        "webRequest",
         "https://*.qpic.cn/",
         "https://*.qq.com/"
     ]

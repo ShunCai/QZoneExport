@@ -7,7 +7,7 @@ const MODAL_HTML = `
         <br/>
         <hr/>
         <br/>
-        <p id="backupProgress">导出 -/- 篇文章，下载 - 张图片，失败 - 张图片</p>
+        <p id="backupProgress">导出 -/- 篇文章，正在下载 - 张图片，已下载 - 张图片，失败 - 张图片</p>
         <br/>
         <br/>
         <button id="downloadBtn" class="btn btn-primary">下载备份</button>
@@ -18,7 +18,16 @@ const README_TEXT = `
 
 qzone-xxxxx (xxx 是QQ号）
 |--- 说明.txt
-└--- blog (日志)
+└--- 日志
+    └--- image (图片)
+        |--- 2007-01-01_00-00_xxxx-xxx-xx-xx (这是图片，可能是jpg，png，gif或webp格式）
+        |--- 2007-01-01_00-01_xxxx-xxx-xx-xx
+        └---- ....
+    |--- 2007-01-01_00-00-日志标题1.md (这是日志正文和评论，markdown格式，记事本也可以打开）
+    |--- 2007-01-01_00-01-日志标题2.md
+    |--- ...
+    └--- 2007-01-01_00-0n-日志标题n.md
+└--- 私密日志
     └--- image (图片)
         |--- 2007-01-01_00-00_xxxx-xxx-xx-xx (这是图片，可能是jpg，png，gif或webp格式）
         |--- 2007-01-01_00-01_xxxx-xxx-xx-xx
@@ -56,29 +65,39 @@ function createOperator() {
                 // 显示模态对话框并且开始获取日志列表
                 showModal();
                 buildFolder();
-                await APP.Common.sleep(30);
+                await APP.Common.sleep(CONFIG.SLEEP_TIME);
                 fetchAllBlogList();
                 break;
             case 'fetch_blog_list':
-                await APP.Common.sleep(500);
+                await APP.Common.sleep(CONFIG.SLEEP_TIME);
                 fetchAllBlog();
                 break;
             case 'fetch_blog':
                 // 如果图片还没下载完，弄个会动的提示，让用户知道不是页面卡死
-                // while (statusIndicator.downloadedImageCnt + statusIndicator.failedImageCnt != window.qzone.blog.imgCount) {
-                while (statusIndicator.downloadingImageCnt > 0) {
+                //var completed = statusIndicator.downloadedImageCnt + statusIndicator.failedImageCnt;
+                var blogCompletedTime = Date.now(); // 等待超时统计
+                var isCancel = false;
+                while (statusIndicator.downloadingImageCnt > 0 && !isCancel) {
+                    var cost = (Date.now() - blogCompletedTime) / 1000;
+                    if (cost > 30) {
+                        isCancel = true;
+                        // 超过30秒仍未处理完成，则自动取消
+                        statusIndicator.canceledImageCnt = statusIndicator.downloadingImageCnt;
+                        statusIndicator.updateTitle("网络似乎存在点问题，正在取消剩余图片下载..." + dot);
+                        statusIndicator.update();
+                    }
                     var dot = '';
                     if (Math.random() > 0.5) {
                         dot = '...'
                     };
                     statusIndicator.updateTitle("还没下载完图片， 等一等..." + dot);
-                    await APP.Common.sleep(500);
+                    await APP.Common.sleep(CONFIG.SLEEP_TIME);
                 }
                 zipQzone();
                 break;
             case 'zip':
                 // 延迟0.5秒，确保压缩完
-                await APP.Common.sleep(500);
+                await APP.Common.sleep(CONFIG.SLEEP_TIME);
                 statusIndicator.showDownload();
                 break;
         }
@@ -97,24 +116,21 @@ function createStatusIndicator() {
     var o = new Object();
     o.downloadingImageCnt = 0;
     o.downloadedImageCnt = 0;
+    o.canceledImageCnt = 0;
     o.failedImageCnt = 0;
     o.downloadedBlogCnt = 0;
 
-    o.hasError = function (msg) {
-        $("#errorMessage").append("<p>" + msg + "</p>");
-    };
-
     o.update = function () {
-        $("#backupProgress").text("导出 " + this.downloadedBlogCnt + "/" + window.qzone.blog.list.length + " 篇文章，下载 " + this.downloadedImageCnt + " 张图片，失败 " + this.failedImageCnt + " 张图片");
+        $("#backupProgress").text("导出 " + this.downloadedBlogCnt + "/" + window.qzone.blog.list.length + " 篇文章，已下载 " + this.downloadedImageCnt + " 张图片，已失败 " + this.failedImageCnt + " 张图片，已取消 " + this.canceledImageCnt + " 张图片");
     }
 
     o.showDownload = function () {
         $("#downloadBtn").show();
-        $("#backupStatus").text("备份完成");
+        $("#backupStatus").html("备份完成");
     }
 
     o.updateTitle = function (title) {
-        $("#backupStatus").text(title);
+        $("#backupStatus").html(title);
     }
 
     o.blogDownloaded = function () {
@@ -152,9 +168,10 @@ function initialize() {
     APP.Common.getUin();
 
     window.qzone.fsRoot = "/QQ空间导出-" + window.qzone.uin + "/";
-    window.qzone.blog.root = window.qzone.fsRoot + "blog/";
+    window.qzone.blog.root = window.qzone.fsRoot + "日志/";
     window.qzone.blog.imgRoot = window.qzone.blog.root + IMAGE_FOLDER_NAME + "/";
     window.qzone.blog.list = [];
+    window.qzone.blog.images = [];
 
     initializeFiler();
 
@@ -238,9 +255,6 @@ function fetchAllBlogList() {
     var uin = window.qzone.uin;
     var nextListFunc = function (page, result, err) {
         statusIndicator.update();
-        if (err != null) {
-            statusIndicator.hasError("获取列表 " + (page * CONFIG.BLOG_PER_PAGE) + "-" + ((page + 1) * CONFIG.BLOG_PER_PAGE) + "失败, 如果只是某段错误，可稍后再试");
-        }
         // TODO error
         if (window.qzone.blog.list.length < window.qzone.blog.totalNum) {
             // 总数不相等时继续获取
@@ -261,9 +275,6 @@ function fetchAllBlogList() {
 function fetchAllBlog() {
     var uin = window.qzone.uin;
     var nextBlogFunc = function (idx, err) {
-        if (err != null) {
-            statusIndicator.hasError("获取日志：" + window.qzone.blog.list[idx].title + " 失败，错误原因：" + err);
-        }
 
         if (window.qzone.blog.list.length > idx + 1) {
             fetchBlog(uin, idx + 1, arguments.callee);
@@ -286,7 +297,7 @@ function fetchAllBlog() {
  * @param {function} nextFunc
  */
 function fetchBlogList(uin, page, nextFunc) {
-    APP.Blog.list(uin, page, function (data) {
+    APP.Blog.getList(uin, page, function (data) {
         // 去掉函数，保留json
         data = data.replace(/^_Callback\(/, "");
         data = data.replace(/\);$/, "");
@@ -315,7 +326,7 @@ function fetchBlog(uin, idx, nextFunc) {
     var title = window.qzone.blog.list[idx].title;
 
 
-    APP.Blog.info(uin, blogid, function (data) {
+    APP.Blog.getInfo(uin, blogid, function (data) {
         var blogPage = jQuery(data);
         var blogData = null;
         var blogInfo = {}
@@ -370,9 +381,9 @@ function constructBlog(index, title, postTime, markdown, blogInfo) {
     // 拼接评论
     result = result + "### 评论:\r\n\r\n";
     blogInfo.data.comments.forEach(function (entry) {
-        var content = "* " + entry.poster.name + ": " + APP.Blog.parseMentionFormat(entry.content,'MD') + "\r\n";
+        var content = "* " + entry.poster.name + ": " + APP.Blog.parseMentionFormat(entry.content, 'MD') + "\r\n";
         entry.replies.forEach(function (rep) {
-            var c = "\t* " + rep.poster.name + ": " + APP.Blog.parseMentionFormat(rep.content,'MD') + "\r\n";
+            var c = "\t* " + rep.poster.name + ": " + APP.Blog.parseMentionFormat(rep.content, 'MD') + "\r\n";
             content = content + c;
         });
         result = result + content;
@@ -389,13 +400,14 @@ function constructBlog(index, title, postTime, markdown, blogInfo) {
         imageInfo.filename = APP.Common.filenameValidate(imageInfo.filename);
         imageInfo.filepath = IMAGE_FOLDER_NAME + "/" + imageInfo.filename;
         result = result.split(match[1]).join(imageInfo.filepath);
-        imageInfo.url = match[1].replace(/http:\//, "https:/")
+        // imageInfo.url = APP.Photos.getExternalUrl(match[1]) || match[1].replace(/http:\//, "https:/");
+        imageInfo.url = match[1].replace(/http:\//, "https:/");
+        imageInfo.title = title;
         imageInfo.title = title;
         images.push(imageInfo);
+        window.qzone.blog.images.push(imageInfo);
     }
     window.qzone.blog.list[index].images = images;
-    // 日志的所有图片数，用于识别图片是否下载完成
-    window.qzone.blog.imgCount = (window.qzone.blog.imgCount || 0) + images.length;
     for (var i = 0; i < images.length; i++) {
         var imageInfo = images[i];
         operator.downloadImage(imageInfo.url, window.qzone.blog.root + imageInfo.filepath, title);
@@ -421,7 +433,6 @@ function saveBlog(idx, title, postTime, blog) {
         statusIndicator.blogDownloaded();
     }, function (err) {
         console.error("filepath: " + filepath + " " + err);
-        statusIndicator.hasError("保存日志：" + filename + " 失败");
     });
 }
 
@@ -433,34 +444,24 @@ function saveBlog(idx, title, postTime, blog) {
  * @param {string} title 图片所在日志的标题，仅用于打印错误报告
  */
 function downloadImage(url, savePath, title) {
-    try {
-        statusIndicator.imageStartDownload();
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", url, true);
-        xhr.responseType = "arraybuffer";
-        xhr.timeout = 10000;
-        xhr.onload = function (oEvent) {
-            var arrayBuffer = xhr.response;
-            var byteArray = new Uint8Array(arrayBuffer);
-
-            window.qzone.filer.write(savePath, { data: byteArray.buffer }, function (fileEntry, fileWriter) {
-
-            }, function (err) {
-                console.error(err);
-            });
-            statusIndicator.imageDownloadSuccess();
-        };
-
-        xhr.onerror = function (e) {
-            statusIndicator.hasError("下载不到：" + title + "的一张图片， URL：" + url);
-            statusIndicator.imageDownloadFailed();
-        }
-
-        xhr.send();
-
-    } catch (error) {
-        console.error(error);
+    if (CONFIG.DEBUG) {
+        console.info(url);
     }
+    statusIndicator.imageStartDownload();
+    APP.Common.send(url, 10000, 'arraybuffer', function (xhr) {
+        var arrayBuffer = xhr.response;
+        var byteArray = new Uint8Array(arrayBuffer);
+        window.qzone.filer.write(savePath, { data: byteArray.buffer }, function (fileEntry, fileWriter) {
+            if (CONFIG.DEBUG) {
+                console.info(fileEntry);
+            }
+        }, function (err) {
+            console.error(err);
+        });
+        statusIndicator.imageDownloadSuccess();
+    }, function () {
+        statusIndicator.imageDownloadFailed();
+    });
 }
 
 /**

@@ -22,37 +22,62 @@ Date.prototype.format = function (fmt) {
 
 const CONFIG = {
     DEBUG: false,
-    BLOG_PER_PAGE: 50
-}
+    BLOG_PER_PAGE: 30,
+    SLEEP_TIME: 500,
+};
 
 const QZONE_URLS = {
+
     /** 日志列表URL */
     BLOG_LIST_URL: "https://user.qzone.qq.com/proxy/domain/b.qzone.qq.com/cgi-bin/blognew/get_abs",
+
     /** 日志详情URL */
     BLOG_INFO_URL: "https://user.qzone.qq.com/proxy/domain/b.qzone.qq.com/cgi-bin/blognew/blog_output_data",
+
     /** 私密日志列表URL */
     BLOG_PRI_LIST_URL: "https://user.qzone.qq.com/proxy/domain/b.qzone.qq.com/cgi-bin/privateblog/privateblog_get_titlelist",
+
     /** 私密日志详情URL */
     BLOG_PRI_INFO_URL: "https://user.qzone.qq.com/proxy/domain/b.qzone.qq.com/cgi-bin/privateblog/privateblog_output_data",
+
     /** QQ好友列表URL */
     FRIENDS_LIST_URL: "https://h5.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/tfriend/friend_show_qqfriends.cgi",
-    /** 说说URL */
+
+    /** QQ好友QQ空间个人档资料 */
+    QZONE_USER_INFO_URL: "https://h5.qzone.qq.com/proxy/domain/base.qzone.qq.com/cgi-bin/user/cgi_userinfo_get_all",
+
+    /** QQ好友添加时间 */
+    USER_ADD_TIME_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/friendship/cgi_friendship",
+
+    /** 好友亲密度 */
+    INTIMACY_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/main_page_cgi",
+
+    /** 说说列表URL */
     MESSAGES_LIST_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6",
-    /** 留言板URL */
+
+    /** 留言板列表URL */
     BOARD_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/m.qzone.qq.com/cgi-bin/new/get_msgb',
-    /**  相册URL */
-    PHOTOS_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3'
-}
+
+    /** 相册列表URL */
+    PHOTOS_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3',
+
+    /** QQ群列表 */
+    GROUPS_LIST_URL: 'https://qun.qq.com/cgi-bin/qun_mgr/get_group_list',
+
+    /** QQ群群友列表 */
+    GROUPS_MEMBERS_LIST_URL: 'https://qun.qq.com/cgi-bin/qun_mgr/search_group_members'
+};
 
 
 var APP = {
     Common: {}, // 公共
-    QQFriends: {}, //QQ好友列表
+    Groups: {}, // QQ群
+    Friends: {}, //QQ好友列表
     Blog: {}, // 日志
     PriBlog: {}, // 私密日志
     Photos: {}, // 相册
     Messages: {},// 说说
-    Board: {} // 留言板
+    Boards: {} // 留言板
 };
 
 
@@ -62,29 +87,36 @@ var APP = {
  */
 APP.Common = {
 
-    send: function (url, timeout, doneFun, failFun) {
+    send: function (url, timeout, responseType, doneFun, failFun) {
         var request = new XMLHttpRequest();
-        var time = false;//是否超时
-        var timer = setTimeout(function () {
-            time = true;
-            request.abort();//请求中止
-        }, timeout);
-        request.open("GET", url, true);
-        request.onreadystatechange = function () {
-            if (request.readyState !== 4) {
-                continue;//忽略未完成的请求
+        try {
+            var time = false;//是否超时
+            var timer = setTimeout(function () {
+                time = true;
+                request.abort();//请求中止
+            }, timeout);
+            request.open("GET", url, true);
+            if (responseType) {
+                request.responseType = "arraybuffer";
             }
-            if (time) {
-                return;//忽略中止请求
+            request.onreadystatechange = function () {
+                if (request.readyState !== 4) {
+                    return;//忽略未完成的请求
+                }
+                if (time) {
+                    return;//忽略中止请求
+                }
+                clearTimeout(timer);//取消等待的超时
+                if (request.status === 200) {
+                    doneFun(request);
+                } else {
+                    failFun(request);
+                }
             }
-            clearTimeout(timer);//取消等待的超时
-            if (request.status === 200) {
-                doneFun(request);
-            } else {
-                failFun(request);
-            }
+            request.send();
+        } catch (e) {
+            failFun(request);
         }
-        request.send();
     },
 
     /**
@@ -136,13 +168,21 @@ APP.Common = {
                 if (CONFIG.DEBUG) {
                     console.info(data);
                 }
-                doneFun(data, textStatus, jqXHR);
+                if (doneFun) {
+                    doneFun(data, textStatus, jqXHR);
+                } else {
+                    return data;
+                }
             })
             .fail(function (jqXHR, textStatus, errorThrown) {
                 if (CONFIG.DEBUG) {
                     console.error(errorThrown);
                 }
-                failFun([], textStatus, errorThrown);
+                if (failFun) {
+                    failFun([], textStatus, errorThrown);
+                } else {
+                    return [];
+                }
             });
     },
 
@@ -249,73 +289,18 @@ APP.Common = {
     },
 
     /**
-     * 转换成正式URI，好像实际上没用到
-     * 
-     * @param {string} 不规范的url
-     */
-    formalURI: function (s) {
-        if (!(typeof s == "string")) {
-            return null;
-        }
-        if (s.indexOf("//") == 0) {
-            s = window.location.protocol + s;
-        }
-        if (s.indexOf("://") < 1) {
-            s = location.protocol + "//" + location.host + (s.indexOf("/") == 0 ? "" : location.pathname.substr(0, location.pathname.lastIndexOf("/") + 1)) + s;
-        }
-        var depart = s.split("://");
-        if (typeof depart == "array" && (depart.length > 1 && /^[a-zA-Z]+$/.test(depart[0]))) {
-            this.protocol = depart[0].toLowerCase();
-            var h = depart[1].split("/");
-            if (typeof h == "array") {
-                this.host = h[0];
-                this.pathname = "/" + h.slice(1).join("/").replace(/(\?|\#).+/i, "");
-                this.href = s;
-                var se = depart[1].lastIndexOf("?"), ha = depart[1].lastIndexOf("#");
-                this.search = se >= 0 ? depart[1].substring(se) : "";
-                this.hash = ha >= 0 ? depart[1].substring(ha) : "";
-                if (this.search.length > 0 && this.hash.length > 0) {
-                    if (ha < se) {
-                        this.search = "";
-                    } else {
-                        this.search = depart[1].substring(se, ha);
-                    }
-                }
-                return this;
-            } else {
-                return null;
-            }
-        } else {
-            return null;
-        }
-    },
-
-    /**
      * 生成 g_tk
      * @param {string} url api的URL，好像传null也可以生成可用的g_tk
      */
     gen_gtk: function (url) {
-        url = this.formalURI(url);
         var skey;
-        if (url) {
-            if (url.host && url.host.indexOf("qzone.qq.com") > 0) {
-                skey = this.getCookie("p_skey");
-            } else {
-                if (url.host && url.host.indexOf("qq.com") > 0) {
-                    skey = this.getCookie("skey");
-                }
+        url = url || window.location.href;
+        if (url.indexOf("qzone.qq.com") > 0) {
+            skey = this.getCookie("p_skey");
+        } else {
+            if (url.indexOf("qq.com") > 0) {
+                skey = this.getCookie("skey") || this.getCookie("rv2");
             }
-        }
-        if (!skey) {
-            try {
-                skey = this.getCookie("p_skey") || "";
-            } catch (err) {
-                // 逻辑有问题
-                skey = this.getCookie("p_skey") || "";
-            }
-        }
-        if (!skey) {
-            skey = this.getCookie("skey") || this.getCookie("rv2");
         }
         var hash = 5381;
         for (var i = 0, len = skey.length; i < len; ++i) {
@@ -370,8 +355,8 @@ APP.Common = {
  */
 APP.Blog = {
 
-    decode: function(b) {
-        return b && b.replace(/(%2C|%25|%7D)/g, function(b) {
+    decode: function (b) {
+        return b && b.replace(/(%2C|%25|%7D)/g, function (b) {
             return unescape(b);
         })
     },
@@ -444,12 +429,12 @@ APP.Blog = {
     },
 
     /**
-     * 构建日志列表URL
+     * 获取日志列表
      *
      * @param {string} uin QQ号
      * @param {integer} page 第几页
      */
-    listUrl: function (uin, page) {
+    getList: function (uin, page, doneFun, failFun) {
         var params = {
             "hostUin": uin,
             "uin": uin,
@@ -468,25 +453,16 @@ APP.Blog = {
             "verbose": "1",
             "qzonetoken": window.qzone.token
         };
-        return APP.Common.toUrl(QZONE_URLS.BLOG_LIST_URL, params);
+        return APP.Common.get(APP.Common.toUrl(QZONE_URLS.BLOG_LIST_URL, params), doneFun, failFun || doneFun);
     },
 
     /**
-     * 生成获得日志列表的URL
+     * 获取日志详情
      *
      * @param {string} uin QQ号
-     * @param {integer} page 第几页
+     * @param {integer} blogid 日志ID
      */
-    list: function (uin, page, doneFun, failFun) {
-        return APP.Common.get(this.listUrl(uin, page), doneFun, failFun || doneFun);
-    },
-
-    /**
-     * 生成获得日志页面的URL
-     * @param {string} uin QQ号
-     * @param {string} blogid 日志ID
-     */
-    infoUrl: function (uin, blogid) {
+    getInfo: function (uin, blogid, doneFun, failFun) {
         var params = {
             "uin": uin,
             "blogid": blogid,
@@ -503,20 +479,10 @@ APP.Blog = {
             "page": "1",
             "refererurl": "https://qzs.qq.com/qzone/app/blog/v6/bloglist.html#nojump=1&page=1&catalog=list"
         };
-        return APP.Common.toUrl(QZONE_URLS.BLOG_INFO_URL, params);
-    },
-
-    /**
-     * 获取日之后详情
-     *
-     * @param {string} uin QQ号
-     * @param {integer} blogid 日志ID
-     */
-    info: function (uin, blogid, doneFun, failFun) {
-        return APP.Common.get(this.infoUrl(uin, blogid), doneFun, failFun || doneFun);
+        return APP.Common.get(APP.Common.toUrl(QZONE_URLS.BLOG_INFO_URL, params), doneFun, failFun || doneFun);
     }
 
-}
+};
 
 /**
  * 私密日志API
@@ -524,12 +490,12 @@ APP.Blog = {
 APP.PriBlog = {
 
     /**
-     * 构建私密日志列表URL
+     * 获取私密日志列表
      *
      * @param {string} uin QQ号
      * @param {integer} page 第几页
      */
-    listUrl: function (uin, page) {
+    getList: function (uin, page, doneFun, failFun) {
         var params = {
             "uin": uin,
             "vuin": uin,
@@ -546,25 +512,16 @@ APP.PriBlog = {
             "g_tk": APP.Common.gen_gtk(),
             "qzonetoken": window.qzone.token
         };
-        return APP.Common.toUrl(QZONE_URLS.BLOG_PRI_LIST_URL, params);
+        return APP.Common.get(APP.Common.toUrl(QZONE_URLS.BLOG_PRI_LIST_URL, params), doneFun, failFun || doneFun);
     },
 
     /**
-     * 获取私密日志列表
-     *
-     * @param {string} uin QQ号
-     * @param {integer} page 第几页
-     */
-    list: function (uin, page, doneFun, failFun) {
-        return APP.Common.get(this.listUrl(uin, page), doneFun, failFun || doneFun);
-    },
-
-    /**
-     * 获取私密日志详情URL
-     * @param {string} uin QQ号
-     * @param {string} blogid 日志ID
-     */
-    infoUrl: function (uin, blogid) {
+    * 获取私密日志详情
+    *
+    * @param {string} uin QQ号
+    * @param {integer} blogid 日志ID
+    */
+    getInfo: function (uin, blogid, doneFun, failFun) {
         var params = {
             "uin": uin,
             "blogid": blogid,
@@ -577,30 +534,20 @@ APP.PriBlog = {
             "ref": "qzone",
             "refererurl": "https://qzs.qq.com/qzone/app/blog/v6/bloglist.html#nojump=1&catalog=private&page=1"
         };
-        return APP.Common.toUrl(QZONE_URLS.BLOG_PRI_INFO_URL, params);
-    },
-
-    /**
-    * 获取私密日志详情
-    *
-    * @param {string} uin QQ号
-    * @param {integer} blogid 日志ID
-    */
-    info: function (uin, blogid, doneFun, failFun) {
-        return APP.Common.get(this.infoUrl(uin, blogid), doneFun, failFun || doneFun);
+        return APP.Common.get(APP.Common.toUrl(QZONE_URLS.BLOG_PRI_INFO_URL, params), doneFun, failFun || doneFun);
     }
-}
+};
 
 /**
  * QQ好友API
  */
-APP.QQFriends = {
+APP.Friends = {
 
     /**
-    * 获取QQ好友列表URL
-    * @param {string} uin QQ号
-    */
-    listUrl: function (uin) {
+     * 获取QQ好友列表
+     * @param {string} uin QQ号
+     */
+    getList: function (uin, doneFun, failFun) {
         var params = {
             "uin": uin,
             "follow_flag": "1",
@@ -609,17 +556,54 @@ APP.QQFriends = {
             "g_tk": APP.Common.gen_gtk(),
             "qzonetoken": window.qzone.token
         };
-        return APP.Common.toUrl(QZONE_URLS.FRIENDS_LIST_URL, params);
+        return APP.Common.get(APP.Common.toUrl(QZONE_URLS.FRIENDS_LIST_URL, params), doneFun, failFun || doneFun);
     },
 
     /**
-    * 获取QQ好友列表     *
-     * @param {string} uin QQ号
+     * 获取QQ好友详情
      */
-    list: function (uin, doneFun, failFun) {
-        return APP.Common.get(this.listUrl(uin), doneFun, failFun || doneFun);
+    getQzoneUserInfo: function (uin, doneFun, failFun) {
+        var params = {
+            "uin": uin,
+            "vuin": window.qzone.uin,
+            "fupdate": "1",
+            "rd": Math.random(),
+            "g_tk": APP.Common.gen_gtk(),
+            "qzonetoken": window.qzone.token
+        };
+        return APP.Common.get(APP.Common.toUrl(QZONE_URLS.QZONE_USER_INFO_URL, params), doneFun, failFun || doneFun);
+    },
+
+    /**
+     * 获取QQ好友添加时间
+     * @param {string} uin 好友QQ号
+     */
+    getFriendshipTime: function (uin, doneFun, failFun) {
+        var params = {
+            "activeuin": window.qzone.uin,
+            "passiveuin": uin,
+            "situation": "1",
+            "isCalendar": "1",
+            "g_tk": APP.Common.gen_gtk(),
+            "qzonetoken": window.qzone.token
+        };
+        return APP.Common.get(APP.Common.toUrl(QZONE_URLS.USER_ADD_TIME_URL, params), doneFun, failFun || doneFun);
+    },
+
+    /**
+     * 获取好友亲密度
+     * @param {string} uin 搜索的QQ号
+     */
+    getIntimacy: function (uin, doneFun, failFun) {
+        var params = {
+            "uin": uin,
+            "param": "15",
+            "g_tk": APP.Common.gen_gtk(),
+            "qzonetoken": window.qzone.token
+        };
+        return APP.Common.get(APP.Common.toUrl(QZONE_URLS.INTIMACY_URL, params), doneFun, failFun);
     }
-}
+};
 
 /**
  * 说说API
@@ -627,10 +611,11 @@ APP.QQFriends = {
 APP.Messages = {
 
     /**
-    * 获取说说列表URL
-    * @param {string} uin QQ号
-    */
-    listUrl: function (uin, page) {
+     * 获取说说列表
+     * @param {string} uin QQ号
+     * @param {integer} page 第几页
+     */
+    getMessages: function (uin, page, doneFun, failFun) {
         var params = {
             "uin": uin,
             "ftype": "0",
@@ -645,30 +630,21 @@ APP.Messages = {
             "need_private_comment": "1",
             "qzonetoken": window.qzone.token
         };
-        return APP.Common.toUrl(QZONE_URLS.MESSAGES_LIST_URL, params);
-    },
-
-    /**
-     * 获取说说列表
-     * @param {string} uin QQ号
-     * @param {integer} page 第几页
-     */
-    list: function (uin, page, doneFun, failFun) {
-        return APP.Common.get(this.listUrl(uin, page), doneFun, failFun || doneFun);
+        return APP.Common.get(APP.Common.toUrl(QZONE_URLS.MESSAGES_LIST_URL, params), doneFun, failFun || doneFun);
     }
-}
+};
 
 /**
  * 留言板API
  */
-APP.Board = {
+APP.Boards = {
 
     /**
-    * 获取留言板列表URL
-    * @param {string} uin QQ号
-    * @param {integer} page 第几页
-    */
-    listUrl: function (uin, page) {
+     * 获取留言板列表
+     * @param {string} uin QQ号
+     * @param {integer} page 第几页
+     */
+    getBoards: function (uin, page, doneFun, failFun) {
         var params = {
             "uin": uin,
             "hostUin": uin,
@@ -681,18 +657,9 @@ APP.Board = {
             "g_tk": APP.Common.gen_gtk(),
             "qzonetoken": window.qzone.token
         };
-        return APP.Common.toUrl(QZONE_URLS.BOARD_LIST_URL, params);
-    },
-
-    /**
-     * 获取留言板列表
-     * @param {string} uin QQ号
-     * @param {integer} page 第几页
-     */
-    list: function (uin, page, doneFun, failFun) {
-        return APP.Common.get(this.listUrl(uin, page), doneFun, failFun || doneFun);
+        return APP.Common.get(APP.Common.toUrl(QZONE_URLS.BOARD_LIST_URL, params), doneFun, failFun || doneFun);
     }
-}
+};
 
 /**
  * 相册API
@@ -700,10 +667,10 @@ APP.Board = {
 APP.Photos = {
 
     /**
-    * 获取相册列表URL
-    * @param {string} uin QQ号
-    */
-    listUrl: function (uin) {
+     * 获取相册列表
+     * @param {string} uin QQ号
+     */
+    getPhotos: function (uin, doneFun, failFun) {
         var params = {
             "g_tk": APP.Common.gen_gtk(),
             "callback": "shine0_Callback",
@@ -726,15 +693,84 @@ APP.Photos = {
             "callbackFun": "shine0",
             "_": Date.now()
         };
-        return APP.Common.toUrl(QZONE_URLS.PHOTOS_LIST_URL, params);
+        return APP.Common.get(APP.Common.toUrl(QZONE_URLS.PHOTOS_LIST_URL, params), doneFun, failFun || doneFun);
     },
 
     /**
-     * 获取相册列表
-     * @param {string} uin QQ号
+     * 获取相片外链(无权限也可以访问)
      */
-    list: function (uin, doneFun, failFun) {
-        return APP.Common.get(this.listUrl(uin), doneFun, failFun || doneFun);
+    getExternalUrl: function (oldurl) {
+        var reg = /http\w?:\/\/.*?\/psb\?\/(.*?)\/(.*?)\/\w\/(.*?)$/gi
+        var result;
+        var newurl;
+        if ((result = reg.exec(oldurl)) !== null) {
+            newurl = "//r.photo.store.qq.com/psb?/" + result[1] + "/" + result[2] + "/r/" + result[3] + "_yake_qzoneimgout.png";
+            return newurl;
+        } else {
+            return null;
+        }
     }
 
+};
+
+/**
+ * Q群API
+ */
+APP.Groups = {
+
+    /**
+     * 获取QQ群列表
+     * @param {string} uin QQ号
+     */
+    getGroups: function (doneFun, failFun) {
+        var params = {
+            "bkn": APP.Common.gen_gtk()
+        };
+        return APP.Common.post(QZONE_URLS.GROUPS_LIST_URL, params, doneFun, failFun || doneFun);
+    },
+
+    /**
+     * 获取QQ群有列表
+     * @param {string} gc 群号
+     */
+    getMembers: function (gc, start, end, doneFun, failFun) {
+        var params = {
+            "gc": gc, //群号
+            "st": start,
+            "end": end,
+            "sort": '0',
+            "bkn": APP.Common.gen_gtk()
+        };
+        return APP.Common.post(QZONE_URLS.GROUPS_MEMBERS_LIST_URL, params, doneFun, failFun || doneFun);
+    }
+
+};
+
+/**
+ * 测试模块，不成熟或不能使用的API
+ */
+APP.Test = {
+
+    /**
+     * 获得一个Cookie值
+     * @param {string} name 
+     */
+    getCookie: function (url, name) {
+        return chrome.cookies.get({
+            url: url,
+            name: name
+        }, function (cookie) {
+            console.info(cookie);
+        });
+    },
+
+    /**
+     * 获取某网站的所有Cookies
+     * @param {string} name
+     */
+    getAllCookie: function (url) {
+        chrome.cookies.getAll({ url }, cookies => {
+            console.info(cookies);
+        });
+    }
 }
