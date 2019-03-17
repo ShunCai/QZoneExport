@@ -137,10 +137,10 @@ var QZone = {
         Data: [],
         Images: []
     },
-    // 日记模块
+    // 私密日记模块
     Diaries: {
-        ROOT: FOLDER_ROOT + '日记',
-        IMAGES_ROOT: FOLDER_ROOT + '日记/images',
+        ROOT: FOLDER_ROOT + '私密日记',
+        IMAGES_ROOT: FOLDER_ROOT + '私密日记/images',
         Data: [],
         Images: []
     },
@@ -174,6 +174,36 @@ var API = {};
 API.Utils = {
 
     /**
+     * 根据时间分组
+     * @param {array} data 数据集合
+     * @param {string} timeField 时间字段名
+     */
+    groupedByTime: function (data, timeField) {
+        data = data || [];
+        let groupData = {};
+        data.forEach(function (item) {
+            let time = item[timeField];
+            let date = null;
+            if (typeof (time) === 'string') {
+                date = new Date(time);
+            } else {
+                date = new Date(time * 1000);
+            }
+            if (!date) {
+                date = new Date('1970-01-01');
+            }
+            let yearTempData = groupData[date.getFullYear()] || {};
+            let monthTempData = yearTempData[date.getMonth() + 1] || [];
+
+            monthTempData.push(item);
+            yearTempData[date.getMonth() + 1] = monthTempData;
+            groupData[date.getFullYear()] = yearTempData;
+
+        });
+        return groupData;
+    },
+
+    /**
      * 写入内容到文件
      * @param {string} content 内容
      * @param {string} filepath FileSystem路径
@@ -181,10 +211,12 @@ API.Utils = {
      * @param {funcation} failFun 
      */
     writeFile: function (content, filepath, doneFun, failFun) {
-        QZone.Common.Filer.write(filepath, { data: content, type: "text/plain" }, (fileEntry) => {
+        QZone.Common.Filer.write(filepath, { data: content, type: "text/plain", append: true }, (fileEntry) => {
             doneFun(fileEntry);
         }, (err) => {
-            failFun(err);
+            if (failFun) {
+                failFun(err);
+            }
         });
     },
 
@@ -205,11 +237,14 @@ API.Utils = {
             QZone.Common.Filer.write(path, { data: byteArray.buffer }, (fileEntry) => {
                 doneFun(fileEntry);
             }, (err) => {
-                failFun(err)
+                if (failFun) {
+                    failFun(err);
+                }
             });
         }, (e) => {
-            console.error(e);
-            failFun(e);
+            if (failFun) {
+                failFun(e);
+            }
         });
     },
 
@@ -230,7 +265,9 @@ API.Utils = {
                 }
                 reader.readAsArrayBuffer(f);
             }, (error) => {
-                failFun(error)
+                if (failFun) {
+                    failFun(error);
+                }
             });
         };
 
@@ -248,8 +285,10 @@ API.Utils = {
                     }
                 }
                 doneFun();
-            }, () => {
-                failFun(error)
+            }, (error) => {
+                if (failFun) {
+                    failFun(error);
+                }
             });
         })(root);
     },
@@ -277,12 +316,16 @@ API.Utils = {
                 if (request.status === 200) {
                     doneFun(request);
                 } else {
-                    failFun(request);
+                    if (failFun) {
+                        failFun(request);
+                    }
                 }
             }
             request.send();
         } catch (e) {
-            failFun(request);
+            if (failFun) {
+                failFun(request);
+            }
         }
     },
 
@@ -307,9 +350,6 @@ API.Utils = {
                 }
             })
             .fail(function (jqXHR, textStatus, errorThrown) {
-                if (CONFIG.DEBUG) {
-                    console.error(errorThrown);
-                }
                 if (failFun) {
                     failFun([], textStatus, errorThrown);
                 } else {
@@ -342,9 +382,6 @@ API.Utils = {
                 }
             })
             .fail(function (jqXHR, textStatus, errorThrown) {
-                if (CONFIG.DEBUG) {
-                    console.error(errorThrown);
-                }
                 if (failFun) {
                     failFun([], textStatus, errorThrown);
                 } else {
@@ -516,13 +553,7 @@ API.Utils = {
      */
     prefixNumber: function (num, length) {
         return (Array(length).join('0') + num).slice(-length);
-    }
-};
-
-/**
- * 日志模块API
- */
-API.Blogs = {
+    },
 
     decode: function (b) {
         return b && b.replace(/(%2C|%25|%7D)/g, function (b) {
@@ -530,23 +561,59 @@ API.Blogs = {
         })
     },
 
-    parseMentionFormat: function (contet, type) {
+    /**
+     * 转换@内容
+     * @param {string} contet @内容
+     * @param {string} type 转换类型，默认TEXT,可选HTML,MD
+     */
+    mentionFormat: function (contet, type) {
         if (!contet || 0 > contet.indexOf("@"))
             return contet;
         contet = contet.replace(/%3A/g, ":").replace(/%2C/g, ",");
-        return contet = contet.replace(/@\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))?\}/g, function (str, uin, name) {
-            var result = "@" + API.Blogs.decode(name);
+        return contet = contet.replace(/@\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))?(?:,auto:([^\}]*))?\}/g, function (str, uin, name) {
+            var result = "@" + API.Utils.decode(name);
             switch (type) {
                 case 'HTML':
-                    result = "<a href='https://user.qzone.qq.com/'" + uin + " target='_blank'>@" + API.Blogs.decode(name) + "</a>";
+                    result = "<a href='https://user.qzone.qq.com/'" + uin + " target='_blank'>" + result + "</a>";
                     break;
                 case 'MD':
-                    result = '[@' + name + '](https://user.qzone.qq.com/' + uin + ')';
+                    result = '[' + result + '](https://user.qzone.qq.com/' + uin + ')';
                     break;
             }
             return result;
         })
     },
+
+    /**
+     * 转换表情内容
+     * @param {string} contet @内容
+     * @param {string} type 转换类型，默认TEXT,可选HTML,MD
+     */
+    emojiFormat: function (contet) {
+        return contet;
+    },
+
+    /**
+     * 转换内容
+     * @param {string} contet @内容
+     * @param {string} type 转换类型，默认TEXT,可选HTML,MD
+     */
+    formatContent: function (contet, type) {
+        if (!contet) {
+            return contet;
+        }
+        //转换@内容
+        contet = this.mentionFormat(contet, type);
+        //转换@内容
+        contet = this.emojiFormat(contet, type);
+        return contet;
+    },
+};
+
+/**
+ * 日志模块API
+ */
+API.Blogs = {
 
     getBlogMediaTypeTitle: function (e) {
         var t = {
@@ -654,7 +721,7 @@ API.Blogs = {
 };
 
 /**
- * 日记模块API
+ * 私密日记模块API
  */
 API.Diaries = {
 
@@ -789,8 +856,8 @@ API.Messages = {
             "uin": uin,
             "ftype": "0",
             "sort": "0",
-            "pos": page * CONFIG.PAGE_SIZE,
-            "num": CONFIG.PAGE_SIZE,
+            "pos": page * 40,
+            "num": 40,
             "replynum": "100",
             "g_tk": API.Utils.gen_gtk(),
             "callback": "_preloadCallback",
@@ -914,32 +981,3 @@ API.Groups = {
     }
 
 };
-
-/**
- * 测试模块，不成熟或不能使用的API
- */
-API.Test = {
-
-    /**
-     * 获得一个Cookie值
-     * @param {string} name 
-     */
-    getCookie: function (url, name) {
-        return chrome.cookies.get({
-            url: url,
-            name: name
-        }, function (cookie) {
-            console.info(cookie);
-        });
-    },
-
-    /**
-     * 获取某网站的所有Cookies
-     * @param {string} name
-     */
-    getAllCookie: function (url) {
-        chrome.cookies.getAll({ url }, cookies => {
-            console.info(cookies);
-        });
-    }
-}

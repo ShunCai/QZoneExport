@@ -33,7 +33,8 @@
             "css": [
                 "static/vendor/jquery/jquery.modal.min.css",
                 "static/css/content.css"
-            ]
+            ],
+            "run_at": "document_end"
         }
     ],
     "page_action": {
