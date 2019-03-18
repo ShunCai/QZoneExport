@@ -3,21 +3,21 @@
  */
 
 const MAX_MSG = {
-    Blogs: '正在获取日志，已获取 {0} 篇，总共 {1} 篇，已导出 {2} 篇，请稍后...',
-    Diaries: '正在获取私密日记，已获取 {0} 篇，总共 {1} 篇，已导出 {2} 篇，请稍后...',
-    Messages: '正在获取说说列表，已获取 {0} 条，总共 {1} 条，已导出 {2} 条，请稍后...',
-    Photos: '正在获取相册列表，已获取 {0} 个，总共 {1} 个，已导出 {2} 个，请稍后...',
-    Boards: '正在获取留言板列表，已获取 {0} 条，总共 {1} 条，已导出 {2} 条，请稍后...',
-    Friends: '正在获取QQ好友，已获取好友 {0} 个，总共 {1} 个，已导出 {2} 个，请稍后...',
-    Groups: '正在获取QQ群列表，已获取 {0} 个，总共 {1} 个，已导出 {2} 个，请稍后...',
-    Images: '正在下载图片，已下载 {0} 张图片，已失败 <span style="color: red;"> {1} </span> 张图片...',
+    Blogs: '正在获取日志，已获取 <span style="color: #1ca5fc;">{0}</span> 篇，总共 <span style="color: #1ca5fc;">{1}</span> 篇，已导出 <span style="color: #1ca5fc;">{2}</span> 篇，请稍后...',
+    Diaries: '正在获取私密日记，已获取 <span style="color: #1ca5fc;">{0}</span> 篇，总共 <span style="color: #1ca5fc;">{1}</span> 篇，已导出 <span style="color: #1ca5fc;">{2}</span> 篇，请稍后...',
+    Messages: '正在获取说说列表，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
+    Photos: '正在获取相册列表，已获取 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
+    Boards: '正在获取留言板列表，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
+    Friends: '正在获取QQ好友，已获取好友 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
+    Groups: '正在获取QQ群列表，已获取 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
+    Images: '正在下载图片，已下载 <span style="color: #1ca5fc;">{0}</span> 张图片，已失败 <span style="color: red;"> {1} </span> 张图片...',
 }
 
 const MODAL_HTML = `
     <div class="modal">
         </br>
         </br>
-        <h3 id="backupStatus">正在导出备份，请不要关闭或刷新当前页面</h3>
+        <h3 id="backupStatus">正在导出备份，请不要关闭或刷新当前页面和打开新的QQ空间页面。</h3>
         <br/>
         <hr/>
         <br/>
@@ -81,7 +81,7 @@ QQ空间备份
     └--- 群组.xlsx
 
 
-Windows 推荐使用 [MarkdownPad](http://markdownpad.com/)
+Windows 推荐使用 [Atom](https://atom.io/)
 MacOS 推荐使用 [MacDown](http://macdown.uranusjr.com/)
 `
 
@@ -214,11 +214,12 @@ function createOperator() {
                 API.Utils.Zip(FOLDER_ROOT, () => {
                     operator.next(OperatorType.ZIP);
                 }, (error) => {
+                    console.error(error);
                 });
                 break;
             case OperatorType.ZIP:
-                // 延迟0.5秒，确保压缩完
-                await API.Utils.sleep(CONFIG.SLEEP_TIME);
+                // 延迟3秒，确保压缩完
+                await API.Utils.sleep(3000);
                 statusIndicator.complete();
                 break;
             default:
@@ -226,14 +227,12 @@ function createOperator() {
         }
     };
 
-    operator.downloadImage = async function (url, savePath) {
+    operator.downloadImage = async function (imageInfo) {
         statusIndicator.download();
-        API.Utils.writeImage(url, savePath, (fileEntry) => {
-            if (CONFIG.DEBUG) {
-                console.log(fileEntry);
-            }
+        API.Utils.writeImage(imageInfo.url, imageInfo.filepath, (fileEntry) => {
             statusIndicator.downloadSuccess();
         }, (e) => {
+            console.info("下载失败URL：" + imageInfo.url + ",path=" + imageInfo.filepath);
             statusIndicator.downloadFailed();
         });
     };
@@ -320,7 +319,7 @@ function createStatusIndicator() {
             if (obj.downloaded + obj.downloadFailed === obj.total) {
                 tip = tip.replace('请稍后', '已完成');
             }
-            $("#" + obj.id).text(tip);
+            $("#" + obj.id).html(tip);
         }
         let imgTip = MAX_MSG.Images.format(this.Images.downloaded, this.Images.downloadFailed);
         if (this.Images.downloaded + this.Images.downloadFailed === this.Images.total) {
@@ -347,6 +346,7 @@ function createStatusIndicator() {
     status.downloadFailed = function (type, count) {
         type = type || 'Images';
         this[type].downloadFailed += (count || 1);
+        this[type].downloading -= (count || 1);
         this.update(type);
     };
 
@@ -406,8 +406,11 @@ function showModal() {
         QZone.Common.Zip.generateAsync({ type: "blob" }).then(function (blob) {
             saveAs(blob, QZone.ZIP_NAME);
             blobLink.text('已导出');
+            blobLink.attr('disabled', false);
         }, (err) => {
-            blobLink.innerHTML += " " + err;
+            console.error(err);
+            blobLink.text('下载失败，请重试。');
+            blobLink.attr('disabled', false);
         });
     });
 }
@@ -624,21 +627,22 @@ API.Blogs.constructContent = function (index, title, postTime, markdown, blogInf
     let tmpResult = result;
     let images = [];
     while (match = imageLinkM.exec(tmpResult)) {
-        var imageInfo = {};
-        imageInfo.filename = API.Utils.guid();
-        imageInfo.filepath = QZone.Blogs.IMAGES_ROOT + "/" + imageInfo.filename;
+        let uid = API.Utils.guid();
+        let url = match[1].replace(/http:\//, "https:/");
+        var imageInfo = {
+            uid: uid,
+            url: url,
+            filename: uid,
+            filepath: QZone.Blogs.IMAGES_ROOT + "/" + uid
+        };
         result = result.split(match[1]).join("images/" + imageInfo.filename);
-        // imageInfo.url = API.Photos.getExternalUrl(match[1]) || match[1].replace(/http:\//, "https:/");
-        imageInfo.url = match[1].replace(/http:\//, "https:/");
-        imageInfo.title = title;
         images.push(imageInfo);
         QZone.Blogs.Images.push(imageInfo);
-
     }
     QZone.Blogs.Data[index].images = images;
     for (let i = 0; i < images.length; i++) {
         let imageInfo = images[i];
-        operator.downloadImage(imageInfo.url, imageInfo.filepath);
+        operator.downloadImage(imageInfo);
     }
     return result;
 };
@@ -814,21 +818,21 @@ API.Diaries.constructContent = function (index, title, postTime, markdown, blogI
     let tmpResult = result;
     let images = [];
     while (match = imageLinkM.exec(tmpResult)) {
-        var imageInfo = {};
-        imageInfo.filename = API.Utils.guid();
-        imageInfo.filepath = QZone.Diaries.IMAGES_ROOT + "/" + imageInfo.filename;
+        let uid = API.Utils.guid();
+        var imageInfo = {
+            uid: uid,
+            url: match[1].replace(/http:\//, "https:/"),
+            filename: uid,
+            filepath: QZone.Diaries.IMAGES_ROOT + "/" + uid
+        };
         result = result.split(match[1]).join("images/" + imageInfo.filename);
-        // imageInfo.url = API.Photos.getExternalUrl(match[1]) || match[1].replace(/http:\//, "https:/");
-        imageInfo.url = match[1].replace(/http:\//, "https:/");
-        imageInfo.title = title;
         images.push(imageInfo);
         QZone.Diaries.Images.push(imageInfo);
-
     }
     QZone.Diaries.Data[index].images = images;
     for (let i = 0; i < images.length; i++) {
         let imageInfo = images[i];
-        operator.downloadImage(imageInfo.url, imageInfo.filepath);
+        operator.downloadImage(imageInfo);
     }
     return result;
 };
@@ -886,11 +890,18 @@ API.Messages.fetchList = function (uin, page, nextFunc) {
                 // 图片信息
                 info.images.forEach(function (entry) {
                     var uid = API.Utils.guid();
-                    entry.uid = uid;
-                    entry.filepath = QZone.Messages.IMAGES_ROOT + "/" + uid;
                     var url = entry.url2.replace(/http:\//, "https:/");
+                    var imageInfo = {
+                        uid: uid,
+                        url: url,
+                        filename: uid,
+                        filepath: QZone.Messages.IMAGES_ROOT + "/" + uid
+                    };
+                    entry.url = imageInfo.url;
+                    entry.uid = imageInfo.uid;
+                    entry.filepath = imageInfo.filepath;
                     // 下载图片
-                    operator.downloadImage(url, entry.filepath);
+                    operator.downloadImage(imageInfo);
                 });
             };
             QZone.Messages.Data.push(info);
@@ -929,21 +940,28 @@ API.Messages.fetchAllList = function () {
 };
 
 
-
 /**
  * 构建说说文件内容
  */
 API.Messages.contentToFiles = function () {
-    let content = "# 说说\r\n\r\n";
-    var yearFilePath = QZone.Messages.ROOT + "/说说.md";
-    QZone.Messages.Data.forEach((data) => {
-        content = content + API.Messages.writeFiles(data, yearFilePath);
-        statusIndicator.downloadSuccess("Messages");
+    const yearMap = API.Utils.groupedByTime(QZone.Messages.Data, "createTime");
+    yearMap.forEach((monthMap, year) => {
+        let content = "# " + year + "年\r\n\r\n";
+        monthMap.forEach((items, month) => {
+            content += "## " + month + "月\r\n\r\n";
+            items.forEach((item) => {
+                content = content + "---\r\n" + API.Messages.writeFiles(item);
+                statusIndicator.downloadSuccess("Messages");
+            });
+        });
+        const yearFilePath = QZone.Messages.ROOT + "/" + year + "年.md";
+        API.Utils.writeFile(content, yearFilePath, () => {
+            console.info("已下载：" + yearFilePath);
+        });
     });
-    API.Utils.writeFile(content, yearFilePath, () => {
-        // 下一步，等待图片下载完成
-        operator.next(OperatorType.AWAIT_IMAGES);
-    });
+
+    // 下一步，等待图片下载完成
+    operator.next(OperatorType.AWAIT_IMAGES);
 };
 
 /**
@@ -965,46 +983,60 @@ API.Messages.writeFiles = function (item) {
 
     var imageContent = '<div style="width: 800px;" >';
     var imgSrc = '<img src="{0}" width="200px" height="200px" align="center" />';
+    if (item.images.length <= 2) {
+        imgSrc = '<img src="{0}" width="200px" align="center" />';
+    }
     if (item.images.length > 0) {
         // 图片信息
         item.images.forEach(function (entry) {
-            // var uid = API.Utils.guid();
             imageContent = imageContent + '\r\n' + imgSrc.format('images/' + entry.uid) + '\r\n';
-            // var imgFilePath = QZone.Messages.IMAGES_ROOT + "/" + uid;
-            // var url = entry.url2.replace(/http:\//, "https:/");
-            // var url = API.Photos.getExternalUrl(entry.url2);
-            // var url = entry.url2;
-            // 下载图片
-            // operator.downloadImage(url, imgFilePath);
         });
         imageContent = imageContent + '</div>' + '\r\n\r\n';
-        result = result + imageContent;
+        result += imageContent;
     };
     // 评论内容
-    var commentContent = "> 评论:\r\n\r\n";
-    item.comments.forEach(function (entry) {
-        commentContent = "* " + entry.name + ": " + API.Utils.formatContent(entry.content, 'MD') + "\r\n";
+    result = result + "> 评论:\r\n\r\n";
+    item.comments.forEach(function (comment) {
+        result = result + "* " + comment.name + ": " + API.Utils.formatContent(comment.content, 'MD') + "\r\n";
         // 回复包含图片
-        var repImgs = entry.pic || [];
-        repImgs.forEach(function (entry) {
-            var uid = API.Utils.guid();
-            commentContent = commentContent + '\r\n' + imgSrc.format('images/' + uid) + '\r\n';
-            var imgFilePath = QZone.Messages.IMAGES_ROOT + "/" + uid;
-            var url = entry.hd_url.replace(/http:\//, "https:/");
-            // var url = API.Photos.getExternalUrl(entry.hd_url);
-            // var url = entry.hd_url;
+        var commentImgs = comment.pic || [];
+        commentImgs.forEach(function (img) {
+            let commentImgUid = API.Utils.guid();
+            let commentImgUrl = img.hd_url.replace(/http:\//, "https:/");
+            let comImageInfo = {
+                uid: commentImgUid,
+                url: commentImgUrl,
+                filename: commentImgUid,
+                filepath: QZone.Messages.IMAGES_ROOT + "/" + commentImgUid
+            };
+            // 替换URL
+            result += "![](" + comImageInfo.filepath + ")" + '\r\n';
             // 下载图片
-            operator.downloadImage(url, imgFilePath);
+            operator.downloadImage(comImageInfo);
         });
-        var replies = entry.list_3 || [];
-        replies.forEach(function (rep) {
-            var c = "\t* " + rep.name + ": " + API.Utils.formatContent(rep.content, 'MD') + "\r\n";
-            commentContent = commentContent + c;
+        var replies = comment.list_3 || [];
+        replies.forEach(function (repItem) {
+            let repContent = "\t* " + repItem.name + ": " + API.Utils.formatContent(repItem.content, 'MD') + "\r\n";
+            var repImgs = repItem.pic || [];
+            repImgs.forEach(function (repImg) {
+                let repImgUid = API.Utils.guid();
+                let repImgUrl = repImg.hd_url.replace(/http:\//, "https:/");
+                let repImgageInfo = {
+                    uid: commentImgUid,
+                    url: repImgUrl,
+                    filename: repImgUid,
+                    filepath: QZone.Messages.IMAGES_ROOT + "/" + repImgUid
+                };
+                // 替换URL
+                result += "![](" + repImgageInfo.filepath + ")" + '\r\n';
+                // 下载图片
+                operator.downloadImage(repImgageInfo);
+            });
+            result += repContent;
         });
     });
     // 转换视频 // TODO
     // 转换音频 // TODO
-    result = result + commentContent + "\r\n\r\n";
-    result = result + "---" + "\r\n";
+    result = result + "\r\n"
     return result;
 };

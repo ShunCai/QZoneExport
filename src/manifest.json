@@ -8,7 +8,7 @@
     },
     "homepage_url": "http://www.lvshuncai.com",
     "background": {
-        "persistent": true,
+        "persistent": false,
         "scripts": [
             "static/js/background.js"
         ]
@@ -34,7 +34,7 @@
                 "static/vendor/jquery/jquery.modal.min.css",
                 "static/css/content.css"
             ],
-            "run_at": "document_end"
+            "run_at": "document_start"
         }
     ],
     "page_action": {
@@ -50,6 +50,7 @@
         "unlimitedStorage",
         "declarativeContent",
         "https://*.qpic.cn/",
-        "https://*.qq.com/"
+        "https://*.qq.com/",
+        "https://*.gtimg.cn/"
     ]
 }

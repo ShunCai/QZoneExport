@@ -180,7 +180,7 @@ API.Utils = {
      */
     groupedByTime: function (data, timeField) {
         data = data || [];
-        let groupData = {};
+        let groupData = new Map();
         data.forEach(function (item) {
             let time = item[timeField];
             let date = null;
@@ -192,13 +192,11 @@ API.Utils = {
             if (!date) {
                 date = new Date('1970-01-01');
             }
-            let yearTempData = groupData[date.getFullYear()] || {};
-            let monthTempData = yearTempData[date.getMonth() + 1] || [];
-
+            let yearTempData = groupData.get(date.getFullYear()) || new Map();
+            let monthTempData = yearTempData.get(date.getMonth() + 1) || [];
             monthTempData.push(item);
-            yearTempData[date.getMonth() + 1] = monthTempData;
-            groupData[date.getFullYear()] = yearTempData;
-
+            yearTempData.set(date.getMonth() + 1, monthTempData);
+            groupData.set(date.getFullYear(), yearTempData);
         });
         return groupData;
     },
@@ -295,38 +293,37 @@ API.Utils = {
 
     send: function (url, timeout, responseType, doneFun, failFun) {
         var request = new XMLHttpRequest();
-        try {
-            var time = false;//是否超时
-            var timer = setTimeout(function () {
-                time = true;
-                request.abort();//请求中止
-            }, timeout);
-            request.open("GET", url, true);
-            if (responseType) {
-                request.responseType = "arraybuffer";
+        var time = false;//是否超时
+        var timer = setTimeout(function () {
+            time = true;
+            request.abort();//请求中止
+        }, timeout);
+        request.open("GET", url, true);
+        if (responseType) {
+            request.responseType = "arraybuffer";
+        }
+        request.onreadystatechange = function () {
+            if (request.readyState !== 4) {
+                return;//忽略未完成的请求
             }
-            request.onreadystatechange = function () {
-                if (request.readyState !== 4) {
-                    return;//忽略未完成的请求
-                }
-                if (time) {
-                    return;//忽略中止请求
-                }
-                clearTimeout(timer);//取消等待的超时
-                if (request.status === 200) {
-                    doneFun(request);
-                } else {
-                    if (failFun) {
-                        failFun(request);
-                    }
-                }
+            if (time) {
+                return;//忽略中止请求
             }
-            request.send();
-        } catch (e) {
-            if (failFun) {
-                failFun(request);
+            clearTimeout(timer);//取消等待的超时
+            if (request.status === 200) {
+                doneFun(request);
+            } else {
+                if (failFun) {
+                    failFun(request);
+                }
             }
         }
+        request.onerror = function (error) {
+            if (failFun) {
+                failFun(error);
+            }
+        }
+        request.send();
     },
 
     /**
@@ -586,11 +583,20 @@ API.Utils = {
 
     /**
      * 转换表情内容
-     * @param {string} contet @内容
-     * @param {string} type 转换类型，默认TEXT,可选HTML,MD
+     * @param {string} contet 表情内容
      */
     emojiFormat: function (contet) {
-        return contet;
+        if (!contet) {
+            return contet;
+        }
+        contet = contet.replace(/%3A/g, ":").replace(/%2C/g, ",");
+        return contet = contet.replace(/\[em\]e\d+\[\/em\]/gi, function (emoji) {
+            let eId = emoji.replace('[em]', '').replace('[/em]', '');
+            if (eId) {
+                emoji = '![](http://qzonestyle.gtimg.cn/qzone/em/' + emoji.replace('[em]', '').replace('[/em]', '') + '.gif)';
+            }
+            return emoji;
+        })
     },
 
     /**
