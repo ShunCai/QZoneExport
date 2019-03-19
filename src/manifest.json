@@ -27,6 +27,7 @@
                 "static/vendor/jszip/jszip.min.js",
                 "static/vendor/jszip/jszip-utils.min.js",
                 "static/vendor/FileSaver/FileSaver.min.js",
+                "static/vendor/sheetjs/xlsx.full.min.js",
                 "static/js/common.js",
                 "static/js/content-script.js"
             ],

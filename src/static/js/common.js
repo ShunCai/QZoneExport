@@ -174,6 +174,18 @@ var API = {};
 API.Utils = {
 
     /**
+     * 转换为ArrayBuffer
+     */
+    toArrayBuffer: function (str) {
+        let buf = new ArrayBuffer(str.length)
+        let view = new Uint8Array(buf)
+        for (let i = 0; i !== str.length; ++i) {
+            view[i] = str.charCodeAt(i) & 0xFF
+        }
+        return buf;
+    },
+
+    /**
      * 根据时间分组
      * @param {array} data 数据集合
      * @param {string} timeField 时间字段名
@@ -210,6 +222,23 @@ API.Utils = {
      */
     writeFile: function (content, filepath, doneFun, failFun) {
         QZone.Common.Filer.write(filepath, { data: content, type: "text/plain", append: true }, (fileEntry) => {
+            doneFun(fileEntry);
+        }, (err) => {
+            if (failFun) {
+                failFun(err);
+            }
+        });
+    },
+
+    /**
+     * 写入内容到文件
+     * @param {string} buffer 内容
+     * @param {string} filepath FileSystem路径
+     * @param {funcation} doneFun 
+     * @param {funcation} failFun 
+     */
+    writeExcel: function (buffer, filepath, doneFun, failFun) {
+        QZone.Common.Filer.write(filepath, { data: buffer }, (fileEntry) => {
             doneFun(fileEntry);
         }, (err) => {
             if (failFun) {
@@ -566,7 +595,6 @@ API.Utils = {
     mentionFormat: function (contet, type) {
         if (!contet || 0 > contet.indexOf("@"))
             return contet;
-        contet = contet.replace(/%3A/g, ":").replace(/%2C/g, ",");
         return contet = contet.replace(/@\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))?(?:,auto:([^\}]*))?\}/g, function (str, uin, name) {
             var result = "@" + API.Utils.decode(name);
             switch (type) {
@@ -589,13 +617,25 @@ API.Utils = {
         if (!contet) {
             return contet;
         }
-        contet = contet.replace(/%3A/g, ":").replace(/%2C/g, ",");
         return contet = contet.replace(/\[em\]e\d+\[\/em\]/gi, function (emoji) {
             let eId = emoji.replace('[em]', '').replace('[/em]', '');
             if (eId) {
                 emoji = '![](http://qzonestyle.gtimg.cn/qzone/em/' + emoji.replace('[em]', '').replace('[/em]', '') + '.gif)';
             }
             return emoji;
+        })
+    },
+
+    /**
+     * 替换URL链接
+     * @param {string} contet 表情内容
+     */
+    urlFormat: function (contet) {
+        if (!contet) {
+            return contet;
+        }
+        return contet = contet.replace(/((http|ftp|https):\/\/)?[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/g, function (url) {
+            return '[网页链接](' + url + ')';
         })
     },
 
@@ -608,10 +648,12 @@ API.Utils = {
         if (!contet) {
             return contet;
         }
-        //转换@内容
+        // 替换URL内容
+        contet = this.urlFormat(contet);
+        // 转换@内容
         contet = this.mentionFormat(contet, type);
-        //转换@内容
-        contet = this.emojiFormat(contet, type);
+        // 转换表情内容
+        contet = this.emojiFormat(contet);
         return contet;
     },
 };
@@ -792,8 +834,8 @@ API.Friends = {
     getFriends: function (uin, doneFun, failFun) {
         let params = {
             "uin": uin,
-            "follow_flag": "1",
-            "groupface_flag": "0",
+            "follow_flag": "0",//是否获取关注的认证空间
+            "groupface_flag": "0",//是否获取QQ群组信息
             "fupdate": "1",
             "g_tk": API.Utils.gen_gtk(),
             "qzonetoken": QZone.Common.token
@@ -813,6 +855,8 @@ API.Friends = {
             "g_tk": API.Utils.gen_gtk(),
             "qzonetoken": QZone.Common.token
         };
+        // code = -3000 未登录
+        // code = -4009 无权限
         return API.Utils.get(API.Utils.toUrl(QZone_URLS.QZONE_USER_INFO_URL, params), doneFun, failFun || doneFun);
     },
 

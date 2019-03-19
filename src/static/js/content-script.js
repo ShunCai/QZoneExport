@@ -128,9 +128,14 @@ const OperatorType = {
     MESSAGES_LIST: 'MESSAGES_LIST',
 
     /**
-     * 获取所有私密日记信息
+     * 说说写入到文件
      */
     MESSAGES_WRITE: 'MESSAGES_WRITE',
+
+    /**
+    * FRIEND_LIST
+    */
+    FRIEND_LIST: 'FRIEND_LIST',
 
     /**
      * 压缩
@@ -148,11 +153,15 @@ var statusIndicator = createStatusIndicator();
 // 转换MarkDown
 var turndownService = new TurndownService();
 
-$(document).ready(
-    function () {
-        operator.next(OperatorType.INIT);
-    }
-);
+
+/**
+ * 页面加载时初始化
+ */
+document.addEventListener('DOMContentLoaded', function () {
+    operator.next(OperatorType.INIT);
+});
+
+
 /**
  * 创建备份流程控制者
  */
@@ -168,7 +177,7 @@ function createOperator() {
                 showModal();
                 initFolder();
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                operator.next(OperatorType.MESSAGES_LIST);
+                operator.next(OperatorType.BLOG_LIST);
                 break;
             case OperatorType.BLOG_LIST:
                 // 获取日志所有列表
@@ -199,6 +208,11 @@ function createOperator() {
                 // 说说写入到文件
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
                 API.Messages.contentToFiles();
+                break;
+            case OperatorType.FRIEND_LIST:
+                // 说说写入到文件
+                await API.Utils.sleep(CONFIG.SLEEP_TIME);
+                API.Friends.fetchAllList();
                 break;
             case OperatorType.AWAIT_IMAGES:
                 // 如果图片还没下载完，弄个会动的提示，让用户知道不是页面卡死
@@ -960,8 +974,8 @@ API.Messages.contentToFiles = function () {
         });
     });
 
-    // 下一步，等待图片下载完成
-    operator.next(OperatorType.AWAIT_IMAGES);
+    // 下一步，获取QQ好友信息
+    operator.next(OperatorType.FRIEND_LIST);
 };
 
 /**
@@ -1039,4 +1053,85 @@ API.Messages.writeFiles = function (item) {
     // 转换音频 // TODO
     result = result + "\r\n"
     return result;
+};
+
+
+/**
+ * 获取留言板信息
+ */
+API.Friends.fetchAllList = function () {
+
+    // 重置数据
+    QZone.Friends.Data = [];
+    QZone.Friends.Images = [];
+
+    statusIndicator.start("Friends");
+
+    API.Friends.getFriends(QZone.Common.uin, (data) => {
+        data = data.replace(/^_Callback\(/, "");
+        data = data.replace(/\);$/, "");
+        result = JSON.parse(data);
+        QZone.Friends.total = result.data.items.length;
+        QZone.Friends.Data = result.data.items;
+        statusIndicator.total(QZone.Friends.total, "Friends");
+
+
+        // 将QQ分组进行分组
+        let groups = result.data.gpnames;
+        let groupMap = new Map();
+        groups.forEach(group => {
+            groupMap.set(group.gpid, group.gpname);
+        });
+
+        // Excel数据
+        let ws_data = [
+            ["QQ号", "备注名称", "QQ昵称", "所在分组", "成为好友时间"],
+        ];
+
+        let writeToExcel = function (ws_data) {
+            // 创建WorkBook
+            let workbook = XLSX.utils.book_new();
+
+            let worksheet = XLSX.utils.aoa_to_sheet(ws_data);
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, "QQ好友");
+
+            // 写入XLSX到HTML5的FileSystem
+            let xlsxArrayBuffer = API.Utils.toArrayBuffer(XLSX.write(workbook, { bookType: 'xlsx', bookSST: false, type: 'binary' }));
+            API.Utils.writeExcel(xlsxArrayBuffer, QZone.Friends.ROOT + "/QQ好友.xlsx", (fileEntry) => {
+                console.info("创建文件成功：" + fileEntry.fullPath);
+                // 下一步，等待图片下载完成
+                operator.next(OperatorType.AWAIT_IMAGES);
+            }, (error) => {
+                console.error(error);
+            });
+        }
+
+        // 处理QQ好友
+        let friends = result.data.items;
+        friends.forEach(friend => {
+            statusIndicator.download("Friends");
+            let groupId = friend.groupid;
+            let groupName = groupMap.get(groupId) || "默认分组";
+            let rowData = [friend.uin, friend.remark, friend.name, groupName];
+            API.Friends.getFriendshipTime(friend.uin, (timeData) => {
+                timeData = timeData.replace(/^_Callback\(/, "");
+                timeData = timeData.replace(/\);$/, "");
+                let timeInfo = JSON.parse(timeData);
+                let addTime = 0;
+                if (timeInfo.data && timeInfo.data.hasOwnProperty('addFriendTime')) {
+                    addTime = timeInfo.data.addFriendTime || 0;
+                } else {
+                    console.warn(timeData);
+                }
+                addTime = addTime == 0 ? "老朋友啦" : new Date(addTime * 1000).format("yyyy-MM-dd hh:mm:ss");
+                rowData[4] = addTime;
+                ws_data.push(rowData);
+                statusIndicator.downloadSuccess("Friends");
+                if (friends.length == ws_data.length - 1) {
+                    writeToExcel(ws_data);
+                }
+            });
+        });
+    });
 };
