@@ -6,9 +6,9 @@ const MAX_MSG = {
     Blogs: '正在获取日志，已获取 <span style="color: #1ca5fc;">{0}</span> 篇，总共 <span style="color: #1ca5fc;">{1}</span> 篇，已导出 <span style="color: #1ca5fc;">{2}</span> 篇，请稍后...',
     Diaries: '正在获取私密日记，已获取 <span style="color: #1ca5fc;">{0}</span> 篇，总共 <span style="color: #1ca5fc;">{1}</span> 篇，已导出 <span style="color: #1ca5fc;">{2}</span> 篇，请稍后...',
     Messages: '正在获取说说列表，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
-    Photos: '正在获取相册列表，已获取 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
-    Boards: '正在获取留言板列表，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
     Friends: '正在获取QQ好友，已获取好友 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
+    Boards: '正在获取留言板列表，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
+    Photos: '正在获取相册列表，已获取 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
     Groups: '正在获取QQ群列表，已获取 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
     Images: '正在下载图片，已下载 <span style="color: #1ca5fc;">{0}</span> 张图片，已失败 <span style="color: red;"> {1} </span> 张图片...',
 }
@@ -24,9 +24,9 @@ const MODAL_HTML = `
         <p id="exportBlogs" style="display: none;" >正在获取日志，请稍后...</p>
         <p id="exportDiaries" style="display: none;" >正在获取私密日记，请稍后...</p>
         <p id="exportMessages" style="display: none;" >正在获取说说，请稍后...</p>
-        <p id="exportPhotos" style="display: none;" >正在获取说说，请稍后...</p>
-        <p id="exportBoards" style="display: none;" >正在获取留言板，请稍后...</p>
         <p id="exportFriends" style="display: none;" >正在获取QQ好友信息，请稍后...</p>
+        <p id="exportBoards" style="display: none;" >正在获取留言板，请稍后...</p>
+        <p id="exportPhotos" style="display: none;" >正在获取相册，请稍后...</p>
         <p id="exportGroups" style="display: none;" >正在获取QQ群组，请稍后...</p>
         <br/>
         <p id="exportImages">正在下载图片，已下载 - 张图片，已失败 - 张图片...</p>
@@ -133,9 +133,19 @@ const OperatorType = {
     MESSAGES_WRITE: 'MESSAGES_WRITE',
 
     /**
-    * FRIEND_LIST
+    * 获取好友列表
     */
     FRIEND_LIST: 'FRIEND_LIST',
+
+    /**
+    * 获取留言板列表
+    */
+    BOARD_LIST: 'BOARD_LIST',
+
+    /**
+    * 留言写入到文件
+    */
+    BOARD_WRITE: 'BOARD_WRITE',
 
     /**
      * 压缩
@@ -210,9 +220,19 @@ function createOperator() {
                 API.Messages.contentToFiles();
                 break;
             case OperatorType.FRIEND_LIST:
-                // 说说写入到文件
+                // 获取并下载QQ好友Excel
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
                 API.Friends.fetchAllList();
+                break;
+            case OperatorType.BOARD_LIST:
+                // 获取留言板列表
+                await API.Utils.sleep(CONFIG.SLEEP_TIME);
+                API.Boards.fetchAllList();
+                break;
+            case OperatorType.BOARD_WRITE:
+                // 留言板数据写入到文件
+                await API.Utils.sleep(CONFIG.SLEEP_TIME);
+                API.Boards.contentToFile();
                 break;
             case OperatorType.AWAIT_IMAGES:
                 // 如果图片还没下载完，弄个会动的提示，让用户知道不是页面卡死
@@ -1057,7 +1077,7 @@ API.Messages.writeFiles = function (item) {
 
 
 /**
- * 获取留言板信息
+ * 获取QQ好友列表
  */
 API.Friends.fetchAllList = function () {
 
@@ -1101,7 +1121,7 @@ API.Friends.fetchAllList = function () {
             API.Utils.writeExcel(xlsxArrayBuffer, QZone.Friends.ROOT + "/QQ好友.xlsx", (fileEntry) => {
                 console.info("创建文件成功：" + fileEntry.fullPath);
                 // 下一步，等待图片下载完成
-                operator.next(OperatorType.AWAIT_IMAGES);
+                operator.next(OperatorType.BOARD_LIST);
             }, (error) => {
                 console.error(error);
             });
@@ -1134,4 +1154,106 @@ API.Friends.fetchAllList = function () {
             });
         });
     });
+};
+
+
+/**
+ * 获取一页的留言板列表
+ *
+ * @param {string} uin QQ号
+ * @param {integer} page 第几页
+ * @param {function} nextFunc
+ */
+API.Boards.fetchList = function (uin, page, nextFunc) {
+    API.Boards.getBoards(uin, page, function (data) {
+        // 去掉函数，保留json
+        data = data.replace(/^_Callback\(/, "");
+        data = data.replace(/\);$/, "");
+        data = JSON.parse(data);
+
+        let commentList = data.data.commentList || [];
+        QZone.Boards.Data = QZone.Boards.Data.concat(commentList);
+
+        // 提示信息
+        QZone.Boards.total = data.data.total || 0;
+        statusIndicator.total(QZone.Boards.total, 'Boards');
+
+        nextFunc(page);
+    }, nextFunc);
+};
+
+
+/**
+ * 获取全部留言板列表
+ */
+API.Boards.fetchAllList = function () {
+
+    // 重置数据
+    QZone.Boards.Data = [];
+    QZone.Boards.Images = [];
+
+    statusIndicator.start("Boards");
+
+    // 获取数据
+    var nextListFunc = function (page) {
+        // TODO error
+        if (QZone.Boards.Data.length < QZone.Boards.total) {
+            // 总数不相等时继续获取
+            API.Boards.fetchList(QZone.Common.uin, page + 1, arguments.callee);
+        } else {
+            // 下一步，开始写入说说到文件
+            operator.next(OperatorType.BOARD_WRITE);
+        }
+    }
+    API.Boards.fetchList(QZone.Common.uin, 0, nextListFunc);
+};
+
+/**
+ * 将留言写入到文件
+ */
+API.Boards.contentToFile = function () {
+    let result = "", newline = '\r\n\r\n';
+    let items = QZone.Boards.Data;
+    for (let index = 0; index < items.length; index++) {
+        const borad = items[index];
+        // 提示信息，下载数+1
+        statusIndicator.download("Boards");
+
+        result += '#### 第' + (items.length - index) + '楼\r\n';
+        result += '> {0} 【{1}】'.format(borad.pubtime, borad.nickname) + newline;
+        result += '> 正文：' + newline;
+        let htmlContent = borad.htmlContent.replace(/src=\"\/qzone\/em/g, 'src=\"http://qzonestyle.gtimg.cn/qzone/em');
+        htmlContent = htmlContent.replace(/\n/g, "\r\n");
+        let mdContent = turndownService.turndown(htmlContent);
+        mdContent = API.Utils.mentionFormat(mdContent, "MD");
+        mdContent = API.Utils.emojiFormat(mdContent, "MD");
+        let nickname = QZone.Common.uin == borad.uin ? "我" : borad.nickname;
+        result += '- [{0}](https://user.qzone.qq.com/{1})：{2}'.format(nickname, borad.uin, mdContent) + newline;
+
+        result += '> 回复：' + newline;
+
+        let replyList = borad.replyList || [];
+        replyList.forEach(reply => {
+            let replyName = QZone.Common.uin == reply.uin ? "我" : reply.nick;
+            let replyContent = API.Utils.formatContent(reply.content, "MD");
+            let replyTime = new Date(reply.time * 1000).format('yyyy-MM-dd hh:mm:ss');
+            let replyMd = '- [{0}](https://user.qzone.qq.com/{1})：{2} 【*{3}*】'.format(replyName, reply.uin, replyContent, replyTime);
+            result += replyMd + newline;
+        });
+        result += '---' + newline;
+        // 提示信息，下载数+1
+        statusIndicator.downloadSuccess("Boards");
+    }
+
+    let filepath = QZone.Boards.ROOT + "/留言板.md";
+    API.Utils.writeFile(result, filepath, (fileEntry) => {
+        console.info("已下载：" + fileEntry.fullPath);
+        // 等待图片下载完成
+        operator.next(OperatorType.AWAIT_IMAGES);
+    }, (error) => {
+        console.error(error);
+        // 提示信息，下载数+1
+        statusIndicator.downloadFailed("Boards", item.length);
+    });
+
 };

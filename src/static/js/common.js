@@ -934,10 +934,10 @@ API.Boards = {
         let params = {
             "uin": uin,
             "hostUin": uin,
-            "start": page * CONFIG.PAGE_SIZE,
+            "start": page * 20,
             "s": Math.random(),
             "format": "jsonp",
-            "num": CONFIG.PAGE_SIZE,
+            "num": 20,
             "inCharset": "utf-8",
             "outCharset": "utf-8",
             "g_tk": API.Utils.gen_gtk(),
