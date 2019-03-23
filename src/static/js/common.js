@@ -31,7 +31,14 @@ Date.prototype.format = function (fmt) {
 String.prototype.format = function (args) {
     var result = this;
     if (arguments.length > 0) {
-        if (arguments.length == 1 && typeof (args) == "object") {
+        if (arguments.length == 1 && Array.isArray(args)) {
+            for (var i = 0; i < args.length; i++) {
+                if (args[i] != undefined) {
+                    var reg = new RegExp("({)" + i + "(})", "g");
+                    result = result.replace(reg, args[i]);
+                }
+            }
+        } else if (arguments.length == 1 && typeof (args) == "object") {
             for (var key in args) {
                 if (args[key] != undefined) {
                     var reg = new RegExp("({" + key + "})", "g");
@@ -42,7 +49,6 @@ String.prototype.format = function (args) {
         else {
             for (var i = 0; i < arguments.length; i++) {
                 if (arguments[i] != undefined) {
-                    //var reg = new RegExp("({[" + i + "]})", "g");//这个在索引大于9时会有问题
                     var reg = new RegExp("({)" + i + "(})", "g");
                     result = result.replace(reg, arguments[i]);
                 }
@@ -99,6 +105,9 @@ const QZone_URLS = {
     /** 相册列表URL */
     PHOTOS_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3',
 
+    /** 相片列表URL */
+    IMAGES_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo',
+
     /** QQ群列表 */
     GROUPS_LIST_URL: 'https://qun.qq.com/cgi-bin/qun_mgr/get_group_list',
 
@@ -119,14 +128,12 @@ var QZone = {
     // QQ群模块
     Groups: {
         ROOT: FOLDER_ROOT + '群组',
-        IMAGES_ROOT: FOLDER_ROOT + '群组/images',
         Data: [],
         Images: []
     },
     // QQ好友模块
     Friends: {
         ROOT: FOLDER_ROOT + '好友',
-        IMAGES_ROOT: FOLDER_ROOT + '好友/images',
         Data: [],
         Images: []
     },
@@ -147,7 +154,6 @@ var QZone = {
     // 相册模块
     Photos: {
         ROOT: FOLDER_ROOT + '相册',
-        IMAGES_ROOT: FOLDER_ROOT + '相册/images',
         Data: [],
         Images: []
     },
@@ -161,7 +167,6 @@ var QZone = {
     // 留言板模块
     Boards: {
         ROOT: FOLDER_ROOT + '留言板',
-        IMAGES_ROOT: FOLDER_ROOT + '留言板/images',
         Data: [],
         Images: []
     }
@@ -247,30 +252,64 @@ API.Utils = {
         });
     },
 
+
     /**
-     * 
+     * 根据图片流获取文件类型，不严谨，只是大概识别
+     * @param {Uint8Array} uint8Array 
+     */
+    getImageType: function (uint8Array) {
+        let typeArray = uint8Array.subarray(0, 4);
+        let hex = typeArray.reduce((hex, decimal) => hex + Number(decimal).toString(16) + '', '').toUpperCase();
+        let type;
+        switch (hex) {
+            case 'FFD8FFE0':
+            case 'FFD8FFE1':
+            case 'FFD8FFE2':
+            case 'FFD8FFE3':
+                type = "jpeg";
+                break;
+            case '47494638':
+                type = "gif";
+                break;
+            case '89504E47':
+                type = "png";
+                break;
+            case '52494646':
+                type = "webp";
+                break;
+            default:
+                console.warn("hex=" + hex);
+                break;
+        }
+        return type;
+    },
+
+    /**
+     * 下载并写入文件到FileSystem
      * @param {string} url 图片URL
      * @param {string} path FileSystem文件路径
      * @param {funcation} doneFun 
      * @param {funcation} failFun 
      */
-    writeImage: function (url, path, doneFun, failFun) {
+    writeImage: function (url, path, isMimeType, doneFun, failFun) {
         if (CONFIG.DEBUG) {
             console.info(url);
         }
-        API.Utils.send(url, 10000, 'arraybuffer', (xhr) => {
-            var arrayBuffer = xhr.response;
-            var byteArray = new Uint8Array(arrayBuffer);
-            QZone.Common.Filer.write(path, { data: byteArray.buffer }, (fileEntry) => {
+        API.Utils.send(url, 'blob', (xhr) => {
+            let res = xhr.response;
+            if (isMimeType && res) {
+                path += '.' + res.type.split('/')[1];
+            }
+            QZone.Common.Filer.write(path, { data: res, type: "blob" }, (fileEntry) => {
                 doneFun(fileEntry);
-            }, (err) => {
+            }, (error) => {
                 if (failFun) {
-                    failFun(err);
+                    failFun(error);
                 }
             });
-        }, (e) => {
+        }, (error) => {
             if (failFun) {
-                failFun(e);
+                failFun(error);
             }
         });
     },
@@ -320,32 +359,23 @@ API.Utils = {
         })(root);
     },
 
-    send: function (url, timeout, responseType, doneFun, failFun) {
+    send: function (url, responseType, doneFun, failFun) {
         var request = new XMLHttpRequest();
-        var time = false;//是否超时
-        var timer = setTimeout(function () {
-            time = true;
-            request.abort();//请求中止
-        }, timeout);
-        request.open("GET", url, true);
+        request.open("GET", url);
         if (responseType) {
-            request.responseType = "arraybuffer";
+            request.responseType = responseType;
         }
-        request.onreadystatechange = function () {
-            if (request.readyState !== 4) {
-                return;//忽略未完成的请求
-            }
-            if (time) {
-                return;//忽略中止请求
-            }
-            clearTimeout(timer);//取消等待的超时
-            if (request.status === 200) {
-                doneFun(request);
-            } else {
-                if (failFun) {
-                    failFun(request);
-                }
-            }
+        // 允许跨域
+        request.withCredentials = true;
+        // 1分钟超时
+        // request.timeout = 1000 * 60;
+        // request.ontimeout = function (error) {
+        //     if (failFun) {
+        //         failFun(error);
+        //     }
+        // }
+        request.onload = function (xhr) {
+            doneFun(request);
         }
         request.onerror = function (error) {
             if (failFun) {
@@ -976,10 +1006,49 @@ API.Photos = {
             "pageNumModeClass": "15",
             "needUserInfo": "1",
             "idcNum": "4",
+            // "pageStart": "0",
+            // "pageNum": "15",
+            "mode": "3",// 指定查询分类视图
             "callbackFun": "shine0",
             "_": Date.now()
         };
         return API.Utils.get(API.Utils.toUrl(QZone_URLS.PHOTOS_LIST_URL, params), doneFun, failFun || doneFun);
+    },
+
+    /**
+     * 获取相册相片列表
+     * @param {string} topicId 相册ID
+     * @param {string} page 当前页
+     */
+    getImages: function (topicId, page, doneFun, failFun) {
+        let params = {
+            "g_tk": API.Utils.gen_gtk(),
+            "callback": "shine2_Callback",
+            "t": String(Math.random().toFixed(16)).slice(-9).replace(/^0/, '9'),
+            "mode": "0",
+            "idcNum": "4",
+            "hostUin": QZone.Common.uin,
+            "topicId": topicId,
+            "noTopic": "0",
+            "uin": QZone.Common.uin,
+            "pageStart": page * 80,
+            "pageNum": 80,
+            "skipCmtCount": "0",
+            "singleurl": "1",
+            "batchId": "",
+            "notice": "0",
+            "appid": "4",
+            "inCharset": "utf-8",
+            "outCharset": "utf-8",
+            "source": "qzone",
+            "plat": "qzone",
+            "outstyle": "json",
+            "format": "jsonp",
+            "json_esc": "1",
+            "callbackFun": "shine2",
+            "_": Date.now()
+        };
+        return API.Utils.get(API.Utils.toUrl(QZone_URLS.IMAGES_LIST_URL, params), doneFun, failFun || doneFun);
     },
 
     /**
@@ -994,6 +1063,35 @@ API.Photos = {
             return newurl;
         } else {
             return null;
+        }
+    },
+
+    /**
+     * 转换URL
+     * @param {string} e 
+     */
+    trimDownloadUrl: function (url) {
+        if (url && url.indexOf("?t=5&") > 0) {
+            url = url.replace("?t=5&", "?")
+        } else if (url && url.indexOf("?t=5") > 0) {
+            url = url.replace("?t=5", "")
+        } else if (url && url.indexOf("&t=5") > 0) {
+            url = url.replace("&t=5", "")
+        }
+        return url
+    },
+
+    /**
+     * 获取照片下载URL
+     * @param {object} photo 
+     */
+    getDownloadUrl: function (photo) {
+        if (photo.origin_upload == 1) {
+            return API.Photos.trimDownloadUrl(photo.origin_url || photo.url);
+        } else if (photo.raw_upload == 1) {
+            return API.Photos.trimDownloadUrl(photo.raw || photo.url);
+        } else {
+            return API.Photos.trimDownloadUrl(photo.downloadUrl || photo.url);
         }
     }
 

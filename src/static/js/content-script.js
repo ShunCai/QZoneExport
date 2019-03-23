@@ -8,7 +8,7 @@ const MAX_MSG = {
     Messages: '正在获取说说列表，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
     Friends: '正在获取QQ好友，已获取好友 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
     Boards: '正在获取留言板列表，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
-    Photos: '正在获取相册列表，已获取 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
+    Photos: '正在获取相册列表，当前相册【{0}】，总共 <span style="color: #1ca5fc;">{1}</span> 张照片，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
     Groups: '正在获取QQ群列表，已获取 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
     Images: '正在下载图片，已下载 <span style="color: #1ca5fc;">{0}</span> 张图片，已失败 <span style="color: red;"> {1} </span> 张图片...',
 }
@@ -146,6 +146,10 @@ const OperatorType = {
     * 留言写入到文件
     */
     BOARD_WRITE: 'BOARD_WRITE',
+    /**
+    * 获取相册照片
+    */
+    PHOTO_LIST: 'PHOTO_LIST',
 
     /**
      * 压缩
@@ -234,6 +238,11 @@ function createOperator() {
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
                 API.Boards.contentToFile();
                 break;
+            case OperatorType.PHOTO_LIST:
+                // 获取相册列表
+                await API.Utils.sleep(CONFIG.SLEEP_TIME);
+                API.Photos.fetchAllList();
+                break;
             case OperatorType.AWAIT_IMAGES:
                 // 如果图片还没下载完，弄个会动的提示，让用户知道不是页面卡死
                 while (statusIndicator.Images.downloading > 0) {
@@ -263,10 +272,11 @@ function createOperator() {
 
     operator.downloadImage = async function (imageInfo) {
         statusIndicator.download();
-        API.Utils.writeImage(imageInfo.url, imageInfo.filepath, (fileEntry) => {
+        API.Utils.writeImage(imageInfo.url, imageInfo.filepath, imageInfo.isMimeType, (fileEntry) => {
             statusIndicator.downloadSuccess();
         }, (e) => {
-            console.info("下载失败URL：" + imageInfo.url + ",path=" + imageInfo.filepath);
+            console.info("下载失败URL：" + imageInfo.url);
+            console.info("失败的文件路径：" + imageInfo.filepath);
             statusIndicator.downloadFailed();
         });
     };
@@ -341,6 +351,7 @@ function createStatusIndicator() {
         let obj = this[type];
         if (type && obj.id !== 'exportImages') {
             $("#" + obj.id).show();
+            this.update(type);
         }
     };
 
@@ -360,6 +371,20 @@ function createStatusIndicator() {
             imgTip = imgTip.replace('请稍后', '已完成');
         }
         $("#exportImages").html(imgTip);
+    };
+
+    status.updateImages = function () {
+        let imgTip = MAX_MSG.Images.format(this.Images.downloaded, this.Images.downloadFailed);
+        if (this.Images.downloaded + this.Images.downloadFailed === this.Images.total) {
+            imgTip = imgTip.replace('请稍后', '已完成');
+        }
+        $("#exportImages").html(imgTip);
+    };
+
+    status.updatePhotosInfo = function (arg) {
+        let tip = MAX_MSG.Photos.format(arg);
+        $("#exportPhotos").html(tip);
+        this.updateImages();
     };
 
     status.complete = function () {
@@ -488,11 +513,11 @@ function initFolder() {
         if (typeof (obj) !== "object") {
             continue;
         }
-        let imgRoot = obj['IMAGES_ROOT'];
-        if (!imgRoot) {
+        let rootPath = obj['IMAGES_ROOT'] || obj['ROOT'];
+        if (!rootPath) {
             continue;
         }
-        QZone.Common.Filer.mkdir(imgRoot, false, (entry) => {
+        QZone.Common.Filer.mkdir(rootPath, false, (entry) => {
             console.info('创建目录成功：' + entry.fullPath);
         });
     }
@@ -1056,7 +1081,7 @@ API.Messages.writeFiles = function (item) {
                 let repImgUid = API.Utils.guid();
                 let repImgUrl = repImg.hd_url.replace(/http:\//, "https:/");
                 let repImgageInfo = {
-                    uid: commentImgUid,
+                    uid: repImgUid,
                     url: repImgUrl,
                     filename: repImgUid,
                     filepath: QZone.Messages.IMAGES_ROOT + "/" + repImgUid
@@ -1248,12 +1273,146 @@ API.Boards.contentToFile = function () {
     let filepath = QZone.Boards.ROOT + "/留言板.md";
     API.Utils.writeFile(result, filepath, (fileEntry) => {
         console.info("已下载：" + fileEntry.fullPath);
-        // 等待图片下载完成
-        operator.next(OperatorType.AWAIT_IMAGES);
+        // 下一步，下载相册
+        operator.next(OperatorType.PHOTO_LIST);
     }, (error) => {
         console.error(error);
         // 提示信息，下载数+1
         statusIndicator.downloadFailed("Boards", item.length);
     });
 
+};
+
+/**
+ * 获取相册一页的照片
+ *
+ * @param {string} uin QQ号
+ * @param {integer} page 第几页
+ * @param {function} nextFunc
+ */
+API.Photos.fetchOneList = function (albumItem, page, nextFunc) {
+    API.Photos.getImages(albumItem.id, page, (imgData) => {
+        let albumId = albumItem.id;
+        // 去掉函数，保留json
+        imgData = imgData.replace(/^shine2_Callback\(/, "");
+        imgData = imgData.replace(/\);$/, "");
+        imgData = JSON.parse(imgData);
+        let photoList = imgData.data.photoList || [];
+
+        QZone.Photos.Data = QZone.Photos.Data.concat(photoList);
+        let albumnIdList = QZone.Photos.Images.get(albumId) || [];
+        QZone.Photos.Images.set(albumId, albumnIdList.concat(photoList));
+
+        nextFunc(page);
+    }, nextFunc);
+};
+
+
+/**
+ * 获取单个相册的全部照片
+ */
+API.Photos.fetchOneAllList = function (albumItem, endFun) {
+
+    // 重置数据
+    QZone.Photos.Images.set(albumItem.id, []);
+
+    // 获取数据
+    var nextListFunc = function (page) {
+        // TODO error
+        if (QZone.Photos.Images.get(albumItem.id).length < albumItem.total) {
+            // 总数不相等时继续获取
+            API.Photos.fetchOneList(albumItem.id, page + 1, arguments.callee);
+        } else {
+            endFun(albumItem);
+        }
+    }
+    API.Photos.fetchOneList(albumItem, 0, nextListFunc);
+};
+
+/**
+ * 获取相册列表
+ */
+API.Photos.fetchAllList = function () {
+    // 重置数据
+    QZone.Photos.Data = [];
+    QZone.Photos.Images = new Map();
+    QZone.Photos.complete = 0;
+
+    statusIndicator.start("Photos");
+
+    API.Photos.getPhotos(QZone.Common.uin, (albumData) => {
+
+        // 去掉函数，保留json
+        albumData = albumData.replace(/^shine0_Callback\(/, "");
+        albumData = albumData.replace(/\);$/, "");
+        albumData = JSON.parse(albumData);
+
+        // 相册分类
+        let classList = albumData.data.classList || [];
+        let classMap = new Map();
+        classList.forEach(classItem => {
+            classMap.set(classItem.id, classItem.name);
+        });
+        // 相册分类列表
+        let albumListModeClass = albumData.data.albumListModeClass || [];
+        albumListModeClass.forEach(modeClass => {
+            // 分类ID
+            let classId = modeClass.classId;
+            // 分类名称
+            let className = classMap.get(classId) || "默认分类";
+            // 相册列表            
+            let albumList = modeClass.albumList || [];
+            albumList.forEach(album => {
+                API.Photos.fetchOneAllList(album, (album) => {
+                    let alnumName = API.Utils.filenameValidate(album.name);
+                    QZone.Common.Filer.mkdir(QZone.Photos.ROOT + "/" + className + "/" + alnumName, false, (entry) => {
+                        console.info('创建目录成功：' + entry.fullPath);
+                    });
+                    let photoList = QZone.Photos.Images.get(album.id) || [];
+                    for (let index = 0; index < photoList.length; index++) {
+                        const photo = photoList[index];
+                        // 普通图下载
+                        let url = photo.url;
+                        // 高清图下载
+                        // let url = photo.raw;
+                        // 原图下载
+                        // let url = photo.origin_url;
+                        // 自动识别，默认原图优先
+                        // let url = API.Photos.getDownloadUrl(photo);
+                        if (photo.is_video) {
+                            console.info("暂不支持视频下载：" + url);
+                            continue;
+                        }
+                        url = url.replace(/http:\//, "https:/");
+                        let photoName = photo.name + "_" + API.Utils.guid();
+                        photoName = API.Utils.filenameValidate(photoName);
+                        let filepath = QZone.Photos.ROOT + "/" + className + "/" + alnumName + "/" + photoName;
+
+                        // 正在下载的照片+1
+                        statusIndicator.download();
+                        API.Utils.writeImage(url, filepath, true, (fileEntry) => {
+                            // 更新提示信息
+                            statusIndicator.updatePhotosInfo([album.name, album.total, index + 1]);
+                            // 下载成功的照片+1
+                            statusIndicator.downloadSuccess();
+                        }, (e) => {
+                            console.log("下载文件出错URL：" + url);
+                            console.info("失败的文件路径：" + filepath);
+                            statusIndicator.downloadFailed();
+                            // 下载失败的照片+1
+                        });
+
+                        QZone.Photos.complete++;
+                        if (QZone.Photos.Data.length === QZone.Photos.complete) {
+                            operator.next(OperatorType.AWAIT_IMAGES);
+                        }
+                    }
+                });
+            });
+        }, (error) => {
+            console.log(error);
+        });
+    }, (error) => {
+        console.log(error);
+    });
 };
