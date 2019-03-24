@@ -191,7 +191,7 @@ function createOperator() {
                 showModal();
                 initFolder();
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                operator.next(OperatorType.BLOG_LIST);
+                operator.next(OperatorType.PHOTO_LIST);
                 break;
             case OperatorType.BLOG_LIST:
                 // 获取日志所有列表
@@ -1312,7 +1312,6 @@ API.Photos.fetchOneList = function (albumItem, page, nextFunc) {
  * 获取单个相册的全部照片
  */
 API.Photos.fetchOneAllList = function (albumItem, endFun) {
-
     // 重置数据
     QZone.Photos.Images.set(albumItem.id, []);
 
@@ -1321,7 +1320,7 @@ API.Photos.fetchOneAllList = function (albumItem, endFun) {
         // TODO error
         if (QZone.Photos.Images.get(albumItem.id).length < albumItem.total) {
             // 总数不相等时继续获取
-            API.Photos.fetchOneList(albumItem.id, page + 1, arguments.callee);
+            API.Photos.fetchOneList(albumItem, page + 1, arguments.callee);
         } else {
             endFun(albumItem);
         }
@@ -1395,17 +1394,73 @@ API.Photos.fetchAllList = function () {
                             statusIndicator.updatePhotosInfo([album.name, album.total, index + 1]);
                             // 下载成功的照片+1
                             statusIndicator.downloadSuccess();
+                            QZone.Photos.complete++;
+                            if (QZone.Photos.Data.length === QZone.Photos.complete) {
+                                operator.next(OperatorType.AWAIT_IMAGES);
+                            }
                         }, (e) => {
                             console.log("下载文件出错URL：" + url);
                             console.info("失败的文件路径：" + filepath);
-                            statusIndicator.downloadFailed();
                             // 下载失败的照片+1
+                            statusIndicator.downloadFailed();
+                            QZone.Photos.complete++;
+                            if (QZone.Photos.Data.length === QZone.Photos.complete) {
+                                operator.next(OperatorType.AWAIT_IMAGES);
+                            }
                         });
+                    }
+                });
+            });
+        }, (error) => {
+            console.log(error);
+        });
+    }, (error) => {
+        console.log(error);
+    });
+};
 
-                        QZone.Photos.complete++;
-                        if (QZone.Photos.Data.length === QZone.Photos.complete) {
-                            operator.next(OperatorType.AWAIT_IMAGES);
-                        }
+
+/**
+ * 获取相册列表
+ */
+API.Photos.fetchAllListTest = function () {
+    // 重置数据
+    QZone.Photos.Data = [];
+    QZone.Photos.Images = new Map();
+    QZone.Photos.complete = 0;
+
+    statusIndicator.start("Photos");
+
+    API.Photos.getPhotos(QZone.Common.uin, (albumData) => {
+
+        // 去掉函数，保留json
+        albumData = albumData.replace(/^shine0_Callback\(/, "");
+        albumData = albumData.replace(/\);$/, "");
+        albumData = JSON.parse(albumData);
+
+        // 相册分类
+        let classList = albumData.data.classList || [];
+        let classMap = new Map();
+        classList.forEach(classItem => {
+            classMap.set(classItem.id, classItem.name);
+        });
+        // 相册分类列表
+        let albumListModeClass = albumData.data.albumListModeClass || [];
+        albumListModeClass.forEach(modeClass => {
+            // 分类ID
+            let classId = modeClass.classId;
+            // 分类名称
+            let className = classMap.get(classId) || "默认分类";
+            // 相册列表            
+            let albumList = modeClass.albumList || [];
+            albumList.forEach(album => {
+                console.info("已获取相册：" + album.name);
+                API.Photos.fetchOneAllList(album, (album) => {
+                    let alnumName = API.Utils.filenameValidate(album.name);
+                    let photoList = QZone.Photos.Images.get(album.id) || [];
+                    for (let index = 0; index < photoList.length; index++) {
+                        const photo = photoList[index];
+                        console.info("已获取相册【{0}】的相片{1}".format(alnumName, photo.name));
                     }
                 });
             });
