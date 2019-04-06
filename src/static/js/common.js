@@ -291,7 +291,7 @@ API.Utils = {
      * @param {funcation} doneFun 
      * @param {funcation} failFun 
      */
-    writeImage: function (url, path, isMimeType, doneFun, failFun) {
+    writeImage: async function (url, path, isMimeType, doneFun, failFun) {
         if (CONFIG.DEBUG) {
             console.info(url);
         }
@@ -1023,7 +1023,7 @@ API.Photos = {
     getImages: function (topicId, page, doneFun, failFun) {
         let params = {
             "g_tk": API.Utils.gen_gtk(),
-            "callback": "shine2_Callback",
+            "callback": "shine0_Callback",
             "t": String(Math.random().toFixed(16)).slice(-9).replace(/^0/, '9'),
             "mode": "0",
             "idcNum": "4",
@@ -1045,7 +1045,7 @@ API.Photos = {
             "outstyle": "json",
             "format": "jsonp",
             "json_esc": "1",
-            "callbackFun": "shine2",
+            "callbackFun": "shine0",
             "_": Date.now()
         };
         return API.Utils.get(API.Utils.toUrl(QZone_URLS.IMAGES_LIST_URL, params), doneFun, failFun || doneFun);

@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "QQ空间导出助手",
-    "description": "QQ空间导出助手，用于备份QQ空间的日志、说说、相册、留言板为文件，供永久保存",
+    "description": "QQ空间导出助手，用于备份QQ空间的好友、日志、私密日记、相册、说说、留言板为文件，供永久保存",
     "version": "0.0.1",
     "icons": {
         "128": "static/img/icon-128.png"
@@ -43,6 +43,7 @@
         "default_title": "QQ空间导出助手",
         "default_popup": "static/html/popup.html"
     },
+    "options_page": "static/html/options.html",
     "permissions": [
         "activeTab",
         "cookies",

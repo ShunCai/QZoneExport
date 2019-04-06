@@ -1,24 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 
 <head>
     <meta charset="utf-8" />
-    <link href="/static/css/popup.css" rel="stylesheet" type="text/css">
+    <link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/popup.css" rel="stylesheet" type="text/css">
     <title>QQ空间导出助手</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
 </head>
 
 <body>
     <div>
         <h4>QQ空间导出助手</h4>
         <hr>
-        <p>备份按钮仅需要点击一次</p>
-        <p>若备份失败，可以尝试刷新QQ空间后再次备份</p>
-        <p>这是一次性工具，用完可以<a id="delSelf" class="link" href="#">点击这里</a>卸载</p>
+        <p>备份按钮仅需要点击一次。</p>
+        <p>如若备份失败，刷新QQ空间后再次备份。</p>
+        <p>这是一次性工具，用完可以<a id="delSelf" class="link" href="#">点击这里</a>卸载。</p>
         <br />
-        <button id="backup">开始备份</button>
+        <div class="custom-control custom-checkbox custom-control-inline">
+            <input type="checkbox" class="custom-control-input" id="Messages" name="exportType" value="Messages" checked>
+            <label class="custom-control-label" for="Messages">说说</label>
+        </div>
+        <div class="custom-control custom-checkbox custom-control-inline">
+            <input type="checkbox" class="custom-control-input" id="Blogs" name="exportType" value="Blogs" checked>
+            <label class="custom-control-label" for="Blogs">日志</label>
+        </div>
+        <div class="custom-control custom-checkbox custom-control-inline">
+            <input type="checkbox" class="custom-control-input" id="Diaries" name="exportType" value="Diaries" checked>
+            <label class="custom-control-label" for="Diaries">私密日记</label>
+        </div>
+        <div class="custom-control custom-checkbox custom-control-inline">
+            <input type="checkbox" class="custom-control-input" id="Photos" name="exportType" value="Photos" checked>
+            <label class="custom-control-label" for="Photos">相册</label>
+        </div>
+        <div class="custom-control custom-checkbox custom-control-inline">
+            <input type="checkbox" class="custom-control-input" id="Boards" name="exportType" checked>
+            <label class="custom-control-label" for="Boards">留言板</label>
+        </div>
+        <div class="custom-control custom-checkbox custom-control-inline">
+            <input type="checkbox" class="custom-control-input" id="Friends" name="exportType" value="Friends" checked>
+            <label class="custom-control-label" for="Friends">好友</label>
+        </div>
+        <br />
+        <br />
+        <button id="backup" type="button" class="btn btn-primary">开始备份</button>
     </div>
-    <script src="/static/vendor/jquery/jquery-3.3.1.min.js"></script>
-    <script src="/static/js/popup.js"></script>
+    <script src="../vendor/jquery/jquery-3.3.1.min.js"></script>
+    <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+    <script src="../js/popup.js"></script>
 </body>
 
 </html>
