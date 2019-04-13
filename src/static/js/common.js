@@ -664,7 +664,13 @@ API.Utils = {
         if (!contet) {
             return contet;
         }
-        return contet = contet.replace(/((http|ftp|https):\/\/)?[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/g, function (url) {
+        // return contet = contet.replace(/((http|ftp|https):\/\/)?[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/g, function (url) {
+        //     return '[网页链接](' + url + ')';
+        // })
+        // return contet = contet.replace(/((https|http|ftp|rtsp|mms)?:\/\/)?(([0-9a-z_!~*().&=+$%-]+:)?[0-9a-z_!~*().&=+$%-]+@)?(([0-9]{1,3}.){3}[0-9]{1,3}|([0-9a-z_!~*()-]+.)*([0-9a-z][0-9a-z-]{0,61})?[0-9a-z].[a-z]{2,6})(:[0-9]{1,4})?((\/?)|(\/[0-9a-z_!~*().;?:@&=+$,%#-]+)+\/?)/g, function (url) {
+        //     return '[网页链接](' + url + ')';
+        // })
+        return contet = contet.replace(/(https|http|ftp|rtsp|mms)?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*/g, function (url) {
             return '[网页链接](' + url + ')';
         })
     },

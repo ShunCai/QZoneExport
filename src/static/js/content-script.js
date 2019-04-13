@@ -191,12 +191,14 @@ function createOperator() {
                 showModal();
                 initFolder();
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                operator.next(OperatorType.PHOTO_LIST);
+                operator.next(OperatorType.BLOG_LIST);
                 break;
             case OperatorType.BLOG_LIST:
                 // 获取日志所有列表
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                API.Blogs.fetchAllList();
+                operator.checkedNext(type, OperatorType.DIARY_LIST, () => {
+                    API.Blogs.fetchAllList();
+                });
                 break;
             case OperatorType.BLOG_INFO:
                 // 获取日志所有信息
@@ -206,7 +208,9 @@ function createOperator() {
             case OperatorType.DIARY_LIST:
                 // 获取私密日记所有列表
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                API.Diaries.fetchAllList();
+                operator.checkedNext(type, OperatorType.MESSAGES_LIST, () => {
+                    API.Diaries.fetchAllList();
+                });
                 break;
             case OperatorType.DIARY_INFO:
                 // 获取私密日记所有信息
@@ -216,7 +220,9 @@ function createOperator() {
             case OperatorType.MESSAGES_LIST:
                 // 获取说说列表
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                API.Messages.fetchAllList();
+                operator.checkedNext(type, OperatorType.FRIEND_LIST, () => {
+                    API.Messages.fetchAllList();
+                });
                 break;
             case OperatorType.MESSAGES_WRITE:
                 // 说说写入到文件
@@ -226,12 +232,16 @@ function createOperator() {
             case OperatorType.FRIEND_LIST:
                 // 获取并下载QQ好友Excel
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                API.Friends.fetchAllList();
+                operator.checkedNext(type, OperatorType.BOARD_LIST, () => {
+                    API.Friends.fetchAllList();
+                });
                 break;
             case OperatorType.BOARD_LIST:
                 // 获取留言板列表
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                API.Boards.fetchAllList();
+                operator.checkedNext(type, OperatorType.PHOTO_LIST, () => {
+                    API.Boards.fetchAllList();
+                });
                 break;
             case OperatorType.BOARD_WRITE:
                 // 留言板数据写入到文件
@@ -241,7 +251,9 @@ function createOperator() {
             case OperatorType.PHOTO_LIST:
                 // 获取相册列表
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                API.Photos.fetchAllList();
+                operator.checkedNext(type, OperatorType.AWAIT_IMAGES, () => {
+                    API.Photos.fetchAllList();
+                });
                 break;
             case OperatorType.AWAIT_IMAGES:
                 // 如果图片还没下载完，弄个会动的提示，让用户知道不是页面卡死
@@ -269,6 +281,14 @@ function createOperator() {
                 break;
         }
     };
+
+    operator.checkedNext = function (operatorType, nextOperatorType, nextFun) {
+        if (QZone.Common.ExportType[operatorType]) {
+            nextFun.call();
+        } else {
+            operator.next(nextOperatorType);
+        }
+    }
 
     operator.downloadImage = async function (imageInfo) {
         statusIndicator.download();
@@ -440,8 +460,9 @@ function init() {
     QZone.Common.Zip = new JSZip();
 
     // 添加按钮监听
-    chrome.runtime.onMessage.addListener(function (msg, sender) {
-        if (msg.from === 'popup' && msg.subject === 'startBackup') {
+    chrome.runtime.onMessage.addListener(function (data) {
+        if (data.from === 'popup' && data.subject === 'startBackup') {
+            QZone.Common.ExportType = data.exportType;
             operator.next(OperatorType.SHOW);
         }
     });
@@ -672,7 +693,9 @@ API.Blogs.constructContent = function (index, title, postTime, markdown, blogInf
     // 拼接评论
     result = result + "> 评论:\r\n\r\n";
     blogInfo.data.comments.forEach(function (entry) {
-        let content = "* " + entry.poster.name + ": " + API.Utils.formatContent(entry.content, 'MD') + "\r\n";
+        let mdContent = API.Utils.formatContent(entry.content, 'MD');
+        let content = '* [{0}](https://user.qzone.qq.com/{1})：{2}'.format(entry.poster.name, entry.poster.id, mdContent) + "\r\n";
+
         entry.replies.forEach(function (rep) {
             let c = "\t* " + rep.poster.name + ": " + API.Utils.formatContent(rep.content, 'MD') + "\r\n";
             content = content + c;
@@ -942,7 +965,10 @@ API.Messages.fetchList = function (uin, page, nextFunc) {
                 images: item.pic || [],
                 audio: item.audio || [],
                 video: item.video || [],
-                location: item.lbs || {},
+                location: item.lbs,
+                rt_con: item.rt_con,
+                rt_uin: item.rt_uin,
+                rt_uinname: item.rt_uinname,
                 createTime: new Date(item.created_time * 1000).format('yyyy-MM-dd hh:mm:ss')
             };
             if (info.images.length > 0) {
@@ -1009,6 +1035,7 @@ API.Messages.contentToFiles = function () {
         monthMap.forEach((items, month) => {
             content += "## " + month + "月\r\n\r\n";
             items.forEach((item) => {
+                statusIndicator.download("Messages");
                 content = content + "---\r\n" + API.Messages.writeFiles(item);
                 statusIndicator.downloadSuccess("Messages");
             });
@@ -1031,14 +1058,20 @@ API.Messages.writeFiles = function (item) {
 
     let location = item.location['name'];
     var result = "> " + item.createTime;
+    // 地理位置
     if (location && location !== "") {
         result += "【" + location + "】";
+    }
+
+    // 转发标示
+    if (item.rt_con) {
+        result += "【转发】";
     }
 
     var content = item.content.replace(/\n/g, "\r\n") + "\r\n";
     // 转换内容
     content = API.Utils.formatContent(content);
-    result = result + "\r\n\r\n" + content;
+    result += "\r\n\r\n" + content;
 
     var imageContent = '<div style="width: 800px;" >';
     var imgSrc = '<img src="{0}" width="200px" height="200px" align="center" />';
@@ -1051,12 +1084,24 @@ API.Messages.writeFiles = function (item) {
             imageContent = imageContent + '\r\n' + imgSrc.format('images/' + entry.uid) + '\r\n';
         });
         imageContent = imageContent + '</div>' + '\r\n\r\n';
-        result += imageContent;
+        result += imageContent + "\r\n";
     };
+
+    // 添加转发内容
+    if (item.rt_con) {
+        result += "> 原文:\r\n";
+        // 转换内容
+        rtContent = '[{0}](https://user.qzone.qq.com/{1})：{2}'.format(item.rt_uinname, item.rt_uin, API.Utils.formatContent(item.rt_con.content))
+        result += "\r\n" + rtContent + "\r\n";
+    }
+
+
     // 评论内容
-    result = result + "> 评论:\r\n\r\n";
+    result += "> 评论:\r\n\r\n";
     item.comments.forEach(function (comment) {
-        result = result + "* " + comment.name + ": " + API.Utils.formatContent(comment.content, 'MD') + "\r\n";
+        let content = API.Utils.formatContent(comment.content, 'MD');
+        result += "*  [{0}](https://user.qzone.qq.com/{1})：{2}".format(comment.name, comment.uin, content) + "\r\n";
+
         // 回复包含图片
         var commentImgs = comment.pic || [];
         commentImgs.forEach(function (img) {
@@ -1075,7 +1120,8 @@ API.Messages.writeFiles = function (item) {
         });
         var replies = comment.list_3 || [];
         replies.forEach(function (repItem) {
-            let repContent = "\t* " + repItem.name + ": " + API.Utils.formatContent(repItem.content, 'MD') + "\r\n";
+            let content = API.Utils.formatContent(repItem.content, 'MD');
+            let repContent = "\t* [{0}](https://user.qzone.qq.com/{1})：{2}".format(repItem.name, repItem.uin, content) + "\r\n";
             var repImgs = repItem.pic || [];
             repImgs.forEach(function (repImg) {
                 let repImgUid = API.Utils.guid();

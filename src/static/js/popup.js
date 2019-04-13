@@ -4,7 +4,12 @@ $('#backup').click(() => {
         active: true,
         currentWindow: true
     }, function (tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, { from: 'popup', subject: 'startBackup' });
+        let exportType = {};
+        var exportTypeDom = $("input[name='exportType']:checked");
+        exportTypeDom.each(function () {
+            exportType[$(this).val()] = true;
+        });
+        chrome.tabs.sendMessage(tabs[0].id, { from: 'popup', subject: 'startBackup', exportType: exportType });
     });
 });
 
