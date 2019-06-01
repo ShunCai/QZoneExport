@@ -9,32 +9,76 @@ const MAX_MSG = {
     Friends: '正在获取QQ好友，已获取好友 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
     Boards: '正在获取留言板列表，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
     Photos: '正在获取相册列表，请稍后...',
-    Groups: '正在获取QQ群列表，已获取 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
     Images: '正在下载图片，已下载 <span style="color: #1ca5fc;">{0}</span> 张图片，已失败 <span style="color: red;"> {1} </span> 张图片...',
 }
 
 const MODAL_HTML = `
-    <div class="modal">
-        </br>
-        </br>
-        <h3 id="backupStatus">正在导出备份，请不要关闭或刷新当前页面和打开新的QQ空间页面。</h3>
-        <br/>
-        <hr/>
-        <br/>
-        <p id="exportBlogs" style="display: none;" >正在获取日志，请稍后...</p>
-        <p id="exportDiaries" style="display: none;" >正在获取私密日记，请稍后...</p>
-        <p id="exportMessages" style="display: none;" >正在获取说说，请稍后...</p>
-        <p id="exportFriends" style="display: none;" >正在获取QQ好友信息，请稍后...</p>
-        <p id="exportBoards" style="display: none;" >正在获取留言板，请稍后...</p>
-        <p id="exportPhotos" style="display: none;" >正在获取相册，请稍后...</p>
-        <p id="exportGroups" style="display: none;" >正在获取QQ群组，请稍后...</p>
-        <br/>
-        <p id="exportImages">正在下载图片，已下载 - 张图片，已失败 - 张图片...</p>
-        <br/>
-        <br/>
-        <button id="downloadBtn" class="btn btn-primary">下载备份</button>
+    <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">QQ空间备份</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h3 id="backupStatus">正在导出备份，请不要关闭或刷新当前页面和打开新的QQ空间页面。</h3>
+                <hr/>
+                <p id="exportBlogs" style="display: none;" >正在获取日志，请稍后...</p>
+                <p id="exportDiaries" style="display: none;" >正在获取私密日记，请稍后...</p>
+                <p id="exportMessages" style="display: none;" >正在获取说说，请稍后...</p>
+                <p id="exportFriends" style="display: none;" >正在获取QQ好友信息，请稍后...</p>
+                <p id="exportBoards" style="display: none;" >正在获取留言板，请稍后...</p>
+                <p id="exportPhotos" style="display: none;" >正在获取相册，请稍后...</p>
+                <p id="exportImages">正在下载图片，已下载 - 张图片，已失败 - 张图片...</p>
+            </div>
+            <div class="modal-footer">
+                <button id="downloadBtn" type="button" class="btn btn-primary" >下载备份</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+            </div>
+        </div>
     </div>
-    `
+`
+
+const DETAIL_HTML = `
+    <div class="container-fluid">
+        <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <a class="nav-item nav-link active" id="nav-messages-tab" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="true">说说</a>
+            <a class="nav-item nav-link" id="nav-blogs-tab" data-toggle="tab" href="#nav-blogs" role="tab" aria-controls="nav-blogs" aria-selected="false">日志</a>
+            <a class="nav-item nav-link" id="nav-diaries-tab" data-toggle="tab" href="#nav-diaries" role="tab" aria-controls="nav-diaries" aria-selected="false">私密日记</a>
+            <a class="nav-item nav-link" id="nav-photos-tab" data-toggle="tab" href="#nav-photos" role="tab" aria-controls="nav-photos" aria-selected="false">相册</a>
+            <a class="nav-item nav-link" id="nav-boards-tab" data-toggle="tab" href="#nav-boards" role="tab" aria-controls="nav-boards" aria-selected="false">留言板</a>
+            <a class="nav-item nav-link" id="nav-friends-tab" data-toggle="tab" href="#nav-friends" role="tab" aria-controls="nav-friends" aria-selected="false">好友</a>
+            <a class="nav-item nav-link" id="nav-settings-tab" data-toggle="tab" href="#nav-settings" role="tab" aria-controls="nav-settings" aria-selected="false">设置</a>
+        </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="nav-messages" role="tabpanel" aria-labelledby="nav-messages-tab">
+            <table id="tb_messages"></table>
+        </div>
+        <div class="tab-pane fade" id="nav-blogs" role="tabpanel" aria-labelledby="nav-blogs-tab">
+            <table id="tb_blogs"></table>
+        </div>
+        <div class="tab-pane fade" id="nav-diaries" role="tabpanel" aria-labelledby="nav-diaries-tab">
+            <table id="tb_diaries"></table>
+        </div>
+        <div class="tab-pane fade" id="nav-photos" role="tabpanel" aria-labelledby="nav-photos-tab">
+            <table id="tb_photos"></table>
+        </div>
+        <div class="tab-pane fade" id="nav-boards" role="tabpanel" aria-labelledby="nav-boards-tab">
+            <table id="tb_boards"></table>
+        </div>
+        <div class="tab-pane fade" id="nav-friends" role="tabpanel" aria-labelledby="nav-friends-tab">
+            <table id="tb_boards"></table>
+        </div>
+        </div>
+    </div>
+`
+
+
 const README_TEXT = `
 目录格式：
 
@@ -77,12 +121,8 @@ QQ空间备份
     └--- 留言板.md
 └--- 好友
     └--- 好友.xlsx
-└--- 群组
-    └--- 群组.xlsx
 
-
-Windows 推荐使用 [Atom](https://atom.io/)
-MacOS 推荐使用 [MacDown](http://macdown.uranusjr.com/)
+推荐使用 [Atom](https://atom.io/)
 `
 
 /**
@@ -107,10 +147,6 @@ const OperatorType = {
      * 获取日志所有列表
      */
     BLOG_LIST: 'BLOG_LIST',
-    /**
-     * 获取所有日志信息
-     */
-    BLOG_INFO: 'BLOG_INFO',
 
     /**
      * 获取私密日记所有列表
@@ -118,19 +154,9 @@ const OperatorType = {
     DIARY_LIST: 'DIARY_LIST',
 
     /**
-     * 获取所有私密日记信息
-     */
-    DIARY_INFO: 'DIARY_INFO',
-
-    /**
      * 获取所有说说列表
      */
     MESSAGES_LIST: 'MESSAGES_LIST',
-
-    /**
-     * 说说写入到文件
-     */
-    MESSAGES_WRITE: 'MESSAGES_WRITE',
 
     /**
     * 获取好友列表
@@ -142,10 +168,6 @@ const OperatorType = {
     */
     BOARD_LIST: 'BOARD_LIST',
 
-    /**
-    * 留言写入到文件
-    */
-    BOARD_WRITE: 'BOARD_WRITE',
     /**
     * 获取相册照片
     */
@@ -185,6 +207,7 @@ function createOperator() {
         switch (type) {
             case OperatorType.INIT:
                 init();
+                await API.Utils.sleep(CONFIG.SLEEP_TIME);
                 break;
             case OperatorType.SHOW:
                 // 显示模态对话框
@@ -200,11 +223,6 @@ function createOperator() {
                     API.Blogs.fetchAllList();
                 });
                 break;
-            case OperatorType.BLOG_INFO:
-                // 获取日志所有信息
-                await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                API.Blogs.fetchAllInfo();
-                break;
             case OperatorType.DIARY_LIST:
                 // 获取私密日记所有列表
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
@@ -212,22 +230,12 @@ function createOperator() {
                     API.Diaries.fetchAllList();
                 });
                 break;
-            case OperatorType.DIARY_INFO:
-                // 获取私密日记所有信息
-                await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                API.Diaries.fetchAllInfo();
-                break;
             case OperatorType.MESSAGES_LIST:
                 // 获取说说列表
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
                 operator.checkedNext(type, OperatorType.FRIEND_LIST, () => {
                     API.Messages.fetchAllList();
                 });
-                break;
-            case OperatorType.MESSAGES_WRITE:
-                // 说说写入到文件
-                await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                API.Messages.contentToFiles();
                 break;
             case OperatorType.FRIEND_LIST:
                 // 获取并下载QQ好友Excel
@@ -242,11 +250,6 @@ function createOperator() {
                 operator.checkedNext(type, OperatorType.PHOTO_LIST, () => {
                     API.Boards.fetchAllList();
                 });
-                break;
-            case OperatorType.BOARD_WRITE:
-                // 留言板数据写入到文件
-                await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                API.Boards.contentToFile();
                 break;
             case OperatorType.PHOTO_LIST:
                 // 获取相册列表
@@ -356,13 +359,6 @@ function createStatusIndicator() {
             downloading: 0,
             downloadFailed: 0,
             total: 0
-        },
-        Groups: {
-            id: 'exportGroups',
-            downloaded: 0,
-            downloading: 0,
-            downloadFailed: 0,
-            total: 0
         }
     };
 
@@ -454,7 +450,14 @@ function init() {
     API.Utils.getUin();
 
     // 初始化文件夹
-    initializeFiler();
+    QZone.Common.Filer = new Filer();
+    QZone.Common.Filer.init({ persistent: false, size: 300 * 1024 * 1024 }, function (fs) {
+        QZone.Common.Filer.ls(FOLDER_ROOT, function (entries) {
+            QZone.Common.Filer.rm(FOLDER_ROOT, function () {
+
+            });
+        });
+    });
 
     // 初始化压缩工具
     QZone.Common.Zip = new JSZip();
@@ -475,15 +478,29 @@ function init() {
  */
 function showModal() {
     $('body').append(MODAL_HTML);
-    $('.modal').modal({});
+    $('#exampleModalCenter').modal({})
+
+    $('#exampleModalCenter').on('hide.bs.modal', function (e) {
+        var r = confirm("确认离开吗？");
+        if (!r) {
+            return false;
+        }
+    })
 
     var blobLink = $('#downloadBtn');
     blobLink.hide();
     blobLink.click(() => {
         blobLink.attr('disabled', true);
         blobLink.text('正在下载...');
+
         // 压缩
-        QZone.Common.Zip.generateAsync({ type: "blob" }).then(function (blob) {
+        QZone.Common.Zip.generateAsync({
+            type: "blob",
+            compression: "DEFLATE",// 压缩，STORE压缩
+            compressionOptions: {
+                level: 9
+            }
+        }).then(function (blob) {
             saveAs(blob, QZone.ZIP_NAME);
             blobLink.text('已导出');
             blobLink.attr('disabled', false);
@@ -491,29 +508,6 @@ function showModal() {
             console.error(err);
             blobLink.text('下载失败，请重试。');
             blobLink.attr('disabled', false);
-        });
-    });
-}
-
-/**
- * 初始化Filesystem，删除文件夹
- */
-function initializeFiler() {
-    QZone.Common.Filer = new Filer();
-
-    QZone.Common.Filer.init({ persistent: false, size: 300 * 1024 * 1024 }, function (fs) {
-        QZone.Common.Filer.ls(FOLDER_ROOT, function (entries) {
-            if (CONFIG.DEBUG) {
-                console.info(entries);
-            }
-            QZone.Common.Filer.rm(FOLDER_ROOT, function () {
-                if (CONFIG.DEBUG) {
-                    console.info("删除成功：" + FOLDER_ROOT);
-                }
-            }, function (error) {
-            });
-        }, function () {
-
         });
     });
 }
@@ -596,8 +590,8 @@ API.Blogs.fetchAllList = function () {
             // 总数不相等时继续获取
             API.Blogs.fetchList(QZone.Common.uin, page + 1, arguments.callee);
         } else {
-            // 开始获取日志内容
-            operator.next(OperatorType.BLOG_INFO);
+            // 获取日志所有信息
+            API.Blogs.fetchAllInfo();
         }
     }
     API.Blogs.fetchList(QZone.Common.uin, 0, nextListFunc);
@@ -668,9 +662,11 @@ API.Blogs.contentToFile = function (data, idx, title, postTime, nextFunc) {
     let markdown = turndownService.turndown(blogContentHtml);
     if (markdown) {
         // 合并标题正文评论
-        let content = API.Blogs.constructContent(idx, title, postTime, markdown, blogInfo);
-        API.Blogs.writeFile(idx, title, postTime, content);
-        nextFunc(idx, null);
+        API.Blogs.constructContent(title, postTime, markdown, blogInfo, (content) => {
+            let label = API.Blogs.getBlogLabel(blogInfo.data);
+            API.Blogs.writeFile(idx, label, title, postTime, content);
+            nextFunc(idx, null);
+        });
     } else {
         nextFunc(idx, err);
     }
@@ -684,7 +680,7 @@ API.Blogs.contentToFile = function (data, idx, title, postTime, nextFunc) {
  * @param {string} markdown 转换为 mardown 格式的日志
  * @param {dictionary} blogInfo 日志的信息，用于获取评论 
  */
-API.Blogs.constructContent = function (index, title, postTime, markdown, blogInfo) {
+API.Blogs.constructContent = function (title, postTime, markdown, blogInfo, doneFun) {
     // 拼接标题，日期，内容
     let result = "# " + title + "\r\n\r\n";
     result = result + "> " + postTime + "\r\n\r\n";
@@ -707,26 +703,22 @@ API.Blogs.constructContent = function (index, title, postTime, markdown, blogInf
     let imageLinkM = /!\[.*?\]\((.+?)\)/g;
     let match;
     let tmpResult = result;
-    let images = [];
     while (match = imageLinkM.exec(tmpResult)) {
+        let orgUrl = match[1];
+        let url = orgUrl.replace(/http:\//, "https:/");
         let uid = API.Utils.guid();
-        let url = match[1].replace(/http:\//, "https:/");
+        let fileName = uid;
         var imageInfo = {
             uid: uid,
             url: url,
-            filename: uid,
-            filepath: QZone.Blogs.IMAGES_ROOT + "/" + uid
+            filename: fileName,
+            filepath: QZone.Blogs.IMAGES_ROOT + "/" + fileName
         };
-        result = result.split(match[1]).join("images/" + imageInfo.filename);
-        images.push(imageInfo);
+        result = result.split(orgUrl).join("images/" + imageInfo.filename);
         QZone.Blogs.Images.push(imageInfo);
-    }
-    QZone.Blogs.Data[index].images = images;
-    for (let i = 0; i < images.length; i++) {
-        let imageInfo = images[i];
         operator.downloadImage(imageInfo);
     }
-    return result;
+    doneFun(result);
 };
 
 /**
@@ -736,17 +728,17 @@ API.Blogs.constructContent = function (index, title, postTime, markdown, blogInf
  * @param {string} postTime 
  * @param {string} content 
  */
-API.Blogs.writeFile = function (idx, title, postTime, content) {
+API.Blogs.writeFile = function (idx, label, title, postTime, content) {
     let filename, filepath;
     postTime = new Date(postTime).format('yyyyMMddhhmmss');
     let orderNum = API.Utils.prefixNumber(idx + 1, QZone.Blogs.total.toString().length);
     filename = API.Utils.filenameValidate(orderNum + "_" + postTime + "_【" + title + "】");
+    if (label && label != "") {
+        filename = API.Utils.filenameValidate(orderNum + "_" + postTime + "_" + label + "【" + title + "】");
+    }
     filepath = QZone.Blogs.ROOT + '/' + filename + ".md";
 
     API.Utils.writeFile(content, filepath, (fileEntry) => {
-        if (CONFIG.DEBUG) {
-            console.info('已保存：' + fileEntry.fullPath);
-        }
         statusIndicator.downloadSuccess('Blogs');
     }, (error) => {
         statusIndicator.downloadFailed('Blogs');
@@ -801,7 +793,8 @@ API.Diaries.fetchAllList = function () {
             // 总数不相等时继续获取
             API.Diaries.fetchList(QZone.Common.uin, page + 1, arguments.callee);
         } else {
-            operator.next(OperatorType.DIARY_INFO);
+            // 获取私密日记所有信息
+            API.Diaries.fetchAllInfo();
         }
     }
     API.Diaries.fetchList(QZone.Common.uin, 0, nextListFunc);
@@ -898,22 +891,19 @@ API.Diaries.constructContent = function (index, title, postTime, markdown, blogI
     let imageLinkM = /!\[.*?\]\((.+?)\)/g;
     let match;
     let tmpResult = result;
-    let images = [];
     while (match = imageLinkM.exec(tmpResult)) {
+        let orgUrl = match[1];
+        let url = orgUrl.replace(/http:\//, "https:/");
         let uid = API.Utils.guid();
+        let fileName = uid;
         var imageInfo = {
             uid: uid,
-            url: match[1].replace(/http:\//, "https:/"),
-            filename: uid,
-            filepath: QZone.Diaries.IMAGES_ROOT + "/" + uid
+            url: url,
+            filename: fileName,
+            filepath: QZone.Diaries.IMAGES_ROOT + "/" + fileName
         };
-        result = result.split(match[1]).join("images/" + imageInfo.filename);
-        images.push(imageInfo);
+        result = result.split(orgUrl).join("images/" + imageInfo.filename);
         QZone.Diaries.Images.push(imageInfo);
-    }
-    QZone.Diaries.Data[index].images = images;
-    for (let i = 0; i < images.length; i++) {
-        let imageInfo = images[i];
         operator.downloadImage(imageInfo);
     }
     return result;
@@ -934,9 +924,6 @@ API.Diaries.writeFile = function (idx, title, postTime, content) {
     filepath = QZone.Diaries.ROOT + '/' + filename + ".md";
 
     API.Utils.writeFile(content, filepath, (fileEntry) => {
-        if (CONFIG.DEBUG) {
-            console.info('已保存：' + fileEntry.fullPath);
-        }
         statusIndicator.downloadSuccess('Diaries');
     }, (error) => {
         statusIndicator.downloadFailed('Diaries');
@@ -1017,8 +1004,8 @@ API.Messages.fetchAllList = function () {
             // 总数不相等时继续获取
             API.Messages.fetchList(QZone.Common.uin, page + 1, arguments.callee);
         } else {
-            // 下一步，开始写入说说到文件
-            operator.next(OperatorType.MESSAGES_WRITE);
+            // 说说写入到文件
+            API.Messages.contentToFiles();
         }
     }
     API.Messages.fetchList(QZone.Common.uin, 0, nextListFunc);
@@ -1073,14 +1060,26 @@ API.Messages.writeFiles = function (item) {
     content = API.Utils.formatContent(content);
     result += "\r\n\r\n" + content;
 
-    var imageContent = '<div style="width: 800px;" >';
-    var imgSrc = '<img src="{0}" width="200px" height="200px" align="center" />';
-    if (item.images.length <= 2) {
-        imgSrc = '<img src="{0}" width="200px" align="center" />';
-    }
-    if (item.images.length > 0) {
+    // 图片信息
+    let rt_imgs = [], msg_imgs = [];
+    item.images.forEach(function (entry) {
+        if (entry.who == 4) {
+            rt_imgs.push(entry);
+        } else {
+            msg_imgs.push(entry);
+        }
+    });
+
+
+    // 说说图片
+    if (msg_imgs.length > 0) {
+        let imageContent = '<div style="width: 800px;" >';
+        let imgSrc = '<img src="{0}" width="200px" height="200px" align="center" />';
+        if (msg_imgs.length <= 2) {
+            imgSrc = '<img src="{0}" width="200px" align="center" />';
+        }
         // 图片信息
-        item.images.forEach(function (entry) {
+        msg_imgs.forEach(function (entry) {
             imageContent = imageContent + '\r\n' + imgSrc.format('images/' + entry.uid) + '\r\n';
         });
         imageContent = imageContent + '</div>' + '\r\n\r\n';
@@ -1094,7 +1093,20 @@ API.Messages.writeFiles = function (item) {
         rtContent = '[{0}](https://user.qzone.qq.com/{1})：{2}'.format(item.rt_uinname, item.rt_uin, API.Utils.formatContent(item.rt_con.content))
         result += "\r\n" + rtContent + "\r\n";
     }
-
+    // 转发内容图片
+    if (rt_imgs.length > 0) {
+        let imageContent = '<div style="width: 800px;" >';
+        let imgSrc = '<img src="{0}" width="200px" height="200px" align="center" />';
+        if (rt_imgs.length <= 2) {
+            imgSrc = '<img src="{0}" width="200px" align="center" />';
+        }
+        // 图片信息
+        rt_imgs.forEach(function (entry) {
+            imageContent = imageContent + '\r\n' + imgSrc.format('images/' + entry.uid) + '\r\n';
+        });
+        imageContent = imageContent + '</div>' + '\r\n\r\n';
+        result += imageContent + "\r\n";
+    };
 
     // 评论内容
     result += "> 评论:\r\n\r\n";
@@ -1272,8 +1284,8 @@ API.Boards.fetchAllList = function () {
             // 总数不相等时继续获取
             API.Boards.fetchList(QZone.Common.uin, page + 1, arguments.callee);
         } else {
-            // 下一步，开始写入说说到文件
-            operator.next(OperatorType.BOARD_WRITE);
+            // 留言板数据写入到文件
+            API.Boards.contentToFile();
         }
     }
     API.Boards.fetchList(QZone.Common.uin, 0, nextListFunc);
@@ -1449,6 +1461,8 @@ API.Photos.fetchAllList = async function () {
                                     // 下载失败的照片+1
                                     statusIndicator.downloadFailed();
                                 });
+                                // 请求完一个相册后，等待5秒再请求下一个相册
+                                await API.Utils.sleep(500);
                             }
                         });
                     });
@@ -1459,10 +1473,6 @@ API.Photos.fetchAllList = async function () {
                 await API.Utils.sleep(3000);
             }
         }
-        console.log('视频：');
-        console.log(QZone.Photos.Video);
-        console.log('下载失败：');
-        console.log(QZone.Photos.Failed);
         operator.next(OperatorType.AWAIT_IMAGES);
     }, (error) => {
         console.log(error);

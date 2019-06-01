@@ -21,18 +21,19 @@
             ],
             "js": [
                 "static/vendor/jquery/jquery-3.3.1.min.js",
+                "static/vendor/bootstrap/js/bootstrap.min.js",
                 "static/vendor/turndown/turndown.js",
                 "static/vendor/filer/filer.min.js",
-                "static/vendor/jquery/jquery.modal.min.js",
                 "static/vendor/jszip/jszip.min.js",
                 "static/vendor/jszip/jszip-utils.min.js",
                 "static/vendor/FileSaver/FileSaver.min.js",
+                "static/vendor/StreamSaver/StreamSaver.js",
                 "static/vendor/sheetjs/xlsx.full.min.js",
                 "static/js/common.js",
                 "static/js/content-script.js"
             ],
             "css": [
-                "static/vendor/jquery/jquery.modal.min.css",
+                "static/vendor/bootstrap/css/bootstrap.min.css",
                 "static/css/content.css"
             ],
             "run_at": "document_start"
@@ -43,7 +44,6 @@
         "default_title": "QQ空间导出助手",
         "default_popup": "static/html/popup.html"
     },
-    "options_page": "static/html/options.html",
     "permissions": [
         "activeTab",
         "cookies",
@@ -51,6 +51,9 @@
         "storage",
         "unlimitedStorage",
         "declarativeContent",
+        "http://*.qpic.cn/",
+        "http://*.qq.com/",
+        "http://*.gtimg.cn/",
         "https://*.qpic.cn/",
         "https://*.qq.com/",
         "https://*.gtimg.cn/"

@@ -30,28 +30,28 @@ Date.prototype.format = function (fmt) {
  */
 String.prototype.format = function (args) {
     var result = this;
-    if (arguments.length > 0) {
-        if (arguments.length == 1 && Array.isArray(args)) {
-            for (var i = 0; i < args.length; i++) {
-                if (args[i] != undefined) {
-                    var reg = new RegExp("({)" + i + "(})", "g");
-                    result = result.replace(reg, args[i]);
-                }
-            }
-        } else if (arguments.length == 1 && typeof (args) == "object") {
-            for (var key in args) {
-                if (args[key] != undefined) {
-                    var reg = new RegExp("({" + key + "})", "g");
-                    result = result.replace(reg, args[key]);
-                }
+    if (arguments.length <= 0) {
+        return result;
+    }
+    if (arguments.length == 1 && Array.isArray(args)) {
+        for (var i = 0; i < args.length; i++) {
+            if (args[i] != undefined) {
+                var reg = new RegExp("({)" + i + "(})", "g");
+                result = result.replace(reg, args[i]);
             }
         }
-        else {
-            for (var i = 0; i < arguments.length; i++) {
-                if (arguments[i] != undefined) {
-                    var reg = new RegExp("({)" + i + "(})", "g");
-                    result = result.replace(reg, arguments[i]);
-                }
+    } else if (arguments.length == 1 && typeof (args) == "object") {
+        for (var key in args) {
+            if (args[key] != undefined) {
+                var reg = new RegExp("({" + key + "})", "g");
+                result = result.replace(reg, args[key]);
+            }
+        }
+    } else {
+        for (var i = 0; i < arguments.length; i++) {
+            if (arguments[i] != undefined) {
+                var reg = new RegExp("({)" + i + "(})", "g");
+                result = result.replace(reg, arguments[i]);
             }
         }
     }
@@ -62,7 +62,6 @@ String.prototype.format = function (args) {
  * 配置项
  */
 const CONFIG = {
-    DEBUG: false,
     PAGE_SIZE: 30,
     SLEEP_TIME: 500,
 };
@@ -106,13 +105,7 @@ const QZone_URLS = {
     PHOTOS_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3',
 
     /** 相片列表URL */
-    IMAGES_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo',
-
-    /** QQ群列表 */
-    GROUPS_LIST_URL: 'https://qun.qq.com/cgi-bin/qun_mgr/get_group_list',
-
-    /** QQ群群友列表 */
-    GROUPS_MEMBERS_LIST_URL: 'https://qun.qq.com/cgi-bin/qun_mgr/search_group_members'
+    IMAGES_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo'
 };
 
 const FOLDER_ROOT = '/QQ空间备份/';
@@ -124,12 +117,6 @@ var QZone = {
         gtk: null,
         Zip: null,
         Filer: null
-    },
-    // QQ群模块
-    Groups: {
-        ROOT: FOLDER_ROOT + '群组',
-        Data: [],
-        Images: []
     },
     // QQ好友模块
     Friends: {
@@ -252,36 +239,24 @@ API.Utils = {
         });
     },
 
-
     /**
-     * 根据图片流获取文件类型，不严谨，只是大概识别
-     * @param {Uint8Array} uint8Array 
+     * 获取文件类型
+     * @param {string} url 文件URL
+     * @param {funcation} doneFun 回调函数
      */
-    getImageType: function (uint8Array) {
-        let typeArray = uint8Array.subarray(0, 4);
-        let hex = typeArray.reduce((hex, decimal) => hex + Number(decimal).toString(16) + '', '').toUpperCase();
-        let type;
-        switch (hex) {
-            case 'FFD8FFE0':
-            case 'FFD8FFE1':
-            case 'FFD8FFE2':
-            case 'FFD8FFE3':
-                type = "jpeg";
-                break;
-            case '47494638':
-                type = "gif";
-                break;
-            case '89504E47':
-                type = "png";
-                break;
-            case '52494646':
-                type = "webp";
-                break;
-            default:
-                console.warn("hex=" + hex);
-                break;
-        }
-        return type;
+    getMimeType: function (url, doneFun) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('HEAD', url, true);
+        xhr.onreadystatechange = function () {
+            if (2 == xhr.readyState) {
+                var ret = {
+                    mimeType: xhr.getResponseHeader('content-type') || xhr.getResponseHeader('Content-Type'),
+                    size: xhr.getResponseHeader('content-length') || xhr.getResponseHeader('Content-Length')
+                };
+                doneFun(ret);
+            }
+        };
+        xhr.send();
     },
 
     /**
@@ -292,9 +267,6 @@ API.Utils = {
      * @param {funcation} failFun 
      */
     writeImage: async function (url, path, isMimeType, doneFun, failFun) {
-        if (CONFIG.DEBUG) {
-            console.info(url);
-        }
         API.Utils.send(url, 'blob', (xhr) => {
             let res = xhr.response;
             if (isMimeType && res) {
@@ -367,13 +339,6 @@ API.Utils = {
         }
         // 允许跨域
         request.withCredentials = true;
-        // 1分钟超时
-        // request.timeout = 1000 * 60;
-        // request.ontimeout = function (error) {
-        //     if (failFun) {
-        //         failFun(error);
-        //     }
-        // }
         request.onload = function (xhr) {
             doneFun(request);
         }
@@ -383,6 +348,10 @@ API.Utils = {
             }
         }
         request.send();
+    },
+
+    downloadFile: function (url, onload, onerror) {
+        this.send(url, 'blob', onload, onerror);
     },
 
     /**
@@ -396,9 +365,6 @@ API.Utils = {
             url: url
         })
             .done(function (data, textStatus, jqXHR) {
-                if (CONFIG.DEBUG) {
-                    console.info(data);
-                }
                 if (doneFun) {
                     doneFun(data, textStatus, jqXHR);
                 } else {
@@ -428,9 +394,6 @@ API.Utils = {
             data: params
         })
             .done(function (data, textStatus, jqXHR) {
-                if (CONFIG.DEBUG) {
-                    console.info(data);
-                }
                 if (doneFun) {
                     doneFun(data, textStatus, jqXHR);
                 } else {
@@ -664,12 +627,6 @@ API.Utils = {
         if (!contet) {
             return contet;
         }
-        // return contet = contet.replace(/((http|ftp|https):\/\/)?[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/g, function (url) {
-        //     return '[网页链接](' + url + ')';
-        // })
-        // return contet = contet.replace(/((https|http|ftp|rtsp|mms)?:\/\/)?(([0-9a-z_!~*().&=+$%-]+:)?[0-9a-z_!~*().&=+$%-]+@)?(([0-9]{1,3}.){3}[0-9]{1,3}|([0-9a-z_!~*()-]+.)*([0-9a-z][0-9a-z-]{0,61})?[0-9a-z].[a-z]{2,6})(:[0-9]{1,4})?((\/?)|(\/[0-9a-z_!~*().;?:@&=+$,%#-]+)+\/?)/g, function (url) {
-        //     return '[网页链接](' + url + ')';
-        // })
         return contet = contet.replace(/(https|http|ftp|rtsp|mms)?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*/g, function (url) {
             return '[网页链接](' + url + ')';
         })
@@ -714,24 +671,15 @@ API.Blogs = {
 
     getBlogLabel: function (e) {
         var t = [["8", "审核不通过"], ["22", "审核中"], ["4", "顶"], ["21", "荐"], ["3", "转"], ["28", "转"], ["35", "转"], ["36", "转"]];
-        var i = function (e) {
-            for (var i = 0; i < t.length; i++) {
-                if (t[i][0] == e) {
-                    return t[i][1];
-                }
-            }
-        };
-        var a = "";
+        var a = '';
         for (var o = 0; o < t.length; o++) {
             var n = t[o][0];
             if (n == 22) {
                 continue;
             }
             if (this.getEffectBit(e, n)) {
-                a += '<span class="' + (n == 3 || n == 28 || n == 35 || n == 36 ? "c_tx3" : "c_tx4") + '" rel="blog-detail-link" blogid="' + e.blogId + '"' + ">[" + t[o][1] + "]</span>";
-                if (n == 8) {
-                    break;
-                }
+                a += '[{0}]'.format(t[o][1]);
+                break;
             }
         }
         return a;
@@ -742,7 +690,7 @@ API.Blogs = {
             throw new Error("nBit param error")
         }
         if (t < 32) {
-            return e.effect1 & 1 << t
+            return (e.effect || e.effect1) & 1 << t
         } else if (t < 64) {
             return e.effect2 & 1 << t
         }
@@ -1099,39 +1047,6 @@ API.Photos = {
         } else {
             return API.Photos.trimDownloadUrl(photo.downloadUrl || photo.url);
         }
-    }
-
-};
-
-/**
- * QQ群模块API
- */
-API.Groups = {
-
-    /**
-     * 获取QQ群列表
-     * @param {string} uin QQ号
-     */
-    getGroups: function (doneFun, failFun) {
-        let params = {
-            "bkn": API.Utils.gen_gtk()
-        };
-        return API.Utils.post(QZone_URLS.GROUPS_LIST_URL, params, doneFun, failFun || doneFun);
-    },
-
-    /**
-     * 获取QQ群有列表
-     * @param {string} gc 群号
-     */
-    getMembers: function (gc, start, end, doneFun, failFun) {
-        let params = {
-            "gc": gc, //群号
-            "st": start,
-            "end": end,
-            "sort": '0',
-            "bkn": API.Utils.gen_gtk()
-        };
-        return API.Utils.post(QZone_URLS.GROUPS_MEMBERS_LIST_URL, params, doneFun, failFun || doneFun);
     }
 
 };
