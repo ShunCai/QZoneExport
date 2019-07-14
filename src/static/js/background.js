@@ -4,9 +4,11 @@ chrome.runtime.onInstalled.addListener(function () {
       {
         conditions: [
           // 打开QQ空间显示pageAction
-          new chrome.declarativeContent.PageStateMatcher({ pageUrl: { urlContains: 'qzone.qq.com' } }),
-          // 打开QQ群空间显示pageAction
-          new chrome.declarativeContent.PageStateMatcher({ pageUrl: { urlContains: 'qun.qq.com' } })
+          new chrome.declarativeContent.PageStateMatcher({
+            pageUrl: {
+              urlContains: 'qzone.qq.com'
+            }
+          })
         ],
         actions: [new chrome.declarativeContent.ShowPageAction()]
       }

@@ -21,7 +21,10 @@
             ],
             "js": [
                 "static/vendor/jquery/jquery-3.3.1.min.js",
+                "static/vendor/popper/popper.min.js",
                 "static/vendor/bootstrap/js/bootstrap.min.js",
+                "static/vendor/bootstrap/js/bootstrap-table.min.js",
+                "static/vendor/bootstrap/js/bootstrap-table-zh-CN.min.js",
                 "static/vendor/turndown/turndown.js",
                 "static/vendor/filer/filer.min.js",
                 "static/vendor/jszip/jszip.min.js",
@@ -29,11 +32,13 @@
                 "static/vendor/FileSaver/FileSaver.min.js",
                 "static/vendor/StreamSaver/StreamSaver.js",
                 "static/vendor/sheetjs/xlsx.full.min.js",
+                "static/vendor/lodash/lodash.js",
                 "static/js/common.js",
                 "static/js/content-script.js"
             ],
             "css": [
                 "static/vendor/bootstrap/css/bootstrap.min.css",
+                "static/vendor/bootstrap/css/bootstrap-table.min.css",
                 "static/css/content.css"
             ],
             "run_at": "document_start"
@@ -44,6 +49,7 @@
         "default_title": "QQ空间导出助手",
         "default_popup": "static/html/popup.html"
     },
+    "content_security_policy": "script-src 'self'; object-src 'self'; connect-src 'self' http://*.idqqimg.com https://*.idqqimg.com http://*.qpic.cn https://*.qpic.cn http://*.gtimg.cn https://*.gtimg.cn http://*.gtimg.com https://*.gtimg.com http://*.qq.com https://*.qq.com http://*.qq.com:8080 https://*.qq.com:8080 http://*.weiyun.com https://*.weiyun.com",
     "permissions": [
         "activeTab",
         "cookies",
@@ -51,11 +57,6 @@
         "storage",
         "unlimitedStorage",
         "declarativeContent",
-        "http://*.qpic.cn/",
-        "http://*.qq.com/",
-        "http://*.gtimg.cn/",
-        "https://*.qpic.cn/",
-        "https://*.qq.com/",
-        "https://*.gtimg.cn/"
+        "<all_urls>"
     ]
 }

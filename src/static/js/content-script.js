@@ -34,11 +34,31 @@ const MODAL_HTML = `
                 <p id="exportImages">正在下载图片，已下载 - 张图片，已失败 - 张图片...</p>
             </div>
             <div class="modal-footer">
-                <button id="downloadBtn" type="button" class="btn btn-primary" >下载备份</button>
+                <button id="showFailedImages" type="button" class="btn btn-danger" style="display: none;" data-toggle="modal" data-target="#modalTable">详情</button>
+                <button id="downloadBtn" type="button" class="btn btn-primary" style="display: none;" >下载</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
             </div>
             </div>
         </div>
+    </div>
+    <div id="modalTable" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">下载失败的列表</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <table id="table"></table>
+        </div>
+        <div class="modal-footer">
+            <button id="againDownload" type="button" class="btn btn-primary" data-dismiss="modal">重试</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+        </div>
+        </div>
+    </div>
     </div>
 `
 
@@ -77,7 +97,6 @@ const DETAIL_HTML = `
         </div>
     </div>
 `
-
 
 const README_TEXT = `
 目录格式：
@@ -194,6 +213,13 @@ var turndownService = new TurndownService();
  * 页面加载时初始化
  */
 document.addEventListener('DOMContentLoaded', function () {
+    // 添加按钮监听
+    chrome.runtime.onMessage.addListener(function (data) {
+        if (data.from === 'popup' && data.subject === 'startBackup') {
+            QZone.Common.ExportType = data.exportType;
+            operator.next(OperatorType.SHOW);
+        }
+    });
     operator.next(OperatorType.INIT);
 });
 
@@ -212,7 +238,7 @@ function createOperator() {
             case OperatorType.SHOW:
                 // 显示模态对话框
                 showModal();
-                initFolder();
+                await initFolder();
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
                 operator.next(OperatorType.BLOG_LIST);
                 break;
@@ -260,7 +286,8 @@ function createOperator() {
                 break;
             case OperatorType.AWAIT_IMAGES:
                 // 如果图片还没下载完，弄个会动的提示，让用户知道不是页面卡死
-                while (statusIndicator.Images.downloading > 0) {
+                let isComplate = (statusIndicator.Images.downloadFailed + statusIndicator.Images.downloaded) >= statusIndicator.Images.total;
+                while (statusIndicator.Images.downloading > 0 && isComplate) {
                     var dot = '';
                     if (Math.random() > 0.5) {
                         dot = '...'
@@ -295,9 +322,13 @@ function createOperator() {
 
     operator.downloadImage = async function (imageInfo) {
         statusIndicator.download();
-        API.Utils.writeImage(imageInfo.url, imageInfo.filepath, imageInfo.isMimeType, (fileEntry) => {
+        await API.Utils.writeImage(imageInfo.url, imageInfo.filepath, imageInfo.isMimeType).then((fileEntry) => {
+            imageInfo.filepath = fileEntry.fullPath;
             statusIndicator.downloadSuccess();
-        }, (e) => {
+            statusIndicator.Images.data.success.push(imageInfo);
+        }).catch((e) => {
+            statusIndicator.Images.data.failed.push(imageInfo);
+            console.error(e);
             console.info("下载失败URL：" + imageInfo.url);
             console.info("失败的文件路径：" + imageInfo.filepath);
             statusIndicator.downloadFailed();
@@ -323,6 +354,11 @@ function createStatusIndicator() {
             downloaded: 0,
             downloading: 0,
             downloadFailed: 0,
+            data: {
+                success: [],
+                failed: [],
+                downloading: []
+            },
             total: 0
         },
         Diaries: {
@@ -405,6 +441,9 @@ function createStatusIndicator() {
 
     status.complete = function () {
         $("#downloadBtn").show();
+        if (statusIndicator.Images.downloadFailed > 0) {
+            $("#showFailedImages").show();
+        }
         $("#backupStatus").html("备份完成");
     };
 
@@ -415,6 +454,9 @@ function createStatusIndicator() {
     status.download = function (type) {
         type = type || 'Images';
         this[type].downloading += 1;
+        if ('Images' === type) {
+            this[type].total += 1;
+        }
         this.update(type);
     };
 
@@ -444,6 +486,9 @@ function createStatusIndicator() {
  * 初始化
  */
 function init() {
+    if (window.location.href.indexOf("qzone.qq.com") == -1 || window.location.protocol == 'filesystem:') {
+        return;
+    }
     // 获取Token
     API.Utils.getQzoneToken();
     // 获取QQ号
@@ -461,14 +506,6 @@ function init() {
 
     // 初始化压缩工具
     QZone.Common.Zip = new JSZip();
-
-    // 添加按钮监听
-    chrome.runtime.onMessage.addListener(function (data) {
-        if (data.from === 'popup' && data.subject === 'startBackup') {
-            QZone.Common.ExportType = data.exportType;
-            operator.next(OperatorType.SHOW);
-        }
-    });
 }
 
 /**
@@ -487,60 +524,160 @@ function showModal() {
         }
     })
 
-    var blobLink = $('#downloadBtn');
-    blobLink.hide();
-    blobLink.click(() => {
-        blobLink.attr('disabled', true);
-        blobLink.text('正在下载...');
+    $('#downloadBtn').click(() => {
+        $('#downloadBtn').attr('disabled', true);
+        $('#downloadBtn').text('正在下载...');
 
         // 压缩
         QZone.Common.Zip.generateAsync({
-            type: "blob",
-            compression: "DEFLATE",// 压缩，STORE压缩
-            compressionOptions: {
-                level: 9
-            }
+            type: "blob"
         }).then(function (blob) {
             saveAs(blob, QZone.ZIP_NAME);
-            blobLink.text('已导出');
-            blobLink.attr('disabled', false);
+            $('#downloadBtn').text('已导出');
+            $('#downloadBtn').attr('disabled', false);
         }, (err) => {
             console.error(err);
-            blobLink.text('下载失败，请重试。');
-            blobLink.attr('disabled', false);
+            $('#downloadBtn').text('下载失败，请重试。');
+            $('#downloadBtn').attr('disabled', false);
         });
     });
+
+    //进度模式窗口隐藏后
+    $('#exampleModalCenter').on('hidden.bs.modal', function () {
+        $("#exampleModalCenter").remove();
+        $("#modalTable").remove();
+        statusIndicator = createStatusIndicator();
+    })
+
+    //显示下载失败的图片
+    $('#modalTable').on('shown.bs.modal', function () {
+        $("#table").bootstrapTable('destroy').bootstrapTable({
+            undefinedText: '-',
+            toggle: 'table',
+            locale: 'zh-CN',
+            search: true,
+            searchAlign: 'left',
+            height: "50%",
+            pagination: true,
+            pageList: [10, 25, 50, 100, 200, 'All'],
+            paginationHAlign: 'left',
+            clickToSelect: true,
+            paginationDetailHAlign: 'right',
+            columns: [{
+                field: 'state',
+                checkbox: true,
+                align: 'left'
+            }, {
+                field: 'name',
+                title: '名称',
+                titleTooltip: '名称',
+                align: 'left',
+                width: '30%',
+                visible: true
+            }, {
+                field: 'desc',
+                title: '描述',
+                titleTooltip: '描述',
+                align: 'left',
+                width: '30%',
+                visible: true
+            }, {
+                field: 'source',
+                title: '来源',
+                titleTooltip: '来源',
+                align: 'left',
+                width: '30%',
+                visible: true,
+                formatter: function (value, row, index, field) {
+                    return value + "[" + row.className + "]";
+                }
+            }, {
+                field: 'className',
+                title: '分类',
+                visible: false
+            }, {
+                field: 'url',
+                title: '地址',
+                titleTooltip: '地址',
+                align: 'left',
+                width: '5%',
+                visible: true,
+                formatter: function (value, row, index, field) {
+                    return '<a target="_blank" class="like" href="' + value + '" title="访问">访问</a>';
+                }
+            }, {
+                field: 'uid',
+                visible: false
+            }, {
+                field: 'filename',
+                visible: false
+            }, {
+                field: 'filepath',
+                visible: false
+            }, {
+                field: 'isMimeType',
+                visible: false
+            }],
+            data: statusIndicator.Images.data.failed
+        })
+        $('#table').bootstrapTable('resetView')
+
+        $("#againDownload").click(function () {
+            let selects = $('#table').bootstrapTable('getSelections');
+            let faileds = statusIndicator.Images.data.failed;
+            for (let index = 0; index < selects.length; index++) {
+                const element = selects[index];
+                statusIndicator["Images"].downloadFailed -= 1;
+                faileds.splice(faileds.findIndex(item => item.uuid === element.uuid), 1)
+                operator.downloadImage(element);
+            }
+        })
+    })
 }
 
 /**
  * 创建在Filesystem临时文件夹
  */
-function initFolder() {
+async function initFolder() {
+
+    console.info('所有模块信息');
+    console.info(QZone);
 
     // 切换到根目录
-    QZone.Common.Filer.cd('/', () => {
-        console.info('切换工作空间成功');
-    });
+    QZone.Common.Filer.cd('/', async () => {
+        console.info("切换到根目录");
+        // 创建模块文件夹
+        let createModuleFolder = () => {
+            return new Promise(async function (resolve, reject) {
+                // 创建所有模块的目录
+                for (x in QZone) {
+                    let obj = QZone[x];
+                    if (typeof (obj) !== "object") {
+                        continue;
+                    }
+                    let rootPath = obj['IMAGES_ROOT'] || obj['ROOT'];
+                    if (!rootPath) {
+                        continue;
+                    }
+                    let entry = await API.Utils.createFolder(rootPath);
+                    console.info('创建目录成功：' + entry.fullPath);
+                }
+                resolve();
+            });
+        }
 
-    // 创建所有模块的目录
-    for (x in QZone) {
-        let obj = QZone[x];
-        if (typeof (obj) !== "object") {
-            continue;
-        }
-        let rootPath = obj['IMAGES_ROOT'] || obj['ROOT'];
-        if (!rootPath) {
-            continue;
-        }
-        QZone.Common.Filer.mkdir(rootPath, false, (entry) => {
-            console.info('创建目录成功：' + entry.fullPath);
+        // 创建模块文件夹
+        await createModuleFolder();
+
+        console.info("开始创建说明文件");
+        // 创建说明文件
+        QZone.Common.Filer.write(FOLDER_ROOT + "说明.txt", { data: README_TEXT, type: "text/plain" }, (entry) => {
+            console.info('创建文件成功：' + entry.fullPath);
+            return true;
         });
-    }
-
-    // 创建说明文件
-    QZone.Common.Filer.write(FOLDER_ROOT + "说明.txt", { data: README_TEXT, type: "text/plain" }, (entry) => {
-        console.info('创建文件成功：' + entry.fullPath);
+        return true;
     });
+    return true;
 };
 
 /**
@@ -551,7 +688,7 @@ function initFolder() {
  * @param {function} nextFunc
  */
 API.Blogs.fetchList = function (uin, page, nextFunc) {
-    API.Blogs.getBlogs(uin, page, function (data) {
+    API.Blogs.getBlogs(uin, page).then((data) => {
         // 去掉函数，保留json
         data = data.replace(/^_Callback\(/, "");
         data = data.replace(/\);$/, "");
@@ -568,8 +705,11 @@ API.Blogs.fetchList = function (uin, page, nextFunc) {
         // 提示信息
         statusIndicator.total(QZone.Blogs.total, 'Blogs');
         statusIndicator.update('Blogs');
-        nextFunc(page, result, null);
-    }, nextFunc);
+        nextFunc(page);
+    }).catch((e) => {
+        nextFunc(page);
+        console.error("获取日志列表异常，当前页：" + page);
+    })
 }
 
 /**
@@ -585,8 +725,8 @@ API.Blogs.fetchAllList = function () {
     QZone.Blogs.Images = [];
 
     // 获取数据
-    var nextListFunc = function (page, result, err) {
-        if (QZone.Blogs.Data.length < QZone.Blogs.total) {
+    var nextList = function (page) {
+        if (QZone.Blogs.Data.length < QZone.Blogs.total && page * CONFIG.PAGE_SIZE < QZone.Blogs.total) {
             // 总数不相等时继续获取
             API.Blogs.fetchList(QZone.Common.uin, page + 1, arguments.callee);
         } else {
@@ -594,7 +734,7 @@ API.Blogs.fetchAllList = function () {
             API.Blogs.fetchAllInfo();
         }
     }
-    API.Blogs.fetchList(QZone.Common.uin, 0, nextListFunc);
+    API.Blogs.fetchList(QZone.Common.uin, 0, nextList);
 };
 
 /**
@@ -610,9 +750,12 @@ API.Blogs.fetchInfo = function (uin, idx, nextFunc) {
     let title = QZone.Blogs.Data[idx].title;
 
     statusIndicator.download("Blogs");
-    API.Blogs.getInfo(uin, blogid, function (data) {
+    API.Blogs.getInfo(uin, blogid).then((data) => {
         API.Blogs.contentToFile(data, idx, title, postTime, nextFunc);
-    }, nextFunc);
+    }).catch((e) => {
+        console.error("获取日志异常，日志标题=" + title);
+        nextFunc(idx, "获取日志异常，日志标题=" + title);
+    })
 }
 
 /**
@@ -621,7 +764,7 @@ API.Blogs.fetchInfo = function (uin, idx, nextFunc) {
 API.Blogs.fetchAllInfo = function () {
     // 获取数据
     var nextBlogFunc = function (idx, err) {
-        if (QZone.Blogs.Data.length > idx + 1) {
+        if (QZone.Blogs.total > idx + 1) {
             API.Blogs.fetchInfo(QZone.Common.uin, idx + 1, arguments.callee);
         } else {
             // 告知完成获取所有日志，并开始等待日志图片下载完成
@@ -712,8 +855,14 @@ API.Blogs.constructContent = function (title, postTime, markdown, blogInfo, done
             uid: uid,
             url: url,
             filename: fileName,
-            filepath: QZone.Blogs.IMAGES_ROOT + "/" + fileName
+            filepath: QZone.Blogs.IMAGES_ROOT + "/" + fileName,
+            isMimeType: false,
+            name: title,
+            desc: title,
+            source: title,
+            className: blogInfo.category
         };
+
         result = result.split(orgUrl).join("images/" + imageInfo.filename);
         QZone.Blogs.Images.push(imageInfo);
         operator.downloadImage(imageInfo);
@@ -754,7 +903,7 @@ API.Blogs.writeFile = function (idx, label, title, postTime, content) {
  * @param {function} nextFunc
  */
 API.Diaries.fetchList = function (uin, page, nextFunc) {
-    API.Diaries.getDiaries(uin, page, function (data) {
+    API.Diaries.getDiaries(uin, page).then((data) => {
         // 去掉函数，保留json
         data = data.replace(/^_Callback\(/, "");
         data = data.replace(/\);$/, "");
@@ -771,8 +920,11 @@ API.Diaries.fetchList = function (uin, page, nextFunc) {
         // 开始获取日志内容
         statusIndicator.total(QZone.Diaries.total, 'Diaries');
         statusIndicator.update('Diaries');
-        nextFunc(page, result, null);
-    }, nextFunc);
+        nextFunc(page);
+    }).catch((e) => {
+        nextFunc(page);
+        console.error("获取私密日志列表异常，当前页：" + page);
+    })
 }
 
 
@@ -787,9 +939,9 @@ API.Diaries.fetchAllList = function () {
     statusIndicator.start("Diaries");
 
     // 获取数据
-    var nextListFunc = function (page, result, err) {
+    var nextListFunc = function (page) {
         // TODO error
-        if (QZone.Diaries.Data.length < QZone.Diaries.total) {
+        if (QZone.Diaries.Data.length < QZone.Diaries.total && page * CONFIG.PAGE_SIZE < QZone.Diaries.total) {
             // 总数不相等时继续获取
             API.Diaries.fetchList(QZone.Common.uin, page + 1, arguments.callee);
         } else {
@@ -813,9 +965,12 @@ API.Diaries.fetchInfo = function (uin, idx, nextFunc) {
     let title = QZone.Diaries.Data[idx].title;
 
     statusIndicator.download("Diaries");
-    API.Diaries.getInfo(uin, blogid, function (data) {
+    API.Diaries.getInfo(uin, blogid).then((data) => {
         API.Diaries.contentToFile(data, idx, title, postTime, nextFunc);
-    }, nextFunc);
+    }).catch((e) => {
+        console.error("获取私密日志异常，日志标题=" + title);
+        nextFunc(idx, "获取私密日志异常，日志标题=" + title);
+    })
 };
 
 /**
@@ -900,7 +1055,12 @@ API.Diaries.constructContent = function (index, title, postTime, markdown, blogI
             uid: uid,
             url: url,
             filename: fileName,
-            filepath: QZone.Diaries.IMAGES_ROOT + "/" + fileName
+            filepath: QZone.Diaries.IMAGES_ROOT + "/" + fileName,
+            isMimeType: false,
+            name: title,
+            desc: title,
+            source: title,
+            className: blogInfo.category
         };
         result = result.split(orgUrl).join("images/" + imageInfo.filename);
         QZone.Diaries.Images.push(imageInfo);
@@ -938,13 +1098,14 @@ API.Diaries.writeFile = function (idx, title, postTime, content) {
  * @param {integer} page 第几页
  * @param {function} nextFunc
  */
-API.Messages.fetchList = function (uin, page, nextFunc) {
-    API.Messages.getMessages(uin, page, function (data) {
+API.Messages.fetchList = async function (uin, page, nextFunc) {
+    await API.Messages.getMessages(uin, page).then((data) => {
         // 去掉函数，保留json
         data = data.replace(/^_preloadCallback\(/, "");
         data = data.replace(/\);$/, "");
         result = JSON.parse(data);
         QZone.Messages.total = result.total;
+
         result.msglist.forEach(function (item) {
             var info = {
                 content: item.content,
@@ -960,36 +1121,45 @@ API.Messages.fetchList = function (uin, page, nextFunc) {
             };
             if (info.images.length > 0) {
                 // 图片信息
-                info.images.forEach(function (entry) {
+                info.images.forEach(async function (entry) {
                     var uid = API.Utils.guid();
                     var url = entry.url2.replace(/http:\//, "https:/");
                     var imageInfo = {
                         uid: uid,
                         url: url,
                         filename: uid,
-                        filepath: QZone.Messages.IMAGES_ROOT + "/" + uid
+                        filepath: QZone.Messages.IMAGES_ROOT + "/" + uid,
+                        isMimeType: false,
+                        name: item.content,
+                        desc: item.content,
+                        source: item.content,
+                        className: "说说"
                     };
+
                     entry.url = imageInfo.url;
                     entry.uid = imageInfo.uid;
                     entry.filepath = imageInfo.filepath;
                     // 下载图片
-                    operator.downloadImage(imageInfo);
+                    await operator.downloadImage(imageInfo);
                 });
             };
             QZone.Messages.Data.push(info);
         });
+
         // 提示信息
         statusIndicator.total(QZone.Messages.total, 'Messages');
         statusIndicator.update('Messages');
-        nextFunc(page, result, null);
-    }, nextFunc);
+        nextFunc(page);
+    }).catch((e) => {
+        nextFunc(page);
+    })
 };
 
 
 /**
  * 获取全部说说列表
  */
-API.Messages.fetchAllList = function () {
+API.Messages.fetchAllList = async function () {
 
     // 重置数据
     QZone.Messages.Data = [];
@@ -998,17 +1168,18 @@ API.Messages.fetchAllList = function () {
     statusIndicator.start("Messages");
 
     // 获取数据
-    var nextListFunc = function (page, result, err) {
+    var nextListFunc = async function (page) {
+        await API.Utils.sleep(500);
         // TODO error
         if (QZone.Messages.Data.length < QZone.Messages.total) {
             // 总数不相等时继续获取
-            API.Messages.fetchList(QZone.Common.uin, page + 1, arguments.callee);
+            await API.Messages.fetchList(QZone.Common.uin, page + 1, arguments.callee);
         } else {
             // 说说写入到文件
             API.Messages.contentToFiles();
         }
     }
-    API.Messages.fetchList(QZone.Common.uin, 0, nextListFunc);
+    await API.Messages.fetchList(QZone.Common.uin, 0, nextListFunc);
 };
 
 
@@ -1123,13 +1294,20 @@ API.Messages.writeFiles = function (item) {
                 uid: commentImgUid,
                 url: commentImgUrl,
                 filename: commentImgUid,
-                filepath: QZone.Messages.IMAGES_ROOT + "/" + commentImgUid
+                filepath: QZone.Messages.IMAGES_ROOT + "/" + commentImgUid,
+                isMimeType: false,
+                name: comment.content,
+                desc: comment.content,
+                source: comment.content,
+                className: "评论"
             };
+
             // 替换URL
             result += "![](" + comImageInfo.filepath + ")" + '\r\n';
             // 下载图片
             operator.downloadImage(comImageInfo);
         });
+
         var replies = comment.list_3 || [];
         replies.forEach(function (repItem) {
             let content = API.Utils.formatContent(repItem.content, 'MD');
@@ -1142,13 +1320,19 @@ API.Messages.writeFiles = function (item) {
                     uid: repImgUid,
                     url: repImgUrl,
                     filename: repImgUid,
-                    filepath: QZone.Messages.IMAGES_ROOT + "/" + repImgUid
+                    filepath: QZone.Messages.IMAGES_ROOT + "/" + repImgUid,
+                    isMimeType: false,
+                    name: repItem.content,
+                    desc: repItem.content,
+                    source: repItem.content,
+                    className: "回复"
                 };
                 // 替换URL
                 result += "![](" + repImgageInfo.filepath + ")" + '\r\n';
                 // 下载图片
                 operator.downloadImage(repImgageInfo);
             });
+
             result += repContent;
         });
     });
@@ -1170,7 +1354,7 @@ API.Friends.fetchAllList = function () {
 
     statusIndicator.start("Friends");
 
-    API.Friends.getFriends(QZone.Common.uin, (data) => {
+    API.Friends.getFriends(QZone.Common.uin).then((data) => {
         data = data.replace(/^_Callback\(/, "");
         data = data.replace(/\);$/, "");
         result = JSON.parse(data);
@@ -1217,7 +1401,7 @@ API.Friends.fetchAllList = function () {
             let groupId = friend.groupid;
             let groupName = groupMap.get(groupId) || "默认分组";
             let rowData = [friend.uin, friend.remark, friend.name, groupName];
-            API.Friends.getFriendshipTime(friend.uin, (timeData) => {
+            API.Friends.getFriendshipTime(friend.uin).then((timeData) => {
                 timeData = timeData.replace(/^_Callback\(/, "");
                 timeData = timeData.replace(/\);$/, "");
                 let timeInfo = JSON.parse(timeData);
@@ -1234,9 +1418,13 @@ API.Friends.fetchAllList = function () {
                 if (friends.length == ws_data.length - 1) {
                     writeToExcel(ws_data);
                 }
-            });
+            }).catch((e) => {
+                console.error("获取好友添加时间异常，QQ号：" + friend.uin);
+            })
         });
-    });
+    }).catch((e) => {
+        console.error("获取好友列表异常");
+    })
 };
 
 
@@ -1248,7 +1436,7 @@ API.Friends.fetchAllList = function () {
  * @param {function} nextFunc
  */
 API.Boards.fetchList = function (uin, page, nextFunc) {
-    API.Boards.getBoards(uin, page, function (data) {
+    API.Boards.getBoards(uin, page).then((data) => {
         // 去掉函数，保留json
         data = data.replace(/^_Callback\(/, "");
         data = data.replace(/\);$/, "");
@@ -1262,7 +1450,10 @@ API.Boards.fetchList = function (uin, page, nextFunc) {
         statusIndicator.total(QZone.Boards.total, 'Boards');
 
         nextFunc(page);
-    }, nextFunc);
+    }).catch((e) => {
+        console.error("获取留言板异常，当前页：" + page);
+        nextFunc(page);
+    })
 };
 
 
@@ -1348,48 +1539,44 @@ API.Boards.contentToFile = function () {
  * @param {integer} page 第几页
  * @param {function} nextFunc
  */
-API.Photos.fetchOneList = async function (albumItem, page, nextFunc) {
-    await API.Photos.getImages(albumItem.id, page, async (imgData) => {
-        let albumId = albumItem.id;
-        // 去掉函数，保留json
-        imgData = imgData.replace(/^shine0_Callback\(/, "");
-        imgData = imgData.replace(/\);$/, "");
-        imgData = JSON.parse(imgData);
-        let photoList = imgData.data.photoList || [];
-
-        QZone.Photos.Data = QZone.Photos.Data.concat(photoList);
-        let albumnIdList = QZone.Photos.Images.get(albumId) || [];
-        QZone.Photos.Images.set(albumId, albumnIdList.concat(photoList));
-
-        await nextFunc(page);
-    }, nextFunc);
+API.Photos.fetchOneList = async function (albumItem, page, nextList) {
+    let imgData = await API.Photos.getImages(albumItem.id, page);
+    // 去掉函数，保留json
+    imgData = imgData.replace(/^shine0_Callback\(/, "");
+    imgData = imgData.replace(/\);$/, "");
+    imgData = JSON.parse(imgData);
+    let photoList = imgData.data.photoList || [];
+    QZone.Photos.Data = QZone.Photos.Data.concat(photoList);
+    let albumnIdList = QZone.Photos.Images.get(albumItem.id) || [];
+    QZone.Photos.Images.set(albumItem.id, albumnIdList.concat(photoList));
+    nextList(albumItem, page, nextList);
 };
 
 
 /**
  * 获取单个相册的全部照片
  */
-API.Photos.fetchOneAllList = async function (albumItem, endFun) {
-    // 获取玩一个相册后等待3秒再获取下一个相册
-    await API.Utils.sleep(3000);
+API.Photos.fetchOneAllList = function (albumItem) {
+    return new Promise(async function (resolve, reject) {
+        // 重置数据
+        QZone.Photos.Images.set(albumItem.id, []);
 
-    // 重置数据
-    QZone.Photos.Images.set(albumItem.id, []);
-
-    // 获取数据
-    var nextListFunc = async function (page) {
-        // TODO error
-        if (QZone.Photos.Images.get(albumItem.id).length < albumItem.total && page * 80 < albumItem.total) {
-            // 请求一页成功后等待一秒再请求下一页
-            await API.Utils.sleep(3000);
-            // 总数不相等时继续获取
-            await API.Photos.fetchOneList(albumItem, page + 1, arguments.callee);
-        } else {
-            await endFun(albumItem);
+        // 获取数据
+        var nextList = async function (albumItem, page) {
+            if (QZone.Photos.Images.get(albumItem.id).length < albumItem.total && page * 80 < albumItem.total) {
+                // 请求一页成功后等待一秒再请求下一页
+                await API.Utils.sleep(300);
+                // 总数不相等时继续获取
+                await arguments.callee(albumItem, page + 1);
+            } else {
+                resolve(QZone.Photos.Images.get(albumItem.id));
+            }
         }
-    }
-    await API.Photos.fetchOneList(albumItem, 0, nextListFunc);
+        // 获取单个相册的第一页相片列表
+        await API.Photos.fetchOneList(albumItem, 0, nextList);
+    });
 };
+
 
 /**
  * 获取相册列表
@@ -1399,82 +1586,83 @@ API.Photos.fetchAllList = async function () {
     QZone.Photos.Data = [];
     QZone.Photos.Images = new Map();
     QZone.Photos.Video = [];
-    QZone.Photos.Failed = [];
 
     statusIndicator.start("Photos");
 
-    await API.Photos.getPhotos(QZone.Common.uin, async (albumData) => {
-        // 去掉函数，保留json
-        albumData = albumData.replace(/^shine0_Callback\(/, "");
-        albumData = albumData.replace(/\);$/, "");
-        albumData = JSON.parse(albumData);
+    // 获取所有相册
+    let albumData = await API.Photos.getPhotos(QZone.Common.uin, 0);
+    // 去掉函数，保留json
+    albumData = albumData.replace(/^shine0_Callback\(/, "");
+    albumData = albumData.replace(/\);$/, "");
+    albumData = JSON.parse(albumData);
 
-        // 相册分类
-        let classList = albumData.data.classList || [];
-        let classMap = new Map();
-        for await (let classItem of classList) {
-            classMap.set(classItem.id, classItem.name);
-        }
-        // 相册分类列表
-        let albumListModeClass = albumData.data.albumListModeClass || [];
-        for await (let modeClass of albumListModeClass) {
-            // 分类ID
-            let classId = modeClass.classId;
-            // 分类名称
-            let className = classMap.get(classId) || "默认分类";
-            // 相册列表            
-            let albumList = modeClass.albumList || [];
-            for await (let album of albumList) {
-                await API.Photos.fetchOneAllList(album, async (album) => {
-                    let alnumName = API.Utils.filenameValidate(album.name);
-                    QZone.Common.Filer.cd('/', () => {
-                        console.info('切换到根目录');
-                        QZone.Common.Filer.mkdir(QZone.Photos.ROOT + "/" + className + "/" + alnumName, false, async (entry) => {
-                            console.info('创建目录成功：' + entry.fullPath);
-                            let photoList = QZone.Photos.Images.get(album.id) || [];
-                            for await (let photo of photoList) {
-                                // 普通图下载
-                                let url = photo.url;
-                                // 高清图下载
-                                // let url = photo.raw;
-                                // 原图下载
-                                // let url = photo.origin_url;
-                                // 自动识别，默认原图优先
-                                // let url = API.Photos.getDownloadUrl(photo);
-                                // let url = photo.raw || photo.url;
-                                if (photo.is_video) {
-                                    QZone.Photos.Video.push(photo);
-                                    continue;
-                                }
-                                url = url.replace(/http:\//, "https:/");
-                                let photoName = photo.name + "_" + API.Utils.guid();
-                                photoName = API.Utils.filenameValidate(photoName);
-                                let filepath = QZone.Photos.ROOT + "/" + className + "/" + alnumName + "/" + photoName;
-
-                                // 正在下载的照片+1
-                                statusIndicator.download();
-                                await API.Utils.writeImage(url, filepath, true, (fileEntry) => {
-                                    // 下载成功的照片+1
-                                    statusIndicator.downloadSuccess();
-                                }, (e) => {
-                                    QZone.Photos.Failed.push(photo);
-                                    // 下载失败的照片+1
-                                    statusIndicator.downloadFailed();
-                                });
-                                // 请求完一个相册后，等待5秒再请求下一个相册
-                                await API.Utils.sleep(500);
-                            }
-                        });
-                    });
-                    // 请求完一个相册后，等待5秒再请求下一个相册
-                    await API.Utils.sleep(3000);
-                });
-                // 请求完一个相册后，等待5秒再请求下一个相册
-                await API.Utils.sleep(3000);
-            }
-        }
-        operator.next(OperatorType.AWAIT_IMAGES);
-    }, (error) => {
-        console.log(error);
+    // 相册分类
+    let classMap = new Map();
+    let classList = albumData.data.classList || [];
+    classList.forEach(classItem => {
+        classMap.set(classItem.id, classItem.name);
     });
+
+    // 相册列表
+    let albumList = albumData.data.albumList || [];
+
+    // 下载相片
+    for (let i = 0; i < albumList.length; i++) {
+        const album = albumList[i];
+        // 获取每个相册的相片列表
+        const photoList = await API.Photos.fetchOneAllList(album);
+        // 分类名称
+        let className = classMap.get(album.classid) || "其它";
+
+        const _photoList = _.chunk(photoList, 5);
+
+        for (let j = 0; j < _photoList.length; j++) {
+
+            const list = _photoList[j];
+            let tasks = [];
+            for (let k = 0; k < list.length; k++) {
+
+                const photo = list[k];
+
+                // 创建文件夹
+                let folderName = QZone.Photos.ROOT + "/" + className + "/" + album.name;
+                await API.Utils.createFolder(folderName);
+
+                // 下载相片
+                // 自动识别，默认原图优先
+                let url = API.Photos.getDownloadUrl(photo);
+                // let url = photo.raw || photo.url;
+                if (photo.is_video) {
+                    QZone.Photos.Video.push(photo);
+                    continue;
+                }
+                url = url.replace(/http:\//, "https:/");
+                let uid = API.Utils.guid();
+                let photoName = photo.name + "_" + uid;
+                photoName = API.Utils.filenameValidate(photoName);
+                let filepath = QZone.Photos.ROOT + "/" + className + "/" + album.name + "/" + photoName;
+
+                let imageInfo = {
+                    uid: photoName,
+                    filename: photoName,
+                    filepath: filepath,
+                    isMimeType: true,
+                    name: photo.name,
+                    desc: photo.desc,
+                    url: url,
+                    albumName: album.name,
+                    className: className
+                };
+                tasks.push(operator.downloadImage(imageInfo));
+            }
+
+            await Promise.all(tasks);
+        }
+
+        // 请求完一个相册后，等待1秒再请求下一个相册
+        await API.Utils.sleep(500);
+    }
+
+    //下一步，等待图片下载完成
+    operator.next(OperatorType.AWAIT_IMAGES);
 }
