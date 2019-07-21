@@ -1629,8 +1629,8 @@ API.Photos.fetchAllList = async function () {
 
                 // 下载相片
                 // 自动识别，默认原图优先
-                // let url = API.Photos.getDownloadUrl(photo);
-                let url = photo.url;
+                let url = API.Photos.getDownloadUrl(photo);
+                // let url = photo.url;
                 url = url.replace(/http:\//, "https:/");
                 let uid = API.Utils.guid();
                 let photoName = photo.name + "_" + uid;
