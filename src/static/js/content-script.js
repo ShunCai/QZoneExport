@@ -1567,7 +1567,7 @@ API.Photos.fetchOneAllList = function (albumItem) {
                 // 请求一页成功后等待一秒再请求下一页
                 await API.Utils.sleep(300);
                 // 总数不相等时继续获取
-                await arguments.callee(albumItem, page + 1);
+                await API.Photos.fetchOneList(albumItem, page + 1, arguments.callee);
             } else {
                 resolve(QZone.Photos.Images.get(albumItem.id));
             }
@@ -1585,7 +1585,6 @@ API.Photos.fetchAllList = async function () {
     // 重置数据
     QZone.Photos.Data = [];
     QZone.Photos.Images = new Map();
-    QZone.Photos.Video = [];
 
     statusIndicator.start("Photos");
 
@@ -1630,12 +1629,8 @@ API.Photos.fetchAllList = async function () {
 
                 // 下载相片
                 // 自动识别，默认原图优先
-                let url = API.Photos.getDownloadUrl(photo);
-                // let url = photo.raw || photo.url;
-                if (photo.is_video) {
-                    QZone.Photos.Video.push(photo);
-                    continue;
-                }
+                // let url = API.Photos.getDownloadUrl(photo);
+                let url = photo.url;
                 url = url.replace(/http:\//, "https:/");
                 let uid = API.Utils.guid();
                 let photoName = photo.name + "_" + uid;
