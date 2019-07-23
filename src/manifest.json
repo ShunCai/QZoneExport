@@ -4,13 +4,13 @@
     "description": "QQ空间导出助手，用于备份QQ空间的好友、日志、私密日记、相册、说说、留言板为文件，供永久保存",
     "version": "0.0.1",
     "icons": {
-        "128": "static/img/icon-128.png"
+        "128": "img/icon-128.png"
     },
     "homepage_url": "http://www.lvshuncai.com",
     "background": {
         "persistent": false,
         "scripts": [
-            "static/js/background.js"
+            "js/background.js"
         ]
     },
     "content_scripts": [
@@ -20,44 +20,44 @@
                 "https://*.qun.qq.com/*"
             ],
             "js": [
-                "static/vendor/jquery/jquery-3.3.1.min.js",
-                "static/vendor/popper/popper.min.js",
-                "static/vendor/bootstrap/js/bootstrap.min.js",
-                "static/vendor/bootstrap/js/bootstrap-table.min.js",
-                "static/vendor/bootstrap/js/bootstrap-table-zh-CN.min.js",
-                "static/vendor/turndown/turndown.js",
-                "static/vendor/filer/filer.min.js",
-                "static/vendor/jszip/jszip.min.js",
-                "static/vendor/jszip/jszip-utils.min.js",
-                "static/vendor/FileSaver/FileSaver.min.js",
-                "static/vendor/StreamSaver/StreamSaver.js",
-                "static/vendor/sheetjs/xlsx.full.min.js",
-                "static/vendor/lodash/lodash.js",
-                "static/vendor/zipjs/z-worker.js",
-                "static/vendor/zipjs/zip.js",
-                "static/vendor/zipjs/zip-fs.js",
-                "static/vendor/zipjs/zip-ext.js",
-                "static/vendor/zipjs/deflate.js",
-                "static/vendor/zipjs/inflate.js",
-                "static/js/common.js",
-                "static/js/content-script.js"
+                "vendor/jquery/jquery-3.3.1.min.js",
+                "vendor/popper/popper.min.js",
+                "vendor/bootstrap/js/bootstrap.min.js",
+                "vendor/bootstrap/js/bootstrap-table.min.js",
+                "vendor/bootstrap/js/bootstrap-table-zh-CN.min.js",
+                "vendor/turndown/turndown.js",
+                "vendor/filer/filer.min.js",
+                "vendor/jszip/jszip.min.js",
+                "vendor/jszip/jszip-utils.min.js",
+                "vendor/FileSaver/FileSaver.min.js",
+                "vendor/StreamSaver/StreamSaver.js",
+                "vendor/sheetjs/xlsx.full.min.js",
+                "vendor/lodash/lodash.js",
+                "vendor/zipjs/z-worker.js",
+                "vendor/zipjs/zip.js",
+                "vendor/zipjs/zip-fs.js",
+                "vendor/zipjs/zip-ext.js",
+                "vendor/zipjs/deflate.js",
+                "vendor/zipjs/inflate.js",
+                "js/common.js",
+                "js/content-script.js"
             ],
             "css": [
-                "static/vendor/bootstrap/css/bootstrap.min.css",
-                "static/vendor/bootstrap/css/bootstrap-table.min.css",
-                "static/css/content.css"
+                "vendor/bootstrap/css/bootstrap.min.css",
+                "vendor/bootstrap/css/bootstrap-table.min.css",
+                "css/content.css"
             ],
             "run_at": "document_start"
         }
     ],
     "page_action": {
-        "default_icon": "static/img/icon-128.png",
+        "default_icon": "img/icon-128.png",
         "default_title": "QQ空间导出助手",
-        "default_popup": "static/html/popup.html"
+        "default_popup": "html/popup.html"
     },
-    "options_page": "static/html/options.html",
+    "options_page": "html/options.html",
     "options_ui": {
-        "page": "static/html/options.html"
+        "page": "html/options.html"
     },
     "permissions": [
         "activeTab",
