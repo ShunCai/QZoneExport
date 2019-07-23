@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+	<link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="icon" href="../img/icon-128.png">
+	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<style>
+		body {
+			font-size: 16px;
+			width: 700px;
+			height: 500px;
+			padding: 10px;
+			font-family: 'Microsoft Yahei';
+		}
+	</style>
+	<title>插件配置页</title>
+</head>
+
+<body>
+	<div id="alerts"></div>
+	<div class="container-fluid">
+		<nav>
+			<div class="nav nav-tabs" id="nav-tab" role="tablist">
+				<a class="nav-item nav-link active" id="nav-messages-tab" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="true">说说</a>
+				<a class="nav-item nav-link" id="nav-blogs-tab" data-toggle="tab" href="#nav-blogs" role="tab" aria-controls="nav-blogs" aria-selected="false">日志</a>
+				<a class="nav-item nav-link" id="nav-diaries-tab" data-toggle="tab" href="#nav-diaries" role="tab" aria-controls="nav-diaries" aria-selected="false">私密日记</a>
+				<a class="nav-item nav-link" id="nav-photos-tab" data-toggle="tab" href="#nav-photos" role="tab" aria-controls="nav-photos" aria-selected="false">相册</a>
+				<a class="nav-item nav-link" id="nav-videos-tab" data-toggle="tab" href="#nav-videos" role="tab" aria-controls="nav-videos" aria-selected="false">视频</a>
+				<a class="nav-item nav-link" id="nav-boards-tab" data-toggle="tab" href="#nav-boards" role="tab" aria-controls="nav-boards" aria-selected="false">留言板</a>
+				<a class="nav-item nav-link" id="nav-friends-tab" data-toggle="tab" href="#nav-friends" role="tab" aria-controls="nav-friends" aria-selected="false">好友</a>
+			</div>
+		</nav>
+		<div class="tab-content" id="nav-tabContent">
+			<div class="tab-pane fade show active" id="nav-messages" role="tabpanel" aria-labelledby="nav-messages-tab">
+				<br />
+				<form id="tb_messages">
+					<fieldset class="form-group">
+						<div class="row">
+							<legend class="col-form-label col-sm-3 pt-0">备份格式：</legend>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="messages_exportFormat_md" name="messages_exportFormat" class="custom-control-input" value="markdown" disabled>
+								<label class="custom-control-label" for="messages_exportFormat_md">MarkDown</label>
+							</div>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="messages_exportFormat_json" name="messages_exportFormat" class="custom-control-input" value="json" disabled>
+								<label class="custom-control-label" for="messages_exportFormat_json">JSON</label>
+							</div>
+						</div>
+					</fieldset>
+					<div class="form-group row">
+						<label for="messages_list_cost" class="col-sm-3 col-form-label">查询间隔：</label>
+						<div class="col-sm-5">
+							<input type="number" min="2" class="form-control" id="messages_list_cost" placeholder="查询每页间隔秒数">
+						</div>
+					</div>
+					<div class="form-group row">
+						<label for="messages_list_limit" class="col-sm-3 col-form-label">每页条数：</label>
+						<div class="col-sm-5">
+							<input type="number" min="10" max="40" class="form-control" id="messages_list_limit" placeholder="查询每页条数">
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-sm-3">是否下载图片：</div>
+						<div class="custom-control custom-checkbox">
+							<input title="11111" type="checkbox" class="custom-control-input" id="messages_download_images" disabled>
+							<label class="custom-control-label" for="messages_download_images"></label>
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-sm-3">是否下载视频：</div>
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" id="messages_download_video" disabled>
+							<label class="custom-control-label" for="messages_download_video"></label>
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-sm-3">是否下载音乐：</div>
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" id="messages_download_music" disabled>
+							<label class="custom-control-label" for="messages_download_music"></label>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="tab-pane fade" id="nav-blogs" role="tabpanel" aria-labelledby="nav-blogs-tab">
+				<br />
+				<form id="tb_blogs">
+					<fieldset class="form-group">
+						<div class="row">
+							<legend class="col-form-label col-sm-3 pt-0">备份格式：</legend>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="blogs_exportFormat_md" name="blogs_exportFormat" class="custom-control-input" value="markdown" disabled>
+								<label class="custom-control-label" for="blogs_exportFormat_md">MarkDown</label>
+							</div>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="blogs_exportFormat_json" name="blogs_exportFormat" class="custom-control-input" value="json" disabled>
+								<label class="custom-control-label" for="blogs_exportFormat_json">JSON</label>
+							</div>
+						</div>
+					</fieldset>
+					<div class="form-group row">
+						<label for="blogs_list_cost" class="col-sm-3 col-form-label">查询间隔：</label>
+						<div class="col-sm-5">
+							<input type="number" min="2" class="form-control" id="blogs_list_cost" placeholder="查询每页间隔秒数">
+						</div>
+					</div>
+					<div class="form-group row">
+						<label for="blogs_list_limit" class="col-sm-3 col-form-label">每页条数：</label>
+						<div class="col-sm-5">
+							<input type="number" min="10" max="30" class="form-control" id="blogs_list_limit" placeholder="查询每页条数">
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-sm-3">是否下载图片：</div>
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" id="blogs_download_images" disabled>
+							<label class="custom-control-label" for="blogs_download_images"></label>
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-sm-3">是否下载视频：</div>
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" id="blogs_download_video" disabled>
+							<label class="custom-control-label" for="blogs_download_video"></label>
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-sm-3">是否下载音乐：</div>
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" id="blogs_download_music" disabled>
+							<label class="custom-control-label" for="blogs_download_music"></label>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="tab-pane fade" id="nav-diaries" role="tabpanel" aria-labelledby="nav-diaries-tab">
+				<br />
+				<form id="tb_diaries">
+					<fieldset class="form-group">
+						<div class="row">
+							<legend class="col-form-label col-sm-3 pt-0">备份格式：</legend>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="diaries_exportFormat_md" name="diaries_exportFormat" class="custom-control-input" value="markdown" disabled>
+								<label class="custom-control-label" for="diaries_exportFormat_md">MarkDown</label>
+							</div>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="diaries_exportFormat_json" name="diaries_exportFormat" class="custom-control-input" value="json" disabled>
+								<label class="custom-control-label" for="diaries_exportFormat_json">JSON</label>
+							</div>
+						</div>
+					</fieldset>
+					<div class="form-group row">
+						<label for="diaries_list_cost" class="col-sm-3 col-form-label">查询间隔：</label>
+						<div class="col-sm-5">
+							<input type="number" min="2" class="form-control" id="diaries_list_cost" placeholder="查询每页间隔秒数">
+						</div>
+					</div>
+					<div class="form-group row">
+						<label for="diaries_list_limit" class="col-sm-3 col-form-label">每页条数：</label>
+						<div class="col-sm-5">
+							<input type="number" min="10" max="30" class="form-control" id="diaries_list_limit" placeholder="查询每页条数">
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-sm-3">是否下载图片：</div>
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" id="diaries_download_images" disabled>
+							<label class="custom-control-label" for="diaries_download_images"></label>
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-sm-3">是否下载视频：</div>
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" id="diaries_download_video" disabled>
+							<label class="custom-control-label" for="diaries_download_video"></label>
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-sm-3">是否下载音乐：</div>
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" id="diaries_download_music" disabled>
+							<label class="custom-control-label" for="diaries_download_music"></label>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="tab-pane fade" id="nav-photos" role="tabpanel" aria-labelledby="nav-photos-tab">
+				<br />
+				<form id="tb_photos">
+					<fieldset class="form-group">
+						<div class="row">
+							<legend class="col-form-label col-sm-3 pt-0">备份格式：</legend>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="photos_exportFormat_file" name="photos_exportFormat" class="custom-control-input" value="file" disabled>
+								<label class="custom-control-label" for="photos_exportFormat_file">文件</label>
+							</div>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="photos_exportFormat_json" name="photos_exportFormat" class="custom-control-input" value="json" disabled>
+								<label class="custom-control-label" for="photos_exportFormat_json">JSON</label>
+							</div>
+						</div>
+					</fieldset>
+					<div class="form-group row">
+						<label for="photos_list_cost" class="col-sm-3 col-form-label">查询间隔：</label>
+						<div class="col-sm-5">
+							<input type="number" min="2" class="form-control" id="photos_list_cost" placeholder="查询每页间隔秒数">
+						</div>
+					</div>
+					<div class="form-group row">
+						<label for="photos_list_limit" class="col-sm-3 col-form-label">每页条数：</label>
+						<div class="col-sm-5">
+							<input type="number" min="10" max="30" class="form-control" id="photos_list_limit" placeholder="查询每页条数">
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-sm-3">是否下载原图：</div>
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" id="photos_download_orgimages" disabled>
+							<label class="custom-control-label" for="photos_download_orgimages"></label>
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-sm-3">是否写入Exif：</div>
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" id="photos_download_exifimages" disabled>
+							<label class="custom-control-label" for="photos_download_exifimages"></label>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="tab-pane fade" id="nav-videos" role="tabpanel" aria-labelledby="nav-videos-tab">
+				<br />
+				<form id="tb_videos">
+					<fieldset class="form-group">
+						<div class="row">
+							<legend class="col-form-label col-sm-3 pt-0">备份格式：</legend>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="videos_exportFormat_file" name="videos_exportFormat" class="custom-control-input" value="downlist" disabled>
+								<label class="custom-control-label" for="videos_exportFormat_file">迅雷下载列表</label>
+							</div>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="videos_exportFormat_json" name="videos_exportFormat" class="custom-control-input" value="json" disabled>
+								<label class="custom-control-label" for="videos_exportFormat_json">JSON</label>
+							</div>
+						</div>
+					</fieldset>
+					<div class="form-group row">
+						<label for="videos_list_cost" class="col-sm-3 col-form-label">查询间隔：</label>
+						<div class="col-sm-5">
+							<input type="number" min="2" class="form-control" id="videos_list_cost" placeholder="查询每页间隔秒数">
+						</div>
+					</div>
+					<div class="form-group row">
+						<label for="videos_list_limit" class="col-sm-3 col-form-label">每页条数：</label>
+						<div class="col-sm-5">
+							<input type="number" min="10" max="30" class="form-control" id="videos_list_limit" placeholder="查询每页条数">
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="tab-pane fade" id="nav-boards" role="tabpanel" aria-labelledby="nav-boards-tab">
+				<br />
+				<form id="tb_boards">
+					<fieldset class="form-group">
+						<div class="row">
+							<legend class="col-form-label col-sm-3 pt-0">备份格式：</legend>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="boards_exportFormat_md" name="boards_exportFormat" class="custom-control-input" value="markdown" disabled>
+								<label class="custom-control-label" for="boards_exportFormat_md">MarkDown</label>
+							</div>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="boards_exportFormat_json" name="boards_exportFormat" class="custom-control-input" value="json" disabled>
+								<label class="custom-control-label" for="boards_exportFormat_json">JSON</label>
+							</div>
+						</div>
+					</fieldset>
+					<div class="form-group row">
+						<label for="boards_list_cost" class="col-sm-3 col-form-label">查询间隔：</label>
+						<div class="col-sm-5">
+							<input type="number" min="2" class="form-control" id="boards_list_cost" placeholder="查询每页间隔秒数">
+						</div>
+					</div>
+					<div class="form-group row">
+						<label for="boards_list_limit" class="col-sm-3 col-form-label">每页条数：</label>
+						<div class="col-sm-5">
+							<input type="number" min="10" max="30" class="form-control" id="boards_list_limit" placeholder="查询每页条数">
+						</div>
+					</div>
+					<div class="form-group row">
+						<div class="col-sm-3">是否下载图片：</div>
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" id="boards_download_images" disabled>
+							<label class="custom-control-label" for="boards_download_images"></label>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="tab-pane fade" id="nav-friends" role="tabpanel" aria-labelledby="nav-friends-tab">
+				<br />
+				<form id="tb_friends">
+					<fieldset class="form-group">
+						<div class="row">
+							<legend class="col-form-label col-sm-3 pt-0">备份格式：</legend>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="friends_exportFormat_xls" name="friends_exportFormat" class="custom-control-input" value="excel" disabled>
+								<label class="custom-control-label" for="friends_exportFormat_xls">Excel</label>
+							</div>
+							<div class="custom-control custom-radio custom-control-inline">
+								<input type="radio" id="friends_exportFormat_json" name="friends_exportFormat" class="custom-control-input" value="json" disabled>
+								<label class="custom-control-label" for="friends_exportFormat_json">JSON</label>
+							</div>
+						</div>
+					</fieldset>
+					<!-- <div class="form-group row">
+						<div class="col-sm-10">
+							<button type="submit" class="btn btn-primary">保存</button>
+						</div>
+					</div> -->
+				</form>
+			</div>
+		</div>
+		<button id="saveQzoneConfig" type="submit" class="btn btn-primary">应用</button>
+	</div>
+	<script src="../vendor/jquery/jquery-3.3.1.min.js"></script>
+	<script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+	<script src="../js/options.js"></script>
+</body>
+
+</html>

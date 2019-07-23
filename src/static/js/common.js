@@ -66,6 +66,62 @@ const CONFIG = {
     SLEEP_TIME: 500,
 };
 
+// 默认配置
+var Qzone_Config = {
+    // 说说模块
+    Messages: {
+        exportType: "markdown",
+        querySleep: 2,
+        pageSize: 40,
+        isDownloadImgages: true,
+        isDownloadVideo: false,
+        isDownloadMusic: false
+    },
+    // 日志模块
+    Blogs: {
+        exportType: "markdown",
+        querySleep: 2,
+        pageSize: 30,
+        isDownloadImgages: true,
+        isDownloadVideo: false,
+        isDownloadMusic: false
+    },
+    // 私密日记模块
+    Diaries: {
+        exportType: "markdown",
+        querySleep: 2,
+        pageSize: 30,
+        isDownloadImgages: true,
+        isDownloadVideo: false,
+        isDownloadMusic: false
+    },
+    // 相册模块
+    Photos: {
+        exportType: "file",
+        querySleep: 2,
+        pageSize: 30,
+        isDownloadOriginal: true,
+        isWriteExif: false
+    },
+    // 视频模块
+    Videos: {
+        exportType: "downlist",
+        querySleep: 2,
+        pageSize: 30
+    },
+    // 留言板模块
+    Boards: {
+        exportType: "markdown",
+        querySleep: 2,
+        pageSize: 30,
+        isDownloadImgages: true
+    },
+    // QQ好友模块
+    Friends: {
+        exportType: "excel"
+    }
+};
+
 /**
  * QQ空间Rest API配置
  */
@@ -105,14 +161,18 @@ const QZone_URLS = {
     PHOTOS_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3',
 
     /** 相片列表URL */
-    IMAGES_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo'
+    IMAGES_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo',
+
+    /** 视频列表URL */
+    VIDEO_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/video_get_data'
 };
 
 const FOLDER_ROOT = '/QQ空间备份/';
 var QZone = {
     ZIP_NAME: 'QQ空间备份.zip',
     Common: {
-        uin: null,
+        loginUin: null,
+        targetUin: null,
         token: null,
         gtk: null,
         Zip: null,
@@ -143,6 +203,11 @@ var QZone = {
         ROOT: FOLDER_ROOT + '相册',
         Data: [],
         Images: []
+    },
+    // 视频模块
+    Videos: {
+        ROOT: FOLDER_ROOT + '视频',
+        Data: []
     },
     // 说说模块
     Messages: {
@@ -496,19 +561,10 @@ API.Utils = {
      * 获取QQ号
      */
     getUin: function () {
-        var url = window.location.href;
-        var UinM = /\/user\.qzone\.qq\.com\/([\d]+)/;
-        var r = UinM.exec(url);
-        if (r != null) {
-            QZone.Common.uin = r[1];
-        } else {
-            UinM = /\/([\d]+)\.qzone\.qq\.com/;
-            r = UinM.exec(url);
-            if (r != null) {
-                QZone.Common.uin = r[1];
-            }
-        }
-        return QZone.Common.uin;
+        // 获取目标QQ
+        QZone.Common.targetUin = /\/user\.qzone\.qq\.com\/([\d]+)/.exec(window.location.href)[1];
+        // 获取登录QQ
+        QZone.Common.loginUin = /\d.+/g.exec(this.getCookie('uin'))[0];
     },
 
     /**
@@ -726,14 +782,14 @@ API.Blogs = {
      * @param {string} uin QQ号
      * @param {integer} page 第几页
      */
-    getBlogs: function (uin, page) {
+    getBlogs: function (page) {
         let params = {
-            "hostUin": uin,
-            "uin": uin,
+            "hostUin": QZone.Common.targetUin,
+            "uin": QZone.Common.loginUin,
             "blogType": "0",
             "cateName": "",
             "cateHex": "",
-            "statYear": "2019",
+            "statYear": new Date().getFullYear(),
             "reqInfo": "7",
             "pos": page * CONFIG.PAGE_SIZE,
             "num": CONFIG.PAGE_SIZE,
@@ -751,12 +807,11 @@ API.Blogs = {
     /**
      * 获取日志详情
      *
-     * @param {string} uin QQ号
      * @param {integer} blogid 日志ID
      */
-    getInfo: function (uin, blogid) {
+    getInfo: function (blogid) {
         let params = {
-            "uin": uin,
+            "uin": QZone.Common.targetUin,
             "blogid": blogid,
             "styledm": "qzonestyle.gtimg.cn",
             "imgdm": "qzs.qq.com",
@@ -784,13 +839,12 @@ API.Diaries = {
     /**
      * 获取私密日志列表
      *
-     * @param {string} uin QQ号
      * @param {integer} page 第几页
      */
-    getDiaries: function (uin, page) {
+    getDiaries: function (page) {
         let params = {
-            "uin": uin,
-            "vuin": uin,
+            "uin": QZone.Common.loginUin,
+            "vuin": QZone.Common.loginUin,
             "pos": page * CONFIG.PAGE_SIZE,
             "numperpage": CONFIG.PAGE_SIZE,
             "pwd2sig": "",
@@ -813,9 +867,9 @@ API.Diaries = {
     * @param {string} uin QQ号
     * @param {integer} blogid 日志ID
     */
-    getInfo: function (uin, blogid) {
+    getInfo: function (blogid) {
         let params = {
-            "uin": uin,
+            "uin": QZone.Common.loginUin,
             "blogid": blogid,
             "pwd2sig": "",
             "styledm": "qzonestyle.gtimg.cn",
@@ -839,9 +893,9 @@ API.Friends = {
      * 获取QQ好友列表
      * @param {string} uin QQ号
      */
-    getFriends: function (uin, doneFun, failFun) {
+    getFriends: function () {
         let params = {
-            "uin": uin,
+            "uin": QZone.Common.loginUin,
             "follow_flag": "0",//是否获取关注的认证空间
             "groupface_flag": "0",//是否获取QQ群组信息
             "fupdate": "1",
@@ -854,10 +908,10 @@ API.Friends = {
     /**
      * 获取QQ好友详情
      */
-    getQzoneUserInfo: function (uin) {
+    getQzoneUserInfo: function (targetUin) {
         let params = {
-            "uin": uin,
-            "vuin": QZone.Common.uin,
+            "uin": targetUin,
+            "vuin": QZone.Common.loginUin,
             "fupdate": "1",
             "rd": Math.random(),
             "g_tk": API.Utils.gen_gtk(),
@@ -870,12 +924,12 @@ API.Friends = {
 
     /**
      * 获取QQ好友添加时间
-     * @param {string} uin 好友QQ号
+     * @param {string} targetUin 好友QQ号
      */
-    getFriendshipTime: function (uin) {
+    getFriendshipTime: function (targetUin) {
         let params = {
-            "activeuin": QZone.Common.uin,
-            "passiveuin": uin,
+            "activeuin": QZone.Common.loginUin,
+            "passiveuin": targetUin,
             "situation": "1",
             "isCalendar": "1",
             "g_tk": API.Utils.gen_gtk(),
@@ -886,11 +940,11 @@ API.Friends = {
 
     /**
      * 获取好友亲密度
-     * @param {string} uin 搜索的QQ号
+     * @param {string} targetUin 搜索的QQ号
      */
-    getIntimacy: function (uin) {
+    getIntimacy: function (targetUin) {
         let params = {
-            "uin": uin,
+            "uin": targetUin,
             "param": "15",
             "g_tk": API.Utils.gen_gtk(),
             "qzonetoken": QZone.Common.token
@@ -906,16 +960,15 @@ API.Messages = {
 
     /**
      * 获取说说列表
-     * @param {string} uin QQ号
      * @param {integer} page 第几页
      */
-    getMessages: function (uin, page) {
+    getMessages: function (page) {
         let params = {
-            "uin": uin,
+            "uin": QZone.Common.targetUin,
             "ftype": "0",
             "sort": "0",
-            "pos": page * 40,
-            "num": 40,
+            "pos": page * Qzone_Config.Messages.pageSize,
+            "num": Qzone_Config.Messages.pageSize,
             "replynum": "100",
             "g_tk": API.Utils.gen_gtk(),
             "callback": "_preloadCallback",
@@ -935,13 +988,12 @@ API.Boards = {
 
     /**
      * 获取留言板列表
-     * @param {string} uin QQ号
      * @param {integer} page 第几页
      */
-    getBoards: function (uin, page) {
+    getBoards: function (page) {
         let params = {
-            "uin": uin,
-            "hostUin": uin,
+            "uin": QZone.Common.loginUin,
+            "hostUin": QZone.Common.targetUin,
             "start": page * 20,
             "s": Math.random(),
             "format": "jsonp",
@@ -962,15 +1014,15 @@ API.Photos = {
 
     /**
      * 获取相册列表
-     * @param {string} uin QQ号
+     * @param {integer} page 当前页
      */
-    getPhotos: function (uin, page) {
+    getPhotos: function (page) {
         let params = {
             "g_tk": API.Utils.gen_gtk(),
             "callback": "shine0_Callback",
             "t": String(Math.random().toFixed(16)).slice(-9).replace(/^0/, '9'),
-            "hostUin": uin,
-            "uin": uin,
+            "hostUin": QZone.Common.targetUin,
+            "uin": QZone.Common.loginUin,
             "appid": "4",
             "inCharset": "utf-8",
             "outCharset": "utf-8",
@@ -1006,10 +1058,10 @@ API.Photos = {
             "t": String(Math.random().toFixed(16)).slice(-9).replace(/^0/, '9'),
             "mode": "0",
             "idcNum": "4",
-            "hostUin": QZone.Common.uin,
+            "hostUin": QZone.Common.targetUin,
             "topicId": topicId,
             "noTopic": "0",
-            "uin": QZone.Common.uin,
+            "uin": QZone.Common.loginUin,
             "pageStart": page * 80,
             "pageNum": 80,
             "skipCmtCount": "0",
@@ -1072,6 +1124,40 @@ API.Photos = {
         } else {
             return API.Photos.trimDownloadUrl(photo.downloadUrl || photo.url);
         }
+    }
+
+};
+
+/**
+ * 视频模块API
+ */
+API.Videos = {
+
+    /**
+     * 获取视频列表
+     * @param {integer} page 当前页
+     */
+    getVideos: function (page) {
+        let params = {
+            "g_tk": API.Utils.gen_gtk(),
+            "callback": "shine0_Callback",
+            "t": String(Math.random().toFixed(16)).slice(-9).replace(/^0/, '9'),
+            "uin": QZone.Common.loginUin,
+            "hostUin": QZone.Common.targetUin,
+            "appid": "4",
+            "getMethod": "2",
+            "start": page * 20,
+            "count": 20,
+            "need_old": "0",
+            "getUserInfo": "0",
+            "inCharset": "utf-8",
+            "outCharset": "utf-8",
+            "refer": "qzone",
+            "source": "qzone",
+            "callbackFun": "shine0",
+            "_": Date.now()
+        }
+        return API.Utils.get(API.Utils.toUrl(QZone_URLS.VIDEO_LIST_URL, params));
     }
 
 };

@@ -33,6 +33,12 @@
                 "static/vendor/StreamSaver/StreamSaver.js",
                 "static/vendor/sheetjs/xlsx.full.min.js",
                 "static/vendor/lodash/lodash.js",
+                "static/vendor/zipjs/z-worker.js",
+                "static/vendor/zipjs/zip.js",
+                "static/vendor/zipjs/zip-fs.js",
+                "static/vendor/zipjs/zip-ext.js",
+                "static/vendor/zipjs/deflate.js",
+                "static/vendor/zipjs/inflate.js",
                 "static/js/common.js",
                 "static/js/content-script.js"
             ],
@@ -49,7 +55,10 @@
         "default_title": "QQ空间导出助手",
         "default_popup": "static/html/popup.html"
     },
-    "content_security_policy": "script-src 'self'; object-src 'self'; connect-src 'self' http://*.idqqimg.com https://*.idqqimg.com http://*.qpic.cn https://*.qpic.cn http://*.gtimg.cn https://*.gtimg.cn http://*.gtimg.com https://*.gtimg.com http://*.qq.com https://*.qq.com http://*.qq.com:8080 https://*.qq.com:8080 http://*.weiyun.com https://*.weiyun.com",
+    "options_page": "static/html/options.html",
+    "options_ui": {
+        "page": "static/html/options.html"
+    },
     "permissions": [
         "activeTab",
         "cookies",

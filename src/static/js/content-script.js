@@ -1,3 +1,5 @@
+zip.workerScriptsPath = "/vendor/zipjs/";
+
 /**
  * 提示信息
  */
@@ -9,6 +11,7 @@ const MAX_MSG = {
     Friends: '正在获取QQ好友，已获取好友 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
     Boards: '正在获取留言板列表，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
     Photos: '正在获取相册列表，请稍后...',
+    Videos: '正在获取视频列表，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
     Images: '正在下载图片，已下载 <span style="color: #1ca5fc;">{0}</span> 张图片，已失败 <span style="color: red;"> {1} </span> 张图片...',
 }
 
@@ -31,6 +34,7 @@ const MODAL_HTML = `
                 <p id="exportFriends" style="display: none;" >正在获取QQ好友信息，请稍后...</p>
                 <p id="exportBoards" style="display: none;" >正在获取留言板，请稍后...</p>
                 <p id="exportPhotos" style="display: none;" >正在获取相册，请稍后...</p>
+                <p id="exportVideos" style="display: none;" >正在获取视频，请稍后...</p>
                 <p id="exportImages">正在下载图片，已下载 - 张图片，已失败 - 张图片...</p>
             </div>
             <div class="modal-footer">
@@ -62,42 +66,6 @@ const MODAL_HTML = `
     </div>
 `
 
-const DETAIL_HTML = `
-    <div class="container-fluid">
-        <nav>
-        <div class="nav nav-tabs" id="nav-tab" role="tablist">
-            <a class="nav-item nav-link active" id="nav-messages-tab" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="true">说说</a>
-            <a class="nav-item nav-link" id="nav-blogs-tab" data-toggle="tab" href="#nav-blogs" role="tab" aria-controls="nav-blogs" aria-selected="false">日志</a>
-            <a class="nav-item nav-link" id="nav-diaries-tab" data-toggle="tab" href="#nav-diaries" role="tab" aria-controls="nav-diaries" aria-selected="false">私密日记</a>
-            <a class="nav-item nav-link" id="nav-photos-tab" data-toggle="tab" href="#nav-photos" role="tab" aria-controls="nav-photos" aria-selected="false">相册</a>
-            <a class="nav-item nav-link" id="nav-boards-tab" data-toggle="tab" href="#nav-boards" role="tab" aria-controls="nav-boards" aria-selected="false">留言板</a>
-            <a class="nav-item nav-link" id="nav-friends-tab" data-toggle="tab" href="#nav-friends" role="tab" aria-controls="nav-friends" aria-selected="false">好友</a>
-            <a class="nav-item nav-link" id="nav-settings-tab" data-toggle="tab" href="#nav-settings" role="tab" aria-controls="nav-settings" aria-selected="false">设置</a>
-        </div>
-        </nav>
-        <div class="tab-content" id="nav-tabContent">
-        <div class="tab-pane fade show active" id="nav-messages" role="tabpanel" aria-labelledby="nav-messages-tab">
-            <table id="tb_messages"></table>
-        </div>
-        <div class="tab-pane fade" id="nav-blogs" role="tabpanel" aria-labelledby="nav-blogs-tab">
-            <table id="tb_blogs"></table>
-        </div>
-        <div class="tab-pane fade" id="nav-diaries" role="tabpanel" aria-labelledby="nav-diaries-tab">
-            <table id="tb_diaries"></table>
-        </div>
-        <div class="tab-pane fade" id="nav-photos" role="tabpanel" aria-labelledby="nav-photos-tab">
-            <table id="tb_photos"></table>
-        </div>
-        <div class="tab-pane fade" id="nav-boards" role="tabpanel" aria-labelledby="nav-boards-tab">
-            <table id="tb_boards"></table>
-        </div>
-        <div class="tab-pane fade" id="nav-friends" role="tabpanel" aria-labelledby="nav-friends-tab">
-            <table id="tb_boards"></table>
-        </div>
-        </div>
-    </div>
-`
-
 const README_TEXT = `
 目录格式：
 
@@ -124,6 +92,8 @@ QQ空间备份
         |--- 图片A
         |--- 图片B
         └---- ....
+└--- 视频
+    └--- 视频链接.txt
 └--- 说说
     └--- images
         |--- 图片A
@@ -193,6 +163,11 @@ const OperatorType = {
     PHOTO_LIST: 'PHOTO_LIST',
 
     /**
+    * 获取视频列表
+    */
+    VIDEO_LIST: 'VIDEO_LIST',
+
+    /**
      * 压缩
      */
     ZIP: 'ZIP'
@@ -260,7 +235,7 @@ function createOperator() {
                 // 获取说说列表
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
                 operator.checkedNext(type, OperatorType.FRIEND_LIST, () => {
-                    API.Messages.fetchAllList();
+                    API.Messages.hadlerAllList();
                 });
                 break;
             case OperatorType.FRIEND_LIST:
@@ -280,8 +255,15 @@ function createOperator() {
             case OperatorType.PHOTO_LIST:
                 // 获取相册列表
                 await API.Utils.sleep(CONFIG.SLEEP_TIME);
-                operator.checkedNext(type, OperatorType.AWAIT_IMAGES, () => {
+                operator.checkedNext(type, OperatorType.VIDEO_LIST, () => {
                     API.Photos.fetchAllList();
+                });
+                break;
+            case OperatorType.VIDEO_LIST:
+                // 获取视频列表
+                await API.Utils.sleep(CONFIG.SLEEP_TIME);
+                operator.checkedNext(type, OperatorType.AWAIT_IMAGES, () => {
+                    API.Videos.hadlerAllList();
                 });
                 break;
             case OperatorType.AWAIT_IMAGES:
@@ -377,6 +359,13 @@ function createStatusIndicator() {
         },
         Photos: {
             id: 'exportPhotos',
+            downloaded: 0,
+            downloading: 0,
+            downloadFailed: 0,
+            total: 0
+        },
+        Videos: {
+            id: 'exportVideos',
             downloaded: 0,
             downloading: 0,
             downloadFailed: 0,
@@ -489,6 +478,12 @@ function init() {
     if (window.location.href.indexOf("qzone.qq.com") == -1 || window.location.protocol == 'filesystem:') {
         return;
     }
+
+    // 读取配置项
+    chrome.storage.local.get(Qzone_Config, function (item) {
+        Qzone_Config = item;
+    })
+
     // 获取Token
     API.Utils.getQzoneToken();
     // 获取QQ号
@@ -622,15 +617,18 @@ function showModal() {
         })
         $('#table').bootstrapTable('resetView')
 
-        $("#againDownload").click(function () {
+        $("#againDownload").click(async function () {
             let selects = $('#table').bootstrapTable('getSelections');
             let faileds = statusIndicator.Images.data.failed;
+            let tasks = [];
             for (let index = 0; index < selects.length; index++) {
                 const element = selects[index];
                 statusIndicator["Images"].downloadFailed -= 1;
                 faileds.splice(faileds.findIndex(item => item.uuid === element.uuid), 1)
-                operator.downloadImage(element);
+                tasks.push(operator.downloadImage(element));
             }
+            await Promise.all(tasks);
+            operator.next(OperatorType.AWAIT_IMAGES);
         })
     })
 }
@@ -683,12 +681,11 @@ async function initFolder() {
 /**
  * 获取一页的日志列表
  *
- * @param {string} uin QQ号
  * @param {integer} page 第几页
  * @param {function} nextFunc
  */
-API.Blogs.fetchList = function (uin, page, nextFunc) {
-    API.Blogs.getBlogs(uin, page).then((data) => {
+API.Blogs.fetchList = function (page, nextFunc) {
+    API.Blogs.getBlogs(page).then((data) => {
         // 去掉函数，保留json
         data = data.replace(/^_Callback\(/, "");
         data = data.replace(/\);$/, "");
@@ -728,29 +725,28 @@ API.Blogs.fetchAllList = function () {
     var nextList = function (page) {
         if (QZone.Blogs.Data.length < QZone.Blogs.total && page * CONFIG.PAGE_SIZE < QZone.Blogs.total) {
             // 总数不相等时继续获取
-            API.Blogs.fetchList(QZone.Common.uin, page + 1, arguments.callee);
+            API.Blogs.fetchList(page + 1, arguments.callee);
         } else {
             // 获取日志所有信息
             API.Blogs.fetchAllInfo();
         }
     }
-    API.Blogs.fetchList(QZone.Common.uin, 0, nextList);
+    API.Blogs.fetchList(0, nextList);
 };
 
 /**
  * 获取一篇日志的内容
  * 
- * @param {string} uin QQ号 
  * @param {integer} idx 日志列表中的第几篇日志
  * @param {function} nextFunc 获取完后执行的函数
  */
-API.Blogs.fetchInfo = function (uin, idx, nextFunc) {
+API.Blogs.fetchInfo = function (idx, nextFunc) {
     let blogid = QZone.Blogs.Data[idx].blogId;
     let postTime = QZone.Blogs.Data[idx].pubTime;
     let title = QZone.Blogs.Data[idx].title;
 
     statusIndicator.download("Blogs");
-    API.Blogs.getInfo(uin, blogid).then((data) => {
+    API.Blogs.getInfo(blogid).then((data) => {
         API.Blogs.contentToFile(data, idx, title, postTime, nextFunc);
     }).catch((e) => {
         console.error("获取日志异常，日志标题=" + title);
@@ -765,7 +761,7 @@ API.Blogs.fetchAllInfo = function () {
     // 获取数据
     var nextBlogFunc = function (idx, err) {
         if (QZone.Blogs.total > idx + 1) {
-            API.Blogs.fetchInfo(QZone.Common.uin, idx + 1, arguments.callee);
+            API.Blogs.fetchInfo(idx + 1, arguments.callee);
         } else {
             // 告知完成获取所有日志，并开始等待日志图片下载完成
             operator.next(OperatorType.DIARY_LIST);
@@ -898,12 +894,11 @@ API.Blogs.writeFile = function (idx, label, title, postTime, content) {
 /**
  * 获取一页的私密日记列表
  *
- * @param {string} uin QQ号
  * @param {integer} page 第几页
  * @param {function} nextFunc
  */
-API.Diaries.fetchList = function (uin, page, nextFunc) {
-    API.Diaries.getDiaries(uin, page).then((data) => {
+API.Diaries.fetchList = function (page, nextFunc) {
+    API.Diaries.getDiaries(page).then((data) => {
         // 去掉函数，保留json
         data = data.replace(/^_Callback\(/, "");
         data = data.replace(/\);$/, "");
@@ -943,29 +938,28 @@ API.Diaries.fetchAllList = function () {
         // TODO error
         if (QZone.Diaries.Data.length < QZone.Diaries.total && page * CONFIG.PAGE_SIZE < QZone.Diaries.total) {
             // 总数不相等时继续获取
-            API.Diaries.fetchList(QZone.Common.uin, page + 1, arguments.callee);
+            API.Diaries.fetchList(page + 1, arguments.callee);
         } else {
             // 获取私密日记所有信息
             API.Diaries.fetchAllInfo();
         }
     }
-    API.Diaries.fetchList(QZone.Common.uin, 0, nextListFunc);
+    API.Diaries.fetchList(0, nextListFunc);
 };
 
 /**
  * 获取一篇私密日记的内容
  * 
- * @param {string} uin QQ号 
  * @param {integer} idx 日志列表中的第几篇私密日记
  * @param {function} nextFunc 获取完后执行的函数
  */
-API.Diaries.fetchInfo = function (uin, idx, nextFunc) {
+API.Diaries.fetchInfo = function (idx, nextFunc) {
     let blogid = QZone.Diaries.Data[idx].blogId;
     let postTime = QZone.Diaries.Data[idx].pubTime;
     let title = QZone.Diaries.Data[idx].title;
 
     statusIndicator.download("Diaries");
-    API.Diaries.getInfo(uin, blogid).then((data) => {
+    API.Diaries.getInfo(blogid).then((data) => {
         API.Diaries.contentToFile(data, idx, title, postTime, nextFunc);
     }).catch((e) => {
         console.error("获取私密日志异常，日志标题=" + title);
@@ -980,7 +974,7 @@ API.Diaries.fetchAllInfo = function () {
     // 获取数据
     var nextFun = function (idx, err) {
         if (QZone.Diaries.Data.length > idx + 1) {
-            API.Diaries.fetchInfo(QZone.Common.uin, idx + 1, arguments.callee);
+            API.Diaries.fetchInfo(idx + 1, arguments.callee);
         } else {
             // 下一步，获取说说列表
             operator.next(OperatorType.MESSAGES_LIST);
@@ -1091,97 +1085,211 @@ API.Diaries.writeFile = function (idx, title, postTime, content) {
 };
 
 
-/**
- * 获取一页的说说列表
- *
- * @param {string} uin QQ号
- * @param {integer} page 第几页
- * @param {function} nextFunc
- */
-API.Messages.fetchList = async function (uin, page, nextFunc) {
-    await API.Messages.getMessages(uin, page).then((data) => {
-        // 去掉函数，保留json
-        data = data.replace(/^_preloadCallback\(/, "");
-        data = data.replace(/\);$/, "");
-        result = JSON.parse(data);
-        QZone.Messages.total = result.total;
+// /**
+//  * 获取一页的说说列表
+//  *
+//  * @param {integer} page 第几页
+//  * @param {function} nextFunc
+//  */
+// API.Messages.fetchList = async function (page, nextFunc) {
+//     await API.Messages.getMessages(page).then((data) => {
+//         // 去掉函数，保留json
+//         data = data.replace(/^_preloadCallback\(/, "");
+//         data = data.replace(/\);$/, "");
+//         result = JSON.parse(data);
+//         if (result.msglist == null || result.msglist == undefined) {
+//             return;
+//         }
 
-        result.msglist.forEach(function (item) {
-            var info = {
-                content: item.content,
-                comments: item.commentlist || [],
-                images: item.pic || [],
-                audio: item.audio || [],
-                video: item.video || [],
-                location: item.lbs,
-                rt_con: item.rt_con,
-                rt_uin: item.rt_uin,
-                rt_uinname: item.rt_uinname,
-                createTime: new Date(item.created_time * 1000).format('yyyy-MM-dd hh:mm:ss')
-            };
-            if (info.images.length > 0) {
-                // 图片信息
-                info.images.forEach(async function (entry) {
-                    var uid = API.Utils.guid();
-                    var url = entry.url2.replace(/http:\//, "https:/");
-                    var imageInfo = {
-                        uid: uid,
-                        url: url,
-                        filename: uid,
-                        filepath: QZone.Messages.IMAGES_ROOT + "/" + uid,
-                        isMimeType: false,
-                        name: item.content,
-                        desc: item.content,
-                        source: item.content,
-                        className: "说说"
-                    };
+//         QZone.Messages.total = result.total;
+//         result.msglist.forEach(async function (item) {
+//             var info = {
+//                 content: item.content,
+//                 comments: item.commentlist || [],
+//                 images: item.pic || [],
+//                 audio: item.audio || [],
+//                 video: item.video || [],
+//                 location: item.lbs,
+//                 rt_con: item.rt_con,
+//                 rt_uin: item.rt_uin,
+//                 rt_uinname: item.rt_uinname,
+//                 createTime: new Date(item.created_time * 1000).format('yyyy-MM-dd hh:mm:ss')
+//             };
+//             let tasks = [];
+//             if (info.images.length > 0) {
+//                 // 图片信息
+//                 info.images.forEach(function (entry) {
+//                     var uid = API.Utils.guid();
+//                     var url = entry.url2.replace(/http:\//, "https:/");
+//                     var imageInfo = {
+//                         uid: uid,
+//                         url: url,
+//                         filename: uid,
+//                         filepath: QZone.Messages.IMAGES_ROOT + "/" + uid,
+//                         isMimeType: false,
+//                         name: item.content,
+//                         desc: item.content,
+//                         source: item.content,
+//                         className: "说说"
+//                     };
 
-                    entry.url = imageInfo.url;
-                    entry.uid = imageInfo.uid;
-                    entry.filepath = imageInfo.filepath;
-                    // 下载图片
-                    await operator.downloadImage(imageInfo);
-                });
-            };
-            QZone.Messages.Data.push(info);
-        });
+//                     entry.url = imageInfo.url;
+//                     entry.uid = imageInfo.uid;
+//                     entry.filepath = imageInfo.filepath;
+//                     // 下载图片
+//                     tasks.push(operator.downloadImage(imageInfo));
+//                 });
+//             };
+//             await Promise.all(tasks);
+//             QZone.Messages.Data.push(info);
+//         });
 
-        // 提示信息
-        statusIndicator.total(QZone.Messages.total, 'Messages');
-        statusIndicator.update('Messages');
-        nextFunc(page);
-    }).catch((e) => {
-        nextFunc(page);
-    })
-};
+//         // 提示信息
+//         statusIndicator.total(QZone.Messages.total, 'Messages');
+//         statusIndicator.update('Messages');
+//         nextFunc(page);
+//     }).catch((e) => {
+//         nextFunc(page);
+//     })
+//     return;
+// };
 
+
+// /**
+//  * 获取全部说说列表
+//  */
+// API.Messages.fetchAllList = async function () {
+
+//     // 重置数据
+//     QZone.Messages.Data = [];
+//     QZone.Messages.Images = [];
+
+//     statusIndicator.start("Messages");
+
+//     // 获取数据
+//     var nextListFunc = async function (page) {
+//         await API.Utils.sleep(500);
+//         // TODO error
+//         if (QZone.Messages.Data.length < QZone.Messages.total && page * 40 < QZone.Messages.total) {
+//             // 总数不相等时继续获取
+//             await API.Messages.fetchList(page + 1, arguments.callee);
+//         } else {
+//             // 说说写入到文件
+//             statusIndicator.update('Messages');
+//             API.Messages.contentToFiles();
+//         }
+//     }
+//     await API.Messages.fetchList(0, nextListFunc);
+// };
 
 /**
  * 获取全部说说列表
  */
-API.Messages.fetchAllList = async function () {
+API.Messages.fetchAllList = async function (page) {
+    statusIndicator.start("Messages");
+    return new Promise(async function (resolve, reject) {
+        // 获取数据
+        var nextList = async function (page) {
+
+            let data = await API.Messages.getMessages(page);
+
+            // 去掉函数，保留json
+            data = data.replace(/^_preloadCallback\(/, "");
+            data = data.replace(/\);$/, "");
+            data = JSON.parse(data);
+
+            QZone.Messages.total = data.total;
+            // 提示信息
+            statusIndicator.total(QZone.Messages.total, 'Messages');
+
+            if (data.msglist == null || data.msglist.length == 0) {
+                // 返回的总数包括无权限的说说的条目数，这里返回为空时表示无权限获取其它的数据
+                resolve(QZone.Messages.Data);
+                return;
+            }
+
+            let tasks = [];
+            let msgList = data.msglist || [];
+            // 构建说说信息和下载信息
+            msgList.forEach(function (item) {
+                var info = {
+                    content: item.content,
+                    comments: item.commentlist || [],
+                    images: item.pic || [],
+                    audio: item.audio || [],
+                    video: item.video || [],
+                    location: item.lbs,
+                    rt_con: item.rt_con,
+                    rt_uin: item.rt_uin,
+                    rt_uinname: item.rt_uinname,
+                    createTime: new Date(item.created_time * 1000).format('yyyy-MM-dd hh:mm:ss')
+                };
+
+                if (info.images.length > 0) {
+                    // 图片信息
+                    info.images.forEach(function (entry) {
+                        var uid = API.Utils.guid();
+                        var url = entry.url2.replace(/http:\//, "https:/");
+                        var imageInfo = {
+                            uid: uid,
+                            url: url,
+                            filename: uid,
+                            filepath: QZone.Messages.IMAGES_ROOT + "/" + uid,
+                            isMimeType: false,
+                            name: item.content,
+                            desc: item.content,
+                            source: item.content,
+                            className: "说说"
+                        };
+
+                        entry.url = imageInfo.url;
+                        entry.uid = imageInfo.uid;
+                        entry.filepath = imageInfo.filepath;
+                        // 下载图片
+                        tasks.push(operator.downloadImage(imageInfo));
+                    });
+                };
+                QZone.Messages.Data.push(info);
+            });
+
+            statusIndicator.update("Messages");
+
+            // 先下载完成当前页的所有图片后再获取下一页
+            await Promise.all(tasks);
+
+            if (QZone.Messages.Data.length < QZone.Messages.total && page * Qzone_Config.Messages.pageSize < QZone.Messages.total) {
+                // 请求一页成功后等待一秒再请求下一页
+                await API.Utils.sleep(300);
+                // 总数不相等时继续获取
+                await arguments.callee(page + 1);
+            } else {
+                resolve(QZone.Messages.Data);
+            }
+        }
+        await nextList(page);
+    });
+};
+
+
+
+/**
+ * 处理所有说说
+ */
+API.Messages.hadlerAllList = function () {
 
     // 重置数据
     QZone.Messages.Data = [];
     QZone.Messages.Images = [];
 
-    statusIndicator.start("Messages");
-
-    // 获取数据
-    var nextListFunc = async function (page) {
-        await API.Utils.sleep(500);
-        // TODO error
-        if (QZone.Messages.Data.length < QZone.Messages.total) {
-            // 总数不相等时继续获取
-            await API.Messages.fetchList(QZone.Common.uin, page + 1, arguments.callee);
-        } else {
-            // 说说写入到文件
-            API.Messages.contentToFiles();
-        }
-    }
-    await API.Messages.fetchList(QZone.Common.uin, 0, nextListFunc);
+    API.Messages.fetchAllList(0).then((data) => {
+        // 写入说说到文件
+        API.Messages.contentToFiles();
+    }).catch((msg) => {
+        console.error(msg);
+        // 下一步，获取QQ好友信息
+        operator.next(OperatorType.FRIEND_LIST);
+    });
 };
-
 
 /**
  * 构建说说文件内容
@@ -1354,7 +1462,7 @@ API.Friends.fetchAllList = function () {
 
     statusIndicator.start("Friends");
 
-    API.Friends.getFriends(QZone.Common.uin).then((data) => {
+    API.Friends.getFriends().then((data) => {
         data = data.replace(/^_Callback\(/, "");
         data = data.replace(/\);$/, "");
         result = JSON.parse(data);
@@ -1431,12 +1539,11 @@ API.Friends.fetchAllList = function () {
 /**
  * 获取一页的留言板列表
  *
- * @param {string} uin QQ号
  * @param {integer} page 第几页
  * @param {function} nextFunc
  */
-API.Boards.fetchList = function (uin, page, nextFunc) {
-    API.Boards.getBoards(uin, page).then((data) => {
+API.Boards.fetchList = function (page, nextFunc) {
+    API.Boards.getBoards(page).then((data) => {
         // 去掉函数，保留json
         data = data.replace(/^_Callback\(/, "");
         data = data.replace(/\);$/, "");
@@ -1473,13 +1580,13 @@ API.Boards.fetchAllList = function () {
         // TODO error
         if (QZone.Boards.Data.length < QZone.Boards.total) {
             // 总数不相等时继续获取
-            API.Boards.fetchList(QZone.Common.uin, page + 1, arguments.callee);
+            API.Boards.fetchList(page + 1, arguments.callee);
         } else {
             // 留言板数据写入到文件
             API.Boards.contentToFile();
         }
     }
-    API.Boards.fetchList(QZone.Common.uin, 0, nextListFunc);
+    API.Boards.fetchList(0, nextListFunc);
 };
 
 /**
@@ -1501,14 +1608,14 @@ API.Boards.contentToFile = function () {
         let mdContent = turndownService.turndown(htmlContent);
         mdContent = API.Utils.mentionFormat(mdContent, "MD");
         mdContent = API.Utils.emojiFormat(mdContent, "MD");
-        let nickname = QZone.Common.uin == borad.uin ? "我" : borad.nickname;
+        let nickname = QZone.Common.loginUin == borad.uin ? "我" : borad.nickname;
         result += '- [{0}](https://user.qzone.qq.com/{1})：{2}'.format(nickname, borad.uin, mdContent) + newline;
 
         result += '> 回复：' + newline;
 
         let replyList = borad.replyList || [];
         replyList.forEach(reply => {
-            let replyName = QZone.Common.uin == reply.uin ? "我" : reply.nick;
+            let replyName = QZone.Common.loginUin == reply.uin ? "我" : reply.nick;
             let replyContent = API.Utils.formatContent(reply.content, "MD");
             let replyTime = new Date(reply.time * 1000).format('yyyy-MM-dd hh:mm:ss');
             let replyMd = '- [{0}](https://user.qzone.qq.com/{1})：{2} 【*{3}*】'.format(replyName, reply.uin, replyContent, replyTime);
@@ -1589,7 +1696,7 @@ API.Photos.fetchAllList = async function () {
     statusIndicator.start("Photos");
 
     // 获取所有相册
-    let albumData = await API.Photos.getPhotos(QZone.Common.uin, 0);
+    let albumData = await API.Photos.getPhotos(0);
     // 去掉函数，保留json
     albumData = albumData.replace(/^shine0_Callback\(/, "");
     albumData = albumData.replace(/\);$/, "");
@@ -1645,7 +1752,7 @@ API.Photos.fetchAllList = async function () {
                     name: photo.name,
                     desc: photo.desc,
                     url: url,
-                    albumName: album.name,
+                    source: album.name,
                     className: className
                 };
                 tasks.push(operator.downloadImage(imageInfo));
@@ -1659,5 +1766,75 @@ API.Photos.fetchAllList = async function () {
     }
 
     //下一步，等待图片下载完成
-    operator.next(OperatorType.AWAIT_IMAGES);
+    operator.next(OperatorType.VIDEO_LIST);
+}
+
+/**
+ * 获取所有视频列表
+ */
+API.Videos.fetchAllList = function (page) {
+    statusIndicator.start("Videos");
+    return new Promise(async function (resolve, reject) {
+        // 获取数据
+        var nextList = async function (page) {
+
+            statusIndicator['Videos'].downloading += 20;
+            statusIndicator.update('Videos');
+            let videoPageData = await API.Videos.getVideos(page);
+
+            // 去掉函数，保留json
+            videoPageData = videoPageData.replace(/^shine0_Callback\(/, "");
+            videoPageData = videoPageData.replace(/\);$/, "");
+            videoPageData = JSON.parse(videoPageData);
+
+            statusIndicator['Videos'].downloading -= videoPageData.data.Videos.length;
+            statusIndicator['Videos'].downloaded += videoPageData.data.Videos.length;
+            statusIndicator.update('Videos');
+
+            QZone.Videos.total = videoPageData.data.total;
+            QZone.Videos.Data = QZone.Videos.Data.concat(videoPageData.data.Videos);
+
+            // 提示信息
+            statusIndicator.total(QZone.Videos.total, 'Videos');
+            statusIndicator.update('Videos');
+
+            if (QZone.Videos.Data.length < QZone.Videos.total && page * 20 < QZone.Videos.total) {
+                // 请求一页成功后等待一秒再请求下一页
+                await API.Utils.sleep(300);
+                // 总数不相等时继续获取
+                await arguments.callee(page + 1);
+            } else {
+                resolve(QZone.Videos.Data);
+            }
+        }
+        await nextList(page);
+    });
+};
+
+/**
+ * 处理所有视频
+ */
+API.Videos.hadlerAllList = function () {
+    // 重置数据
+    QZone.Videos.Data = [];
+
+    API.Videos.fetchAllList(0).then((data) => {
+        let videoUrls = [];
+        for (let index = 0; index < data.length; index++) {
+            const videoInfo = data[index];
+            videoUrls.push(videoInfo.url);
+        }
+        let filepath = QZone.Videos.ROOT + '/视频链接.downlist';
+        API.Utils.writeFile(videoUrls.join("\r\n"), filepath, (fileEntry) => {
+            //下一步，等待图片下载完成
+            operator.next(OperatorType.AWAIT_IMAGES);
+        }, (error) => {
+            //下一步，等待图片下载完成
+            operator.next(OperatorType.AWAIT_IMAGES);
+        });
+    }).catch((msg) => {
+        console.error(msg);
+        //下一步，等待图片下载完成
+        operator.next(OperatorType.AWAIT_IMAGES);
+    });
 }

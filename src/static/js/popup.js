@@ -12,9 +12,3 @@ $('#backup').click(() => {
         chrome.tabs.sendMessage(tabs[0].id, { from: 'popup', subject: 'startBackup', exportType: exportType });
     });
 });
-
-// 绑定卸载事件
-$("#delSelf").click(() => {
-    // 卸载自身
-    chrome.management.uninstallSelf();
-});

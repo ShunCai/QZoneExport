@@ -6,7 +6,13 @@ chrome.runtime.onInstalled.addListener(function () {
           // 打开QQ空间显示pageAction
           new chrome.declarativeContent.PageStateMatcher({
             pageUrl: {
-              urlContains: 'qzone.qq.com'
+              urlMatches: 'http://user.qzone.qq.com/\d*'
+            }
+          }),
+          // 打开QQ空间显示pageAction
+          new chrome.declarativeContent.PageStateMatcher({
+            pageUrl: {
+              urlMatches: 'https://user.qzone.qq.com/\d*'
             }
           })
         ],
