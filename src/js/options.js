@@ -13,7 +13,7 @@ var Qzone_Config = {
 	Blogs: {
 		exportType: "markdown",
 		querySleep: 2,
-		pageSize: 30,
+		pageSize: 50,
 		isDownloadImgages: true,
 		isDownloadVideo: false,
 		isDownloadMusic: false
@@ -22,7 +22,7 @@ var Qzone_Config = {
 	Diaries: {
 		exportType: "markdown",
 		querySleep: 2,
-		pageSize: 30,
+		pageSize: 50,
 		isDownloadImgages: true,
 		isDownloadVideo: false,
 		isDownloadMusic: false
@@ -32,6 +32,7 @@ var Qzone_Config = {
 		exportType: "file",
 		querySleep: 2,
 		pageSize: 30,
+		downCount: 5,
 		isDownloadOriginal: true,
 		isWriteExif: false
 	},
@@ -39,13 +40,13 @@ var Qzone_Config = {
 	Videos: {
 		exportType: "downlist",
 		querySleep: 2,
-		pageSize: 30
+		pageSize: 20
 	},
 	// 留言板模块
 	Boards: {
 		exportType: "markdown",
 		querySleep: 2,
-		pageSize: 30,
+		pageSize: 20,
 		isDownloadImgages: true
 	},
 	// QQ好友模块
@@ -85,6 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		$("input[type='radio'][name='photos_exportFormat'][value='" + item.Photos.exportType + "']").attr("checked", "checked");
 		$("#photos_list_cost").val(item.Photos.querySleep);
 		$("#photos_list_limit").val(item.Photos.pageSize);
+		$("#photos_down_limit").val(item.Photos.downCount);
 		$("#photos_download_orgimages").attr("checked", item.Photos.isDownloadOriginal);
 		$("#photos_download_exifimages").attr("checked", item.Photos.isWriteExif);
 
@@ -133,6 +135,7 @@ $('#saveQzoneConfig').click(() => {
 	Qzone_Config.Photos.exportType = $("input[type='radio'][name='photos_exportFormat']").val();
 	Qzone_Config.Photos.querySleep = $("#photos_list_cost").val();
 	Qzone_Config.Photos.pageSize = $("#photos_list_limit").val();
+	Qzone_Config.Photos.downCount = $("#photos_down_limit").val();
 	Qzone_Config.Photos.isDownloadOriginal = $("#photos_download_orgimages").prop("checked");
 	Qzone_Config.Photos.isWriteExif = $("#photos_download_exifimages").prop("checked");
 

@@ -58,14 +58,6 @@ String.prototype.format = function (args) {
     return result;
 }
 
-/**
- * 配置项
- */
-const CONFIG = {
-    PAGE_SIZE: 30,
-    SLEEP_TIME: 500,
-};
-
 // 默认配置
 var Qzone_Config = {
     // 说说模块
@@ -81,7 +73,7 @@ var Qzone_Config = {
     Blogs: {
         exportType: "markdown",
         querySleep: 2,
-        pageSize: 30,
+        pageSize: 50,
         isDownloadImgages: true,
         isDownloadVideo: false,
         isDownloadMusic: false
@@ -90,7 +82,7 @@ var Qzone_Config = {
     Diaries: {
         exportType: "markdown",
         querySleep: 2,
-        pageSize: 30,
+        pageSize: 50,
         isDownloadImgages: true,
         isDownloadVideo: false,
         isDownloadMusic: false
@@ -100,6 +92,7 @@ var Qzone_Config = {
         exportType: "file",
         querySleep: 2,
         pageSize: 30,
+        downCount: 5,
         isDownloadOriginal: true,
         isWriteExif: false
     },
@@ -107,13 +100,13 @@ var Qzone_Config = {
     Videos: {
         exportType: "downlist",
         querySleep: 2,
-        pageSize: 30
+        pageSize: 20
     },
     // 留言板模块
     Boards: {
         exportType: "markdown",
         querySleep: 2,
-        pageSize: 30,
+        pageSize: 20,
         isDownloadImgages: true
     },
     // QQ好友模块
@@ -791,8 +784,8 @@ API.Blogs = {
             "cateHex": "",
             "statYear": new Date().getFullYear(),
             "reqInfo": "7",
-            "pos": page * CONFIG.PAGE_SIZE,
-            "num": CONFIG.PAGE_SIZE,
+            "pos": page * Qzone_Config.Blogs.pageSize,
+            "num": Qzone_Config.Blogs.pageSize,
             "sortType": "0",
             "source": "0",
             "rand": Math.random(),
@@ -845,8 +838,8 @@ API.Diaries = {
         let params = {
             "uin": QZone.Common.loginUin,
             "vuin": QZone.Common.loginUin,
-            "pos": page * CONFIG.PAGE_SIZE,
-            "numperpage": CONFIG.PAGE_SIZE,
+            "pos": page * Qzone_Config.Diaries.pageSize,
+            "numperpage": Qzone_Config.Diaries.pageSize,
             "pwd2sig": "",
             "r": Math.random(),
             "fupdate": "1",
@@ -1036,8 +1029,8 @@ API.Photos = {
             "pageNumModeClass": "15",
             "needUserInfo": "1",
             "idcNum": "4",
-            "pageStart": page * 80,
-            "pageNum": 80,
+            "pageStart": page * Qzone_Config.Photos.pageSize,
+            "pageNum": Qzone_Config.Photos.pageSize,
             "mode": "23",// 指定查询普通视图
             // "mode": "3",// 指定查询分类视图
             "callbackFun": "shine0",

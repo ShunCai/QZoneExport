@@ -16,8 +16,7 @@
     "content_scripts": [
         {
             "matches": [
-                "https://*.qzone.qq.com/*",
-                "https://*.qun.qq.com/*"
+                "https://*.qzone.qq.com/*"
             ],
             "js": [
                 "vendor/jquery/jquery-3.3.1.min.js",
@@ -26,19 +25,12 @@
                 "vendor/bootstrap/js/bootstrap-table.min.js",
                 "vendor/bootstrap/js/bootstrap-table-zh-CN.min.js",
                 "vendor/turndown/turndown.js",
+                "vendor/lodash/lodash.js",
                 "vendor/filer/filer.min.js",
                 "vendor/jszip/jszip.min.js",
                 "vendor/jszip/jszip-utils.min.js",
                 "vendor/FileSaver/FileSaver.min.js",
-                "vendor/StreamSaver/StreamSaver.js",
                 "vendor/sheetjs/xlsx.full.min.js",
-                "vendor/lodash/lodash.js",
-                "vendor/zipjs/z-worker.js",
-                "vendor/zipjs/zip.js",
-                "vendor/zipjs/zip-fs.js",
-                "vendor/zipjs/zip-ext.js",
-                "vendor/zipjs/deflate.js",
-                "vendor/zipjs/inflate.js",
                 "js/common.js",
                 "js/content-script.js"
             ],
