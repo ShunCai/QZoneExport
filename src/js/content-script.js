@@ -1587,31 +1587,64 @@ API.Photos.fetchOneAllList = function (albumItem) {
 
 
 /**
+ * 获取所有的相册
+ */
+API.Photos.fetchAllAlbums = function () {
+    return new Promise(async function (resolve, reject) {
+        // 重置数据
+        QZone.Photos.Album = [];
+        QZone.Photos.Data = [];
+        QZone.Photos.ClassMap = new Map();
+        QZone.Photos.Images = new Map();
+
+        // 获取数据
+        var nextList = async function (page) {
+
+            let albumData = await API.Photos.getPhotos(page);
+            // 去掉函数，保留json
+            albumData = albumData.replace(/^shine0_Callback\(/, "");
+            albumData = albumData.replace(/\);$/, "");
+            albumData = JSON.parse(albumData);
+
+            // 相册分类
+            let classList = albumData.data.classList || [];
+            classList.forEach(classItem => {
+                QZone.Photos.ClassMap.set(classItem.id, classItem.name);
+            });
+
+            // 相册列表
+            let albumList = albumData.data.albumList || [];
+            let total = albumData.data.albumsInUser;
+            QZone.Photos.Album = QZone.Photos.Album.concat(albumList);
+
+            if (QZone.Photos.Album.length < total && page * Qzone_Config.Photos.pageSize < total) {
+                // 请求一页成功后等待一秒再请求下一页
+                await API.Utils.sleep(Qzone_Config.Photos.querySleep * 1000);
+                // 总数不相等时继续获取
+                await arguments.callee(page + 1);
+            } else {
+                resolve(QZone.Photos.Album);
+            }
+        }
+        // 获取第一页相册列表
+        await nextList(0);
+    });
+};
+
+/**
  * 获取相册列表
  */
 API.Photos.fetchAllList = async function () {
     // 重置数据
+    QZone.Photos.Album = [];
     QZone.Photos.Data = [];
+    QZone.Photos.ClassMap = new Map();
     QZone.Photos.Images = new Map();
 
     statusIndicator.start("Photos");
 
     // 获取所有相册
-    let albumData = await API.Photos.getPhotos(0);
-    // 去掉函数，保留json
-    albumData = albumData.replace(/^shine0_Callback\(/, "");
-    albumData = albumData.replace(/\);$/, "");
-    albumData = JSON.parse(albumData);
-
-    // 相册分类
-    let classMap = new Map();
-    let classList = albumData.data.classList || [];
-    classList.forEach(classItem => {
-        classMap.set(classItem.id, classItem.name);
-    });
-
-    // 相册列表
-    let albumList = albumData.data.albumList || [];
+    let albumList = await API.Photos.fetchAllAlbums();
 
     // 下载相片
     for (let i = 0; i < albumList.length; i++) {
@@ -1619,7 +1652,7 @@ API.Photos.fetchAllList = async function () {
         // 获取每个相册的相片列表
         const photoList = await API.Photos.fetchOneAllList(album);
         // 分类名称
-        let className = classMap.get(album.classid) || "其它";
+        let className = QZone.Photos.ClassMap.get(album.classid) || "其它";
 
         const _photoList = _.chunk(photoList, Qzone_Config.Photos.downCount);
 

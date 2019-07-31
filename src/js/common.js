@@ -555,9 +555,12 @@ API.Utils = {
      */
     getUin: function () {
         // 获取目标QQ
-        QZone.Common.targetUin = /\/user\.qzone\.qq\.com\/([\d]+)/.exec(window.location.href)[1];
-        // 获取登录QQ
-        QZone.Common.loginUin = /\d.+/g.exec(this.getCookie('uin'))[0];
+        let rs = /\/user\.qzone\.qq\.com\/([\d]+)/.exec(window.location.href);
+        if (rs) {
+            QZone.Common.targetUin = rs[1];
+            // 获取登录QQ
+            QZone.Common.loginUin = /\d.+/g.exec(this.getCookie('uin'))[0];
+        }
     },
 
     /**
@@ -1026,12 +1029,12 @@ API.Photos = {
             "filter": "1",
             "handset": "4",
             "pageNumModeSort": "40",
-            "pageNumModeClass": "15",
-            "needUserInfo": "1",
+            "pageNumModeClass": "40",
+            "needUserInfo": "0",
             "idcNum": "4",
             "pageStart": page * Qzone_Config.Photos.pageSize,
             "pageNum": Qzone_Config.Photos.pageSize,
-            "mode": "23",// 指定查询普通视图
+            "mode": "2",// 指定查询普通视图
             // "mode": "3",// 指定查询分类视图
             "callbackFun": "shine0",
             "_": Date.now()
