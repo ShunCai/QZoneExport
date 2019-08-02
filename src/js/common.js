@@ -348,43 +348,37 @@ API.Utils = {
      * @param {function} doneFun 
      * @param {function} failFun 
      */
-    Zip: function (root, doneFun, failFun) {
-        let zipOneFile = function (entry) {
-            let newName = encodeURIComponent(entry.name);
-            let fullPath = entry.fullPath.replace(entry.name, newName);
-            QZone.Common.Filer.open(fullPath, (f) => {
-                let reader = new FileReader();
-                reader.onload = function (event) {
-                    QZone.Common.Zip.file(entry.fullPath, event.target.result, { binary: true });
-                }
-                reader.readAsArrayBuffer(f);
-            }, (error) => {
-                if (failFun) {
-                    failFun(error);
-                }
-            });
-        };
-
-        (function (path) {
-            let cl = arguments.callee;
-            QZone.Common.Filer.ls(path, (entries) => {
-                var i = 0;
-                for (i = 0; i < entries.length; i++) {
-                    var entry = entries[i];
-                    if (entry.isDirectory) {
-                        QZone.Common.Zip.folder(entry.fullPath);
-                        cl(path + entry.name + '/');
-                    } else {
-                        zipOneFile(entry);
+    Zip: function (root) {
+        return new Promise(async function (resolve, reject) {
+            let zipOneFile = function (entry) {
+                let newName = encodeURIComponent(entry.name);
+                let fullPath = entry.fullPath.replace(entry.name, newName);
+                QZone.Common.Filer.open(fullPath, (f) => {
+                    let reader = new FileReader();
+                    reader.onload = function (event) {
+                        QZone.Common.Zip.file(entry.fullPath, event.target.result, { binary: true });
                     }
-                }
-                doneFun();
-            }, (error) => {
-                if (failFun) {
-                    failFun(error);
-                }
-            });
-        })(root);
+                    reader.readAsArrayBuffer(f);
+                }, reject);
+            };
+
+            (function (path) {
+                let cl = arguments.callee;
+                QZone.Common.Filer.ls(path, (entries) => {
+                    var i = 0;
+                    for (i = 0; i < entries.length; i++) {
+                        var entry = entries[i];
+                        if (entry.isDirectory) {
+                            QZone.Common.Zip.folder(entry.fullPath);
+                            cl(path + entry.name + '/');
+                        } else {
+                            zipOneFile(entry);
+                        }
+                    }
+                    resolve();
+                }, reject);
+            })(root);
+        });
     },
 
     send: function (url, responseType) {
@@ -1030,7 +1024,7 @@ API.Photos = {
             "handset": "4",
             "pageNumModeSort": "40",
             "pageNumModeClass": "40",
-            "needUserInfo": "0",
+            "needUserInfo": "1",
             "idcNum": "4",
             "pageStart": page * Qzone_Config.Photos.pageSize,
             "pageNum": Qzone_Config.Photos.pageSize,

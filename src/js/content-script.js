@@ -34,6 +34,10 @@ const MODAL_HTML = `
                 <p id="exportPhotos" style="display: none;" >正在获取相册，请稍后...</p>
                 <p id="exportVideos" style="display: none;" >正在获取视频，请稍后...</p>
                 <p id="exportImages">正在下载图片，已下载 - 张图片，已失败 - 张图片...</p>
+                <br/>
+                <div id="progress" class="progress" style="display: none;">
+                    <div id="progressbar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">已下载 0%</div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button id="showFailedImages" type="button" class="btn btn-danger" style="display: none;" data-toggle="modal" data-target="#modalTable">详情</button>
@@ -276,15 +280,12 @@ function createOperator() {
                     await API.Utils.sleep(500);
                 }
                 // 压缩
-                API.Utils.Zip(FOLDER_ROOT, () => {
-                    operator.next(OperatorType.ZIP);
-                }, (error) => {
-                    console.error(error);
-                });
+                await API.Utils.Zip(FOLDER_ROOT);
+                operator.next(OperatorType.ZIP);
                 break;
             case OperatorType.ZIP:
                 // 延迟3秒，确保压缩完
-                await API.Utils.sleep(3000);
+                await API.Utils.sleep(500);
                 statusIndicator.complete();
                 break;
             default:
@@ -518,21 +519,41 @@ function showModal() {
     })
 
     $('#downloadBtn').click(() => {
-        $('#downloadBtn').attr('disabled', true);
-        $('#downloadBtn').text('正在下载...');
 
-        // 压缩
-        QZone.Common.Zip.generateAsync({
+        $('#progress').show();
+        $("#progressbar").css("width", "0%");
+        $("#progressbar").attr("aria-valuenow", "0");
+        $('#progressbar').text('已下载0%');
+
+        $('#downloadBtn').attr('disabled', true);
+        $('#downloadBtn').text('正在下载');
+
+        let writeStream = streamSaver.createWriteStream(QZone.ZIP_NAME).getWriter()
+        QZone.Common.Zip.generateInternalStream({
+            // streamFiles: true,
+            // compression: "DEFLATE",
+            // compressionOptions: {
+            //     level: 9
+            // },
+            // type: "uint8array",
             type: "blob"
-        }).then(function (blob) {
-            saveAs(blob, QZone.ZIP_NAME);
-            $('#downloadBtn').text('已导出');
-            $('#downloadBtn').attr('disabled', false);
-        }, (err) => {
-            console.error(err);
+        }).on('data', (data, metadata) => {
+            $("#progressbar").css("width", metadata.percent.toFixed(2) + "%");
+            $("#progressbar").attr("aria-valuenow", metadata.percent.toFixed(2));
+            $('#progressbar').text('已下载' + metadata.percent.toFixed(2) + '%');
+            writeStream.write(data)
+        }).on('error', (e) => {
+            console.error(e);
             $('#downloadBtn').text('下载失败，请重试。');
             $('#downloadBtn').attr('disabled', false);
-        });
+        }).on('end', () => {
+            writeStream.close();
+            $("#progressbar").css("width", "100%");
+            $("#progressbar").attr("aria-valuenow", 100);
+            $('#progressbar').text('已下载' + '100%');
+            $('#downloadBtn').text('已导出');
+            $('#downloadBtn').attr('disabled', false);
+        }).resume();
     });
 
     //进度模式窗口隐藏后
