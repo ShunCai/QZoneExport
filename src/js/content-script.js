@@ -432,7 +432,7 @@ function createStatusIndicator() {
         if (statusIndicator.Images.downloadFailed > 0) {
             $("#showFailedImages").show();
         }
-        $("#backupStatus").html("备份完成");
+        $("#backupStatus").html("备份完成，请下载。");
     };
 
     status.updateTitle = function (title) {
@@ -490,7 +490,7 @@ function init() {
 
     // 初始化文件夹
     QZone.Common.Filer = new Filer();
-    QZone.Common.Filer.init({ persistent: false, size: 300 * 1024 * 1024 }, function (fs) {
+    QZone.Common.Filer.init({ persistent: false, size: 4 * 1024 * 1024 * 1024 }, function (fs) {
         QZone.Common.Filer.ls(FOLDER_ROOT, function (entries) {
             QZone.Common.Filer.rm(FOLDER_ROOT, function () {
 
@@ -530,13 +530,8 @@ function showModal() {
 
         let writeStream = streamSaver.createWriteStream(QZone.ZIP_NAME).getWriter()
         QZone.Common.Zip.generateInternalStream({
-            // streamFiles: true,
-            // compression: "DEFLATE",
-            // compressionOptions: {
-            //     level: 9
-            // },
-            // type: "uint8array",
-            type: "blob"
+            type: "blob",
+            streamFiles: true
         }).on('data', (data, metadata) => {
             $("#progressbar").css("width", metadata.percent.toFixed(2) + "%");
             $("#progressbar").attr("aria-valuenow", metadata.percent.toFixed(2));
@@ -551,7 +546,7 @@ function showModal() {
             $("#progressbar").css("width", "100%");
             $("#progressbar").attr("aria-valuenow", 100);
             $('#progressbar').text('已下载' + '100%');
-            $('#downloadBtn').text('已导出');
+            $('#downloadBtn').text('已下载');
             $('#downloadBtn').attr('disabled', false);
         }).resume();
     });
@@ -1420,6 +1415,8 @@ API.Friends.fetchAllList = function () {
                 // 下一步，等待图片下载完成
                 operator.next(OperatorType.BOARD_LIST);
             }, (error) => {
+                // 下一步，等待图片下载完成
+                operator.next(OperatorType.BOARD_LIST);
                 console.error(error);
             });
         }
@@ -1453,6 +1450,8 @@ API.Friends.fetchAllList = function () {
             })
         });
     }).catch((e) => {
+        // 下一步，等待图片下载完成
+        operator.next(OperatorType.BOARD_LIST);
         console.error("获取好友列表异常");
     })
 };
