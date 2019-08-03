@@ -709,7 +709,8 @@ API.Blogs.fetchList = function (page, nextFunc) {
             var i = {
                 blogId: item.blogId,
                 pubTime: item.pubTime,
-                title: item.title
+                title: item.title,
+                cate: item.cate
             };
             QZone.Blogs.Data.push(i);
         });
@@ -763,7 +764,7 @@ API.Blogs.fetchInfo = function (idx, nextFunc) {
     API.Blogs.getInfo(blogid).then((data) => {
         API.Blogs.contentToFile(data, idx, title, postTime, nextFunc);
     }).catch((e) => {
-        console.error("获取日志异常，日志标题=" + title);
+        console.error("获取日志异常", title);
         nextFunc(idx, "获取日志异常，日志标题=" + title);
     })
 }
@@ -785,7 +786,7 @@ API.Blogs.fetchAllInfo = function () {
 };
 
 /**
- * 读取私密日记内容到文件
+ * 读取日志内容到文件
  * @param {html} data 日志详情页
  * @param {integer} idx 
  * @param {string} title 标题
@@ -817,7 +818,7 @@ API.Blogs.contentToFile = function (data, idx, title, postTime, nextFunc) {
         // 合并标题正文评论
         API.Blogs.constructContent(title, postTime, markdown, blogInfo, (content) => {
             let label = API.Blogs.getBlogLabel(blogInfo.data);
-            API.Blogs.writeFile(idx, label, title, postTime, content);
+            API.Blogs.writeFile(idx, label, title, postTime, content, blogInfo);
             nextFunc(idx, null);
         });
     } else {
@@ -870,10 +871,10 @@ API.Blogs.constructContent = function (title, postTime, markdown, blogInfo, done
             name: title,
             desc: title,
             source: title,
-            className: blogInfo.category
+            className: blogInfo.data.category
         };
 
-        result = result.split(orgUrl).join("images/" + imageInfo.filename);
+        result = result.split(orgUrl).join("../images/" + imageInfo.filename);
         QZone.Blogs.Images.push(imageInfo);
         operator.downloadImage(imageInfo);
     }
@@ -887,7 +888,7 @@ API.Blogs.constructContent = function (title, postTime, markdown, blogInfo, done
  * @param {string} postTime 
  * @param {string} content 
  */
-API.Blogs.writeFile = function (idx, label, title, postTime, content) {
+API.Blogs.writeFile = function (idx, label, title, postTime, content, blogInfo) {
     let filename, filepath;
     postTime = new Date(postTime).format('yyyyMMddhhmmss');
     let orderNum = API.Utils.prefixNumber(idx + 1, QZone.Blogs.total.toString().length);
@@ -895,13 +896,16 @@ API.Blogs.writeFile = function (idx, label, title, postTime, content) {
     if (label && label != "") {
         filename = API.Utils.filenameValidate(orderNum + "_" + postTime + "_" + label + "【" + title + "】");
     }
-    filepath = QZone.Blogs.ROOT + '/' + filename + ".md";
-
-    API.Utils.writeFile(content, filepath, (fileEntry) => {
-        statusIndicator.downloadSuccess('Blogs');
-    }, (error) => {
-        statusIndicator.downloadFailed('Blogs');
+    filepath = QZone.Blogs.ROOT + "/" + blogInfo.data.category;
+    API.Utils.createFolder(filepath).then(() => {
+        filepath += '/' + filename + ".md";
+        API.Utils.writeFile(content, filepath, (fileEntry) => {
+            statusIndicator.downloadSuccess('Blogs');
+        }, (error) => {
+            statusIndicator.downloadFailed('Blogs');
+        });
     });
+
 };
 
 
@@ -1068,7 +1072,7 @@ API.Diaries.constructContent = function (index, title, postTime, markdown, blogI
             name: title,
             desc: title,
             source: title,
-            className: blogInfo.category
+            className: "私密日志"
         };
         result = result.split(orgUrl).join("images/" + imageInfo.filename);
         QZone.Diaries.Images.push(imageInfo);
@@ -1555,7 +1559,7 @@ API.Boards.contentToFile = function () {
     }, (error) => {
         console.error(error);
         // 提示信息，下载数+1
-        statusIndicator.downloadFailed("Boards", item.length);
+        statusIndicator.downloadFailed("Boards", QZone.Boards.Data);
     });
 
 };
