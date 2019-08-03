@@ -530,7 +530,7 @@ function showModal() {
 
         let writeStream = streamSaver.createWriteStream(QZone.ZIP_NAME).getWriter()
         QZone.Common.Zip.generateInternalStream({
-            type: "blob",
+            type: "uint8array",
             streamFiles: true
         }).on('data', (data, metadata) => {
             $("#progressbar").css("width", metadata.percent.toFixed(2) + "%");
