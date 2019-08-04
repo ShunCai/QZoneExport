@@ -358,9 +358,7 @@ function createOperator() {
             statusIndicator.Images.data.success.push(imageInfo);
         }).catch((e) => {
             statusIndicator.Images.data.failed.push(imageInfo);
-            console.error(e);
-            console.info("下载失败URL：" + imageInfo.url);
-            console.info("失败的文件路径：" + imageInfo.filepath);
+            console.error("下载失败", e, imageInfo);
             statusIndicator.downloadFailed();
         });
     };
@@ -574,12 +572,13 @@ function showModal() {
         $("#progressbar").attr("aria-valuenow", "0");
         $('#progressbar').text('已下载0%');
 
+        $('#showFailedImages').attr('disabled', true);
         $('#downloadBtn').attr('disabled', true);
         $('#downloadBtn').text('正在下载');
 
         let writeStream = streamSaver.createWriteStream(QZone.ZIP_NAME).getWriter()
         QZone.Common.Zip.generateInternalStream({
-            type: "uint8array",
+            type: "blob",
             streamFiles: true
         }).on('data', (data, metadata) => {
             $("#progressbar").css("width", metadata.percent.toFixed(2) + "%");
@@ -589,6 +588,7 @@ function showModal() {
         }).on('error', (e) => {
             console.error(e);
             $('#downloadBtn').text('下载失败，请重试。');
+            $('#showFailedImages').attr('disabled', false);
             $('#downloadBtn').attr('disabled', false);
         }).on('end', () => {
             writeStream.close();
@@ -596,6 +596,7 @@ function showModal() {
             $("#progressbar").attr("aria-valuenow", 100);
             $('#progressbar').text('已下载' + '100%');
             $('#downloadBtn').text('已下载');
+            $('#showFailedImages').attr('disabled', false);
             $('#downloadBtn').attr('disabled', false);
         }).resume();
     });
@@ -701,8 +702,7 @@ function showModal() {
  */
 async function initFolder() {
 
-    console.info('所有模块信息');
-    console.info(QZone);
+    console.info('所有模块信息', QZone);
 
     // 切换到根目录
     QZone.Common.Filer.cd('/', async () => {
@@ -721,7 +721,7 @@ async function initFolder() {
                         continue;
                     }
                     let entry = await API.Utils.createFolder(rootPath);
-                    console.info('创建目录成功：' + entry.fullPath);
+                    console.info('创建目录成功', entry);
                 }
                 resolve();
             });
@@ -733,7 +733,7 @@ async function initFolder() {
         console.info("开始创建说明文件");
         // 创建说明文件
         QZone.Common.Filer.write(FOLDER_ROOT + "说明.md", { data: README_TEXT, type: "text/plain" }, (entry) => {
-            console.info('创建文件成功：' + entry.fullPath);
+            console.info('创建文件成功', entry);
             return true;
         });
         return true;
@@ -1464,7 +1464,7 @@ API.Friends.fetchAllList = function () {
             // 写入XLSX到HTML5的FileSystem
             let xlsxArrayBuffer = API.Utils.toArrayBuffer(XLSX.write(workbook, { bookType: 'xlsx', bookSST: false, type: 'binary' }));
             API.Utils.writeExcel(xlsxArrayBuffer, QZone.Friends.ROOT + "/QQ好友.xlsx", (fileEntry) => {
-                console.info("创建文件成功：" + fileEntry.fullPath);
+                console.info("创建文件成功", fileEntry);
                 // 下一步，等待图片下载完成
                 operator.next(OperatorType.BOARD_LIST);
             }, (error) => {
@@ -1499,7 +1499,7 @@ API.Friends.fetchAllList = function () {
                     writeToExcel(ws_data);
                 }
             }).catch((e) => {
-                console.error("获取好友添加时间异常，QQ号：" + friend.uin);
+                console.error("获取好友添加时间异常", friend);
             })
         });
     }).catch((e) => {
@@ -1602,7 +1602,7 @@ API.Boards.contentToFile = function () {
 
     let filepath = QZone.Boards.ROOT + "/留言板.md";
     API.Utils.writeFile(result, filepath, (fileEntry) => {
-        console.info("已下载：" + fileEntry.fullPath);
+        console.info("已下载：", fileEntry);
         // 下一步，下载相册
         operator.next(OperatorType.PHOTO_LIST);
     }, (error) => {
