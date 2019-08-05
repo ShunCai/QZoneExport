@@ -1,3 +1,5 @@
+streamSaver.mitm = 'https://github.lvshuncai.com/StreamSaver.js/mitm.html'
+
 /**
  * 提示信息
  */
@@ -537,7 +539,7 @@ function init() {
 
     // 初始化文件夹
     QZone.Common.Filer = new Filer();
-    QZone.Common.Filer.init({ persistent: false, size: 4 * 1024 * 1024 * 1024 }, function (fs) {
+    QZone.Common.Filer.init({ persistent: false, size: 10 * 1024 * 1024 * 1024 }, function (fs) {
         QZone.Common.Filer.ls(FOLDER_ROOT, function (entries) {
             QZone.Common.Filer.rm(FOLDER_ROOT, function () {
 
@@ -587,6 +589,7 @@ function showModal() {
             writeStream.write(data)
         }).on('error', (e) => {
             console.error(e);
+            writeStream.abort(e);
             $('#downloadBtn').text('下载失败，请重试。');
             $('#showFailedImages').attr('disabled', false);
             $('#downloadBtn').attr('disabled', false);
@@ -705,8 +708,8 @@ async function initFolder() {
     console.info('所有模块信息', QZone);
 
     // 切换到根目录
-    QZone.Common.Filer.cd('/', async () => {
-        console.info("切换到根目录");
+    QZone.Common.Filer.cd('/', async (root) => {
+        console.info("切换到根目录", root);
         // 创建模块文件夹
         let createModuleFolder = () => {
             return new Promise(async function (resolve, reject) {
@@ -730,7 +733,6 @@ async function initFolder() {
         // 创建模块文件夹
         await createModuleFolder();
 
-        console.info("开始创建说明文件");
         // 创建说明文件
         QZone.Common.Filer.write(FOLDER_ROOT + "说明.md", { data: README_TEXT, type: "text/plain" }, (entry) => {
             console.info('创建文件成功', entry);
@@ -1277,8 +1279,8 @@ API.Messages.contentToFiles = function () {
             });
         });
         const yearFilePath = QZone.Messages.ROOT + "/" + year + "年.md";
-        API.Utils.writeFile(content, yearFilePath, () => {
-            console.info("已下载：" + yearFilePath);
+        API.Utils.writeFile(content, yearFilePath, (fileEntry) => {
+            console.info("已下载：", fileEntry);
         });
     });
 
@@ -1567,50 +1569,56 @@ API.Boards.fetchAllList = function () {
  * 将留言写入到文件
  */
 API.Boards.contentToFile = function () {
-    let result = "", newline = '\r\n\r\n';
-    let items = QZone.Boards.Data;
-    for (let index = 0; index < items.length; index++) {
-        const borad = items[index];
-        // 提示信息，下载数+1
-        statusIndicator.download("Boards");
+    let newline = '\r\n\r\n';
 
-        result += '#### 第' + (items.length - index) + '楼\r\n';
-        result += '> {0} 【{1}】'.format(borad.pubtime, borad.nickname) + newline;
-        result += '> 正文：' + newline;
-        let htmlContent = borad.htmlContent.replace(/src=\"\/qzone\/em/g, 'src=\"http://qzonestyle.gtimg.cn/qzone/em');
-        htmlContent = htmlContent.replace(/\n/g, "\r\n");
-        let mdContent = turndownService.turndown(htmlContent);
-        mdContent = API.Utils.mentionFormat(mdContent, "MD");
-        mdContent = API.Utils.emojiFormat(mdContent, "MD");
-        let nickname = QZone.Common.loginUin == borad.uin ? "我" : borad.nickname;
-        result += '- [{0}](https://user.qzone.qq.com/{1})：{2}'.format(nickname, borad.uin, mdContent) + newline;
+    let total = QZone.Boards.Data.length;
+    const yearMap = API.Utils.groupedByTime(QZone.Boards.Data, "pubtime");
+    yearMap.forEach((monthMap, year) => {
+        let content = "# " + year + "年" + newline;
+        monthMap.forEach((items, month) => {
+            content += "## " + month + "月" + newline;
 
-        result += '> 回复：' + newline;
+            for (let index = 0; index < items.length; index++) {
+                const borad = items[index];
 
-        let replyList = borad.replyList || [];
-        replyList.forEach(reply => {
-            let replyName = QZone.Common.loginUin == reply.uin ? "我" : reply.nick;
-            let replyContent = API.Utils.formatContent(reply.content, "MD");
-            let replyTime = new Date(reply.time * 1000).format('yyyy-MM-dd hh:mm:ss');
-            let replyMd = '- [{0}](https://user.qzone.qq.com/{1})：{2} 【*{3}*】'.format(replyName, reply.uin, replyContent, replyTime);
-            result += replyMd + newline;
+                // 提示信息，下载数+1
+                statusIndicator.download("Boards");
+                content += "---\r\n";
+
+                content += '#### 第' + (total--) + '楼\r\n';
+                content += '> {0} 【{1}】'.format(borad.pubtime, borad.nickname) + newline;
+                content += '> 正文：' + newline;
+                let htmlContent = borad.htmlContent.replace(/src=\"\/qzone\/em/g, 'src=\"http://qzonestyle.gtimg.cn/qzone/em');
+                htmlContent = htmlContent.replace(/\n/g, "\r\n");
+                let mdContent = turndownService.turndown(htmlContent);
+                mdContent = API.Utils.mentionFormat(mdContent, "MD");
+                mdContent = API.Utils.emojiFormat(mdContent, "MD");
+                let nickname = QZone.Common.loginUin == borad.uin ? "我" : borad.nickname;
+                content += '- [{0}](https://user.qzone.qq.com/{1})：{2}'.format(nickname, borad.uin, mdContent) + newline;
+
+                content += '> 回复：' + newline;
+
+                let replyList = borad.replyList || [];
+                replyList.forEach(reply => {
+                    let replyName = QZone.Common.loginUin == reply.uin ? "我" : reply.nick;
+                    let replyContent = API.Utils.formatContent(reply.content, "MD");
+                    let replyTime = new Date(reply.time * 1000).format('yyyy-MM-dd hh:mm:ss');
+                    let replyMd = '- [{0}](https://user.qzone.qq.com/{1})：{2} 【*{3}*】'.format(replyName, reply.uin, replyContent, replyTime);
+                    content += replyMd + newline;
+                });
+                content += '---' + newline;
+                // 提示信息，下载数+1
+                statusIndicator.downloadSuccess("Boards");
+            };
         });
-        result += '---' + newline;
-        // 提示信息，下载数+1
-        statusIndicator.downloadSuccess("Boards");
-    }
-
-    let filepath = QZone.Boards.ROOT + "/留言板.md";
-    API.Utils.writeFile(result, filepath, (fileEntry) => {
-        console.info("已下载：", fileEntry);
-        // 下一步，下载相册
-        operator.next(OperatorType.PHOTO_LIST);
-    }, (error) => {
-        console.error(error);
-        // 提示信息，下载数+1
-        statusIndicator.downloadFailed("Boards", QZone.Boards.Data);
+        const yearFilePath = QZone.Boards.ROOT + "/" + year + "年.md";
+        API.Utils.writeFile(content, yearFilePath, (fileEntry) => {
+            console.info("已下载：", fileEntry);
+        });
     });
 
+    // 下一步，下载相册
+    operator.next(OperatorType.PHOTO_LIST);
 };
 
 /**
