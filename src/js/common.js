@@ -91,7 +91,7 @@ var Qzone_Config = {
     Photos: {
         exportType: "file",
         querySleep: 2,
-        pageSize: 30,
+        pageSize: 90,
         downCount: 5,
         isDownloadOriginal: true,
         isWriteExif: false
@@ -162,7 +162,7 @@ const QZone_URLS = {
 
 const FOLDER_ROOT = '/QQ空间备份/';
 var QZone = {
-    ZIP_NAME: 'QQ空间备份.zip',
+    ZIP_NAME: 'QQ空间备份',
     Common: {
         loginUin: null,
         targetUin: null,
@@ -555,6 +555,10 @@ API.Utils = {
             // 获取登录QQ
             QZone.Common.loginUin = /\d.+/g.exec(this.getCookie('uin'))[0];
         }
+        return {
+            'loginUin': QZone.Common.loginUin,
+            'targetUin': QZone.Common.targetUin
+        }
     },
 
     /**
@@ -718,6 +722,21 @@ API.Utils = {
                 reject(e);
             });
         });
+    },
+
+    /**
+     * 消息通知
+     */
+    notification: (title, message) => {
+        if (window.Notification && Notification.permission !== "denied") {
+            Notification.requestPermission(function (status) {
+                var notice_ = new Notification(title, { body: message });
+                notice_.onclick = function () {
+                    // 单击消息提示框，进入浏览器页面
+                    window.focus();
+                }
+            });
+        }
     }
 };
 
@@ -984,10 +1003,10 @@ API.Boards = {
         let params = {
             "uin": QZone.Common.loginUin,
             "hostUin": QZone.Common.targetUin,
-            "start": page * 20,
+            "start": page * Qzone_Config.Boards.pageSize,
             "s": Math.random(),
             "format": "jsonp",
-            "num": 20,
+            "num": Qzone_Config.Boards.pageSize,
             "inCharset": "utf-8",
             "outCharset": "utf-8",
             "g_tk": API.Utils.gen_gtk(),
@@ -1052,8 +1071,8 @@ API.Photos = {
             "topicId": topicId,
             "noTopic": "0",
             "uin": QZone.Common.loginUin,
-            "pageStart": page * 80,
-            "pageNum": 80,
+            "pageStart": page * Qzone_Config.Photos.pageSize,
+            "pageNum": Qzone_Config.Photos.pageSize,
             "skipCmtCount": "0",
             "singleurl": "1",
             "batchId": "",
@@ -1136,8 +1155,8 @@ API.Videos = {
             "hostUin": QZone.Common.targetUin,
             "appid": "4",
             "getMethod": "2",
-            "start": page * 20,
-            "count": 20,
+            "start": page * Qzone_Config.Videos.pageSize,
+            "count": Qzone_Config.Videos.pageSize,
             "need_old": "0",
             "getUserInfo": "0",
             "inCharset": "utf-8",

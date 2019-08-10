@@ -31,7 +31,7 @@ var Qzone_Config = {
 	Photos: {
 		exportType: "file",
 		querySleep: 2,
-		pageSize: 30,
+		pageSize: 90,
 		downCount: 5,
 		isDownloadOriginal: true,
 		isWriteExif: false
