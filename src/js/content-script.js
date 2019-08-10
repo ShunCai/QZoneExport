@@ -1660,7 +1660,12 @@ API.Boards.contentToFile = function () {
                 content += "---\r\n";
 
                 content += '#### 第' + (total--) + '楼\r\n';
-                content += '> {0} 【{1}】'.format(borad.pubtime, borad.nickname) + newline;
+
+                let nickname = QZone.Common.loginUin == borad.uin ? "我" : borad.nickname;
+                nickname = nickname || '匿名用户';
+                nickname = API.Utils.formatContent(nickname, "MD");
+
+                content += '> {0} 【{1}】'.format(borad.pubtime, nickname) + newline;
                 content += '> 正文：' + newline;
                 if (borad.secret == 1 && !borad.htmlContent) {
                     // 私密留言
@@ -1674,8 +1679,6 @@ API.Boards.contentToFile = function () {
                 let mdContent = turndownService.turndown(htmlContent);
                 mdContent = API.Utils.mentionFormat(mdContent, "MD");
                 mdContent = API.Utils.emojiFormat(mdContent, "MD");
-                let nickname = QZone.Common.loginUin == borad.uin ? "我" : borad.nickname;
-                nickname = API.Utils.formatContent(nickname, "MD");
                 content += '- [{0}](https://user.qzone.qq.com/{1})：{2}'.format(nickname, borad.uin, mdContent) + newline;
 
                 content += '> 回复：' + newline;
