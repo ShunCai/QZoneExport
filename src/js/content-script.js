@@ -1662,9 +1662,9 @@ API.Boards.contentToFile = function () {
                 content += '#### 第' + (total--) + '楼\r\n';
                 content += '> {0} 【{1}】'.format(borad.pubtime, borad.nickname) + newline;
                 content += '> 正文：' + newline;
-                if (borad.secret == 1) {
+                if (borad.secret == 1 && !borad.htmlContent) {
                     // 私密留言
-                    content += '主人收到一条黄钻私密留言';
+                    content += '主人收到一条私密留言，仅彼此可见' + newline;
                     // 提示信息，下载数+1
                     statusIndicator.downloadSuccess("Boards");
                     continue;
