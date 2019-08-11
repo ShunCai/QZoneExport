@@ -108,7 +108,6 @@ const README_TEXT = `
 ![](https://i.loli.net/2019/08/11/heysLFv2GJAW4kD.png)
 - 推荐使用 [Atom](https://atom.io/) Markdown编辑器查看.md备份内容
 - 备份目录结构如下
-```
 └─QQ空间备份
 │  说明.md
 ├─好友
@@ -134,7 +133,6 @@ const README_TEXT = `
 │  【年份】.md
 └─images
 图片名称
-    ```
 
 ## 注意事项
 - 视频导出是导出视频下载链接，链接存在有效期请及时下载。
