@@ -1,10 +1,14 @@
 # QQ空间导出助手
 
-> QQ空间导出助手，用于备份QQ空间的说说、相册、视频、日志、留言板为文件，供永久保存
+> QQ空间导出助手，用于备份日志、私密日志、说说、相册、留言板、QQ好友、视频为文件，供永久保存。
 
 ## 简介
 
-互联网产品都有着自己的生命周期，新浪博客相册，网易相册，QQ账号注销等等，于是写了这个基于Chrome的QQ空间导出助手的谷歌扩展，用于备份QQ空间的日志、说说、相册、留言板为文件，供永久保存。
+落叶随风，青春，稍纵即逝，QQ空间，一个承载了很多人的青春的地方。
+
+然而，新浪博客相册宣布停止运营，网易相册关闭，QQ账号支持注销等等，无不意味着，互联网产品都有着自己的生命周期，但生命周期到了尽头，我们的数据怎么办。
+
+数据，还是要本地备份一份的，QQ空间导出助手的谷歌扩展，可以QQ空间的日志、私密日志、说说、相册、留言板、QQ好友、视频为文件，供永久保存。
 
 ## 安装
 #### 源码安装
@@ -14,60 +18,59 @@
 - 点击[加载已解压的扩展程序]按钮
 - 选择QZoneExport/src文件夹
 
-#### Google
-- [QQ空间导出助手](https://atom.io/)
+#### 谷歌商店
+- [QQ空间导出助手](https://chrome.google.com/webstore/search/QQ%E7%A9%BA%E9%97%B4%E5%AF%BC%E5%87%BA%E5%8A%A9%E6%89%8B)
 
 
 ## 使用
 - 登录QQ空间  
-  支持空间URL：https://user.qzone.qq.com/QQ号  
-  不支持空间URL：https://QQ号.qzone.qq.com
 - 右上角点击插件图标  
- ![](https://i.loli.net/2019/08/04/Td5hUAfcvH14Yik.png)
+ ![](https://i.loli.net/2019/08/11/wpmyPEzFVvBSKra.png)
 - 勾选备份内容
 - 点击开始备份
 - 等待备份完成   
-![](https://i.loli.net/2019/08/04/wiIQYvGEsR38Z12.png)
 - 点击下载备份  
-![](https://i.loli.net/2019/08/04/LSoxmFJAf4Ms9NZ.png)
-- 下载并保存  
-![](https://i.loli.net/2019/08/04/NIkosuxiRKLHlFB.png)
+![](https://i.loli.net/2019/08/11/EyKZkBcPxgmsqUu.png)
+- 等待下载完成  
+![](https://i.loli.net/2019/08/11/heysLFv2GJAW4kD.png)
 - 推荐使用 [Atom](https://atom.io/) Markdown编辑器查看.md备份内容
 - 备份目录结构如下    
-    ├─好友  
-    │  └─QQ好友.xlsx  
-    ├─日志  
-    │  ├─images  
-    │  │  └─图片名称  
-    │  └─分类名称  
-    │      └─日志标题.md  
-    ├─留言板  
-    │  └─留言板.md  
-    ├─相册  
-    │  └─分类名称  
-    │      └─相册名称  
-    │          └─相片名称  
-    ├─私密日记  
-    │  ├─images  
-    │  │  └─图片名称  
-    │  └─日志标题.md  
-    ├─视频  
-    │  └─视频链接.downlist  
-    └─说说  
-    │   ├─2019年.md  
-    │   └─images  
-    │       └─图片名称  
-    ├─说明.md  
+```
+└─QQ空间备份    
+    │  说明.md    
+    ├─好友    
+    │      QQ好友.xlsx    
+    ├─日志    
+    │  ├─images    
+    │  │      图片名称      
+    │  ├─日志分类    
+    │  │      【日志标题】.md    
+    ├─留言板    
+    │      【年份】.md    
+    ├─相册    
+    │  ├─相册分类    
+    │  │  ├─相册名称    
+    │  │  │      相片名称    
+    ├─私密日记    
+    │  │  【日志标题】.md    
+    │  └─images
+    │          图片名称    
+    ├─视频
+    │      视频链接.downlist    
+    └─说说
+        │  【年份】.md    
+        └─images    
+                图片名称
+```
 
-## 备份内容预览
-### 说说
-![](https://s2.ax1x.com/2019/08/04/eySxun.png)
-### 日志
-![](https://s2.ax1x.com/2019/08/04/eySjjs.png)
-### 留言板
-![](https://i.loli.net/2019/08/04/3oj4emPFhC29iAQ.png)
-### 好友
-![](https://i.loli.net/2019/08/04/AhQB1PeGfTFl3N2.png)
+## 注意事项
+- 视频导出是导出视频下载链接，链接存在有效期请及时下载。
+- 如果存在图片下载失败，一般为Chrome不信任安全证书导致，建议访问链接后重新下载。
+- 导出他人QQ空间内容时，无法导出私密日志和QQ好友。
+
+
+## 内容预览
+![](https://i.loli.net/2019/08/11/U8AJlwxEsHeWrBm.png)
 
 
 
@@ -75,9 +78,10 @@
 - 右键点击插件图标
 - 弹出菜单选择【选项】  
 - 配置页面可配置备份方式和选项
-![](https://i.loli.net/2019/08/04/XcqReS1sHInlCMN.png)
+![](https://i.loli.net/2019/08/11/lDvAcmCuXwbksR8.png)
 - 推荐使用默认配置，遇到QQ冻结时，可调整查询间隔
 - 无法更改的配置表示尚未支持
+- 配置项的值存在最大值的限制，目前尚未加上校验
 
 
 ## TO-DO
