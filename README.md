@@ -19,7 +19,7 @@
 - 选择QZoneExport/src文件夹
 
 #### 谷歌商店
-- [QQ空间导出助手](https://chrome.google.com/webstore/search/QQ%E7%A9%BA%E9%97%B4%E5%AF%BC%E5%87%BA%E5%8A%A9%E6%89%8B)
+- [QQ空间导出助手](https://chrome.google.com/webstore/detail/qq%E7%A9%BA%E9%97%B4%E5%AF%BC%E5%87%BA%E5%8A%A9%E6%89%8B/aofadimegphfgllgjblddapiaojbglhf)
 
 
 ## 使用
