@@ -390,12 +390,10 @@ API.Utils = {
             }
             // 允许跨域
             request.withCredentials = true;
-            request.onload = function (xhr) {
-                resolve(request);
-            }
-            request.onerror = function (xhr) {
-                reject(xhr);
-            }
+            request.onload = (xhr) => resolve(request);
+            request.onerror = (xhr) => reject(xhr);
+            request.ontimeout = (xhr) => reject(xhr);
+            request.onabort = (xhr) => reject(xhr);
             request.send();
         });
     },

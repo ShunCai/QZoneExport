@@ -3,7 +3,7 @@
     "name": "QQ空间导出助手",
     "short_name": "QQ空间备份",
     "description": "QQ空间导出助手，用于备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友为文件，供永久保存",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "icons": {
         "128": "img/icon-128.png"
     },

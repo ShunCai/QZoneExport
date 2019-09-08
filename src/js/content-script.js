@@ -1714,16 +1714,20 @@ API.Boards.contentToFile = function () {
  * @param {function} nextFunc
  */
 API.Photos.fetchOneList = async function (albumItem, page, nextList) {
-    let imgData = await API.Photos.getImages(albumItem.id, page);
-    // 去掉函数，保留json
-    imgData = imgData.replace(/^shine0_Callback\(/, "");
-    imgData = imgData.replace(/\);$/, "");
-    imgData = JSON.parse(imgData);
-    let photoList = imgData.data.photoList || [];
-    QZone.Photos.Data = QZone.Photos.Data.concat(photoList);
-    let albumnIdList = QZone.Photos.Images.get(albumItem.id) || [];
-    QZone.Photos.Images.set(albumItem.id, albumnIdList.concat(photoList));
-    nextList(albumItem, page, nextList);
+    await API.Photos.getImages(albumItem.id, page).then((imgData) => {
+        // 去掉函数，保留json
+        imgData = imgData.replace(/^shine0_Callback\(/, "");
+        imgData = imgData.replace(/\);$/, "");
+        imgData = JSON.parse(imgData);
+        let photoList = imgData.data.photoList || [];
+        QZone.Photos.Data = QZone.Photos.Data.concat(photoList);
+        let albumnIdList = QZone.Photos.Images.get(albumItem.id) || [];
+        QZone.Photos.Images.set(albumItem.id, albumnIdList.concat(photoList));
+        nextList(albumItem, page, nextList);
+    }).catch(() => {
+        console.error('获取照片异常，当前页：' + page, albumItem);
+        nextList(albumItem, page, nextList);
+    });
 };
 
 
