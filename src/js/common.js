@@ -549,9 +549,9 @@ API.Utils = {
         // 获取目标QQ
         let rs = /\/user\.qzone\.qq\.com\/([\d]+)/.exec(window.location.href);
         if (rs) {
-            QZone.Common.targetUin = rs[1];
+            QZone.Common.targetUin = rs[1] - 0;
             // 获取登录QQ
-            QZone.Common.loginUin = /\d.+/g.exec(this.getCookie('uin'))[0];
+            QZone.Common.loginUin = /\d.+/g.exec(this.getCookie('uin'))[0] - 0;
         }
         return {
             'loginUin': QZone.Common.loginUin,

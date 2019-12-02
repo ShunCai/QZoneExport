@@ -13,13 +13,15 @@
 ## 安装
 #### 源码安装
 - 下载源码
-- 打开[谷歌扩展](chrome://extensions/)
+- 打开[扩展中心](chrome://extensions/)
 - 勾选开发者模式
 - 点击[加载已解压的扩展程序]按钮
 - 选择QZoneExport/src文件夹
 
-#### 谷歌商店
-- [QQ空间导出助手](https://chrome.google.com/webstore/detail/qq%E7%A9%BA%E9%97%B4%E5%AF%BC%E5%87%BA%E5%8A%A9%E6%89%8B/aofadimegphfgllgjblddapiaojbglhf)
+#### 在线安装
+- [谷歌商店](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
+
+- [360扩展中心](https://ext.chrome.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
 
 
 ## 使用
@@ -65,8 +67,13 @@
 
 ## 注意事项
 - 视频导出是导出视频下载链接，链接存在有效期请及时下载。
-- 如果存在图片下载失败，一般为Chrome不信任安全证书导致，建议访问链接后重新下载。
+- 如果存在图片下载失败，一般为Chrome不信任安全证书导致，建议访问链接信任后重新下载。
 - 导出他人QQ空间内容时，无法导出私密日志和QQ好友。
+- 相册导出的原图为高清原图，不包含Exif信息的。
+
+
+## 已知问题
+- 数据量大小达到4G的时候无法导出，会导致浏览器崩溃。
 
 
 ## 内容预览
@@ -94,4 +101,7 @@
 - [x] 优化插件UI
 - [x] 原图相册导出
 - [x] 视频导出
-- [ ] JSON导出
+- [ ] 支持导出指定相册
+- [ ] 支持导出Exif原图
+- [ ] 支持JSON导出
+- [ ] 支持RTF导出
