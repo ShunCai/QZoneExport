@@ -18,12 +18,14 @@ sendMessageToContentScript({
     from: 'popup',
     subject: 'initUin'
 }, (data) => {
-    $("#loginUin").text(data.loginUin);
-    $("#targetUin").text(data.targetUin);
-    $("#Diaries").attr("checked", data.loginUin == data.targetUin);
-    $("#Diaries").attr("disabled", data.loginUin != data.targetUin);
-    $("#Friends").attr("checked", data.loginUin == data.targetUin);
-    $("#Friends").attr("disabled", data.loginUin != data.targetUin);
+    $("#loginUin").text(data.Owner.uin);
+    $("#targetUin").text(data.Target.uin);
+    $("#Diaries").attr("checked", data.Owner.uin == data.Target.uin);
+    $("#Diaries").attr("disabled", data.Owner.uin != data.Target.uin);
+    $("#Friends").attr("checked", data.Owner.uin == data.Target.uin);
+    $("#Friends").attr("disabled", data.Owner.uin != data.Target.uin);
+    $("#Favorites").attr("checked", data.Owner.uin == data.Target.uin);
+    $("#Favorites").attr("disabled", data.Owner.uin != data.Target.uin);
 });
 
 // 绑定备份按钮事件

@@ -79,9 +79,9 @@ const README_TEXT = `
 
 落叶随风，青春，稍纵即逝，QQ空间，一个承载了很多人的青春的地方。
 
-然而，新浪博客相册宣布停止运营，网易相册关闭，QQ账号支持注销等等，无不意味着，互联网产品都有着自己的生命周期，但生命周期到了尽头，我们的数据怎么办。
+然而，新浪博客相册宣布停止运营，网易相册关闭，QQ账号支持注销等等，无不意味着，互联网产品都有着自己的生命周期，但生命周期到了尽头，记录着我们的青春的数据怎么办？
 
-数据，还是要本地备份一份的，QQ空间导出助手的谷歌扩展，可以QQ空间的日志、私密日志、说说、相册、留言板、QQ好友、视频为文件，供永久保存。
+数据，还是掌握到自己手里的好，QQ空间导出助手的谷歌扩展，可以导出备份QQ空间的日志、私密日志、说说、相册、留言板、QQ好友、视频为文件，供永久保存。
 
 ## 安装
 #### 源码安装
@@ -92,10 +92,11 @@ const README_TEXT = `
 - 选择QZoneExport/src文件夹
 
 #### 在线安装
-- [谷歌商店](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
+- [Chrome浏览器](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
 
-- [360扩展中心](https://ext.chrome.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
+- [360极速浏览器](https://ext.chrome.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
 
+- [360安全浏览器](https://ext.se.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
 
 ## 使用
 - 登录QQ空间
@@ -263,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         break;
                     case 'initUin':
                         // 获取QQ号
-                        let res = API.Utils.getUin();
+                        let res = API.Utils.initUin();
                         sendResponse(res);
                         break;
                     default:
@@ -572,14 +573,18 @@ function init() {
     }
 
     // 读取配置项
-    chrome.storage.local.get(Qzone_Config, function (item) {
+    chrome.storage.sync.get(Qzone_Config, function (item) {
         Qzone_Config = item;
     })
 
+    // 获取gtk
+    API.Utils.initGtk();
     // 获取Token
     API.Utils.getQzoneToken();
     // 获取QQ号
-    API.Utils.getUin();
+    API.Utils.initUin();
+    // 获取用户信息
+    API.Utils.getOwnerProfile();
 
     // 初始化文件夹
     QZone.Common.Filer = new Filer();
@@ -622,15 +627,15 @@ function showModal() {
         $('#downloadBtn').attr('disabled', true);
         $('#downloadBtn').text('正在下载');
 
-        let zipName = QZone.ZIP_NAME + "_" + QZone.Common.targetUin + ".zip";
+        let zipName = QZone.Common.Config.ZIP_NAME + "_" + QZone.Common.Target.uin + ".zip";
         QZone.Common.Filer.df(function (used, free, cap) {
             let usedSize = API.Utils.bytesToSize(used);
             console.info("已使用：", API.Utils.bytesToSize(used));
             console.info("剩余：", API.Utils.bytesToSize(free));
             console.info("总容量：", API.Utils.bytesToSize(cap));
 
-            // 500M
-            let usedMax = 500 * 1024 * 1024;
+            // 1G
+            let usedMax = 1024 * 1024 * 1024;
             if (usedMax > used) {
                 QZone.Common.Zip.generateAsync({ type: "blob" }, (metadata) => {
                     $("#progressbar").css("width", metadata.percent.toFixed(2) + "%");
@@ -1556,10 +1561,12 @@ API.Friends.fetchAllList = function () {
 
         // 处理QQ好友
         let friends = result.data.items;
-        friends.forEach(friend => {
+        for (let index = 0; index < friends.length; index++) {
+            var friend = friends[index];
             statusIndicator.download("Friends");
             let groupId = friend.groupid;
             let groupName = groupMap.get(groupId) || "默认分组";
+            friends[index]['groupName'] = groupName;
             let rowData = [friend.uin, friend.remark, friend.name, groupName];
             API.Friends.getFriendshipTime(friend.uin).then((timeData) => {
                 timeData = timeData.replace(/^_Callback\(/, "");
@@ -1572,6 +1579,7 @@ API.Friends.fetchAllList = function () {
                     console.warn(timeData);
                 }
                 addTime = addTime == 0 ? "老朋友啦" : new Date(addTime * 1000).format("yyyy-MM-dd hh:mm:ss");
+                friends[index]['addFriendTime'] = addTime;
                 rowData[4] = addTime;
                 ws_data.push(rowData);
                 statusIndicator.downloadSuccess("Friends");
@@ -1581,7 +1589,7 @@ API.Friends.fetchAllList = function () {
             }).catch((e) => {
                 console.error("获取好友添加时间异常", friend);
             })
-        });
+        }
     }).catch((e) => {
         // 下一步，下载留言板
         operator.next(OperatorType.BOARD_LIST);
@@ -1671,7 +1679,7 @@ API.Boards.contentToFile = function () {
 
                 content += '#### 第' + (total--) + '楼\r\n';
 
-                let nickname = QZone.Common.loginUin == borad.uin ? "我" : borad.nickname;
+                let nickname = QZone.Common.Owner.uin == borad.uin ? "我" : borad.nickname;
                 nickname = nickname || '匿名用户';
                 nickname = API.Utils.formatContent(nickname, "MD");
 
@@ -1695,7 +1703,7 @@ API.Boards.contentToFile = function () {
 
                 let replyList = borad.replyList || [];
                 replyList.forEach(reply => {
-                    let replyName = QZone.Common.loginUin == reply.uin ? "我" : reply.nick;
+                    let replyName = QZone.Common.Owner.uin == reply.uin ? "我" : reply.nick;
                     replyName = API.Utils.formatContent(replyName, "MD");
                     let replyContent = API.Utils.formatContent(reply.content, "MD");
                     let replyTime = new Date(reply.time * 1000).format('yyyy-MM-dd hh:mm:ss');
@@ -1775,11 +1783,6 @@ API.Photos.fetchOneAllList = function (albumItem) {
  */
 API.Photos.fetchAllAlbums = function () {
     return new Promise(async function (resolve, reject) {
-        // 重置数据
-        QZone.Photos.Album = [];
-        QZone.Photos.Data = [];
-        QZone.Photos.ClassMap = new Map();
-        QZone.Photos.Images = new Map();
 
         statusIndicator.start("Photos");
 
@@ -1794,7 +1797,7 @@ API.Photos.fetchAllAlbums = function () {
             // 相册分类
             let classList = albumData.data.classList || [];
             classList.forEach(classItem => {
-                QZone.Photos.ClassMap.set(classItem.id, classItem.name);
+                QZone.Photos.ClassMap[classItem.id] = classItem.name;
             });
 
             // 相册列表
@@ -1826,7 +1829,7 @@ API.Photos.fetchAllList = async function () {
     // 重置数据
     QZone.Photos.Album = [];
     QZone.Photos.Data = [];
-    QZone.Photos.ClassMap = new Map();
+    QZone.Photos.ClassMap = {};
     QZone.Photos.Images = new Map();
 
     // 获取所有相册
@@ -1841,7 +1844,7 @@ API.Photos.fetchAllList = async function () {
         // 获取每个相册的相片列表
         const photoList = await API.Photos.fetchOneAllList(album);
         // 分类名称
-        let className = QZone.Photos.ClassMap.get(album.classid) || "其它";
+        let className = QZone.Photos.ClassMap[album.classid] || "其它";
 
         const _photoList = _.chunk(photoList, Qzone_Config.Photos.downCount);
 
@@ -1861,7 +1864,7 @@ API.Photos.fetchAllList = async function () {
                 // 下载相片
                 // 自动识别，默认原图优先
                 let url = photo.url;
-                if (Qzone_Config.Photos.isDownloadOriginal) {
+                if (Qzone_Config.Photos.exifType === "hd") {
                     url = API.Photos.getDownloadUrl(photo);
                 }
                 url = url.replace(/http:\//, "https:/");
@@ -1977,5 +1980,53 @@ API.Videos.hadlerAllList = function () {
         //下一步，等待图片下载完成
         statusIndicator.typeComplete('Videos');
         operator.next(OperatorType.AWAIT_IMAGES);
+    });
+}
+
+/**
+ * 递归获取所有收藏列表
+ */
+API.Favorites.fetchAllList = function () {
+    return new Promise(async function (resolve, reject) {
+        // 获取一页的收藏列表
+        const nextPageList = async (page) => {
+
+            // 递归获取所有收藏列表
+            let resData = await API.Favorites.getFavorites(page);
+            // 去掉函数，保留json
+            resData = API.Utils.parseData(resData, /^_Callback\(/);
+
+            // 总数
+            QZone.Favorites.total = resData.data.total_num || 0;
+
+            // 数据
+            QZone.Favorites.Data = QZone.Favorites.Data.concat(resData.data.fav_list || []);
+
+            if (QZone.Favorites.Data.length < QZone.Favorites.total && page * Qzone_Config.Favorites.pageSize < QZone.Favorites.total) {
+                // 请求一页成功后等待一秒再请求下一页
+                await API.Utils.sleep(Qzone_Config.Favorites.querySleep * 1000);
+                // 总数不相等时继续获取
+                await arguments.callee(page + 1);
+            } else {
+                resolve(QZone.Favorites.Data);
+            }
+        }
+        // 开始请求
+        await nextPageList(0);
+    });
+};
+
+
+/**
+ * 处理所有收藏
+ */
+API.Favorites.hadlerAllList = function () {
+    // 重置数据
+    QZone.Favorites.Data = [];
+
+    API.Favorites.fetchAllList().then((data) => {
+        // 处理数据
+    }).catch((e) => {
+        console.info("获取收藏列表异常：", e);
     });
 }
