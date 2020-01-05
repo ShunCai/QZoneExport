@@ -154,17 +154,18 @@
 									<div class="form-group row">
 										<label class="col-sm-1 col-form-label">查询间隔：</label>
 										<div class="col-sm-1">
-											<input type="number" min="2" class="form-control"
+											<input type="number" min="1" class="form-control"
 												id="messages_list_cost_min" placeholder="最小间隔">
 										</div>
 										<span>-</span>
 										<div class="col-sm-1">
-											<input type="number" min="2" class="form-control"
+											<input type="number" min="1" class="form-control"
 												id="messages_list_cost_max" placeholder="最大间隔">
 										</div>
 									</div>
 									<div class="form-group row">
-										<label for="messages_list_limit" class="col-sm-1 col-form-label" aria-describedby="messages_list_limit_help">每页条数：</label>
+										<label for="messages_list_limit" class="col-sm-1 col-form-label"
+											aria-describedby="messages_list_limit_help">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="20" max="40" class="form-control"
 												id="messages_list_limit" placeholder="查询每页条数">
@@ -180,8 +181,8 @@
 												id="messages_download_full_comments">
 											<label style="margin-left: 14px;" class="custom-control-label"
 												for="messages_download_full_comments"
-												aria-describedby="comments_help"></label>
-											<small id="comments_help" class="text-muted">默认下载前10条评论，勾选下载全部</small>
+												aria-describedby="messages_comments_help"></label>
+											<small id="messages_comments_help" class="text-muted">默认下载前10条评论，勾选下载全部</small>
 										</div>
 									</div>
 									<div class="form-group row">
@@ -201,8 +202,10 @@
 							<div class="tab-pane fade" id="nav-blogs" role="tabpanel" aria-labelledby="nav-blogs-tab">
 								<br />
 								<form id="tb_blogs">
+									<h5>日志选项：</h5>
+									<hr>
 									<div class="form-group row">
-										<label for="blogs_exportFormat" class="col-sm-2 col-form-label">备份类型：</label>
+										<label for="blogs_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
 											<select id="blogs_exportFormat" class="custom-select">
 												<option value="markdown" selected>MarkDown</option>
@@ -213,17 +216,48 @@
 										</div>
 									</div>
 									<div class="form-group row">
-										<label for="blogs_list_cost" class="col-sm-2 col-form-label">查询间隔：</label>
-										<div class="col-sm-2">
-											<input type="number" min="2" class="form-control" id="blogs_list_cost"
-												placeholder="查询每页间隔秒数">
+										<label class="col-sm-1 col-form-label">查询间隔：</label>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control"
+												id="blogs_list_cost_min" placeholder="最小间隔">
+										</div>
+										<span>-</span>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control"
+												id="blogs_list_cost_max" placeholder="最大间隔">
 										</div>
 									</div>
 									<div class="form-group row">
-										<label for="blogs_list_limit" class="col-sm-2 col-form-label">每页条数：</label>
+										<label for="blogs_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="15" max="100" class="form-control"
 												id="blogs_list_limit" placeholder="查询每页条数">
+										</div>
+									</div>
+									<br>
+									<h5>评论选项：</h5>
+									<hr>
+									<div class="form-group row">
+										<div class="col-sm-1">所有评论：</div>
+										<div class="custom-control custom-checkbox">
+											<input type="checkbox" class="custom-control-input"
+												id="blogs_download_full_comments">
+											<label style="margin-left: 14px;" class="custom-control-label"
+												for="blogs_download_full_comments"
+												aria-describedby="blogs_comments_help"></label>
+											<small id="blogs_comments_help" class="text-muted">默认下载前10条评论，勾选下载全部</small>
+										</div>
+									</div>
+									<div class="form-group row">
+										<label class="col-sm-1 col-form-label">查询间隔：</label>
+										<div class="col-sm-1">
+											<input type="number" min="2" class="form-control" id="blogs_comments_min"
+												placeholder="最小间隔">
+										</div>
+										<span>-</span>
+										<div class="col-sm-1">
+											<input type="number" min="2" class="form-control" id="blogs_comments_max"
+												placeholder="最大间隔">
 										</div>
 									</div>
 								</form>

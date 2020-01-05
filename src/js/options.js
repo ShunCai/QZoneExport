@@ -27,8 +27,15 @@
 
 		// 日志模块赋值
 		$("#blogs_exportFormat").val(Qzone_Config.Blogs.exportType);
-		$("#blogs_list_cost").val(Qzone_Config.Blogs.querySleep);
+		$("#blogs_list_cost_min").val(Qzone_Config.Blogs.randomSeconds.min);
+		$("#blogs_list_cost_max").val(Qzone_Config.Blogs.randomSeconds.max);
 		$("#blogs_list_limit").val(Qzone_Config.Blogs.pageSize);
+
+
+		// 日志评论选项
+		$("#blogs_download_full_comments").attr("checked", Qzone_Config.Blogs.Comments.isFull);
+		$("#blogs_comments_min").val(Qzone_Config.Blogs.Comments.randomSeconds.min);
+		$("#blogs_comments_max").val(Qzone_Config.Blogs.Comments.randomSeconds.max);
 
 		// 私密日志赋值
 		$("#diaries_exportFormat").val(Qzone_Config.Diaries.exportType);
@@ -72,8 +79,8 @@
 		Qzone_Config.Messages.randomSeconds.max = $("#messages_list_cost_max").val();
 		Qzone_Config.Messages.pageSize = $("#messages_list_limit").val();
 
-		
-		// 说说评论
+
+		// 说说评论副职
 		Qzone_Config.Messages.Comments.isFull = $("#messages_download_full_comments").prop("checked");
 		Qzone_Config.Messages.Comments.randomSeconds.min = $("#messages_comments_min").val();
 		Qzone_Config.Messages.Comments.randomSeconds.max = $("#messages_comments_max").val();
@@ -81,8 +88,14 @@
 
 		// 日志模块赋值
 		Qzone_Config.Blogs.exportType = $("#blogs_exportFormat").val();
-		Qzone_Config.Blogs.querySleep = $("#blogs_list_cost").val();
+		Qzone_Config.Blogs.randomSeconds.min = $("#blogs_list_cost_min").val();
+		Qzone_Config.Blogs.randomSeconds.max = $("#blogs_list_cost_max").val();
 		Qzone_Config.Blogs.pageSize = $("#blogs_list_limit").val();
+
+		// 说说评论副职
+		Qzone_Config.Blogs.Comments.isFull = $("#blogs_download_full_comments").prop("checked");
+		Qzone_Config.Blogs.Comments.randomSeconds.min = $("#blogs_comments_min").val();
+		Qzone_Config.Blogs.Comments.randomSeconds.max = $("#blogs_comments_max").val();
 
 		// 私密日志赋值
 		Qzone_Config.Diaries.exportType = $("#diaries_exportFormat").val();

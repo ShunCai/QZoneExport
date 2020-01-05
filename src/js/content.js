@@ -122,9 +122,17 @@ class StatusIndicator {
     /**
      * 下载成功
      */
-    success() {
+    success(item) {
         this.downloaded++
         this.addData('success', item)
+    }
+
+    /**
+     * 设置总数
+     * @param {integer} total
+     */
+    set total(total) {
+        this.total = total;
     }
 }
 
@@ -133,6 +141,7 @@ class StatusIndicator {
  */
 const MAX_MSG = {
     Blogs: '正在获取日志，已获取 <span style="color: #1ca5fc;">{0}</span> 篇，总共 <span style="color: #1ca5fc;">{1}</span> 篇，已导出 <span style="color: #1ca5fc;">{2}</span> 篇，请稍后...',
+    Blogs_Comments: '正在获取第 <span style="color: #1ca5fc;">{0}</span> 篇日志的评论，已获取 <span style="color: #1ca5fc;">{1}</span> 条，已失败 <span style="color: red">{2}</span> 条，总共 <span style="color: #1ca5fc;">{3}</span> 条，请稍后...',
     Diaries: '正在获取私密日记，已获取 <span style="color: #1ca5fc;">{0}</span> 篇，总共 <span style="color: #1ca5fc;">{1}</span> 篇，已导出 <span style="color: #1ca5fc;">{2}</span> 篇，请稍后...',
     Messages: '正在获取说说，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
     //Messages: '正在获取第 <span style="color: #1ca5fc;">{0}</span> 页的说说列表，已获取 <span style="color: #1ca5fc;">{1}</span> 条，已失败 <span style="color: red">{2}</span> 条，总共 <span style="color: #1ca5fc;">{3}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
@@ -158,6 +167,7 @@ const MODAL_HTML = `
                 <h3 id="backupStatus">正在导出备份，请不要关闭或刷新当前页面和打开新的QQ空间页面。</h3>
                 <hr/>
                 <p id="exportBlogs" style="display: none;margin-bottom: 3px;" >正在获取日志，请稍后...</p>
+                <p id="exportBlogs_Comments" style="display: none;margin-bottom: 3px;" >正在获取日志评论，请稍后...</p>
                 <p id="exportDiaries" style="display: none;margin-bottom: 3px;" >正在获取私密日记，请稍后...</p>
                 <p id="exportMessages" style="display: none;margin-bottom: 3px;" >正在获取说说，请稍后...</p>
                 <p id="exportMessages_Comments" style="display: none;margin-bottom: 3px;" >正在获取说说评论，请稍后...</p>
@@ -165,7 +175,7 @@ const MODAL_HTML = `
                 <p id="exportBoards" style="display: none;margin-bottom: 3px;" >正在获取留言板，请稍后...</p>
                 <p id="exportPhotos" style="display: none;margin-bottom: 3px;" >正在获取相册，请稍后...</p>
                 <p id="exportVideos" style="display: none;margin-bottom: 3px;" >正在获取视频，请稍后...</p>
-                <p id="exportImages">正在下载图片，已下载 - 张图片，已失败 - 张图片...</p>
+                <p id="exportImages">正在下载图片，已下载 <span style="color: #1ca5fc;"> 0 </span> 张图片，已失败 <span style="color: red;"> 0 </span> 张图片...</p>
                 <br/>
                 <div id="progress" class="progress" style="display: none;">
                     <div id="progressbar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">已下载 0%</div>
@@ -557,6 +567,13 @@ function createStatusIndicator() {
             downloadFailed: 0,
             total: 0
         },
+        Blogs_Comments: {
+            id: 'exportBlogs_Comments',
+            downloaded: 0,
+            downloading: 0,
+            downloadFailed: 0,
+            total: 0
+        },
         Images: {
             id: 'exportImages',
             downloaded: 0,
@@ -735,8 +752,8 @@ function init() {
     QZone.Common.Filer.init({ persistent: false, size: 10 * 1024 * 1024 * 1024 }, function (fs) {
         QZone.Common.Filer.ls(FOLDER_ROOT, function (entries) {
             console.debug('当前子目录：', entries);
-            QZone.Common.Filer.rm(FOLDER_ROOT, function (entry) {
-                console.debug('清除历史数据成功！', entry);
+            QZone.Common.Filer.rm(FOLDER_ROOT, function () {
+                console.debug('清除历史数据成功！');
             });
         });
     });
@@ -973,17 +990,12 @@ API.Blogs.fetchList = function (page, nextFunc) {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
 
-        QZone.Blogs.total = data.data.totalNum;
+        // 设置总数
+        QZone.Blogs.total = data.data.totalNum || 0;
 
-        data.data.list.forEach(function (item) {
-            var i = {
-                blogId: item.blogId,
-                pubTime: item.pubTime,
-                title: item.title,
-                cate: item.cate
-            };
-            QZone.Blogs.Data.push(i);
-        });
+        let list = data.data.list || [];
+        QZone.Blogs.Data = QZone.Blogs.Data.concat(list);
+
         // 提示信息
         statusIndicator.total(QZone.Blogs.total, 'Blogs');
         statusIndicator.update('Blogs');
@@ -1026,16 +1038,13 @@ API.Blogs.fetchAllList = function () {
  * @param {function} nextFunc 获取完后执行的函数
  */
 API.Blogs.fetchInfo = function (idx, nextFunc) {
-    let blogid = QZone.Blogs.Data[idx].blogId;
-    let postTime = QZone.Blogs.Data[idx].pubTime;
-    let title = QZone.Blogs.Data[idx].title;
-
+    let item = QZone.Blogs.Data[idx];
     statusIndicator.download("Blogs");
-    API.Blogs.getInfo(blogid).then((data) => {
-        API.Blogs.contentToFile(data, idx, title, postTime, nextFunc);
+    API.Blogs.getInfo(item.blogId).then((blogPage) => {
+        API.Blogs.contentToFile(blogPage, idx, item.title, item.pubTime, nextFunc);
     }).catch((e) => {
-        console.error("获取日志异常", title);
-        nextFunc(idx, "获取日志异常，日志标题=" + title);
+        console.error("获取日志异常", item, e);
+        nextFunc(idx, e);
     })
 }
 
@@ -1086,12 +1095,41 @@ API.Blogs.contentToFile = function (data, idx, title, postTime, nextFunc) {
     let blogContentHtml = blogPage.find("#blogDetailDiv:first").html();
     let markdown = turndownService.turndown(blogContentHtml);
     if (markdown) {
-        // 合并标题正文评论
-        API.Blogs.constructContent(title, postTime, markdown, blogInfo, (content) => {
-            let label = API.Blogs.getBlogLabel(blogInfo.data);
-            API.Blogs.writeFile(idx, label, title, postTime, content, blogInfo);
-            nextFunc(idx, null);
-        });
+        // 是否获取全部评论
+        if (Qzone_Config.Blogs.Comments.isFull) {
+            // 获取日志的全部评论
+            API.Blogs.getAllComments(blogInfo.data, (type, item, page) => {
+                let $comment_tip = $("#exportBlogs_Comments");
+                // 显示获取评论的进度
+                $comment_tip.show();
+                let comments_tip = MAX_MSG['Blogs_Comments'];
+                let comments_obj = statusIndicator['Blogs_Comments'];
+                if (type === "error") {
+                    comments_obj.downloadFailed = comments_obj.downloadFailed + Qzone_Config.Blogs.Comments.pageSize;
+                }
+                let tips = comments_tip.format(idx + 1, item.comments.length, comments_obj.downloadFailed, item.replynum);
+                if (type === 'end') {
+                    tips = tips.replace('请稍后', '已完成');
+                    // 添加评论
+                    let item = blogInfo.data;
+                    item.comments = item.comments || [];
+                    // 合并标题正文评论
+                    API.Blogs.constructContent(title, postTime, markdown, item, (content) => {
+                        let label = API.Blogs.getBlogLabel(item);
+                        API.Blogs.writeFile(idx, label, title, postTime, content, item);
+                        nextFunc(idx, null);
+                    });
+                }
+                $comment_tip.html(tips);
+            });
+        } else {
+            // 合并标题正文评论
+            API.Blogs.constructContent(title, postTime, markdown, blogInfo.data, (content) => {
+                let label = API.Blogs.getBlogLabel(blogInfo.data);
+                API.Blogs.writeFile(idx, label, title, postTime, content, blogInfo.data);
+                nextFunc(idx, null);
+            });
+        }
     } else {
         nextFunc(idx, err);
     }
@@ -1105,27 +1143,29 @@ API.Blogs.contentToFile = function (data, idx, title, postTime, nextFunc) {
  * @param {string} markdown 转换为 mardown 格式的日志
  * @param {dictionary} blogInfo 日志的信息，用于获取评论 
  */
-API.Blogs.constructContent = function (title, postTime, markdown, blogInfo, doneFun) {
+API.Blogs.constructContent = function (title, postTime, markdown, item, doneFun) {
     // 拼接标题，日期，内容
     let result = "# " + title + "\r\n\r\n";
     result = result + "> " + postTime + "\r\n\r\n";
     result = result + markdown.replace(/\n/g, "\r\n") + "\r\n\r\n\r\n";
 
     // 拼接评论
-    result = result + "> 评论:\r\n\r\n";
-    blogInfo.data.comments.forEach(function (entry) {
-        let poster = API.Utils.formatContent(entry.poster.name, 'MD');
-        let mdContent = API.Utils.formatContent(entry.content, 'MD');
-        let content = '* [{0}](https://user.qzone.qq.com/{1})：{2}'.format(poster, entry.poster.id, mdContent) + "\r\n";
+    result = result + "> 评论(" + item.replynum + "):\r\n\r\n";
+    let comments = item.comments;
+    for (let index = 0; index < comments.length; index++) {
+        const comment = comments[index];
+        let poster = API.Utils.formatContent(comment.poster.name, 'MD');
+        let mdContent = API.Utils.formatContent(comment.content, 'MD');
+        let content = '* [{0}](https://user.qzone.qq.com/{1})：{2}'.format(poster, comment.poster.id, mdContent) + "\r\n";
 
-        entry.replies.forEach(function (rep) {
+        comment.replies.forEach(function (rep) {
             let repPoster = API.Utils.formatContent(rep.poster.name, 'MD');
             let repContent = API.Utils.formatContent(rep.content, 'MD');
             let c = '\t* [{0}](https://user.qzone.qq.com/{1})：{2}'.format(repPoster, rep.poster.id, repContent) + "\r\n";
             content = content + c;
         });
         result = result + content;
-    });
+    }
 
     // 转为本地图片
     let imageLinkM = /!\[.*?\]\((.+?)\)/g;
@@ -1145,7 +1185,7 @@ API.Blogs.constructContent = function (title, postTime, markdown, blogInfo, done
             name: title,
             desc: title,
             source: title,
-            className: blogInfo.data.category
+            className: item.category
         };
 
         result = result.split(orgUrl).join("../images/" + imageInfo.filename);
@@ -1162,7 +1202,7 @@ API.Blogs.constructContent = function (title, postTime, markdown, blogInfo, done
  * @param {string} postTime 
  * @param {string} content 
  */
-API.Blogs.writeFile = function (idx, label, title, postTime, content, blogInfo) {
+API.Blogs.writeFile = function (idx, label, title, postTime, content, item) {
     let filename, filepath;
     postTime = new Date(postTime).format('yyyyMMddhhmmss');
     let orderNum = API.Utils.prefixNumber(idx + 1, QZone.Blogs.total.toString().length);
@@ -1170,7 +1210,7 @@ API.Blogs.writeFile = function (idx, label, title, postTime, content, blogInfo) 
     if (label && label != "") {
         filename = API.Utils.filenameValidate(orderNum + "_" + postTime + "_" + label + "【" + title + "】");
     }
-    filepath = QZone.Blogs.ROOT + "/" + blogInfo.data.category;
+    filepath = QZone.Blogs.ROOT + "/" + item.category;
     API.Utils.createFolder(filepath).then(() => {
         filepath += '/' + filename + ".md";
         API.Utils.writeFile(content, filepath, (fileEntry) => {
@@ -1499,7 +1539,9 @@ API.Messages.fetchAllList = async function (pageIndex) {
             // 先下载完成当前页的所有图片后再获取下一页
             await Promise.all(tasks);
 
-            if (QZone.Messages.Data.length < QZone.Messages.total && pageIndex * Qzone_Config.Messages.pageSize < QZone.Messages.total) {
+            // 是否还有下一页
+            let hasNextPage = API.Utils.hasNextPage(pageIndex, Qzone_Config.Messages.pageSize, QZone.Messages.total, QZone.Messages.Data);
+            if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = Qzone_Config.Messages.randomSeconds.min;
                 let max = Qzone_Config.Messages.randomSeconds.max;
@@ -1870,8 +1912,7 @@ API.Boards.contentToFile = function () {
                 let htmlContent = borad.htmlContent.replace(/src=\"\/qzone\/em/g, 'src=\"http://qzonestyle.gtimg.cn/qzone/em');
                 htmlContent = htmlContent.replace(/\n/g, "\r\n");
                 let mdContent = turndownService.turndown(htmlContent);
-                mdContent = API.Utils.mentionFormat(mdContent, "MD");
-                mdContent = API.Utils.emojiFormat(mdContent, "MD");
+                mdContent = API.Utils.formatContent(mdContent, "MD");
                 content += '- [{0}](https://user.qzone.qq.com/{1})：{2}'.format(nickname, borad.uin, mdContent) + newline;
 
                 content += '> 回复：' + newline;

@@ -9,7 +9,7 @@ var Qzone_Config = {
             max: 3
         },
         Comments: {
-            isFull: false,
+            isFull: true,
             pageSize: 20,
             randomSeconds: {
                 min: 1,
@@ -20,8 +20,19 @@ var Qzone_Config = {
     // 日志模块
     Blogs: {
         exportType: "markdown",
-        querySleep: 2,
-        pageSize: 50
+        pageSize: 50,
+        randomSeconds: {
+            min: 1,
+            max: 3
+        },
+        Comments: {
+            isFull: true,
+            pageSize: 50,
+            randomSeconds: {
+                min: 1,
+                max: 3
+            }
+        }
     },
     // 私密日记模块
     Diaries: {

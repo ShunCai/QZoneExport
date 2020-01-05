@@ -840,6 +840,13 @@ API.Utils = {
             uin: uin,
             size: 100
         });
+    },
+
+    /**
+     * 是否获取结束
+     */
+    hasNextPage: (pageIndex, pageSize, total, list) => {
+        return list.length < total && pageIndex * pageSize < total;
     }
 };
 
@@ -854,7 +861,7 @@ API.Blogs = {
             13: "日志中包含视频"
         };
         for (var i in t) {
-            if (API.Utils.getEffectBit(e, i)) {
+            if (API.Blogs.getEffectBit(e, i)) {
                 return t[i];
             }
         }
@@ -869,7 +876,7 @@ API.Blogs = {
             if (n == 22) {
                 continue;
             }
-            if (API.Utils.getEffectBit(e, n)) {
+            if (API.Blogs.getEffectBit(e, n)) {
                 a += '[{0}]'.format(t[o][1]);
                 break;
             }
@@ -951,9 +958,9 @@ API.Blogs = {
     getComments: function (blogid, page) {
         let params = {
             "uin": QZone.Common.Owner.uin,
-            "num": 50,
+            "num": Qzone_Config.Blogs.Comments.pageSize,
             "topicId": QZone.Common.Target.uin + "_" + blogid,
-            "start": page * 50,
+            "start": page * Qzone_Config.Blogs.Comments.pageSize,
             "r": Math.random(),
             "iNotice": 0,
             "inCharset": "utf-8",
@@ -964,6 +971,63 @@ API.Blogs = {
             "qzonetoken": QZone.Common.Config.token
         };
         return API.Utils.get(API.Utils.toUrl(QZone_URLS.BLOGS_COMMENTS_URL, params));
+    },
+
+    /**
+     * 获取日志所有的评论
+     * @param {object} 日志信息
+     * @param {function} 回调函数
+     */
+    getAllComments: (item, callback) => {
+        // 清空原有的评论列表
+        item.comments = [];
+
+        // 获取一页的评论列表
+        var nextPage = function (item, page) {
+
+            // 更新获取评论进度
+            callback('working', item, page);
+
+            // 开始获取评论
+            API.Blogs.getComments(item.blogid || item.blogId, page).then(async (data) => {
+                // 去掉函数，保留json
+                data = API.Utils.toJson(data, /^_Callback\(/);
+
+                item.comments = item.comments.concat(data.data.comments || []);
+
+                let total = item.replynum || 0;
+
+                let comment_config = Qzone_Config.Blogs.Comments;
+
+                // 是否还有下一页
+                let hasNextPage = API.Utils.hasNextPage(page, comment_config.pageSize, total, item.comments);
+                if (hasNextPage) {
+                    // 请求一页成功后等待一秒再请求下一页
+                    let min = comment_config.randomSeconds.min;
+                    let max = comment_config.randomSeconds.max;
+                    let seconds = API.Utils.randomSeconds(min, max);
+                    await API.Utils.sleep(seconds * 1000);
+                    // 总数不相等时继续获取
+                    await arguments.callee(item, page + 1);
+                } else {
+                    callback('end', item, page);
+                }
+            }).catch(async (e) => {
+                // 当前页失败后，跳过继续请求下一页
+                console.error("获取日志评论列表异常！", item, page, e);
+                callback('error', item, page);
+                let comment_config = Qzone_Config.Blogs.Comments;
+                let min = comment_config.randomSeconds.min;
+                let max = comment_config.randomSeconds.max;
+                let seconds = API.Utils.randomSeconds(min, max);
+                await API.Utils.sleep(seconds * 1000);
+                // 总数不相等时继续获取
+                return await arguments.callee(item, page + 1);
+            })
+        }
+
+        // 开始请求
+        nextPage(item, 0);
     }
 
 };
@@ -1271,10 +1335,14 @@ API.Messages = {
 
                 item.custom_comments = item.custom_comments.concat(data.commentlist || []);
 
-                if (item.custom_comment_total > item.custom_comments.length) {
+                let comment_config = Qzone_Config.Messages.Comments;
+
+                // 是否还有下一页
+                let hasNextPage = API.Utils.hasNextPage(page, comment_config.pageSize, item.custom_comment_total, item.custom_comments);
+                if (hasNextPage) {
                     // 请求一页成功后等待一秒再请求下一页
-                    let min = Qzone_Config.Messages.Comments.randomSeconds.min;
-                    let max = Qzone_Config.Messages.Comments.randomSeconds.max;
+                    let min = comment_config.randomSeconds.min;
+                    let max = comment_config.randomSeconds.max;
                     let seconds = API.Utils.randomSeconds(min, max);
                     await API.Utils.sleep(seconds * 1000);
                     // 总数不相等时继续获取
@@ -1285,7 +1353,7 @@ API.Messages = {
                 }
 
             }).catch(async (e) => {
-                console.error("获取评论列表异常！", item, page, e);
+                console.error("获取说说评论列表异常！", item, page, e);
                 commentProgress.call(undefined, 'error', item, page);
                 // 当前页失败后，跳过继续请求下一页
                 let min = Qzone_Config.Messages.Comments.randomSeconds.min;
