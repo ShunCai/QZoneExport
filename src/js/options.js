@@ -16,8 +16,14 @@
 	chrome.storage.sync.get(Qzone_Config, function (Qzone_Config) {
 		// 说说模块赋值
 		$("#messages_exportFormat").val(Qzone_Config.Messages.exportType);
-		$("#messages_list_cost").val(Qzone_Config.Messages.querySleep);
+		$("#messages_list_cost_min").val(Qzone_Config.Messages.randomSeconds.min);
+		$("#messages_list_cost_max").val(Qzone_Config.Messages.randomSeconds.max);
 		$("#messages_list_limit").val(Qzone_Config.Messages.pageSize);
+
+		// 说说评论选项
+		$("#messages_download_full_comments").attr("checked", Qzone_Config.Messages.Comments.isFull);
+		$("#messages_comments_min").val(Qzone_Config.Messages.Comments.randomSeconds.min);
+		$("#messages_comments_max").val(Qzone_Config.Messages.Comments.randomSeconds.max);
 
 		// 日志模块赋值
 		$("#blogs_exportFormat").val(Qzone_Config.Blogs.exportType);
@@ -62,8 +68,16 @@
 
 		// 说说模块赋值
 		Qzone_Config.Messages.exportType = $("#messages_exportFormat").val();
-		Qzone_Config.Messages.querySleep = $("#messages_list_cost").val();
+		Qzone_Config.Messages.randomSeconds.min = $("#messages_list_cost_min").val();
+		Qzone_Config.Messages.randomSeconds.max = $("#messages_list_cost_max").val();
 		Qzone_Config.Messages.pageSize = $("#messages_list_limit").val();
+
+		
+		// 说说评论
+		Qzone_Config.Messages.Comments.isFull = $("#messages_download_full_comments").prop("checked");
+		Qzone_Config.Messages.Comments.randomSeconds.min = $("#messages_comments_min").val();
+		Qzone_Config.Messages.Comments.randomSeconds.max = $("#messages_comments_max").val();
+
 
 		// 日志模块赋值
 		Qzone_Config.Blogs.exportType = $("#blogs_exportFormat").val();

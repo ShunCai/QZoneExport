@@ -57,3 +57,12 @@ String.prototype.format = function (args) {
     }
     return result;
 }
+
+/**
+ * ReplaceAll的实现
+ * @param {String} search 搜索字符
+ * @param {String} target 替换字符
+ */
+String.prototype.replaceAll = function (search, target) {
+    return this.replace(new RegExp(search, "gm"), target);
+}

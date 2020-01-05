@@ -3,8 +3,19 @@ var Qzone_Config = {
     // 说说模块
     Messages: {
         exportType: "markdown",
-        querySleep: 2,
-        pageSize: 40
+        pageSize: 40,
+        randomSeconds: {
+            min: 1,
+            max: 3
+        },
+        Comments: {
+            isFull: false,
+            pageSize: 20,
+            randomSeconds: {
+                min: 1,
+                max: 3
+            }
+        }
     },
     // 日志模块
     Blogs: {
@@ -54,12 +65,12 @@ const FOLDER_ROOT = '/QQ空间备份/';
 var QZone = {
     Common: {
         Owner: {
-            
+
         },
         Target: {
-            
+
         },
-        Config:{
+        Config: {
             ZIP_NAME: 'QQ空间备份'
         },
         Zip: null,
