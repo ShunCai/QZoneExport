@@ -1,44 +1,67 @@
 streamSaver.mitm = 'https://github.lvshuncai.com/StreamSaver.js/mitm.html'
 
 /**
- * 下载队列
+ * 下载任务
  */
-let Queue = (function () {
-    const items = new WeakMap()
-    class Queue {
-        constructor() {
-            items.set(this, [])
-        }
-        enqueue(element) {
-            let q = items.get(this)
-            q.push(element)
-        }
-        dequeue() {
-            let q = items.get(this)
-            return r = q.shift()
-        }
-        front() {
-            let q = items.get(this)
-            return q[0]
-        }
-        isEmpty() {
-            let q = items.get(this)
-            return q.length === 0
-        }
-        size() {
-            let q = items.get(this)
-            return q.length
-        }
-        print() {
-            let q = items.get(this)
-            console.log(q.toString())
-        }
+class DownloadTask {
+
+    /**
+     * 
+     * @param {string} dir 下载目录
+     * @param {string} type 文件名，包含后缀
+     * @param {string} tip 文件地址
+     */
+    constructor(dir, name, url) {
+        this.dir = dir
+        this.name = name
+        this.url = url
     }
-    return Queue
-})()
+
+}
 
 /**
  * 下载信息
+ */
+class DownloadInfo {
+
+    /**
+     * 
+     * @param {string} dir 下载目录
+     * @param {DownloadTask} tasks 任务
+     * @param {string} tip 文件地址
+     */
+    constructor(taskGroupName, tasks) {
+        this.taskGroupName = taskGroupName
+        this.tasks = tasks || []
+    }
+
+    /**
+    * 添加下载任务
+    * @param {DownloadTask} task 任务
+    */
+    addTask(task) {
+        this.tasks.push(task);
+    }
+
+    /**
+     * 删除指定索引任务
+     * @param {integer} index 数组索引
+     */
+    delTask(index) {
+        this.tasks.splice(index, 1);
+    }
+
+    /**
+     * 根据下载链接删除任务
+     * @param {string} url 下载链接
+     */
+    removeTask(url) {
+        this.tasks.remove(url, 'url')
+    }
+}
+
+/**
+ * 备份进度
  */
 class StatusIndicator {
 
@@ -53,6 +76,8 @@ class StatusIndicator {
         this.type = type
         this.tip = tip
         this.total = 0
+        this.pageIndex = 0
+        this.pageSize = 0
         this.downloaded = 0
         this.downloading = 0
         this.downloadFailed = 0
@@ -144,7 +169,6 @@ const MAX_MSG = {
     Blogs_Comments: '正在获取第 <span style="color: #1ca5fc;">{0}</span> 篇日志的评论，已获取 <span style="color: #1ca5fc;">{1}</span> 条，已失败 <span style="color: red">{2}</span> 条，总共 <span style="color: #1ca5fc;">{3}</span> 条，请稍后...',
     Diaries: '正在获取私密日记，已获取 <span style="color: #1ca5fc;">{0}</span> 篇，总共 <span style="color: #1ca5fc;">{1}</span> 篇，已导出 <span style="color: #1ca5fc;">{2}</span> 篇，请稍后...',
     Messages: '正在获取说说，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
-    //Messages: '正在获取第 <span style="color: #1ca5fc;">{0}</span> 页的说说列表，已获取 <span style="color: #1ca5fc;">{1}</span> 条，已失败 <span style="color: red">{2}</span> 条，总共 <span style="color: #1ca5fc;">{3}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
     Messages_Comments: '正在获取第 <span style="color: #1ca5fc;">{0}</span> 页的第 <span style="color: #1ca5fc;">{1}</span> 条说说的评论，已获取 <span style="color: #1ca5fc;">{2}</span> 条，已失败 <span style="color: red">{3}</span> 条，总共 <span style="color: #1ca5fc;">{4}</span> 条，请稍后...',
     Friends: '正在获取QQ好友，已获取好友 <span style="color: #1ca5fc;">{0}</span> 个，总共 <span style="color: #1ca5fc;">{1}</span> 个，已导出 <span style="color: #1ca5fc;">{2}</span> 个，请稍后...',
     Boards: '正在获取留言板，已获取 <span style="color: #1ca5fc;">{0}</span> 条，总共 <span style="color: #1ca5fc;">{1}</span> 条，已导出 <span style="color: #1ca5fc;">{2}</span> 条，请稍后...',
@@ -166,16 +190,18 @@ const MODAL_HTML = `
             <div class="modal-body">
                 <h3 id="backupStatus">正在导出备份，请不要关闭或刷新当前页面和打开新的QQ空间页面。</h3>
                 <hr/>
-                <p id="exportBlogs" style="display: none;margin-bottom: 3px;" >正在获取日志，请稍后...</p>
-                <p id="exportBlogs_Comments" style="display: none;margin-bottom: 3px;" >正在获取日志评论，请稍后...</p>
-                <p id="exportDiaries" style="display: none;margin-bottom: 3px;" >正在获取私密日记，请稍后...</p>
-                <p id="exportMessages" style="display: none;margin-bottom: 3px;" >正在获取说说，请稍后...</p>
-                <p id="exportMessages_Comments" style="display: none;margin-bottom: 3px;" >正在获取说说评论，请稍后...</p>
-                <p id="exportFriends" style="display: none;margin-bottom: 3px;" >正在获取QQ好友信息，请稍后...</p>
-                <p id="exportBoards" style="display: none;margin-bottom: 3px;" >正在获取留言板，请稍后...</p>
-                <p id="exportPhotos" style="display: none;margin-bottom: 3px;" >正在获取相册，请稍后...</p>
-                <p id="exportVideos" style="display: none;margin-bottom: 3px;" >正在获取视频，请稍后...</p>
-                <p id="exportImages">正在下载图片，已下载 <span style="color: #1ca5fc;"> 0 </span> 张图片，已失败 <span style="color: red;"> 0 </span> 张图片...</p>
+                <div class="container">                    
+                    <p id="exportBlogs" style="display: none;margin-bottom: 3px;" >正在获取日志，请稍后...</p>
+                    <p id="exportBlogs_Comments" style="display: none;margin-bottom: 3px;" >正在获取日志评论，请稍后...</p>
+                    <p id="exportDiaries" style="display: none;margin-bottom: 3px;" >正在获取私密日记，请稍后...</p>
+                    <p id="exportMessages" style="display: none;margin-bottom: 3px;" >正在获取说说，请稍后...</p>
+                    <p id="exportMessages_Comments" style="display: none;margin-bottom: 3px;" >正在获取说说评论，请稍后...</p>
+                    <p id="exportFriends" style="display: none;margin-bottom: 3px;" >正在获取QQ好友信息，请稍后...</p>
+                    <p id="exportBoards" style="display: none;margin-bottom: 3px;" >正在获取留言板，请稍后...</p>
+                    <p id="exportPhotos" style="display: none;margin-bottom: 3px;" >正在获取相册，请稍后...</p>
+                    <p id="exportVideos" style="display: none;margin-bottom: 3px;" >正在获取视频，请稍后...</p>
+                    <p id="exportImages">正在下载图片，已下载 <span style="color: #1ca5fc;"> 0 </span> 张图片，已失败 <span style="color: red;"> 0 </span> 张图片...</p>
+                </div>
                 <br/>
                 <div id="progress" class="progress" style="display: none;">
                     <div id="progressbar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">已下载 0%</div>
@@ -377,21 +403,13 @@ const OperatorType = {
     ZIP: 'ZIP'
 };
 
-if (Object.freeze) {
-    Object.freeze(OperatorType);
-}
-
 
 var operator = createOperator();
 var statusIndicator = createStatusIndicator();
 // 转换MarkDown
 var turndownService = new TurndownService();
 
-
-/**
- * 页面加载时初始化
- */
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
     // 消息监听
     chrome.runtime.onConnect.addListener(function (port) {
         console.debug("消息发送者：", port);
@@ -426,8 +444,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     operator.next(OperatorType.INIT);
-});
-
+})()
 
 /**
  * 创建备份流程控制者
@@ -734,7 +751,7 @@ function init() {
     }
 
     // 读取配置项
-    chrome.storage.sync.get(Qzone_Config, function (item) {
+    chrome.storage.sync.get(Default_Config, function (item) {
         Qzone_Config = item;
     })
 
@@ -1450,7 +1467,7 @@ API.Messages.fetchAllList = async function (pageIndex) {
                 let message_comments_tip = MAX_MSG['Messages_Comments'];
                 let message_comments_obj = statusIndicator['Messages_Comments'];
                 if (type === "error") {
-                    message_comments_obj.downloadFailed = message_comments_obj.downloadFailed + 20;
+                    message_comments_obj.downloadFailed = message_comments_obj.downloadFailed + Qzone_Config.Messages.Comments.pageSize;
                 }
                 let tips = message_comments_tip.format(pageIndex + 1, item.index + 1, item.custom_comments.length, message_comments_obj.downloadFailed, item.custom_comment_total);
                 if (type === 'end') {
@@ -2061,7 +2078,7 @@ API.Photos.fetchAllList = async function () {
         // 分类名称
         let className = QZone.Photos.ClassMap[album.classid] || "其它";
 
-        const _photoList = _.chunk(photoList, Qzone_Config.Photos.downCount);
+        const _photoList = _.chunk(photoList, Qzone_Config.Photos.downloadThread);
 
         let photoOrder = 1;
         for (let j = 0; j < _photoList.length; j++) {
@@ -2199,16 +2216,22 @@ API.Videos.hadlerAllList = function () {
 /**
  * 递归获取所有收藏列表
  */
-API.Favorites.fetchAllList = function () {
-    return new Promise(async function (resolve, reject) {
-        // 获取一页的收藏列表
-        var nextPageList = async function (page) {
+API.Favorites.getAllList = async function () {
+    // 获取一页的收藏列表
+    var nextPage = async function (pageIndex) {
 
-            // 递归获取所有收藏列表
-            let data = await API.Favorites.getFavorites(page);
+        console.debug('正在获取收藏夹列表，当前页：', pageIndex)
+
+        // 收藏夹配置项
+        let option = Qzone_Config.Favorites;
+
+        // 递归获取所有收藏列表
+        return await API.Favorites.getFavorites(pageIndex).then(async (data) => {
 
             // 去掉函数，保留json
             data = API.Utils.toJson(data, /^_Callback\(/);
+
+            console.debug('已获取收藏夹列表，当前页：', pageIndex, data)
 
             // 总数
             QZone.Favorites.total = data.data.total_num || 0;
@@ -2219,18 +2242,32 @@ API.Favorites.fetchAllList = function () {
             // 添加到全局变量
             QZone.Favorites.Data = QZone.Favorites.Data.concat(dataList);
 
-            if (QZone.Favorites.Data.length < QZone.Favorites.total && page * Qzone_Config.Favorites.pageSize < QZone.Favorites.total) {
+            // 是否还有下一页
+            let hasNextPage = API.Utils.hasNextPage(pageIndex, option.pageSize, QZone.Favorites.total, QZone.Favorites.Data);
+            if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
-                await API.Utils.sleep(Qzone_Config.Favorites.querySleep * 1000);
+                let min = option.randomSeconds.min;
+                let max = option.randomSeconds.max;
+                let seconds = API.Utils.randomSeconds(min, max);
+                await API.Utils.sleep(seconds * 1000);
                 // 总数不相等时继续获取
-                await arguments.callee(page + 1);
+                return await arguments.callee(pageIndex + 1);
             } else {
-                resolve(QZone.Favorites.Data);
+                return QZone.Favorites.Data;
             }
-        }
-        // 开始请求
-        await nextPageList(0);
-    });
+        }).catch(async (e) => {
+            console.error('获取收藏列表异常,当前页：', pageIndex, e);
+            // 请求一页成功后等待一秒再请求下一页
+            let min = option.randomSeconds.min;
+            let max = option.randomSeconds.max;
+            let seconds = API.Utils.randomSeconds(min, max);
+            await API.Utils.sleep(seconds * 1000);
+            // 总数不相等时继续获取
+            return await arguments.callee(pageIndex + 1);
+        });
+    }
+    // 开始请求
+    return await nextPage(0);
 };
 
 
@@ -2243,6 +2280,7 @@ API.Favorites.hadlerAllList = function () {
 
     API.Favorites.fetchAllList().then((data) => {
         // 处理数据
+        console.info('所有收藏夹列表完成：', data);
     }).catch((e) => {
         console.error("获取收藏列表异常：", e);
     });

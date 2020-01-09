@@ -275,30 +275,23 @@ API.Utils = {
     /**
      * POST 请求
      * @param {string} url 
-     * @param {object} params 
-     * @param {function} doneFun 
-     * @param {function} failFun 
+     * @param {object} params
      */
-    post: function (url, params, doneFun, failFun) {
-        $.ajax({
-            url: url,
-            method: 'POST',
-            data: params
-        })
-            .done(function (data, textStatus, jqXHR) {
-                if (doneFun) {
-                    doneFun(data, textStatus, jqXHR);
-                } else {
-                    return data;
-                }
-            })
-            .fail(function (jqXHR, textStatus, errorThrown) {
-                if (failFun) {
-                    failFun([], textStatus, errorThrown);
-                } else {
-                    return [];
+    post: function (url, params) {
+        return new Promise(function (resolve, reject) {
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: params,
+                success: function (result) {
+                    resolve(result);
+                },
+                error: function (xhr, status, error) {
+                    reject(error);
                 }
             });
+        });
+
     },
 
     /**
@@ -1072,7 +1065,7 @@ API.Diaries = {
         let params = {
             "uin": QZone.Common.Owner.uin,
             "blogid": blogid,
-            "pwd2sig": "",
+            "pwd2sig": QZone.Common.Config.pwd2sig || "",
             "styledm": "qzonestyle.gtimg.cn",
             "imgdm": "qzs.qq.com",
             "bdm": "b.qzone.qq.com",
@@ -1184,9 +1177,9 @@ API.Messages = {
      * 转换数据
      * @param pageIndex 需要转换的数据
      * @param data 需要转换的数据
-     * @param commentProgress 获取评论进度回调函数
+     * @param onprocess 获取评论进度回调函数
      */
-    convert: async (data, commentProgress) => {
+    convert: async (data, onprocess) => {
         console.debug("原始数据：", data);
         data = data || [];
         for (let index = 0; index < data.length; index++) {
@@ -1216,7 +1209,7 @@ API.Messages = {
             if (item.custom_comment_total > item.custom_comments.length && Qzone_Config.Messages.Comments.isFull) {
                 // 获取所有的评论
                 // 长说说
-                let comments_list = await API.Messages.getAllComments(item, commentProgress);
+                let comments_list = await API.Messages.getAllComments(item, onprocess);
                 item.custom_comments = comments_list;
             }
             // 配图
@@ -1263,6 +1256,7 @@ API.Messages = {
                 name: item.source_name,
                 url: item.source_url,
             };
+            // 转发数量
             item.custom_forward_total = item.fwdnum || 0;
             // 创建时间
             item.custom_create_time = API.Utils.formatDate(item.created_time);
@@ -1304,8 +1298,8 @@ API.Messages = {
             "t1_source": "undefined",
             "ftype": 0,
             "sort": 0,
-            "pos": page * 20,
-            "num": 20,
+            "pos": page * Qzone_Config.Messages.Comments.pageSize,
+            "num": Qzone_Config.Messages.Comments.pageSize,
             "g_tk": QZone.Common.Config.gtk,
             "callback": "_preloadCallback",
             "code_version": 1,

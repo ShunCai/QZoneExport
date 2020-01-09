@@ -12,67 +12,73 @@
 		window.location.hash = "#" + this.id;
 	});
 
-	// 读取数据，第一个参数是指定要读取的key以及设置默认值
-	chrome.storage.sync.get(Qzone_Config, function (Qzone_Config) {
+	let loadOptions = (options) => {
 		// 说说模块赋值
-		$("#messages_exportFormat").val(Qzone_Config.Messages.exportType);
-		$("#messages_list_cost_min").val(Qzone_Config.Messages.randomSeconds.min);
-		$("#messages_list_cost_max").val(Qzone_Config.Messages.randomSeconds.max);
-		$("#messages_list_limit").val(Qzone_Config.Messages.pageSize);
+		$("#messages_exportFormat").val(options.Messages.exportType);
+		$("#messages_list_cost_min").val(options.Messages.randomSeconds.min);
+		$("#messages_list_cost_max").val(options.Messages.randomSeconds.max);
+		$("#messages_list_limit").val(options.Messages.pageSize);
 
 		// 说说评论选项
-		$("#messages_download_full_comments").attr("checked", Qzone_Config.Messages.Comments.isFull);
-		$("#messages_comments_min").val(Qzone_Config.Messages.Comments.randomSeconds.min);
-		$("#messages_comments_max").val(Qzone_Config.Messages.Comments.randomSeconds.max);
+		$("#messages_download_full_comments").attr("checked", options.Messages.Comments.isFull);
+		$("#messages_comments_min").val(options.Messages.Comments.randomSeconds.min);
+		$("#messages_comments_max").val(options.Messages.Comments.randomSeconds.max);		
+		$("#messages_comments_limit").val(options.Messages.Comments.pageSize);
 
 		// 日志模块赋值
-		$("#blogs_exportFormat").val(Qzone_Config.Blogs.exportType);
-		$("#blogs_list_cost_min").val(Qzone_Config.Blogs.randomSeconds.min);
-		$("#blogs_list_cost_max").val(Qzone_Config.Blogs.randomSeconds.max);
-		$("#blogs_list_limit").val(Qzone_Config.Blogs.pageSize);
+		$("#blogs_exportFormat").val(options.Blogs.exportType);
+		$("#blogs_list_cost_min").val(options.Blogs.randomSeconds.min);
+		$("#blogs_list_cost_max").val(options.Blogs.randomSeconds.max);
+		$("#blogs_list_limit").val(options.Blogs.pageSize);
 
 
 		// 日志评论选项
-		$("#blogs_download_full_comments").attr("checked", Qzone_Config.Blogs.Comments.isFull);
-		$("#blogs_comments_min").val(Qzone_Config.Blogs.Comments.randomSeconds.min);
-		$("#blogs_comments_max").val(Qzone_Config.Blogs.Comments.randomSeconds.max);
+		$("#blogs_download_full_comments").attr("checked", options.Blogs.Comments.isFull);
+		$("#blogs_comments_min").val(options.Blogs.Comments.randomSeconds.min);
+		$("#blogs_comments_max").val(options.Blogs.Comments.randomSeconds.max);
+		$("#blogs_comments_limit").val(options.Blogs.Comments.pageSize);
 
 		// 私密日志赋值
-		$("#diaries_exportFormat").val(Qzone_Config.Diaries.exportType);
-		$("#diaries_list_cost").val(Qzone_Config.Diaries.querySleep);
-		$("#diaries_list_limit").val(Qzone_Config.Diaries.pageSize);
+		$("#diaries_exportFormat").val(options.Diaries.exportType);
+		$("#diaries_list_cost_min").val(options.Diaries.randomSeconds.min);
+		$("#diaries_list_cost_max").val(options.Diaries.randomSeconds.max);
+		$("#diaries_list_limit").val(options.Diaries.pageSize);
 
 		// 相册模块赋值
-		$("#photos_exportFormat").val(Qzone_Config.Photos.exportType);
-		$("#photos_list_cost").val(Qzone_Config.Photos.querySleep);
-		$("#photos_list_limit").val(Qzone_Config.Photos.pageSize);
-		$("#photos_down_limit").val(Qzone_Config.Photos.downCount);
-		$("#photos_exifType").val(Qzone_Config.Photos.exifType);
+		$("#photos_exportFormat").val(options.Photos.exportType);
+		$("#photos_list_cost").val(options.Photos.querySleep);
+		$("#photos_list_limit").val(options.Photos.pageSize);
+		$("#photos_down_type").val(options.Photos.downloadType);
+		$("#photos_down_thread").val(options.Photos.downloadThread);
+		$("#photos_exifType").val(options.Photos.exifType);
 
 		// 视频模块赋值
-		$("#videos_exportFormat").val(Qzone_Config.Videos.exportType);
-		$("#videos_list_cost").val(Qzone_Config.Videos.querySleep);
-		$("#videos_list_limit").val(Qzone_Config.Videos.pageSize);
+		$("#videos_exportFormat").val(options.Videos.exportType);
+		$("#videos_list_cost").val(options.Videos.querySleep);
+		$("#videos_list_limit").val(options.Videos.pageSize);
 
 		// 留言板模块赋值
-		$("#boards_exportFormat").val(Qzone_Config.Boards.exportType);
-		$("#boards_list_cost").val(Qzone_Config.Boards.querySleep);
-		$("#boards_list_limit").val(Qzone_Config.Boards.pageSize);
+		$("#boards_exportFormat").val(options.Boards.exportType);
+		$("#boards_list_cost").val(options.Boards.querySleep);
+		$("#boards_list_limit").val(options.Boards.pageSize);
 
 		// 好友模块赋值
-		$("input[type='radio'][name='friends_exportFormat'][value='" + Qzone_Config.Friends.exportType + "']").attr("checked", "checked");
+		$("input[type='radio'][name='friends_exportFormat'][value='" + options.Friends.exportType + "']").attr("checked", "checked");
 
 		// 收藏夹模块赋值
-		$("#favorites_exportFormat").val(Qzone_Config.Favorites.exportType);
-		$("#favorites_list_cost").val(Qzone_Config.Favorites.querySleep);
-		$("#favorites_list_limit").val(Qzone_Config.Favorites.pageSize);
+		$("#favorites_exportFormat").val(options.Favorites.exportType);
+		$("#favorites_list_cost").val(options.Favorites.querySleep);
+		$("#favorites_list_limit").val(options.Favorites.pageSize);
+	}
 
+	// 读取数据，第一个参数是指定要读取的key以及设置默认值
+	chrome.storage.sync.get(Default_Config, function (options) {
+		console.info('读取配置完成！', options);
+		window.Qzone_Config = options;
+		loadOptions(options);
 	});
 
-
-
-	$('#saveQzoneConfig').click(() => {
-
+	let setOptions = () => {
 		// 说说模块赋值
 		Qzone_Config.Messages.exportType = $("#messages_exportFormat").val();
 		Qzone_Config.Messages.randomSeconds.min = $("#messages_list_cost_min").val();
@@ -84,6 +90,7 @@
 		Qzone_Config.Messages.Comments.isFull = $("#messages_download_full_comments").prop("checked");
 		Qzone_Config.Messages.Comments.randomSeconds.min = $("#messages_comments_min").val();
 		Qzone_Config.Messages.Comments.randomSeconds.max = $("#messages_comments_max").val();
+		Qzone_Config.Messages.Comments.pageSize = $("#messages_comments_limit").val();
 
 
 		// 日志模块赋值
@@ -92,21 +99,24 @@
 		Qzone_Config.Blogs.randomSeconds.max = $("#blogs_list_cost_max").val();
 		Qzone_Config.Blogs.pageSize = $("#blogs_list_limit").val();
 
-		// 说说评论副职
+		// 说说评论赋值
 		Qzone_Config.Blogs.Comments.isFull = $("#blogs_download_full_comments").prop("checked");
 		Qzone_Config.Blogs.Comments.randomSeconds.min = $("#blogs_comments_min").val();
 		Qzone_Config.Blogs.Comments.randomSeconds.max = $("#blogs_comments_max").val();
+		Qzone_Config.Blogs.Comments.pageSize = $("#blogs_comments_limit").val();
 
 		// 私密日志赋值
-		Qzone_Config.Diaries.exportType = $("#diaries_exportFormat").val();
-		Qzone_Config.Diaries.querySleep = $("#diaries_list_cost").val();
+		Qzone_Config.Diaries.exportType = $("#diaries_exportFormat").val();		
+		Qzone_Config.Diaries.randomSeconds.min = $("#diaries_list_cost_min").val();
+		Qzone_Config.Diaries.randomSeconds.max = $("#diaries_list_cost_max").val();
 		Qzone_Config.Diaries.pageSize = $("#diaries_list_limit").val();
 
 		// 相册模块赋值
 		Qzone_Config.Photos.exportType = $("#photos_exportFormat").val();
 		Qzone_Config.Photos.querySleep = $("#photos_list_cost").val();
 		Qzone_Config.Photos.pageSize = $("#photos_list_limit").val();
-		Qzone_Config.Photos.downCount = $("#photos_down_limit").val();
+		Qzone_Config.Photos.downloadType = $("#photos_down_type").val();		
+		Qzone_Config.Photos.downloadThread = $("#photos_down_thread").val();
 		Qzone_Config.Photos.exifType = $("#photos_exifType").val();
 
 		// 视频模块赋值
@@ -130,7 +140,19 @@
 		chrome.storage.sync.set(Qzone_Config, function () {
 			console.info("保存成功！");
 		});
+	}
 
+	// 保存按钮
+	$('#saveQzoneConfig').click(() => {
+		setOptions();
+	})
+
+	// 重置按钮
+	$('#resetQzoneConfig').click(() => {
+		// 读取数据，第一个参数是指定要读取的key以及设置默认值	
+		let data_config = $('#nav-tab>a.nav-item.nav-link.active').attr('data-config');
+		Qzone_Config[data_config] = Default_Config[data_config]
+		loadOptions(Qzone_Config);
 	})
 
 	const readerTable = (tableId, columns, data) => {
@@ -164,8 +186,6 @@
 
 	// 读取数据
 	chrome.storage.local.get(QZone, function (QZone) {
-
-
 		// 设置目标信息
 		$("#qzone_title").text(QZone.Common.Target.title);
 

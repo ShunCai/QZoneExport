@@ -66,3 +66,29 @@ String.prototype.format = function (args) {
 String.prototype.replaceAll = function (search, target) {
     return this.replace(new RegExp(search, "gm"), target);
 }
+
+/**
+ * 数组查找索引
+ */
+Array.prototype.indexOf = function (val, field) {
+    if (field) {
+        return this.findIndex((obj) => {
+            if (obj[field] === val) {
+                return obj;
+            }
+        })
+    } else {
+        return this.indexOf(val);
+    }
+    return -1;
+};
+
+/**
+ * 删除元素
+ */
+Array.prototype.remove = function (val, field) {
+    var index = this.indexOf(val, field);
+    if (index > -1) {
+        this.splice(index, 1);
+    }
+};

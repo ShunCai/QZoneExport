@@ -1,4 +1,93 @@
 // 默认配置
+var Default_Config = {
+    // 说说模块
+    Messages: {
+        exportType: "markdown",
+        pageSize: 40,
+        randomSeconds: {
+            min: 1,
+            max: 3
+        },
+        Comments: {
+            isFull: true,
+            pageSize: 20,
+            randomSeconds: {
+                min: 1,
+                max: 3
+            }
+        }
+    },
+    // 日志模块
+    Blogs: {
+        exportType: "markdown",
+        pageSize: 50,
+        randomSeconds: {
+            min: 1,
+            max: 3
+        },
+        Comments: {
+            isFull: true,
+            pageSize: 50,
+            randomSeconds: {
+                min: 1,
+                max: 3
+            }
+        }
+    },
+    // 私密日记模块
+    Diaries: {
+        exportType: "markdown",
+        pageSize: 50,
+        randomSeconds: {
+            min: 1,
+            max: 3
+        }
+    },
+    // 相册模块
+    Photos: {
+        exportType: "folder",
+        pageSize: 90,
+        randomSeconds: {
+            min: 1,
+            max: 3
+        },
+        Images: {
+            exportType: "file",
+            pageSize: 90,            
+            downloadType: 'zip',
+            downloadThread: 5,
+            exifType: "hd",
+            randomSeconds: {
+                min: 1,
+                max: 3
+            }
+        }
+    },
+    // 视频模块
+    Videos: {
+        exportType: "downlist",
+        querySleep: 2,
+        pageSize: 20
+    },
+    // 留言板模块
+    Boards: {
+        exportType: "markdown",
+        querySleep: 2,
+        pageSize: 20
+    },
+    // QQ好友模块
+    Friends: {
+        exportType: "excel"
+    },
+    // 收藏夹模块
+    Favorites: {
+        exportType: "markdown",
+        querySleep: 2,
+        pageSize: 20
+    },
+};
+
+// 用户配置
 var Qzone_Config = {
     // 说说模块
     Messages: {
@@ -37,16 +126,31 @@ var Qzone_Config = {
     // 私密日记模块
     Diaries: {
         exportType: "markdown",
-        querySleep: 2,
-        pageSize: 50
+        pageSize: 50,
+        randomSeconds: {
+            min: 1,
+            max: 3
+        }
     },
     // 相册模块
     Photos: {
-        exportType: "file",
-        querySleep: 2,
+        exportType: "folder",
         pageSize: 90,
-        downCount: 5,
-        exifType: "hd"
+        randomSeconds: {
+            min: 1,
+            max: 3
+        },
+        Images: {
+            exportType: "file",
+            pageSize: 90,
+            downloadType: 'zip',
+            downloadThread: 5,
+            exifType: "hd",
+            randomSeconds: {
+                min: 1,
+                max: 3
+            }
+        }
     },
     // 视频模块
     Videos: {
@@ -71,6 +175,7 @@ var Qzone_Config = {
         pageSize: 20
     },
 };
+
 
 const FOLDER_ROOT = '/QQ空间备份/';
 var QZone = {

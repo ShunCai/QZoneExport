@@ -35,7 +35,8 @@
                 "vendor/blob/Blob.js",
                 "vendor/StreamSaver/StreamSaver.js",
                 "vendor/StreamSaver/zip-stream.js",
-                "vendor/sheetjs/xlsx.full.min.js",
+                "vendor/sheetjs/xlsx.full.min.js",                
+                "vendor/thunder/thunder-link.js",
                 "js/utils.js",
                 "js/config.js",
                 "js/api.js",
@@ -45,8 +46,7 @@
                 "vendor/bootstrap/css/bootstrap.min.css",
                 "vendor/bootstrap/css/bootstrap-table.min.css",
                 "css/content.css"
-            ],
-            "run_at": "document_start"
+            ]
         }
     ],
     "page_action": {
@@ -55,7 +55,7 @@
         "default_popup": "html/popup.html"
     },
     "options_page": "html/options.html",
-    "content_security_policy": "script-src 'self' 'unsafe-eval' https://github.lvshuncai.com/; frame-src 'self' https://github.lvshuncai.com/; object-src 'self'",
+    "content_security_policy": "script-src 'self' 'unsafe-eval' https://github.lvshuncai.com/ https://open.thunderurl.com/; frame-src 'self' https://github.lvshuncai.com/ https://open.thunderurl.com/; object-src 'self'",
     "permissions": [
         "activeTab",
         "cookies",
