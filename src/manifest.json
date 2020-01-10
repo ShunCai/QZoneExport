@@ -1,8 +1,7 @@
 {
     "manifest_version": 2,
     "name": "QQ空间导出助手",
-    "short_name": "QQ空间备份",
-    "description": "QQ空间导出助手，用于备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友为文件，供永久保存",
+    "description": "QQ空间导出助手，用于导出备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友、收藏夹为文件，便于迁移与保存",
     "version": "1.0.2",
     "icons": {
         "128": "img/icon-128.png"
@@ -35,7 +34,7 @@
                 "vendor/blob/Blob.js",
                 "vendor/StreamSaver/StreamSaver.js",
                 "vendor/StreamSaver/zip-stream.js",
-                "vendor/sheetjs/xlsx.full.min.js",                
+                "vendor/sheetjs/xlsx.full.min.js",
                 "vendor/thunder/thunder-link.js",
                 "js/utils.js",
                 "js/config.js",
@@ -62,6 +61,8 @@
         "notifications",
         "storage",
         "unlimitedStorage",
+        "downloads",
+        "downloads.shelf",
         "contextMenus",
         "declarativeContent",
         "<all_urls>"

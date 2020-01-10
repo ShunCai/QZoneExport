@@ -3,6 +3,15 @@
  */
 const QZone_URLS = {
 
+    /** 说说列表URL */
+    MESSAGES_LIST_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6",
+
+    /** 说说详情URL */
+    MESSAGES_DETAIL_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msgdetail_v6",
+
+    /** 说说评论列表URL */
+    MESSAGES_COMMONTS_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msgdetail_v6",
+
     /** 日志列表URL */
     BLOGS_LIST_URL: "https://user.qzone.qq.com/proxy/domain/b.qzone.qq.com/cgi-bin/blognew/get_abs",
 
@@ -29,15 +38,6 @@ const QZone_URLS = {
 
     /** 好友亲密度 */
     INTIMACY_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/main_page_cgi",
-
-    /** 说说列表URL */
-    MESSAGES_LIST_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6",
-
-    /** 说说详情URL */
-    MESSAGES_DETAIL_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msgdetail_v6",
-
-    /** 说说评论列表URL */
-    MESSAGES_COMMONTS_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msgdetail_v6",
 
     /** 留言板列表URL */
     BOARD_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/m.qzone.qq.com/cgi-bin/new/get_msgb',
@@ -67,7 +67,7 @@ API.Utils = {
     /**
      * 转换为ArrayBuffer
      */
-    toArrayBuffer: function (str) {
+    toArrayBuffer(str) {
         let buf = new ArrayBuffer(str.length)
         let view = new Uint8Array(buf)
         for (let i = 0; i !== str.length; ++i) {
@@ -81,7 +81,7 @@ API.Utils = {
      * @param {array} data 数据集合
      * @param {string} timeField 时间字段名
      */
-    groupedByTime: function (data, timeField) {
+    groupedByTime(data, timeField) {
         data = data || [];
         let groupData = new Map();
         data.forEach(function (item) {
@@ -111,7 +111,7 @@ API.Utils = {
      * @param {funcation} doneFun 
      * @param {funcation} failFun 
      */
-    writeFile: function (content, filepath, doneFun, failFun) {
+    writeFile(content, filepath, doneFun, failFun) {
         QZone.Common.Filer.write(filepath, { data: content, type: "text/plain", append: true }, (fileEntry) => {
             doneFun(fileEntry);
         }, (err) => {
@@ -128,7 +128,7 @@ API.Utils = {
      * @param {funcation} doneFun 
      * @param {funcation} failFun 
      */
-    writeExcel: function (buffer, filepath, doneFun, failFun) {
+    writeExcel(buffer, filepath, doneFun, failFun) {
         QZone.Common.Filer.write(filepath, { data: buffer }, (fileEntry) => {
             doneFun(fileEntry);
         }, (err) => {
@@ -143,19 +143,23 @@ API.Utils = {
      * @param {string} url 文件URL
      * @param {funcation} doneFun 回调函数
      */
-    getMimeType: function (url, doneFun) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('HEAD', url, true);
-        xhr.onreadystatechange = function () {
-            if (2 == xhr.readyState) {
-                var ret = {
-                    mimeType: xhr.getResponseHeader('content-type') || xhr.getResponseHeader('Content-Type'),
-                    size: xhr.getResponseHeader('content-length') || xhr.getResponseHeader('Content-Length')
-                };
-                doneFun(ret);
-            }
-        };
-        xhr.send();
+    getMimeType(url) {
+        return new Promise(function (resolve, reject) {
+            url = url.replace(/http:\//, "https:/");
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onreadystatechange = function () {
+                if (2 == xhr.readyState) {
+                    var ret = {
+                        mimeType: xhr.getResponseHeader('content-type') || xhr.getResponseHeader('Content-Type'),
+                        size: xhr.getResponseHeader('content-length') || xhr.getResponseHeader('Content-Length')
+                    };
+                    this.abort();
+                    resolve(ret);
+                }
+            };
+            xhr.send();
+        });
     },
 
     /**
@@ -165,7 +169,7 @@ API.Utils = {
      * @param {funcation} doneFun 
      * @param {funcation} failFun 
      */
-    writeImage: function (url, path, isMimeType) {
+    writeImage(url, path, isMimeType) {
         return new Promise(async function (resolve, reject) {
             await API.Utils.send(url, 'blob').then((xhr) => {
                 let res = xhr.response;
@@ -189,7 +193,7 @@ API.Utils = {
      * @param {function} doneFun 
      * @param {function} failFun 
      */
-    Zip: function (root) {
+    Zip(root) {
         return new Promise(async function (resolve, reject) {
             let zipOneFile = function (entry) {
                 let newName = encodeURIComponent(entry.name);
@@ -227,7 +231,7 @@ API.Utils = {
      * @param {string} url 
      * @param {string} responseType 
      */
-    send: function (url, responseType) {
+    send(url, responseType) {
         return new Promise(function (resolve, reject) {
             var request = new XMLHttpRequest();
             request.open("GET", url);
@@ -248,17 +252,15 @@ API.Utils = {
      * 下载文件
      * @param {string} url 
      */
-    downloadFile: function (url) {
+    downloadFile(url) {
         return API.Utils.send(url, 'blob');
     },
 
     /**
      * GET 请求
      * @param {*} url 
-     * @param {*} doneFun 
-     * @param {*} failFun 
      */
-    get: function (url) {
+    get(url) {
         return new Promise(function (resolve, reject) {
             $.ajax({
                 url: url,
@@ -277,7 +279,7 @@ API.Utils = {
      * @param {string} url 
      * @param {object} params
      */
-    post: function (url, params) {
+    post(url, params) {
         return new Promise(function (resolve, reject) {
             $.ajax({
                 url: url,
@@ -298,7 +300,7 @@ API.Utils = {
      * 获取URL参数值
      * @param {string} name 
      */
-    getUrlParam: function (name) {
+    getUrlParam(name) {
         var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
         var r = window.location.search.substr(1).match(reg);
         if (r != null) return decodeURI(r[2]); return null;
@@ -309,7 +311,7 @@ API.Utils = {
      * @param {string} url 
      * @param {string} name 
      */
-    getUrlParam: function (url, name) {
+    getUrlParam(url, name) {
         var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
         var r = url.search.substr(1).match(reg);
         if (r != null) return decodeURI(r[2]); return null;
@@ -319,7 +321,7 @@ API.Utils = {
      * 获取URL参数值
      * @param {string} url 
      */
-    toParams: function (url) {
+    toParams(url) {
         var reg_url = /^[^\?]+\?([\w\W]+)$/,
             reg_para = /([^&=]+)=([\w\W]*?)(&|$|#)/g,
             arr_url = reg_url.exec(url),
@@ -338,7 +340,7 @@ API.Utils = {
      * @param {string} url 
      * @param {object} params 
      */
-    toUrl: function (url, params) {
+    toUrl(url, params) {
         let paramsArr = [];
         if (params) {
             Object.keys(params).forEach(item => {
@@ -358,7 +360,7 @@ API.Utils = {
      * 获得一个Cookie值
      * @param {string} name 
      */
-    getCookie: function (name) {
+    getCookie(name) {
         if (location.protocol === 'chrome-extension:') {
             chrome.cookies.get({
                 url: "https://user.qzone.qq.com",
@@ -377,7 +379,7 @@ API.Utils = {
     /**
      * 从 HTML 页面找到 token 保存起来
      */
-    getQzoneToken: function () {
+    getQzoneToken() {
         $("script").each(function () {
             var t = $(this).text();
             t = t.replace(/\ /g, "");
@@ -396,7 +398,7 @@ API.Utils = {
     /**
      * 从 HTML 页面找到用户信息
      */
-    getOwnerProfile: function () {
+    getOwnerProfile() {
         $("script").each(function () {
             var t = $(this).text();
             t = t.replace(/\ /g, "");
@@ -418,7 +420,7 @@ API.Utils = {
     /**
      * 获取QQ号
      */
-    initUin: function () {
+    initUin() {
         // 获取目标QQ
         let rs = /\/user\.qzone\.qq\.com\/([\d]+)/.exec(window.location.href);
         if (rs) {
@@ -437,7 +439,7 @@ API.Utils = {
      * 生成 g_tk
      * @param {string} url
      */
-    initGtk: function (url) {
+    initGtk(url) {
         var skey;
         url = url || window.location.href;
         if (url.indexOf("qzone.qq.com") > 0) {
@@ -457,14 +459,14 @@ API.Utils = {
     /**
      * @param {integer} ms 毫秒
      */
-    sleep: function (ms) {
+    sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms))
     },
 
     /**
      * 生成一个UUID
      */
-    newUid: function () {
+    newUid() {
         var s4 = function () {
             return Math.floor((1 + Math.random()) * 0x10000)
                 .toString(16)
@@ -479,7 +481,7 @@ API.Utils = {
      *
      * @param {原名} name
      */
-    filenameValidate: function (name) {
+    filenameValidate(name) {
         var reg = new RegExp(/'|#|&| |!|\\|\/|:|\?|"|<|>|\*|\|/g);
         name = name.replace(reg, "_");
         return name;
@@ -490,7 +492,7 @@ API.Utils = {
      * @param {int} num 
      * @param {int} length 
      */
-    prefixNumber: function (num, length) {
+    prefixNumber(num, length) {
         return (Array(length).join('0') + num).slice(-length);
     },
 
@@ -498,7 +500,7 @@ API.Utils = {
      * 转码
      * @param {string} b 
      */
-    decode: function (b) {
+    decode(b) {
         return b && b.replace(/(%2C|%25|%7D)/g, function (b) {
             return unescape(b);
         })
@@ -507,7 +509,7 @@ API.Utils = {
     /**
      * 获取超链接
      */
-    getLink: (url, title, type) => {
+    getLink(url, title, type) {
         // 默认HTML超链接
         let res = "<a href='{url}' target='_blank'>{title}</a>";
         switch (type) {
@@ -526,7 +528,7 @@ API.Utils = {
     /**
      * 获取用户空间地址
      */
-    getUserLink: (uin, nickName) => {
+    getUserLink(uin, nickName) {
         return API.Utils.getLink('https://user.qzone.qq.com/' + uin, nickName);
     },
 
@@ -535,7 +537,7 @@ API.Utils = {
      * @param {string} contet @内容
      * @param {string} type 转换类型，默认TEXT,可选HTML,MD
      */
-    formatMention: function (contet, type) {
+    formatMention(contet, type) {
         if (!contet) {
             return contet;
         }
@@ -564,7 +566,7 @@ API.Utils = {
      * @param {string} contet 表情内容
      * @param {string} type 转换类型，默认TEXT,可选HTML,MD
      */
-    formatEmoticon: function (contet, type) {
+    formatEmoticon(contet, type) {
         if (!contet) {
             return contet;
         }
@@ -591,7 +593,7 @@ API.Utils = {
      * @param {string} contet URL
      * @param {string} type 转换类型，默认TEXT,可选HTML,MD
      */
-    urlFormat: function (contet, type) {
+    urlFormat(contet, type) {
         if (!contet) {
             return contet;
         }
@@ -609,7 +611,7 @@ API.Utils = {
     /**
      * 转换HTML特殊字符
      */
-    escHTML: (content) => {
+    escHTML(content) {
         var l = { "&amp;": /&/g, "&lt;": /</g, "&gt;": />/g, "&#039;": /\x27/g, "&quot;": /\x22/g };
         for (var i in l) {
             content = content.replace(l[i], i);
@@ -620,14 +622,14 @@ API.Utils = {
     /**
      * 获取分享来源标题
      */
-    getURLTitle: (item, index) => {
+    getURLTitle(item, index) {
         return item["url_title_" + index] || "";
     },
 
     /**
      * 获取评论数
      */
-    getCommentCount: (item) => {
+    getCommentCount(item) {
         return item.replies || item.reply_num || item.cmtnum || 0;
     },
 
@@ -637,7 +639,7 @@ API.Utils = {
      * @param {string} type 转换类型，默认TEXT,可选HTML,MD
      * @param {boolean} isRt 是否是处理转发内容
      */
-    formatContent: function (item, type, isRt) {
+    formatContent(item, type, isRt) {
         if (typeof item === 'string') {
             // 转换特殊符号
             item = API.Utils.escHTML(item);
@@ -726,7 +728,7 @@ API.Utils = {
      * 字节转换大小
      * @param {byte} bytes 
      */
-    bytesToSize: function (bytes) {
+    bytesToSize(bytes) {
         var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
         if (bytes == 0) return 'n/a';
         var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
@@ -738,7 +740,7 @@ API.Utils = {
      * 创建文件夹
      * @param {string} path 
      */
-    createFolder: function (path) {
+    createFolder(path) {
         return new Promise(function (resolve, reject) {
             QZone.Common.Filer.mkdir(path, false, (entry) => {
                 resolve(entry);
@@ -779,7 +781,7 @@ API.Utils = {
      * 转换时间
      *  @param {integer} time 
      */
-    formatDate: (time) => {
+    formatDate(time) {
         return new Date(time * 1000).format('yyyy-MM-dd hh:mm:ss');
     },
 
@@ -788,7 +790,7 @@ API.Utils = {
      *  @param {string} json 
      *  @param {string} jsonpKey 
      */
-    toJson: (json, jsonpKey) => {
+    toJson(json, jsonpKey) {
         json = json.replace(jsonpKey, "");
         json = json.replace(/\);$/, "");
         return JSON.parse(json);
@@ -799,7 +801,7 @@ API.Utils = {
      * @param {string} content 内容
      * @param {string} type 转换类型，默认HTML,MD
      */
-    formatTopic: (content, type) => {
+    formatTopic(content, type) {
         return content.replace(/^(?!&)#((?:.|<br\/>)+?)(?!&)#/gi, function (t, e) {
             let url = 'http://rc.qzone.qq.com/qzonesoso/?search=' + encodeURIComponent(e);
             let res = '<a href="{0}" target="_blank">{1}</a>'.format(url, API.Utils.escHTML(t));
@@ -817,7 +819,9 @@ API.Utils = {
     /**
      * 随机秒数
      */
-    randomSeconds: (min, max) => {
+    randomSeconds(min, max) {
+        min = min - 0;
+        max = max - 0;
         var range = max - min;
         var random = Math.random();
         var num = min + Math.round(random * range); //四舍五入
@@ -827,7 +831,7 @@ API.Utils = {
     /**
      * 获取用户空间的头像地址
      */
-    getUserLogoUrl: (uin) => {
+    getUserLogoUrl(uin) {
         return "http://qlogo{host}.store.qq.com/qzone/{uin}/{uin}/{size}".format({
             host: uin % 4 || 1,
             uin: uin,
@@ -838,8 +842,44 @@ API.Utils = {
     /**
      * 是否获取结束
      */
-    hasNextPage: (pageIndex, pageSize, total, list) => {
+    hasNextPage(pageIndex, pageSize, total, list) {
         return list.length < total && pageIndex * pageSize < total;
+    },
+
+    /**
+     * 替换URL
+     * @param {string} url URL
+     */
+    replaceUrl(url) {
+        url = url || '';
+        if (url.indexOf('//p.qpimg.cn/cgi-bin/cgi_imgproxy') > -1) {
+            // 替换图片代理URL为实际URL
+            url = API.Utils.toParams(url)['url'] || url
+            url = url.replace(/http:\//, "https:/")
+        }
+        return url
+    },
+
+    /**
+     * 迅雷下载
+     * @param {DownloadInfo} taskInfo 
+     */
+    downloadByThunder(taskInfo) {
+        thunderLink.newTask(taskInfo);
+    },
+
+    /**
+     * 浏览器下载(发送消息给背景页下载)
+     * @param {object} options
+     */
+    downloadByBrowser(options, callback) {
+        chrome.runtime.sendMessage({
+            from: 'content',
+            type: 'download_browser',
+            options: options
+        }, function (res) {
+            callback(res)
+        })
     }
 };
 
@@ -848,7 +888,7 @@ API.Utils = {
  */
 API.Blogs = {
 
-    getBlogMediaTypeTitle: function (e) {
+    getBlogMediaTypeTitle(e) {
         var t = {
             0: "日志中包含图片",
             13: "日志中包含视频"
@@ -861,7 +901,7 @@ API.Blogs = {
         return null;
     },
 
-    getBlogLabel: function (e) {
+    getBlogLabel(e) {
         var t = [["8", "审核不通过"], ["22", "审核中"], ["4", "顶"], ["21", "荐"], ["3", "转"], ["28", "转"], ["35", "转"], ["36", "转"]];
         var a = '';
         for (var o = 0; o < t.length; o++) {
@@ -877,7 +917,7 @@ API.Blogs = {
         return a;
     },
 
-    getEffectBit: function (e, t) {
+    getEffectBit(e, t) {
         if (t < 0 || t > 63) {
             throw new Error("nBit param error")
         }
@@ -894,7 +934,7 @@ API.Blogs = {
      * @param {string} uin QQ号
      * @param {integer} page 第几页
      */
-    getBlogs: function (page) {
+    getBlogs(page) {
         let params = {
             "hostUin": QZone.Common.Target.uin,
             "uin": QZone.Common.Owner.uin,
@@ -921,7 +961,7 @@ API.Blogs = {
      *
      * @param {integer} blogid 日志ID
      */
-    getInfo: function (blogid) {
+    getInfo(blogid) {
         let params = {
             "uin": QZone.Common.Target.uin,
             "blogid": blogid,
@@ -948,7 +988,7 @@ API.Blogs = {
      * @param {string} uin QQ号
      * @param {integer} page 第几页
      */
-    getComments: function (blogid, page) {
+    getComments(blogid, page) {
         let params = {
             "uin": QZone.Common.Owner.uin,
             "num": Qzone_Config.Blogs.Comments.pageSize,
@@ -971,7 +1011,7 @@ API.Blogs = {
      * @param {object} 日志信息
      * @param {function} 回调函数
      */
-    getAllComments: (item, callback) => {
+    getAllComments(item, callback) {
         // 清空原有的评论列表
         item.comments = [];
 
@@ -1035,7 +1075,7 @@ API.Diaries = {
      *
      * @param {integer} page 第几页
      */
-    getDiaries: function (page) {
+    getDiaries(page) {
         let params = {
             "uin": QZone.Common.Owner.uin,
             "vuin": QZone.Common.Owner.uin,
@@ -1061,7 +1101,7 @@ API.Diaries = {
     * @param {string} uin QQ号
     * @param {integer} blogid 日志ID
     */
-    getInfo: function (blogid) {
+    getInfo(blogid) {
         let params = {
             "uin": QZone.Common.Owner.uin,
             "blogid": blogid,
@@ -1087,7 +1127,7 @@ API.Friends = {
      * 获取QQ好友列表
      * @param {string} uin QQ号
      */
-    getFriends: function () {
+    getFriends() {
         let params = {
             "uin": QZone.Common.Owner.uin,
             "follow_flag": "0",//是否获取关注的认证空间
@@ -1102,7 +1142,7 @@ API.Friends = {
     /**
      * 获取QQ好友详情
      */
-    getQzoneUserInfo: function () {
+    getQzoneUserInfo() {
         let params = {
             "uin": QZone.Common.Target.uin,
             "vuin": QZone.Common.Owner.uin,
@@ -1119,7 +1159,7 @@ API.Friends = {
     /**
      * 获取QQ好友添加时间
      */
-    getFriendshipTime: function () {
+    getFriendshipTime() {
         let params = {
             "activeuin": QZone.Common.Owner.uin,
             "passiveuin": QZone.Common.Target.uin,
@@ -1134,7 +1174,7 @@ API.Friends = {
     /**
      * 获取好友亲密度
      */
-    getIntimacy: function () {
+    getIntimacy() {
         let params = {
             "uin": QZone.Common.Target.uin,
             "param": "15",
@@ -1154,7 +1194,7 @@ API.Messages = {
      * 获取说说列表
      * @param {integer} page 第几页
      */
-    getMessages: function (page) {
+    getMessages(page) {
         let params = {
             "uin": QZone.Common.Target.uin,
             "ftype": "0",
@@ -1179,7 +1219,7 @@ API.Messages = {
      * @param data 需要转换的数据
      * @param onprocess 获取评论进度回调函数
      */
-    convert: async (data, onprocess) => {
+    convert(data, onprocess) {
         console.debug("原始数据：", data);
         data = data || [];
         for (let index = 0; index < data.length; index++) {
@@ -1195,23 +1235,10 @@ API.Messages = {
             }
             // 内容
             item.custom_content = item.content;
-            if (item.has_more_con === 1) {
-                // 长说说
-                let content_data = await API.Messages.getFullContent(item.custom_id);
-                content_data = API.Utils.toJson(content_data, /^_Callback\(/);
-                item.content = content_data.content;
-                item.conlist = content_data.conlist || [];
-            }
             // 评论
             item.custom_comments = item.commentlist || [];
             // 评论数
             item.custom_comment_total = API.Utils.getCommentCount(item);
-            if (item.custom_comment_total > item.custom_comments.length && Qzone_Config.Messages.Comments.isFull) {
-                // 获取所有的评论
-                // 长说说
-                let comments_list = await API.Messages.getAllComments(item, onprocess);
-                item.custom_comments = comments_list;
-            }
             // 配图
             item.custom_images = item.pic || [];
             // 配图数
@@ -1245,11 +1272,6 @@ API.Messages = {
                 uin: item.rt_uin || '',
                 nickname: item.rt_uinname || ''
             };
-            if (item.rt_uin && item.rt_has_more_con === 1) {
-                let content_data = await API.Messages.getFullContent(item.tid);
-                content_data = API.Utils.toJson(content_data, /^_Callback\(/);
-                item.rt_con = content_data.rt_con;
-            }
             // 来源
             item.custom_source = {
                 id: item.source_appid,
@@ -1270,7 +1292,7 @@ API.Messages = {
      * 获取说说全文
      * @param {integer} id 说说ID
      */
-    getFullContent: function (id) {
+    getFullContent(id) {
         let params = {
             "qzonetoken": QZone.Common.Config.token,
             "g_tk": QZone.Common.Config.gtk,
@@ -1291,7 +1313,7 @@ API.Messages = {
      * 获取说说评论列表
      * @param {integer} page 第几页
      */
-    getComments: function (id, page) {
+    getComments(id, page) {
         let params = {
             "uin": QZone.Common.Target.uin,
             "tid": id,
@@ -1314,7 +1336,7 @@ API.Messages = {
      * 递归获取所有的评论
      * @param {string} item 说说信息
      */
-    getAllComments: async (item, commentProgress) => {
+    async getAllComment(item, commentProgress) {
         // 清空原有评论列表
         item.custom_comments = [];
 
@@ -1366,7 +1388,7 @@ API.Messages = {
     /**
      * 转换媒体内容
      */
-    formatMedia: (item) => {
+    formatMedia(item) {
         let images = item.custom_images || [];
         let videos = item.custom_video || [];
         let audios = item.custom_audio || [];
@@ -1461,7 +1483,7 @@ API.Messages = {
      * 获取视频连接
      * @param {object} 视频信息
      */
-    getVideoUrl: (video) => {
+    getVideoUrl(video) {
         // URL3个人相册视频？
         let url = video.url3;
         if (video.source_type == "share") {
@@ -1497,7 +1519,7 @@ API.Boards = {
      * 获取留言板列表
      * @param {integer} page 第几页
      */
-    getBoards: function (page) {
+    getBoards(page) {
         let params = {
             "uin": QZone.Common.Owner.uin,
             "hostUin": QZone.Common.Target.uin,
@@ -1523,7 +1545,7 @@ API.Photos = {
      * 获取相册列表
      * @param {integer} page 当前页
      */
-    getPhotos: function (page) {
+    getPhotos(page) {
         let params = {
             "g_tk": QZone.Common.Config.gtk,
             "callback": "shine0_Callback",
@@ -1558,7 +1580,7 @@ API.Photos = {
      * @param {string} topicId 相册ID
      * @param {string} page 当前页
      */
-    getImages: function (topicId, page) {
+    getImages(topicId, page) {
         let params = {
             "g_tk": QZone.Common.Config.gtk,
             "callback": "shine0_Callback",
@@ -1592,7 +1614,7 @@ API.Photos = {
     /**
      * 获取相片外链(无权限也可以访问)
      */
-    getExternalUrl: function (oldurl) {
+    getExternalUrl(oldurl) {
         let reg = /http\w?:\/\/.*?\/psb\?\/(.*?)\/(.*?)\/\w\/(.*?)$/gi
         let result;
         let newurl;
@@ -1608,7 +1630,7 @@ API.Photos = {
      * 转换URL
      * @param {string} e 
      */
-    trimDownloadUrl: function (url) {
+    trimDownloadUrl(url) {
         if (url && url.indexOf("?t=5&") > 0) {
             url = url.replace("?t=5&", "?")
         } else if (url && url.indexOf("?t=5") > 0) {
@@ -1623,7 +1645,7 @@ API.Photos = {
      * 获取照片下载URL
      * @param {object} photo 
      */
-    getDownloadUrl: function (photo) {
+    getDownloadUrl(photo) {
         if (photo.origin_upload == 1) {
             return API.Photos.trimDownloadUrl(photo.origin_url || photo.url);
         } else if (photo.raw_upload == 1) {
@@ -1644,7 +1666,7 @@ API.Videos = {
      * 获取视频列表
      * @param {integer} page 当前页
      */
-    getVideos: function (page) {
+    getVideos(page) {
         let params = {
             "g_tk": QZone.Common.Config.gtk,
             "callback": "shine0_Callback",
@@ -1678,7 +1700,7 @@ API.Favorites = {
     /**
      * 获取查询类型
      */
-    getQueryType: (innerType) => {
+    getQueryType(innerType) {
         let Fav_Tyep = {
             0: "全部",
             1: "日志",
@@ -1697,7 +1719,7 @@ API.Favorites = {
     /**
      * 获取类型
      */
-    getType: (innerType) => {
+    getType(innerType) {
         let Fav_Tyep = {
             0: "全部",
             1: "网页",
@@ -1715,7 +1737,7 @@ API.Favorites = {
     /**
      * 转换数据
      */
-    convert: (data) => {
+    convert(data) {
         console.debug("原始数据：", data);
         for (var i = 0; i < data.length; i++) {
             let temp = data[i];
@@ -1787,7 +1809,7 @@ API.Favorites = {
      * 获取收藏列表
      * @param {integer} page 当前页
      */
-    getFavorites: function (page) {
+    getFavorites(page) {
         let params = {
             "uin": QZone.Common.Owner.uin,
             "type": "0",

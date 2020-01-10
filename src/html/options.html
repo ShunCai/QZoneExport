@@ -99,7 +99,8 @@
 					<div class="container-fluid">
 						<nav>
 							<div class="nav nav-tabs" id="nav-tab" role="tablist">
-								<a class="nav-item nav-link active" id="nav-messages-tab" data-config="Messages" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="true">说说</a>
+								<a class="nav-item nav-link active" id="nav-common-tab" data-config="Messages" data-toggle="tab" href="#nav-common" role="tab" aria-controls="nav-common" aria-selected="true">公共配置</a>
+								<a class="nav-item nav-link" id="nav-messages-tab" data-config="Messages" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="true">说说</a>
 								<a class="nav-item nav-link" id="nav-blogs-tab" data-config="Blogs" data-toggle="tab" href="#nav-blogs" role="tab" aria-controls="nav-blogs" aria-selected="false">日志</a>
 								<a class="nav-item nav-link" id="nav-diaries-tab" data-config="Diaries" data-toggle="tab" href="#nav-diaries" role="tab" aria-controls="nav-diaries" aria-selected="false">私密日记</a>
 								<a class="nav-item nav-link" id="nav-photos-tab" data-config="Photos" data-toggle="tab" href="#nav-photos" role="tab" aria-controls="nav-photos" aria-selected="false">相册</a>
@@ -110,7 +111,20 @@
 							</div>
 						</nav>
 						<div class="tab-content" id="nav-tabContent">
-							<div class="tab-pane fade show active" id="nav-messages" role="tabpanel" aria-labelledby="nav-messages-tab">
+							<div class="tab-pane fade show active" id="nav-common" role="tabpanel" aria-labelledby="nav-common-tab">
+								<br />
+								<form id="tb_common">
+									<div class="form-group row">
+										<div class="col-sm-2">下载状态栏：</div>
+										<div class="custom-control custom-checkbox">
+											<input type="checkbox" class="custom-control-input" id="common_download_status">
+											<label style="margin-left: 14px;" class="custom-control-label" for="common_download_status" aria-describedby="common_download_status_help"></label>
+											<small id="common_download_status_help" class="text-muted">勾选表示不禁用，禁用后，会影响整个浏览器下载文件时无状态栏提醒，适用于备份方式为下载管理器的情况</small>
+										</div>
+									</div>
+								</form>
+							</div>
+							<div class="tab-pane fade" id="nav-messages" role="tabpanel" aria-labelledby="nav-messages-tab">
 								<br />
 								<form id="tb_messages">
 									<h5>说说选项：</h5>
@@ -501,8 +515,8 @@
 	<script src="../vendor/bootstrap/js/bootstrap-datepicker.min.js"></script>
 	<script src="../vendor/bootstrap/js/bootstrap-datepicker.zh-CN.min.js"></script>
 	<script src="../vendor/bootstrap/js/bootstrap-table-filter-control.min.js"></script>
-	<script src="../vendor/bootstrap/js/bootstrap-table-export.min.js"></script>	
-	<script src="../vendor/thunder/thunder-link.js"></script>
+	<script src="../vendor/bootstrap/js/bootstrap-table-export.min.js"></script>
+	<!-- <script src="../vendor/thunder/thunder-link.js"></script> -->
 	<script src="../js/config.js"></script>
 	<script src="../js/utils.js"></script>
 	<script src="../js/api.js"></script>

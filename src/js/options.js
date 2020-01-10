@@ -13,6 +13,10 @@
 	});
 
 	let loadOptions = (options) => {
+		// 公共模块赋值
+		$('#common_download_status').attr("checked", options.Common.enabledShelf);
+		chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
+
 		// 说说模块赋值
 		$("#messages_exportFormat").val(options.Messages.exportType);
 		$("#messages_list_cost_min").val(options.Messages.randomSeconds.min);
@@ -22,7 +26,7 @@
 		// 说说评论选项
 		$("#messages_download_full_comments").attr("checked", options.Messages.Comments.isFull);
 		$("#messages_comments_min").val(options.Messages.Comments.randomSeconds.min);
-		$("#messages_comments_max").val(options.Messages.Comments.randomSeconds.max);		
+		$("#messages_comments_max").val(options.Messages.Comments.randomSeconds.max);
 		$("#messages_comments_limit").val(options.Messages.Comments.pageSize);
 
 		// 日志模块赋值
@@ -46,7 +50,8 @@
 
 		// 相册模块赋值
 		$("#photos_exportFormat").val(options.Photos.exportType);
-		$("#photos_list_cost").val(options.Photos.querySleep);
+		$("#photos_list_cost_min").val(options.Photos.randomSeconds.min);
+		$("#photos_list_cost_max").val(options.Photos.randomSeconds.max);
 		$("#photos_list_limit").val(options.Photos.pageSize);
 		$("#photos_down_type").val(options.Photos.downloadType);
 		$("#photos_down_thread").val(options.Photos.downloadThread);
@@ -54,11 +59,14 @@
 
 		// 视频模块赋值
 		$("#videos_exportFormat").val(options.Videos.exportType);
-		$("#videos_list_cost").val(options.Videos.querySleep);
+		$("#videos_list_cost_min").val(options.Videos.randomSeconds.min);
+		$("#videos_list_cost_max").val(options.Videos.randomSeconds.max);
 		$("#videos_list_limit").val(options.Videos.pageSize);
 
 		// 留言板模块赋值
 		$("#boards_exportFormat").val(options.Boards.exportType);
+		$("#boards_list_cost_min").val(options.Boards.randomSeconds.min);
+		$("#boards_list_cost_max").val(options.Boards.randomSeconds.max);
 		$("#boards_list_cost").val(options.Boards.querySleep);
 		$("#boards_list_limit").val(options.Boards.pageSize);
 
@@ -67,7 +75,8 @@
 
 		// 收藏夹模块赋值
 		$("#favorites_exportFormat").val(options.Favorites.exportType);
-		$("#favorites_list_cost").val(options.Favorites.querySleep);
+		$("#favorites_list_cost_min").val(options.Favorites.randomSeconds.min);
+		$("#favorites_list_cost_max").val(options.Favorites.randomSeconds.max);
 		$("#favorites_list_limit").val(options.Favorites.pageSize);
 	}
 
@@ -79,63 +88,72 @@
 	});
 
 	let setOptions = () => {
+
+		// 公共模块赋值
+		Qzone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
+		chrome.downloads.setShelfEnabled(Qzone_Config.Common.enabledShelf);
+
 		// 说说模块赋值
 		Qzone_Config.Messages.exportType = $("#messages_exportFormat").val();
-		Qzone_Config.Messages.randomSeconds.min = $("#messages_list_cost_min").val();
-		Qzone_Config.Messages.randomSeconds.max = $("#messages_list_cost_max").val();
-		Qzone_Config.Messages.pageSize = $("#messages_list_limit").val();
+		Qzone_Config.Messages.randomSeconds.min = $("#messages_list_cost_min").val() * 1;
+		Qzone_Config.Messages.randomSeconds.max = $("#messages_list_cost_max").val() * 1;
+		Qzone_Config.Messages.pageSize = $("#messages_list_limit").val() * 1;
 
 
 		// 说说评论副职
 		Qzone_Config.Messages.Comments.isFull = $("#messages_download_full_comments").prop("checked");
-		Qzone_Config.Messages.Comments.randomSeconds.min = $("#messages_comments_min").val();
-		Qzone_Config.Messages.Comments.randomSeconds.max = $("#messages_comments_max").val();
-		Qzone_Config.Messages.Comments.pageSize = $("#messages_comments_limit").val();
+		Qzone_Config.Messages.Comments.randomSeconds.min = $("#messages_comments_min").val() * 1;
+		Qzone_Config.Messages.Comments.randomSeconds.max = $("#messages_comments_max").val() * 1;
+		Qzone_Config.Messages.Comments.pageSize = $("#messages_comments_limit").val() * 1;
 
 
 		// 日志模块赋值
 		Qzone_Config.Blogs.exportType = $("#blogs_exportFormat").val();
-		Qzone_Config.Blogs.randomSeconds.min = $("#blogs_list_cost_min").val();
-		Qzone_Config.Blogs.randomSeconds.max = $("#blogs_list_cost_max").val();
-		Qzone_Config.Blogs.pageSize = $("#blogs_list_limit").val();
+		Qzone_Config.Blogs.randomSeconds.min = $("#blogs_list_cost_min").val() * 1;
+		Qzone_Config.Blogs.randomSeconds.max = $("#blogs_list_cost_max").val() * 1;
+		Qzone_Config.Blogs.pageSize = $("#blogs_list_limit").val() * 1;
 
 		// 说说评论赋值
 		Qzone_Config.Blogs.Comments.isFull = $("#blogs_download_full_comments").prop("checked");
-		Qzone_Config.Blogs.Comments.randomSeconds.min = $("#blogs_comments_min").val();
-		Qzone_Config.Blogs.Comments.randomSeconds.max = $("#blogs_comments_max").val();
-		Qzone_Config.Blogs.Comments.pageSize = $("#blogs_comments_limit").val();
+		Qzone_Config.Blogs.Comments.randomSeconds.min = $("#blogs_comments_min").val() * 1;
+		Qzone_Config.Blogs.Comments.randomSeconds.max = $("#blogs_comments_max").val() * 1;
+		Qzone_Config.Blogs.Comments.pageSize = $("#blogs_comments_limit").val() * 1;
 
 		// 私密日志赋值
-		Qzone_Config.Diaries.exportType = $("#diaries_exportFormat").val();		
-		Qzone_Config.Diaries.randomSeconds.min = $("#diaries_list_cost_min").val();
-		Qzone_Config.Diaries.randomSeconds.max = $("#diaries_list_cost_max").val();
-		Qzone_Config.Diaries.pageSize = $("#diaries_list_limit").val();
+		Qzone_Config.Diaries.exportType = $("#diaries_exportFormat").val();
+		Qzone_Config.Diaries.randomSeconds.min = $("#diaries_list_cost_min").val() * 1;
+		Qzone_Config.Diaries.randomSeconds.max = $("#diaries_list_cost_max").val() * 1;
+		Qzone_Config.Diaries.pageSize = $("#diaries_list_limit").val() * 1;
 
 		// 相册模块赋值
 		Qzone_Config.Photos.exportType = $("#photos_exportFormat").val();
-		Qzone_Config.Photos.querySleep = $("#photos_list_cost").val();
-		Qzone_Config.Photos.pageSize = $("#photos_list_limit").val();
-		Qzone_Config.Photos.downloadType = $("#photos_down_type").val();		
-		Qzone_Config.Photos.downloadThread = $("#photos_down_thread").val();
+		Qzone_Config.Photos.pageSize = $("#photos_list_limit").val() * 1;
+		Qzone_Config.Photos.randomSeconds.min = $("#photos_list_cost_min").val() * 1;
+		Qzone_Config.Photos.randomSeconds.max = $("#photos_list_cost_max").val() * 1;
+		Qzone_Config.Photos.downloadType = $("#photos_down_type").val();
+		Qzone_Config.Photos.downloadThread = $("#photos_down_thread").val() * 1;
 		Qzone_Config.Photos.exifType = $("#photos_exifType").val();
 
 		// 视频模块赋值
 		Qzone_Config.Videos.exportType = $("#videos_exportFormat").val();
-		Qzone_Config.Videos.querySleep = $("#videos_list_cost").val();
-		Qzone_Config.Videos.pageSize = $("#videos_list_limit").val();
+		Qzone_Config.Videos.randomSeconds.min = $("#videos_list_cost_min").val() * 1;
+		Qzone_Config.Videos.randomSeconds.min = $("#videos_list_cost_max").val() * 1;
+		Qzone_Config.Videos.pageSize = $("#videos_list_limit").val() * 1;
 
 		// 留言板模块赋值
 		Qzone_Config.Boards.exportType = $("#boards_exportFormat").val();
-		Qzone_Config.Boards.querySleep = $("#boards_list_cost").val();
-		Qzone_Config.Boards.pageSize = $("#boards_list_limit").val();
+		Qzone_Config.Boards.randomSeconds.min = $("#boards_list_cost_min").val() * 1;
+		Qzone_Config.Boards.randomSeconds.max = $("#boards_list_cost_max").val() * 1;
+		Qzone_Config.Boards.pageSize = $("#boards_list_limit").val() * 1;
 
 		// 好友模块赋值
 		Qzone_Config.Friends.exportType = $("#friends_exportFormat").val();
 
 		// 收藏夹模块赋值
 		Qzone_Config.Favorites.exportType = $("#favorites_exportFormat").val();
-		Qzone_Config.Favorites.querySleep = $("#favorites_list_cost").val();
-		Qzone_Config.Favorites.pageSize = $("#favorites_list_limit").val();
+		Qzone_Config.Favorites.randomSeconds.min = $("#favorites_list_cost_min").val() * 1;
+		Qzone_Config.Favorites.randomSeconds.max = $("#favorites_list_cost_max").val() * 1;
+		Qzone_Config.Favorites.pageSize = $("#favorites_list_limit").val() * 1;
 
 		chrome.storage.sync.set(Qzone_Config, function () {
 			console.info("保存成功！");
@@ -454,3 +472,4 @@
 
 	});
 });
+

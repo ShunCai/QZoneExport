@@ -70,7 +70,7 @@ String.prototype.replaceAll = function (search, target) {
 /**
  * 数组查找索引
  */
-Array.prototype.indexOf = function (val, field) {
+Array.prototype.getIndex = function (val, field) {
     if (field) {
         return this.findIndex((obj) => {
             if (obj[field] === val) {
@@ -80,14 +80,13 @@ Array.prototype.indexOf = function (val, field) {
     } else {
         return this.indexOf(val);
     }
-    return -1;
 };
 
 /**
  * 删除元素
  */
 Array.prototype.remove = function (val, field) {
-    var index = this.indexOf(val, field);
+    var index = this.getIndex(val, field);
     if (index > -1) {
         this.splice(index, 1);
     }
