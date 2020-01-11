@@ -1378,7 +1378,7 @@ API.Messages = {
                 for (let index = 0; index < images.length; index++) {
                     const image = images[index];
                     let url = isQzoneUrl ? image.custom_url : image.custom_filepath
-                    result.push('<img src="{0}" width="300px" align="center" />\n'.format(url));
+                    result.push('<img src="{0}" width="200px" align="center" />\n'.format(url));
                 }
                 result.push('</div>\n');
                 result.push('\r\n\r\n');
@@ -1392,7 +1392,7 @@ API.Messages = {
                     for (let j = 0; j < _image_list.length; j++) {
                         const _temp = _image_list[j];
                         let url = isQzoneUrl ? _temp.custom_url : _temp.custom_filepath
-                        result.push('<img src="{0}" width="300px" height="300px" align="center" />\n'.format(url));
+                        result.push('<img src="{0}" width="200px" height="200px" align="center" />\n'.format(url));
                     }
                     result.push('</div>\n');
                 }
@@ -1407,7 +1407,7 @@ API.Messages = {
                     for (let j = 0; j < _image_list.length; j++) {
                         const _temp = _image_list[j];
                         let url = isQzoneUrl ? _temp.custom_url : _temp.custom_filepath
-                        result.push('<img src="{0}" width="300px" height="300px" align="center" />\n'.format(url));
+                        result.push('<img src="{0}" width="200px" height="200px" align="center" />\n'.format(url));
                     }
                     result.push('</div>\n');
                 }
@@ -1422,7 +1422,7 @@ API.Messages = {
                     for (let j = 0; j < _image_list.length; j++) {
                         const _temp = _image_list[j];
                         let url = isQzoneUrl ? _temp.custom_url : _temp.custom_filepath
-                        result.push('<img src="{0}" width="300px" height="300px" align="center" />\n'.format(url));
+                        result.push('<img src="{0}" width="200px" height="200px" align="center" />\n'.format(url));
                     }
                     result.push('</div>\n');
                 }
