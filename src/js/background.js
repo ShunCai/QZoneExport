@@ -1,5 +1,6 @@
 // 浏览器下载信息，用于更改文件名
 let BrowseDownloads = new Map();
+let QZoneDownloadId = 0;
 
 /**
  * PageAction监听
@@ -55,6 +56,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             sendResponse(id);
           });
           break;
+        case 'show_export_zip':
+          // 打开下载的ZIP文件
+          chrome.downloads.show(QZoneDownloadId);
+          break;
         default:
           console.warn('Background 接收到消息，但未识别类型！', request);
           break;
@@ -72,9 +77,17 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
  */
 chrome.downloads.onDeterminingFilename.addListener(function (item, suggest) {
   console.debug("添加到下载管理器前：", item);
+  let filename = item.filename;
+  let downloadInfo = BrowseDownloads.get(item.id);
+  if (downloadInfo) {
+    filename = downloadInfo['filename'];
+  }
+  if (filename.startsWith('QQ空间备份') && filename.endsWith('.zip')) {
+    // 备份文件
+    QZoneDownloadId = item.id;
+  }
   suggest({
-    filename: BrowseDownloads.get(item.id)['filename'] || item.filename,
-    conflictAction: 'overwrite'
+    filename: filename
   });
   console.debug("添加到下载管理器后：", item);
 });

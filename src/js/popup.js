@@ -51,7 +51,7 @@
         // 显示信息
         $("#loginUin").text(data.Owner.uin);
         $("#targetUin").text(data.Target.uin);
-        $("#userType").text(isOwner ? '备份个人' : '备份他人');
+        $("#userType").text(isOwner ? '个人模式' : '他人模式');
 
         $("#Diaries").attr("checked", isOwner);
         $("#Diaries").attr("disabled", !isOwner);

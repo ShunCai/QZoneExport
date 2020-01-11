@@ -1,9 +1,9 @@
 streamSaver.mitm = 'https://github.lvshuncai.com/StreamSaver.js/mitm.html'
 
 /**
- * 下载任务
+ * 迅雷任务
  */
-class DownloadTask {
+class ThunderTask {
 
     /**
      * 
@@ -25,14 +25,14 @@ class DownloadTask {
 }
 
 /**
- * 下载信息
+ * 迅雷任务信息
  */
-class DownloadInfo {
+class ThunderInfo {
 
     /**
      * 
      * @param {string} dir 下载目录
-     * @param {DownloadTask} tasks 任务
+     * @param {ThunderTask} tasks 任务
      * @param {string} tip 文件地址
      */
     constructor(taskGroupName, tasks) {
@@ -42,7 +42,7 @@ class DownloadInfo {
 
     /**
     * 添加下载任务
-    * @param {DownloadTask} task 任务
+    * @param {ThunderTask} task 任务
     */
     addTask(task) {
         this.tasks.push(task);
@@ -66,44 +66,101 @@ class DownloadInfo {
 }
 
 /**
+ * 浏览器下载任务
+ */
+class BrowserTask {
+
+    /**
+     * 
+     * @param {string} url 下载地址
+     * @param {filename} filename 文件名称
+     */
+    constructor(url, filename) {
+        this.url = url
+        this.filename = filename
+    }
+}
+
+/**
  * 备份进度
  */
 class StatusIndicator {
+
+    /**
+     * 提示DOM元素ID
+     */
+    static DOM_INFO = {
+        Messages: 'Messages_Tips',
+        Messages_Full_Content: 'Messages_Full_Content_Tips',
+        Messages_Comments: 'Messages_Comments_Tips',
+        Messages_Export: 'Messages_Export_Tips',
+        Messages_Images: 'Messages_Images_Tips',
+        Blogs: 'Blogs_Tips',
+        Blogs_Comments: 'Blogs_Comments_Tips',
+        Diaries: 'Diaries_Tips',
+        Friends: 'Friends_Tips',
+        Boards: 'Boards_Tips',
+        Photos: 'Photos_Tips',
+        Photos_Images: 'Photos_Images_Tips',
+        Videos: 'Videos_Tips',
+        Images: 'Images_Tips',
+    }
 
     /**
      * 提示信息
      */
     static MAX_MSG = {
         Messages: [
-            '正在获取第 <span style="color: #1ca5fc;">{page}</span> 页的说说列表',
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的说说列表',
+            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+            '请稍后...'
+        ],
+        Messages_Full_Content: [
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的全文',
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
             '已失败 <span style="color: red;">{downloadFailed}</span> 条',
             '总共 <span style="color: #1ca5fc;">{total}</span> 条',
             '请稍后...'
         ],
         Messages_Comments: [
-            '正在获取第 <span style="color: #1ca5fc;">{page}</span> 条说说的评论列表',
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的评论列表',
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
             '已失败 <span style="color: red;">{downloadFailed}</span> 条',
             '总共 <span style="color: #1ca5fc;">{total}</span> 条',
             '请稍后...'
         ],
+        Messages_Export: [
+            '正在导出说说',
+            '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+            '请稍后...'
+        ],
+        Messages_Images: [
+            '正在导出说说配图',
+            '已下载 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+            '请稍后...'
+        ],
         Blogs: [
-            '正在获取第 <span style="color: #1ca5fc;">{page}</span> 页的日志列表',
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的日志列表',
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
             '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
             '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
             '请稍后...'
         ],
         Blogs_Comments: [
-            '正在获取第 <span style="color: #1ca5fc;">{page}</span> 篇日志的评论列表',
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日志的评论列表',
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
             '已失败 <span style="color: red;">{downloadFailed}</span> 条',
             '总共 <span style="color: #1ca5fc;">{total}</span> 条',
             '请稍后...'
         ],
         Diaries: [
-            '正在获取第 <span style="color: #1ca5fc;">{page}</span> 页的私密日记列表',
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的私密日记列表',
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
             '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
             '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
@@ -116,28 +173,28 @@ class StatusIndicator {
             '请稍后...'
         ],
         Boards: [
-            '正在获取第 <span style="color: #1ca5fc;">{page}</span> 页的留言板列表',
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的留言板列表',
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
             '已失败 <span style="color: red;">{downloadFailed}</span> 条',
             '总共 <span style="color: #1ca5fc;">{total}</span> 条',
             '请稍后...'
         ],
         Photos: [
-            '正在获取第 <span style="color: #1ca5fc;">{page}</span> 页的相册列表',
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的相册列表',
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
             '已失败 <span style="color: red;">{downloadFailed}</span> 个',
             '总共 <span style="color: #1ca5fc;">{total}</span> 个',
             '请稍后...'
         ],
         Photos_Images: [
-            '正在获取第 <span style="color: #1ca5fc;">{page}</span> 个相册的相片列表',
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 个相册的相片列表',
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
             '已失败 <span style="color: red;">{downloadFailed}</span> 个',
             '总共 <span style="color: #1ca5fc;">{total}</span> 个',
             '请稍后...'
         ],
         Videos: [
-            '正在获取第 <span style="color: #1ca5fc;">{page}</span> 页的视频列表',
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的视频列表',
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
             '已失败 <span style="color: red;">{downloadFailed}</span> 个',
             '总共 <span style="color: #1ca5fc;">{total}</span> 个',
@@ -154,37 +211,19 @@ class StatusIndicator {
 
     /**
      * 
-     * @param {string} id dom的id
      * @param {string} type 导出类型
      */
-    constructor(id, type) {
-        this.id = id
+    constructor(type) {
+        this.id = StatusIndicator.DOM_INFO[type] || (type + '_Tips')
         this.type = type
         this.tip = StatusIndicator.MAX_MSG[type] || ''
         this.total = 0
-        this.page = 0
+        this.index = 0
         this.pageSize = 0
         this.exported = 0
         this.downloaded = 0
         this.downloading = 0
         this.downloadFailed = 0
-        this.data = {
-            success: [],
-            failed: []
-        }
-    }
-
-    /**
-     * 添加数据
-     * @param {string} dataType 数据类型
-     * @param {string} data 数据
-     */
-    addData(dataType, data) {
-        if (Array.isArray(data)) {
-            this.data[dataType] = this.data[dataType].concat(data)
-            return
-        }
-        this.data[dataType].push(data)
     }
 
     /**
@@ -211,7 +250,7 @@ class StatusIndicator {
     complete() {
         let $tip_dom = $("#" + this.id);
         $tip_dom.show();
-        $tip_dom.html(this.tip.join('，').format(this).replace('正在获取', '已获取').replace('请稍后', '已完成'));
+        $tip_dom.html(this.tip.join('，').format(this).replace('正在获取', '已获取').replace('正在导出', '已导出').replace('请稍后', '已完成'));
     }
 
     /**
@@ -226,7 +265,6 @@ class StatusIndicator {
      * 下载失败
      */
     addFailed(item) {
-        this.addData('failed', item)
         let count = 1;
         if (Array.isArray(item)) {
             count = item.length;
@@ -243,7 +281,6 @@ class StatusIndicator {
      * 下载成功
      */
     addSuccess(item) {
-        this.addData('success', item)
         let count = 1;
         if (Array.isArray(item)) {
             count = item.length;
@@ -263,18 +300,15 @@ class StatusIndicator {
     }
 }
 
-
-
-
 /**
  * 导出操作
  */
-class ExportOperator {
+class QZoneOperator {
 
     /**
      * 操作类型
      */
-    static SortOperatorType = ['INIT', 'SHOW', 'MESSAGES_LIST', 'BLOG_LIST', 'DIARY_LIST', 'PHOTO_LIST', 'VIDEO_LIST', 'BOARD_LIST', 'FRIEND_LIST', 'AWAIT_IMAGES', 'ZIP']
+    static SortOperatorType = ['INIT', 'SHOW', 'MESSAGES_LIST', 'BLOG_LIST', 'DIARY_LIST', 'PHOTO_LIST', 'VIDEO_LIST', 'BOARD_LIST', 'FRIEND_LIST', 'IMAGES_LIST', 'ZIP', 'COMPLETE']
 
     /**
      * 操作类型
@@ -328,19 +362,24 @@ class ExportOperator {
         /**
          * 等待日志图片下载完成
          */
-        AWAIT_IMAGES: 'AWAIT_IMAGES',
+        IMAGES_LIST: 'IMAGES_LIST',
 
         /**
          * 压缩
          */
-        ZIP: 'ZIP'
+        ZIP: 'ZIP',
+
+        /**
+         * 压缩
+         */
+        COMPLETE: 'COMPLETE'
     }
 
     /**
      * 下一步操作
      */
     async next(nextType) {
-        let operatorType = ExportOperator.OperatorType
+        let operatorType = QZoneOperator.OperatorType
         switch (nextType) {
             case operatorType.INIT:
                 this.init();
@@ -356,12 +395,15 @@ class ExportOperator {
                 // 获取说说列表
                 await API.Utils.sleep(500);
                 await API.Messages.export();
-                break;
-            case operatorType.AWAIT_IMAGES:
-                // 压缩
-                await API.Utils.Zip(FOLDER_ROOT);
+                this.next(operatorType.ZIP);
                 break;
             case operatorType.ZIP:
+                await API.Utils.sleep(500);
+                // 压缩
+                await API.Utils.Zip(FOLDER_ROOT);
+                operator.next(operatorType.COMPLETE);
+                break;
+            case operatorType.COMPLETE:
                 // 延迟3秒，确保压缩完
                 await API.Utils.sleep(500);
                 $("#downloadBtn").show();
@@ -378,24 +420,22 @@ class ExportOperator {
      */
     init() {
         if (location.href.indexOf("qzone.qq.com") == -1) {
-            return
+            return;
         }
 
         // 读取配置项
         chrome.storage.sync.get(Default_Config, function (item) {
 
-            Qzone_Config = item
+            Qzone_Config = item;
 
             // 获取gtk
-            API.Utils.initGtk()
+            API.Utils.initGtk();
             // 获取Token
-            API.Utils.getQzoneToken()
+            API.Utils.getQzoneToken();
             // 获取QQ号
-            API.Utils.initUin()
+            API.Utils.initUin();
             // 获取用户信息
-            API.Utils.getOwnerProfile()
-            // 下载任务信息
-            downloadInfo.taskGroupName = QZone.Common.Config.ZIP_NAME + "_" + QZone.Common.Target.uin
+            API.Utils.getOwnerProfile();
 
             // 初始化文件夹
             QZone.Common.Filer.init({ persistent: false, size: 10 * 1024 * 1024 * 1024 }, function (fs) {
@@ -493,6 +533,7 @@ class ExportOperator {
                         $progressbar.text('已下载' + '100%');
                         $downloadBtn.text('已下载');
                         $downloadBtn.attr('disabled', false);
+                        $("#showFolder").show();
                         API.Utils.notification("QQ空间导出助手通知", "你的QQ空间数据下载完成！");
                     });
                 } else {
@@ -517,12 +558,27 @@ class ExportOperator {
                         $progressbar.text('已下载' + '100%');
                         $downloadBtn.text('已下载');
                         $downloadBtn.attr('disabled', false);
+                        $("#showFolder").show();
                         API.Utils.notification("QQ空间导出助手通知", "你的QQ空间数据下载完成！");
                     }).resume();
                 }
             });
 
         });
+
+        let $showFolder = $('#showFolder');
+        $showFolder.click(() => {
+            chrome.runtime.sendMessage({
+                from: 'content',
+                type: 'show_export_zip'
+            });
+        })
+
+        //进度模式窗口隐藏后
+        $('#exampleModalCenter').on('hidden.bs.modal', function () {
+            $("#exampleModalCenter").remove();
+            $("#modalTable").remove();
+        })
     }
 
 
@@ -542,16 +598,19 @@ const MODAL_HTML = `
                     <h3 id="backupStatus">正在导出备份，请不要关闭或刷新当前页面和打开新的QQ空间页面。</h3>
                     <hr/>
                     <div class="container">  
-                        <p id="exportMessages" style="display: none;margin-bottom: 3px;" >正在获取说说，请稍后...</p>
-                        <p id="exportMessages_Comments" style="display: none;margin-bottom: 3px;" >正在获取说说评论，请稍后...</p>            
-                        <p id="exportBlogs" style="display: none;margin-bottom: 3px;" >正在获取日志，请稍后...</p>
-                        <p id="exportBlogs_Comments" style="display: none;margin-bottom: 3px;" >正在获取日志评论，请稍后...</p>
-                        <p id="exportDiaries" style="display: none;margin-bottom: 3px;" >正在获取私密日记，请稍后...</p>
-                        <p id="exportFriends" style="display: none;margin-bottom: 3px;" >正在获取QQ好友信息，请稍后...</p>
-                        <p id="exportBoards" style="display: none;margin-bottom: 3px;" >正在获取留言板，请稍后...</p>
-                        <p id="exportPhotos" style="display: none;margin-bottom: 3px;" >正在获取相册，请稍后...</p>
-                        <p id="exportVideos" style="display: none;margin-bottom: 3px;" >正在获取视频，请稍后...</p>
-                        <p id="exportImages" style="display: none;margin-bottom: 3px;" >正在获取图片，请稍后...</p>
+                        <p id="Messages_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Messages_Full_Content_Tips" style="display: none;margin-bottom: 3px;" ></p>            
+                        <p id="Messages_Comments_Tips" style="display: none;margin-bottom: 3px;" ></p>            
+                        <p id="Messages_Export_Tips" style="display: none;margin-bottom: 3px;" ></p>           
+                        <p id="Messages_Images_Tips" style="display: none;margin-bottom: 3px;" ></p>              
+                        <p id="Blogs_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Blogs_Comments_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Diaries_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Friends_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Boards_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Photos_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Videos_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Images_Tips" style="display: none;margin-bottom: 3px;" ></p>
                     </div>
                     <br/>
                     <div id="progress" class="progress" style="display: none;">
@@ -559,6 +618,7 @@ const MODAL_HTML = `
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button id="showFolder" type="button" class="btn btn-primary" style="display: none;" >下载目录</button>
                     <button id="downloadBtn" type="button" class="btn btn-primary" style="display: none;" >下载</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
                 </div>
@@ -676,9 +736,11 @@ const README_TEXT = `
 `
 
 // 操作器
-const operator = new ExportOperator();
-// 下载文件信息
-const downloadInfo = new DownloadInfo();
+const operator = new QZoneOperator();
+// 迅雷下载信息
+const thunderInfo = new ThunderInfo(QZone.Common.Config.ZIP_NAME);
+// 浏览器下载信息
+const browserTasks = new Array();
 
 /**
  * 初始化监听
@@ -694,7 +756,7 @@ const downloadInfo = new DownloadInfo();
                     switch (request.subject) {
                         case 'startBackup':
                             QZone.Common.ExportType = request.exportType;
-                            operator.next(ExportOperator.OperatorType.SHOW);
+                            operator.next(QZoneOperator.OperatorType.SHOW);
                             port.postMessage({});
                             break;
                         case 'initUin':
@@ -716,176 +778,5 @@ const downloadInfo = new DownloadInfo();
                 break;
         }
     });
-    operator.next(ExportOperator.OperatorType.INIT);
+    operator.next(QZoneOperator.OperatorType.INIT);
 })()
-
-/**
- * 导出说说数据
- */
-API.Messages.export = async () => {
-
-    // 获取所有的说说数据
-    let dataList = await API.Messages.getAllList();
-    console.debug('所有说说列表获取完成', dataList)
-
-    // 获取所有说说的全文
-    //dataList = await API.Messages.getAllFullContent(dataList);
-
-    // 获取所有的说说评论
-    //dataList = await API.Messages.getAllList(dataList);
-
-    // 根据导出类型导出数据    
-    //await API.Messages.exportList(dataList);
-
-}
-
-/**
- * 获取说说一页列表的数据
- * @param {integer} pageIndex 指定页的索引
- * @param {StatusIndicator} indicator 状态更新器
- */
-API.Messages.getList = async (pageIndex, indicator) => {
-    console.debug("开始获取说说列表，当前页：", pageIndex + 1)
-    // 状态更新器当前页
-    indicator.page = pageIndex + 1
-    return await API.Messages.getMessages(pageIndex).then(async (data) => {
-        // 去掉函数，保留json
-        data = API.Utils.toJson(data, /^_preloadCallback\(/)
-
-        console.debug("成功获取说说列表，当前页：", pageIndex + 1, data)
-
-        // 更新状态-下载中的数量
-        indicator.addDownload(Qzone_Config.Messages.pageSize);
-
-        // 返回的总数包括无权限的说说的条目数，这里返回为空时表示无权限获取其它的数据
-        if (data.msglist == null || data.msglist.length == 0) {
-            return QZone.Messages.Data
-        }
-
-        // 更新状态-总数
-        QZone.Messages.total = data.total
-        indicator.setTotal(QZone.Messages.total)
-
-        let dataList = data.msglist || []
-
-        // 转换数据
-        dataList = API.Messages.convert(dataList)
-
-        let message_dir = '说说/images'
-
-        for (const item of dataList) {
-            // 下载说说配图
-            for (const entry of item.custom_images) {
-                let uid = API.Utils.newUid()
-                let url = entry.url2 || entry.url1
-                // 获取图片类型
-                let mimeData = await API.Utils.getMimeType(url);
-                let mimeType = mimeData.mimeType
-                if (mimeType) {
-                    let suffix = mimeType.split('/')[1]
-                    uid = uid + '.' + suffix;
-                }
-                let task = new DownloadTask(uid, message_dir, uid, url, '说说配图', item)
-                // 添加任务
-                downloadInfo.addTask(task);
-            }
-
-            // 下载视频预览图
-            for (const entry of item.custom_video) {
-                let uid = entry.video_id || API.Utils.newUid()
-                let url = entry.url1
-                // 获取图片类型
-                let mimeData = await API.Utils.getMimeType(url);
-                let mimeType = mimeData.mimeType
-                if (mimeType) {
-                    let suffix = mimeType.split('/')[1]
-                    uid = uid + '.' + suffix;
-                }
-                let task = new DownloadTask(uid, message_dir, uid, url, '说说视频', item)
-                // 添加任务
-                downloadInfo.addTask(task);
-            }
-
-            // 下载音乐预览图
-            for (const entry of item.custom_audio) {
-                let uid = entry.albumid || entry.id || API.Utils.newUid()
-                let url = entry.image
-                // 获取图片类型
-                let mimeData = await API.Utils.getMimeType(url);
-                let mimeType = mimeData.mimeType
-                if (mimeType) {
-                    let suffix = mimeType.split('/')[1]
-                    uid = uid + '.' + suffix;
-                }
-                let task = new DownloadTask(uid, message_dir, uid, url, '说说歌曲', item)
-                // 添加任务
-                downloadInfo.addTask(task);
-            }
-        }
-        // 更新状态-下载成功数
-        indicator.addSuccess(dataList)
-        return dataList;
-    })
-}
-
-/**
- * 获取所有说说列表
- */
-API.Messages.getAllList = async () => {
-
-    // 状态更新器
-    let indicator = new StatusIndicator('exportMessages', 'Messages');
-
-    // 开始
-    indicator.print();
-
-    let nextPage = async function (pageIndex, indicator) {
-        let dataList = await API.Messages.getList(pageIndex, indicator).then(async (dataList) => {
-            // 添加到全局变量
-            QZone.Messages.Data = QZone.Messages.Data.concat(dataList);
-
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, Qzone_Config.Messages.pageSize, QZone.Messages.total, QZone.Messages.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = Qzone_Config.Messages.randomSeconds.min;
-                let max = Qzone_Config.Messages.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
-            } else {
-                return dataList;
-            }
-        }).catch(async (e) => {
-            console.error("获取说说列表异常，当前页：", pageIndex + 1, e);
-            indicator.addFailed({
-                pageIndex: pageIndex,
-                pageSize: Qzone_Config.Messages.pageSize,
-                isPage: true
-            });
-            // 当前页失败后，跳过继续请求下一页
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, Qzone_Config.Messages.pageSize, QZone.Messages.total, QZone.Messages.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = Qzone_Config.Messages.randomSeconds.min;
-                let max = Qzone_Config.Messages.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
-            } else {
-                return dataList;
-            }
-        });
-        return dataList;
-    }
-
-    await nextPage(0, indicator);
-
-    // 完成
-    indicator.complete();
-
-    return QZone.Messages.Data
-}

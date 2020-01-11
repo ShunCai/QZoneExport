@@ -16,12 +16,16 @@
 		// 公共模块赋值
 		$('#common_download_status').attr("checked", options.Common.enabledShelf);
 		chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
+		$("#common_download_thread").val(options.Common.downloadThread);
 
 		// 说说模块赋值
 		$("#messages_exportFormat").val(options.Messages.exportType);
+		$("#messages_download_type").val(options.Messages.downloadType);
 		$("#messages_list_cost_min").val(options.Messages.randomSeconds.min);
 		$("#messages_list_cost_max").val(options.Messages.randomSeconds.max);
 		$("#messages_list_limit").val(options.Messages.pageSize);
+		$("#messages_full").attr("checked", options.Messages.isFull);
+
 
 		// 说说评论选项
 		$("#messages_download_full_comments").attr("checked", options.Messages.Comments.isFull);
@@ -54,7 +58,6 @@
 		$("#photos_list_cost_max").val(options.Photos.randomSeconds.max);
 		$("#photos_list_limit").val(options.Photos.pageSize);
 		$("#photos_down_type").val(options.Photos.downloadType);
-		$("#photos_down_thread").val(options.Photos.downloadThread);
 		$("#photos_exifType").val(options.Photos.exifType);
 
 		// 视频模块赋值
@@ -92,12 +95,15 @@
 		// 公共模块赋值
 		Qzone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
 		chrome.downloads.setShelfEnabled(Qzone_Config.Common.enabledShelf);
+		Qzone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
 
 		// 说说模块赋值
 		Qzone_Config.Messages.exportType = $("#messages_exportFormat").val();
+		Qzone_Config.Messages.downloadType = $('#messages_download_type').val();
 		Qzone_Config.Messages.randomSeconds.min = $("#messages_list_cost_min").val() * 1;
 		Qzone_Config.Messages.randomSeconds.max = $("#messages_list_cost_max").val() * 1;
 		Qzone_Config.Messages.pageSize = $("#messages_list_limit").val() * 1;
+		Qzone_Config.Messages.isFull = $("#messages_full").prop("checked");
 
 
 		// 说说评论副职
@@ -131,7 +137,6 @@
 		Qzone_Config.Photos.randomSeconds.min = $("#photos_list_cost_min").val() * 1;
 		Qzone_Config.Photos.randomSeconds.max = $("#photos_list_cost_max").val() * 1;
 		Qzone_Config.Photos.downloadType = $("#photos_down_type").val();
-		Qzone_Config.Photos.downloadThread = $("#photos_down_thread").val() * 1;
 		Qzone_Config.Photos.exifType = $("#photos_exifType").val();
 
 		// 视频模块赋值

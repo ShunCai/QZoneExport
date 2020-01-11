@@ -99,8 +99,7 @@
 					<div class="container-fluid">
 						<nav>
 							<div class="nav nav-tabs" id="nav-tab" role="tablist">
-								<a class="nav-item nav-link active" id="nav-common-tab" data-config="Messages" data-toggle="tab" href="#nav-common" role="tab" aria-controls="nav-common" aria-selected="true">公共配置</a>
-								<a class="nav-item nav-link" id="nav-messages-tab" data-config="Messages" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="true">说说</a>
+								<a class="nav-item nav-link active" id="nav-messages-tab" data-config="Messages" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="true">说说</a>
 								<a class="nav-item nav-link" id="nav-blogs-tab" data-config="Blogs" data-toggle="tab" href="#nav-blogs" role="tab" aria-controls="nav-blogs" aria-selected="false">日志</a>
 								<a class="nav-item nav-link" id="nav-diaries-tab" data-config="Diaries" data-toggle="tab" href="#nav-diaries" role="tab" aria-controls="nav-diaries" aria-selected="false">私密日记</a>
 								<a class="nav-item nav-link" id="nav-photos-tab" data-config="Photos" data-toggle="tab" href="#nav-photos" role="tab" aria-controls="nav-photos" aria-selected="false">相册</a>
@@ -108,38 +107,40 @@
 								<a class="nav-item nav-link" id="nav-boards-tab" data-config="Boards" data-toggle="tab" href="#nav-boards" role="tab" aria-controls="nav-boards" aria-selected="false">留言板</a>
 								<a class="nav-item nav-link" id="nav-friends-tab" data-config="Friends" data-toggle="tab" href="#nav-friends" role="tab" aria-controls="nav-friends" aria-selected="false">好友</a>
 								<a class="nav-item nav-link" id="nav-favorites-tab" data-config="Favorites" data-toggle="tab" href="#nav-favorites" role="tab" aria-controls="nav-favorites" aria-selected="false">收藏夹</a>
+								<a class="nav-item nav-link " id="nav-common-tab" data-config="Messages" data-toggle="tab" href="#nav-common" role="tab" aria-controls="nav-common" aria-selected="false">其它</a>
 							</div>
 						</nav>
 						<div class="tab-content" id="nav-tabContent">
-							<div class="tab-pane fade show active" id="nav-common" role="tabpanel" aria-labelledby="nav-common-tab">
-								<br />
-								<form id="tb_common">
-									<div class="form-group row">
-										<div class="col-sm-2">下载状态栏：</div>
-										<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="common_download_status">
-											<label style="margin-left: 14px;" class="custom-control-label" for="common_download_status" aria-describedby="common_download_status_help"></label>
-											<small id="common_download_status_help" class="text-muted">勾选表示不禁用，禁用后，会影响整个浏览器下载文件时无状态栏提醒，适用于备份方式为下载管理器的情况</small>
-										</div>
-									</div>
-								</form>
-							</div>
-							<div class="tab-pane fade" id="nav-messages" role="tabpanel" aria-labelledby="nav-messages-tab">
+							<div class="tab-pane fade show active" id="nav-messages" role="tabpanel" aria-labelledby="nav-messages-tab">
 								<br />
 								<form id="tb_messages">
-									<h5>说说选项：</h5>
+									<h5 style="color:cadetblue">公共选项：</h5>
 									<hr>
 									<div class="form-group row">
-										<label for="messages_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
+										<label for="messages_exportFormat" class="col-sm-1 col-form-label">说说备份类型：</label>
 										<div class="col-sm-2">
 											<select id="messages_exportFormat" class="custom-select">
-												<option value="markdown" selected>MarkDown</option>
-												<option value="html">HTML</option>
-												<option value="json">JSON</option>
-												<option value="rtf">RTF</option>
+												<option value="MarkDown" selected>MarkDown</option>
+												<option value="HTML">HTML</option>
+												<option value="JSON">JSON</option>
+												<option value="RTF">RTF</option>
 											</select>
 										</div>
 									</div>
+									<div class="form-group row">
+										<label for="messages_download_type" class="col-sm-1 col-form-label">配图备份类型：</label>
+										<div class="col-sm-2">
+											<select id="messages_download_type" class="custom-select" aria-describedby="messages_download_type_help">
+												<option value="File" selected>助手内部</option>
+												<option value="Thunder">迅雷X</option>
+												<option value="Browser">浏览器</option>
+												<option value="QZone">QQ空间外链</option>
+											</select>
+										</div>
+									</div>
+									<br>
+									<h5 style="color:cadetblue">说说选项：</h5>
+									<hr>
 									<div class="form-group row">
 										<label class="col-sm-1 col-form-label">查询间隔：</label>
 										<div class="col-sm-1">
@@ -156,17 +157,17 @@
 											<input type="number" min="20" max="40" class="form-control" id="messages_list_limit" placeholder="查询每页条数">
 										</div>
 									</div>
-									<br>
-									<h5>评论选项：</h5>
-									<hr>
 									<div class="form-group row">
-										<div class="col-sm-1">所有评论：</div>
+										<div class="col-sm-1">全文说说：</div>
 										<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="messages_download_full_comments">
-											<label style="margin-left: 14px;" class="custom-control-label" for="messages_download_full_comments" aria-describedby="messages_comments_help"></label>
-											<small id="messages_comments_help" class="text-muted">默认下载前10条评论，勾选下载全部</small>
+											<input type="checkbox" class="custom-control-input" id="messages_full">
+											<label style="margin-left: 14px;" class="custom-control-label" for="messages_full" aria-describedby="messages_full_help"></label>
+											<small id="messages_full_help" class="text-muted">默认不获取全文，勾选获取全文，适用长说说</small>
 										</div>
 									</div>
+									<br>
+									<h5 style="color:cadetblue">评论选项：</h5>
+									<hr>
 									<div class="form-group row">
 										<label class="col-sm-1 col-form-label">查询间隔：</label>
 										<div class="col-sm-1">
@@ -181,6 +182,14 @@
 										<label for="messages_comments_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="10" max="20" class="form-control" id="messages_comments_limit" placeholder="查询每页条数">
+										</div>
+									</div>
+									<div class="form-group row">
+										<div class="col-sm-1">所有评论：</div>
+										<div class="custom-control custom-checkbox">
+											<input type="checkbox" class="custom-control-input" id="messages_download_full_comments">
+											<label style="margin-left: 14px;" class="custom-control-label" for="messages_download_full_comments" aria-describedby="messages_comments_help"></label>
+											<small id="messages_comments_help" class="text-muted">默认下载前10条评论，勾选下载全部</small>
 										</div>
 									</div>
 								</form>
@@ -352,12 +361,6 @@
 										</div>
 									</div>
 									<div class="form-group row">
-										<label for="photos_down_thread" class="col-sm-1 col-form-label">下载并发量：</label>
-										<div class="col-sm-2">
-											<input type="number" min="5" max="15" class="form-control" id="photos_down_thread" placeholder="下载并发量">
-										</div>
-									</div>
-									<div class="form-group row">
 										<label for="photos_exifType" class="col-sm-1 col-form-label">照片清晰度：</label>
 										<div class="col-sm-2">
 											<select id="photos_exifType" class="custom-select">
@@ -494,6 +497,25 @@
 										<label for="favorites_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="20" max="40" class="form-control" id="favorites_list_limit" placeholder="查询每页条数">
+										</div>
+									</div>
+								</form>
+							</div>
+							<div class="tab-pane fade" id="nav-common" role="tabpanel" aria-labelledby="nav-common-tab">
+								<br />
+								<form id="tb_common">
+									<div class="form-group row">
+										<label for="common_download_thread" class="col-sm-1 col-form-label">下载并发量：</label>
+										<div class="col-sm-2">
+											<input type="number" min="5" max="15" class="form-control" id="common_download_thread" placeholder="下载并发量">
+										</div>
+									</div>
+									<div class="form-group row">
+										<div class="col-sm-1">下载状态栏：</div>
+										<div class="custom-control custom-checkbox">
+											<input type="checkbox" class="custom-control-input" id="common_download_status">
+											<label style="margin-left: 14px;" class="custom-control-label" for="common_download_status" aria-describedby="common_download_status_help"></label>
+											<small id="common_download_status_help" class="text-muted">勾选表示不禁用，禁用后，会影响整个浏览器下载文件时无状态栏提醒，适用于备份方式为下载管理器的情况</small>
 										</div>
 									</div>
 								</form>

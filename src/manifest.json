@@ -39,7 +39,8 @@
                 "js/utils.js",
                 "js/config.js",
                 "js/api.js",
-                "js/content.js"
+                "js/content.js",
+                "js/messages.js"
             ],
             "css": [
                 "vendor/bootstrap/css/bootstrap.min.css",
