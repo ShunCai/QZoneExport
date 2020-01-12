@@ -13,14 +13,15 @@
 	});
 
 	let loadOptions = (options) => {
-		// 公共模块赋值
+		// 公共模块赋值		
+		$("#common_download_type").val(options.Common.downloadType);
+		$('#common_file_suffix').attr("checked", options.Common.isAutoFileSuffix);
 		$('#common_download_status').attr("checked", options.Common.enabledShelf);
 		chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
 		$("#common_download_thread").val(options.Common.downloadThread);
 
 		// 说说模块赋值
 		$("#messages_exportFormat").val(options.Messages.exportType);
-		$("#messages_download_type").val(options.Messages.downloadType);
 		$("#messages_list_cost_min").val(options.Messages.randomSeconds.min);
 		$("#messages_list_cost_max").val(options.Messages.randomSeconds.max);
 		$("#messages_list_limit").val(options.Messages.pageSize);
@@ -92,14 +93,15 @@
 
 	let setOptions = () => {
 
-		// 公共模块赋值
+		// 公共模块赋值		
+		Qzone_Config.Common.isAutoFileSuffix = $('#common_file_suffix').prop("checked");
+		Qzone_Config.Common.downloadType = $('#common_download_type').val();
 		Qzone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
 		chrome.downloads.setShelfEnabled(Qzone_Config.Common.enabledShelf);
 		Qzone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
 
 		// 说说模块赋值
 		Qzone_Config.Messages.exportType = $("#messages_exportFormat").val();
-		Qzone_Config.Messages.downloadType = $('#messages_download_type').val();
 		Qzone_Config.Messages.randomSeconds.min = $("#messages_list_cost_min").val() * 1;
 		Qzone_Config.Messages.randomSeconds.max = $("#messages_list_cost_max").val() * 1;
 		Qzone_Config.Messages.pageSize = $("#messages_list_limit").val() * 1;

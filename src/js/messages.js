@@ -22,9 +22,6 @@ API.Messages.export = async () => {
 
     // 根据导出类型导出数据    
     await API.Messages.exportAllListToFiles(dataList);
-
-    // 下载文件
-    await API.Messages.downloadAllFiles();
 }
 
 /**
@@ -220,7 +217,7 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
             for (let j = 0; j < images.length; j++) {
                 // 处理说说评论的配图
                 const image = images[j];
-                await API.Messages.addDownloadTasks(image, image.hd_url, download_dir, moudel_dir, '说说评论配图');
+                await API.Utils.addDownloadTasks(image, image.hd_url, download_dir, moudel_dir, '说说评论配图');
             }
 
             // 获取评论回复
@@ -230,7 +227,7 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
                 let images = repItem.pic || [];
                 for (let r = 0; r < images.length; r++) {
                     const image = images[r];
-                    await API.Messages.addDownloadTasks(image, image.hd_url, download_dir, moudel_dir, '说说评论回复配图');
+                    await API.Utils.addDownloadTasks(image, image.hd_url, download_dir, moudel_dir, '说说评论回复配图');
                 }
             }
         }
@@ -375,7 +372,6 @@ API.Messages.exportMdToFiles = async (dataList) => {
         for (let monthEntry of monthDataMap) {
             let month = monthEntry[0];
             let items = monthEntry[1];
-            // console.debug('正在构建月份MD内容', year, month, items);
             contents.push("## " + month + "月");
 
             items = await API.Messages.addMediaToTasks(items);
@@ -387,13 +383,11 @@ API.Messages.exportMdToFiles = async (dataList) => {
 
             // 添加成功数量
             indicator.addSuccess(items);
-            // console.debug('构建月份MD内容完成', year, month, items);
         }
         let content = contents.join('\r\n\r\n');
         const yearFilePath = QZone.Messages.ROOT + "/" + year + "年.md";
         let fileEntry = await API.Utils.writeFile(content, yearFilePath);
-        // console.debug('说说年份MD文件生成完成', year, fileEntry);
-        console.debug('生成年份MD文件完成', year);
+        console.debug('生成年份MD文件完成', year, fileEntry);
     }
     indicator.complete();
 }
@@ -403,8 +397,33 @@ API.Messages.exportMdToFiles = async (dataList) => {
  * @param {Array} dataList 数据
  */
 API.Messages.exportJsonToFile = async (dataList) => {
+    // 说说数据根据年份分组
+    let yearDataMap = API.Utils.groupedByTime(dataList, "custom_create_time");
+    let indicator = new StatusIndicator('Messages_Export');
+    indicator.setTotal(dataList.length);
+    for (let yearEntry of yearDataMap) {
+        let year = yearEntry[0];
+        let monthDataMap = yearEntry[1];
+        console.debug('正在生成年份JSON文件', year);
+        let yearItems = [];
+        for (let monthEntry of monthDataMap) {
+            let items = monthEntry[1];
+
+            // 添加说说附件下任务
+            items = await API.Messages.addMediaToTasks(items);
+
+            // 添加成功数量
+            indicator.addSuccess(items);
+            yearItems = yearItems.concat(items);
+        }
+        const yearFilePath = QZone.Messages.ROOT + "/" + year + "年.json";
+        let fileEntry = await API.Utils.writeFile(JSON.stringify(yearItems), yearFilePath);
+        console.debug('生成年份JSON文件完成', year, fileEntry);
+    }
+
     let json = JSON.stringify(dataList);
-    await API.Utils.writeFile(json, QZone.Messages.ROOT + '/' + QZone.Common.Target.uin + '.json');
+    await API.Utils.writeFile(json, QZone.Messages.ROOT + '/ALL.json');
+    indicator.complete();
 }
 
 
@@ -412,7 +431,7 @@ API.Messages.exportJsonToFile = async (dataList) => {
  * 获取说说的MD内容
  */
 API.Messages.getItemMdContent = (item) => {
-    let downloadType = Qzone_Config.Messages.downloadType;
+    let downloadType = Qzone_Config.Common.downloadType;
     let isQzoneUrl = downloadType === 'QZone';
 
     // 地理位置
@@ -501,17 +520,17 @@ API.Messages.addMediaToTasks = async (dataList) => {
         // 下载说说配图
         for (const image of item.custom_images) {
             let url = image.url2 || image.url1;
-            await API.Messages.addDownloadTasks(image, url, download_dir, moudel_dir, '说说配图');
+            await API.Utils.addDownloadTasks(image, url, download_dir, moudel_dir, '说说配图');
         }
 
         // 下载视频预览图
         for (const video of item.custom_video) {
-            await API.Messages.addDownloadTasks(video, video.url1, download_dir, moudel_dir, '说说视频');
+            await API.Utils.addDownloadTasks(video, video.url1, download_dir, moudel_dir, '说说视频');
         }
 
         // 下载音乐预览图
         for (const audio of item.custom_audio) {
-            await API.Messages.addDownloadTasks(audio, audio.image, download_dir, moudel_dir, '说说歌曲');
+            await API.Utils.addDownloadTasks(audio, audio.image, download_dir, moudel_dir, '说说歌曲');
         }
 
         // 获取评论的配图
@@ -521,7 +540,7 @@ API.Messages.addMediaToTasks = async (dataList) => {
             // 评论包含图片
             let images = comment.pic || [];
             for (const image of images) {
-                await API.Messages.addDownloadTasks(image, image.hd_url, download_dir, moudel_dir, '说说评论配图');
+                await API.Utils.addDownloadTasks(image, image.hd_url, download_dir, moudel_dir, '说说评论配图');
             }
 
             // 回复包含图片，理论上回复现在不能回复图片，兼容一下
@@ -529,114 +548,10 @@ API.Messages.addMediaToTasks = async (dataList) => {
             for (const repItem of replies) {
                 let images = repItem.pic || [];
                 for (const image of images) {
-                    await API.Messages.addDownloadTasks(image, image.hd_url, download_dir, moudel_dir, '说说评论回复配图');
+                    await API.Utils.addDownloadTasks(image, image.hd_url, download_dir, moudel_dir, '说说评论回复配图');
                 }
             }
         }
     }
     return dataList;
-}
-
-/**
- * 通过Ajax请求下载文件
- * @param {ThunderTask} tasks
- */
-API.Messages.downloadsByAjax = async (tasks) => {
-    const _tasks = _.chunk(tasks, Qzone_Config.Common.downloadThread);
-    let indicator = new StatusIndicator('Messages_Images');
-    indicator.setTotal(tasks.length);
-    for (let i = 0; i < _tasks.length; i++) {
-        const list = _tasks[i];
-        let down_tasks = [];
-        for (let j = 0; j < list.length; j++) {
-            const photo = list[j];
-            let filepath = QZone.Common.Config.ZIP_NAME + '/' + photo.dir + photo.name;
-            down_tasks.push(API.Utils.writeImage(photo.url, filepath).then((fileEntry) => {
-                // console.debug('下载图片完成', fileEntry);
-                indicator.addSuccess(photo);
-            }).catch((error) => {
-                indicator.addFailed(photo);
-                console.error('下载图片异常', error);
-            }));
-        }
-        await Promise.all(down_tasks);
-    }
-    indicator.complete();
-    return true;
-}
-
-/**
- * 添加图片下载任务
- * @param {string} image 图片对象
- * @param {string} url URL
- * @param {string} download_dir 下载目录
- * @param {string} moudel_dir 模块下载目录
- * @param {string} source 图片来源
- */
-API.Messages.addDownloadTasks = async (image, url, download_dir, moudel_dir, source) => {
-    let downloadType = Qzone_Config.Messages.downloadType;
-    let isQzoneUrl = downloadType === 'QZone';
-    image.custom_url = url;
-    if (isQzoneUrl) {
-        return;
-    }
-    let uid = API.Utils.newUid();
-    url = API.Utils.replaceUrl(url);
-    // 获取图片类型
-    let mimeData = await API.Utils.getMimeType(url);
-    let mimeType = mimeData.mimeType
-    if (mimeType) {
-        let suffix = mimeType.split('/')[1]
-        uid = uid + '.' + suffix;
-    }
-    image.custom_uid = uid;
-    image.custom_mimeType = mimeType;
-    image.custom_dir = 'images';
-    image.custom_filename = uid;
-    image.custom_filepath = 'images/' + uid;
-    // 添加浏览器下载任务
-    browserTasks.push(new BrowserTask(url, download_dir + moudel_dir + uid));
-    // 添加迅雷下载任务
-    thunderInfo.addTask(new ThunderTask(uid, moudel_dir, uid, url, source, item));
-}
-
-/**
- * 通过浏览器下载文件
- */
-API.Messages.downloadByBrowser = async (tasks) => {
-    let indicator = new StatusIndicator('Messages_Images');
-    indicator.setTotal(tasks.length);
-
-    for (const task of tasks) {
-        API.Utils.downloadByBrowser(task);
-        indicator.addSuccess(task);
-    }
-
-    indicator.complete();
-    return true;
-}
-
-/**
- * 下载说说配图
- */
-API.Messages.downloadAllFiles = async () => {
-    let downloadType = Qzone_Config.Messages.downloadType;
-    if (downloadType === 'QZone') {
-        // 使用QQ空间外链时，不需要下载文件
-        return;
-    }
-    switch (downloadType) {
-        case 'File':
-            await API.Messages.downloadsByAjax(thunderInfo.tasks);
-            break;
-        case 'Thunder':
-            API.Utils.downloadByThunder(thunderInfo);
-            break;
-        case 'Browser':
-            API.Messages.downloadByBrowser(browserTasks);
-            break;
-        default:
-            console.warn('未识别类型', downloadType);
-            break;
-    }
 }

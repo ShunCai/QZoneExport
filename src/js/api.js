@@ -77,7 +77,7 @@ API.Utils = {
     },
 
     /**
-     * 根据时间分组
+     * 根据年月份分组数据
      * @param {array} data 数据集合
      * @param {string} timeField 时间字段名
      */
@@ -155,7 +155,13 @@ API.Utils = {
                     this.abort();
                     resolve(ret);
                 }
-            };
+            }
+            xhr.onerror = (e) => {
+                reject(e);
+            }
+            xhr.ontimeout = (e) => {
+                reject(e);
+            }
             xhr.send();
         });
     },
@@ -652,19 +658,6 @@ API.Utils = {
             // 说说内容类型
             switch (info.type) {
                 case 0:
-                    // 艾特某人？
-                    // switch (info.who) {
-                    //     case 3:
-                    //         info.custom_url = "http://rc.qzone.qq.com/myhome/weibo/profile/{uin}".format(info);
-                    //         break;
-                    //     case 2:
-                    //         // 强推朋友APP？
-                    //         info.custom_url = "http://www.pengyou.com/index.php?mod=profile&u={uin}&adtag=from_profile".format(info);
-                    //         break;
-                    //     default:
-                    //         info.custom_url = "http://user.qzone.qq.com/{uin}".format(info);
-                    //         break
-                    // }
                     info.custom_url = "http://user.qzone.qq.com/{uin}".format(info);
                     // 转换特殊符号
                     info.custom_display = API.Utils.escHTML(info.nick);
@@ -866,13 +859,16 @@ API.Utils = {
      * @param {object} options
      */
     downloadByBrowser(options) {
-        chrome.runtime.sendMessage({
-            from: 'content',
-            type: 'download_browser',
-            options: options
-        }, (res) => {
-            console.debug('添加到下载器完成', res);
-        })
+        return new Promise(function (resolve) {
+            chrome.runtime.sendMessage({
+                from: 'content',
+                type: 'download_browser',
+                options: options
+            }, (res) => {
+                resolve(res);
+                console.debug('添加到下载器完成', res);
+            })
+        });
     }
 };
 
@@ -1213,7 +1209,6 @@ API.Messages = {
      * @param onprocess 获取评论进度回调函数
      */
     convert(data) {
-        console.debug("原始数据：", data);
         data = data || [];
         for (let index = 0; index < data.length; index++) {
 
@@ -1276,7 +1271,6 @@ API.Messages = {
             // 创建时间
             item.custom_create_time = API.Utils.formatDate(item.created_time);
         }
-        console.debug("转换数据：", data);
         return data;
     },
 
@@ -1352,7 +1346,7 @@ API.Messages = {
      * 转换媒体内容
      */
     formatMedia(item) {
-        let downloadType = Qzone_Config.Messages.downloadType;
+        let downloadType = Qzone_Config.Common.downloadType;
         let isQzoneUrl = downloadType === 'QZone';
         let images = item.custom_images || [];
         let videos = item.custom_video || [];
@@ -1713,7 +1707,6 @@ API.Favorites = {
      * 转换数据
      */
     convert(data) {
-        console.debug("原始数据：", data);
         for (var i = 0; i < data.length; i++) {
             let temp = data[i];
             temp.custom_create_time = API.Utils.formatDate(temp.create_time);
@@ -1776,7 +1769,6 @@ API.Favorites = {
                 temp.share_info.custom_reason = API.Utils.formatContent(temp.share_info.reason);
             }
         }
-        console.debug("转换数据：", data);
         return data;
     },
 

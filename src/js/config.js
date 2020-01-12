@@ -2,15 +2,18 @@
 var Default_Config = {
     // 公共配置
     Common: {
+        // 附件下载类型
+        downloadType: 'File',
+        // 附件自动识别文件后缀
+        isAutoFileSuffix: true,
         // 照片下载并发数        
         downloadThread: 5,
-        // 是否禁用下载状态栏提醒
-        enabledShelf: true
+        // 是否启用下载状态栏提醒
+        enabledShelf: false
     },
     // 说说模块
     Messages: {
         exportType: "MarkDown",// 内容备份类型
-        downloadType: 'File',// 附件下载类型
         pageSize: 40,
         randomSeconds: {
             min: 2,
@@ -29,7 +32,6 @@ var Default_Config = {
     // 日志模块
     Blogs: {
         exportType: "MarkDown",// 内容备份类型
-        downloadType: 'File',// 附件下载类型
         pageSize: 50,
         randomSeconds: {
             min: 2,
@@ -47,7 +49,6 @@ var Default_Config = {
     // 私密日记模块
     Diaries: {
         exportType: "MarkDown",// 内容备份类型
-        downloadType: 'File',// 附件下载类型
         pageSize: 50,
         randomSeconds: {
             min: 2,
@@ -65,7 +66,6 @@ var Default_Config = {
         Images: {
             exportType: "file",
             pageSize: 90,
-            downloadType: 'zip',
             downloadThread: 5,
             exifType: "hd",
             randomSeconds: {
@@ -111,15 +111,18 @@ var Default_Config = {
 var Qzone_Config = {
     // 公共配置
     Common: {
+        // 附件下载类型
+        downloadType: 'File',
+        // 附件自动识别文件后缀
+        isAutoFileSuffix: true,
         // 照片下载并发数        
         downloadThread: 5,
-        // 是否禁用下载状态栏提醒
-        enabledShelf: true
+        // 是否启用下载状态栏提醒
+        enabledShelf: false
     },
     // 说说模块
     Messages: {
         exportType: "MarkDown",// 内容备份类型
-        downloadType: 'File',// 附件下载类型
         pageSize: 40,
         randomSeconds: {
             min: 2,
@@ -138,7 +141,6 @@ var Qzone_Config = {
     // 日志模块
     Blogs: {
         exportType: "MarkDown",// 内容备份类型
-        downloadType: 'File',// 附件下载类型
         pageSize: 50,
         randomSeconds: {
             min: 2,
@@ -156,7 +158,6 @@ var Qzone_Config = {
     // 私密日记模块
     Diaries: {
         exportType: "MarkDown",// 内容备份类型
-        downloadType: 'File',// 附件下载类型
         pageSize: 50,
         randomSeconds: {
             min: 2,

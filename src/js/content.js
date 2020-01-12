@@ -11,16 +11,12 @@ class ThunderTask {
      * @param {string} dir 下载目录
      * @param {string} name 文件名，包含后缀
      * @param {string} url 文件地址
-     * @param {string} category 类别
-     * @param {object} source 来源
      */
-    constructor(uid, dir, name, url, category, source) {
+    constructor(uid, dir, name, url) {
         this.uid = uid
         this.dir = dir
         this.name = name
-        this.url = (url || '').replace(/http:\//, "https:/");
-        // this.category = category
-        // this.source = source
+        this.url = url.replace(/http:\//, "https:/");
     }
 }
 
@@ -32,12 +28,13 @@ class ThunderInfo {
     /**
      * 
      * @param {string} dir 下载目录
+     * @param {integer} threadCount 下载
      * @param {ThunderTask} tasks 任务
-     * @param {string} tip 文件地址
      */
-    constructor(taskGroupName, tasks) {
+    constructor(taskGroupName, threadCount, tasks) {
         this.taskGroupName = taskGroupName
         this.tasks = tasks || []
+        this.threadCount = threadCount
     }
 
     /**
@@ -76,8 +73,8 @@ class BrowserTask {
      * @param {filename} filename 文件名称
      */
     constructor(url, filename) {
-        this.url = url
-        this.filename = filename
+        this.url = url.replace(/http:\//, "https:/");
+        this.filename = filename;
     }
 }
 
@@ -94,7 +91,6 @@ class StatusIndicator {
         Messages_Full_Content: 'Messages_Full_Content_Tips',
         Messages_Comments: 'Messages_Comments_Tips',
         Messages_Export: 'Messages_Export_Tips',
-        Messages_Images: 'Messages_Images_Tips',
         Blogs: 'Blogs_Tips',
         Blogs_Comments: 'Blogs_Comments_Tips',
         Diaries: 'Diaries_Tips',
@@ -104,6 +100,9 @@ class StatusIndicator {
         Photos_Images: 'Photos_Images_Tips',
         Videos: 'Videos_Tips',
         Images: 'Images_Tips',
+        Common_File: 'Common_File_Tips',
+        Common_Thunder: 'Common_Thunder_Tips',
+        Common_Browser: 'Common_Browser_Tips'
     }
 
     /**
@@ -134,13 +133,6 @@ class StatusIndicator {
         Messages_Export: [
             '正在导出说说',
             '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Messages_Images: [
-            '正在导出说说配图',
-            '已下载 <span style="color: #1ca5fc;">{downloaded}</span> 条',
             '已失败 <span style="color: red;">{downloadFailed}</span> 条',
             '总共 <span style="color: #1ca5fc;">{total}</span> 条',
             '请稍后...'
@@ -200,11 +192,21 @@ class StatusIndicator {
             '总共 <span style="color: #1ca5fc;">{total}</span> 个',
             '请稍后...'
         ],
-        Images: [
-            '正在下载图片',
-            '已下载 <span style="color: #1ca5fc;">{downloaded}</span> 张',
-            '已失败 <span style="color: red;"> {downloadFailed} </span> 张',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        Common_File: [
+            '正在下载文件',
+            '已下载 <span style="color: #1ca5fc;">{downloaded}</span> ',
+            '已失败 <span style="color: red;">{downloadFailed}</span> ',
+            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+            '请稍后...'
+        ],
+        Common_Thunder: [
+            '正在唤起迅雷X下载文件',
+            '请稍后...'
+        ],
+        Common_Browser: [
+            '正在添加下载任务到浏览器',
+            '已添加 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
             '请稍后...'
         ]
     }
@@ -250,7 +252,7 @@ class StatusIndicator {
     complete() {
         let $tip_dom = $("#" + this.id);
         $tip_dom.show();
-        $tip_dom.html(this.tip.join('，').format(this).replace('正在获取', '已获取').replace('正在导出', '已导出').replace('请稍后', '已完成'));
+        $tip_dom.html(this.tip.join('，').format(this).replace('正在', '已').replace('请稍后', '已完成'));
     }
 
     /**
@@ -360,9 +362,9 @@ class QZoneOperator {
         FRIEND_LIST: 'FRIEND_LIST',
 
         /**
-         * 等待日志图片下载完成
+         * 下载文件
          */
-        IMAGES_LIST: 'IMAGES_LIST',
+        FILE_LIST: 'FILE_LIST',
 
         /**
          * 压缩
@@ -395,6 +397,11 @@ class QZoneOperator {
                 // 获取说说列表
                 await API.Utils.sleep(500);
                 await API.Messages.export();
+                this.next(operatorType.FILE_LIST);
+                break;
+            case operatorType.FILE_LIST:
+                // 下载文件
+                await API.Utils.downloadAllFiles();
                 this.next(operatorType.ZIP);
                 break;
             case operatorType.ZIP:
@@ -601,16 +608,17 @@ const MODAL_HTML = `
                         <p id="Messages_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Messages_Full_Content_Tips" style="display: none;margin-bottom: 3px;" ></p>            
                         <p id="Messages_Comments_Tips" style="display: none;margin-bottom: 3px;" ></p>            
-                        <p id="Messages_Export_Tips" style="display: none;margin-bottom: 3px;" ></p>           
-                        <p id="Messages_Images_Tips" style="display: none;margin-bottom: 3px;" ></p>              
+                        <p id="Messages_Export_Tips" style="display: none;margin-bottom: 3px;" ></p>        
                         <p id="Blogs_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Blogs_Comments_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Diaries_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Friends_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Boards_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Photos_Tips" style="display: none;margin-bottom: 3px;" ></p>
-                        <p id="Videos_Tips" style="display: none;margin-bottom: 3px;" ></p>
-                        <p id="Images_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Videos_Tips" style="display: none;margin-bottom: 3px;" ></p>           
+                        <p id="Common_File_Tips" style="display: none;margin-bottom: 3px;" ></p>           
+                        <p id="Common_Thunder_Tips" style="display: none;margin-bottom: 3px;" ></p>        
+                        <p id="Common_Browser_Tips" style="display: none;margin-bottom: 3px;" ></p>   
                     </div>
                     <br/>
                     <div id="progress" class="progress" style="display: none;">
@@ -618,7 +626,7 @@ const MODAL_HTML = `
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button id="showFolder" type="button" class="btn btn-primary" style="display: none;" >下载目录</button>
+                    <button id="showFolder" type="button" class="btn btn-success" style="display: none;" >查看备份</button>
                     <button id="downloadBtn" type="button" class="btn btn-primary" style="display: none;" >下载</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
                 </div>
@@ -780,3 +788,130 @@ const browserTasks = new Array();
     });
     operator.next(QZoneOperator.OperatorType.INIT);
 })()
+
+
+
+/**
+ * 通过Ajax请求下载文件
+ * @param {ThunderTask} tasks
+ */
+API.Utils.downloadsByAjax = async (tasks) => {
+    const _tasks = _.chunk(tasks, Qzone_Config.Common.downloadThread);
+    let indicator = new StatusIndicator('Common_File');
+    indicator.setTotal(tasks.length);
+    for (let i = 0; i < _tasks.length; i++) {
+        const list = _tasks[i];
+        let down_tasks = [];
+        for (let j = 0; j < list.length; j++) {
+            const photo = list[j];
+            let filepath = QZone.Common.Config.ZIP_NAME + '/' + photo.dir + photo.name;
+            down_tasks.push(API.Utils.writeImage(photo.url, filepath).then(() => {
+                indicator.addSuccess(photo);
+            }).catch((error) => {
+                indicator.addFailed(photo);
+                console.error('下载图片异常', error);
+            }));
+        }
+        await Promise.all(down_tasks);
+    }
+    indicator.complete();
+    return true;
+}
+
+/**
+ * 添加图片下载任务
+ * @param {string} image 图片对象
+ * @param {string} url URL
+ * @param {string} download_dir 下载目录
+ * @param {string} moudel_dir 模块下载目录
+ * @param {string} source 图片来源
+ */
+API.Utils.addDownloadTasks = async (image, url, download_dir, moudel_dir) => {
+    let downloadType = Qzone_Config.Common.downloadType;
+    let isQzoneUrl = downloadType === 'QZone';
+    if (isQzoneUrl) {
+        return;
+    }
+    let uid = API.Utils.newUid();
+    url = API.Utils.replaceUrl(url);
+    image.custom_url = url;
+    // 是否获取文件类型
+    if (Qzone_Config.Common.isAutoFileSuffix) {
+        // 获取图片类型
+        await API.Utils.getMimeType(url).then((data) => {
+            let mimeType = data.mimeType
+            if (mimeType) {
+                let suffix = mimeType.split('/')[1]
+                uid = uid + '.' + suffix;
+            }
+            image.custom_uid = uid;
+            image.custom_mimeType = mimeType;
+            image.custom_dir = 'images';
+            image.custom_filename = uid;
+            image.custom_filepath = 'images/' + uid;
+            // 添加浏览器下载任务
+            browserTasks.push(new BrowserTask(url, download_dir + moudel_dir + uid));
+            // 添加迅雷下载任务
+            thunderInfo.addTask(new ThunderTask(uid, moudel_dir, uid, url));
+        }).catch((e) => {
+            console.error('获取文件类型', e);
+        });
+    } else {
+        image.custom_uid = uid;
+        image.custom_dir = 'images';
+        image.custom_filename = uid;
+        image.custom_filepath = 'images/' + uid;
+        // 添加浏览器下载任务
+        browserTasks.push(new BrowserTask(url, download_dir + moudel_dir + uid));
+        // 添加迅雷下载任务
+        thunderInfo.addTask(new ThunderTask(uid, moudel_dir, uid, url));
+    }
+}
+
+/**
+ * 通过浏览器下载文件
+ * @param {BrowserTask} tasks 浏览器下载任务
+ */
+API.Utils.downloadByBrowser = async (tasks) => {
+    let indicator = new StatusIndicator('Common_Browser');
+    indicator.setTotal(tasks.length);
+
+    for (const task of tasks) {
+        await API.Utils.downloadByBrowser(task);
+        indicator.addSuccess(task);
+    }
+
+    indicator.complete();
+    return true;
+}
+
+/**
+ * 下载文件
+ */
+API.Utils.downloadAllFiles = async () => {
+    let downloadType = Qzone_Config.Common.downloadType;
+    if (downloadType === 'QZone') {
+        // 使用QQ空间外链时，不需要下载文件
+        return;
+    }
+    switch (downloadType) {
+        case 'File':
+            await API.Utils.downloadsByAjax(thunderInfo.tasks);
+            break;
+        case 'Thunder':
+            let indicator = new StatusIndicator('Common_Thunder');
+            indicator.setTotal(thunderInfo.tasks.length);
+            // 下载线程数
+            thunderInfo.threadCount = Qzone_Config.Common.downloadThread;
+            API.Utils.downloadByThunder(thunderInfo);
+            indicator.addSuccess(thunderInfo.tasks);
+            indicator.complete();
+            break;
+        case 'Browser':
+            API.Utils.downloadByBrowser(browserTasks);
+            break;
+        default:
+            console.warn('未识别类型', downloadType);
+            break;
+    }
+}

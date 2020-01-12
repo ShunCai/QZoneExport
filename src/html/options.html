@@ -117,24 +117,13 @@
 									<h5 style="color:cadetblue">公共选项：</h5>
 									<hr>
 									<div class="form-group row">
-										<label for="messages_exportFormat" class="col-sm-1 col-form-label">说说备份类型：</label>
+										<label for="messages_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
 											<select id="messages_exportFormat" class="custom-select">
 												<option value="MarkDown" selected>MarkDown</option>
-												<option value="HTML">HTML</option>
+												<!-- <option value="HTML">HTML</option> -->
 												<option value="JSON">JSON</option>
-												<option value="RTF">RTF</option>
-											</select>
-										</div>
-									</div>
-									<div class="form-group row">
-										<label for="messages_download_type" class="col-sm-1 col-form-label">配图备份类型：</label>
-										<div class="col-sm-2">
-											<select id="messages_download_type" class="custom-select" aria-describedby="messages_download_type_help">
-												<option value="File" selected>助手内部</option>
-												<option value="Thunder">迅雷X</option>
-												<option value="Browser">浏览器</option>
-												<option value="QZone">QQ空间外链</option>
+												<!-- <option value="RTF">RTF</option> -->
 											</select>
 										</div>
 									</div>
@@ -504,6 +493,25 @@
 							<div class="tab-pane fade" id="nav-common" role="tabpanel" aria-labelledby="nav-common-tab">
 								<br />
 								<form id="tb_common">
+									<div class="form-group row">
+										<label for="common_download_type" class="col-sm-1 col-form-label">文件下载方式：</label>
+										<div class="col-sm-2">
+											<select id="common_download_type" class="custom-select" aria-describedby="common_download_type_help">
+												<option value="File" selected>助手内部</option>
+												<option value="Thunder">迅雷X</option>
+												<option value="Browser">浏览器</option>
+												<option value="QZone">QQ空间外链</option>
+											</select>
+										</div>
+									</div>
+									<div class="form-group row">
+										<div class="col-sm-1">文件名后缀：</div>
+										<div class="custom-control custom-checkbox">
+											<input type="checkbox" class="custom-control-input" id="common_file_suffix">
+											<label style="margin-left: 14px;" class="custom-control-label" for="common_file_suffix" aria-describedby="common_file_suffix_help"></label>
+											<small id="common_file_suffix_help" class="text-muted">勾选表示下载文件时自动识别文件后缀名，仅适用非QQ空间外链的方式，同时会导致数据导出时长增加。</small>
+										</div>
+									</div>
 									<div class="form-group row">
 										<label for="common_download_thread" class="col-sm-1 col-form-label">下载并发量：</label>
 										<div class="col-sm-2">
