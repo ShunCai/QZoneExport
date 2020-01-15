@@ -38,7 +38,7 @@ var Default_Config = {
             max: 5
         },
         Comments: {
-            isFull: true, //是否全部评论
+            isFull: false, //是否全部评论
             pageSize: 50,
             randomSeconds: {
                 min: 2,
@@ -242,6 +242,7 @@ var QZone = {
         Config: {
             ZIP_NAME: 'QQ空间备份'
         },
+        FILE_URLS: new Map(),
         Zip: window['JSZip'] ? new JSZip() : undefined,
         MD: window['TurndownService'] ? new TurndownService() : undefined,
         Filer: window['Filer'] ? new Filer() : undefined
@@ -257,43 +258,50 @@ var QZone = {
         ROOT: FOLDER_ROOT + '日志',
         IMAGES_ROOT: FOLDER_ROOT + '日志/images',
         Data: [],
-        Images: []
+        Images: [],
+        FILE_URLS: new Map()
     },
     // 私密日记模块
     Diaries: {
         ROOT: FOLDER_ROOT + '私密日记',
         IMAGES_ROOT: FOLDER_ROOT + '私密日记/images',
         Data: [],
-        Images: []
+        Images: [],
+        FILE_URLS: new Map()
     },
     // 相册模块
     Photos: {
         ROOT: FOLDER_ROOT + '相册',
         Data: [],
-        Images: []
+        Images: [],
+        FILE_URLS: new Map()
     },
     // 视频模块
     Videos: {
         ROOT: FOLDER_ROOT + '视频',
-        Data: []
+        Data: [],
+        FILE_URLS: new Map()
     },
     // 说说模块
     Messages: {
         ROOT: FOLDER_ROOT + '说说',
         IMAGES_ROOT: FOLDER_ROOT + '说说/images',
         Data: [],
-        Images: []
+        Images: [],
+        FILE_URLS: new Map()
     },
     // 留言板模块
     Boards: {
         ROOT: FOLDER_ROOT + '留言板',
         Data: [],
-        Images: []
+        Images: [],
+        FILE_URLS: new Map()
     },
     // 收藏夹模块
     Favorites: {
         ROOT: FOLDER_ROOT + '收藏夹',
         Data: [],
-        Images: []
+        Images: [],
+        FILE_URLS: new Map()
     }
 };

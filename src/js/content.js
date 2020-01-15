@@ -92,7 +92,9 @@ class StatusIndicator {
         Messages_Comments: 'Messages_Comments_Tips',
         Messages_Export: 'Messages_Export_Tips',
         Blogs: 'Blogs_Tips',
+        Blogs_Content: 'Blogs_Content_Tips',
         Blogs_Comments: 'Blogs_Comments_Tips',
+        Blogs_Export: 'Blogs_Export_Tips',
         Diaries: 'Diaries_Tips',
         Friends: 'Friends_Tips',
         Boards: 'Boards_Tips',
@@ -144,9 +146,23 @@ class StatusIndicator {
             '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
             '请稍后...'
         ],
+        Blogs_Content: [
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇的日志内容',
+            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+            '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
+            '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+            '请稍后...'
+        ],
         Blogs_Comments: [
             '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日志的评论列表',
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+            '请稍后...'
+        ],
+        Blogs_Export: [
+            '正在导出日志',
+            '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
             '已失败 <span style="color: red;">{downloadFailed}</span> 条',
             '总共 <span style="color: #1ca5fc;">{total}</span> 条',
             '请稍后...'
@@ -310,11 +326,6 @@ class QZoneOperator {
     /**
      * 操作类型
      */
-    static SortOperatorType = ['INIT', 'SHOW', 'MESSAGES_LIST', 'BLOG_LIST', 'DIARY_LIST', 'PHOTO_LIST', 'VIDEO_LIST', 'BOARD_LIST', 'FRIEND_LIST', 'IMAGES_LIST', 'ZIP', 'COMPLETE']
-
-    /**
-     * 操作类型
-     */
     static OperatorType = {
 
         /**
@@ -380,37 +391,47 @@ class QZoneOperator {
     /**
      * 下一步操作
      */
-    async next(nextType) {
-        let operatorType = QZoneOperator.OperatorType
-        switch (nextType) {
-            case operatorType.INIT:
+    async next(moduleType) {
+        let OperatorType = QZoneOperator.OperatorType
+        switch (moduleType) {
+            case OperatorType.INIT:
                 this.init();
                 break;
-            case operatorType.SHOW:
+            case OperatorType.SHOW:
                 // 显示模态对话框
                 this.showProcess();
                 this.initModelFolder();
                 await API.Utils.sleep(500);
-                this.next(operatorType.MESSAGES_LIST);
+                this.next(OperatorType.MESSAGES_LIST);
                 break;
-            case operatorType.MESSAGES_LIST:
+            case OperatorType.MESSAGES_LIST:
                 // 获取说说列表
                 await API.Utils.sleep(500);
-                await API.Messages.export();
-                this.next(operatorType.FILE_LIST);
+                if (this.isExport(moduleType)) {
+                    await API.Messages.export();
+                }
+                this.next(OperatorType.BLOG_LIST);
                 break;
-            case operatorType.FILE_LIST:
+            case OperatorType.BLOG_LIST:
+                // 获取日志列表
+                await API.Utils.sleep(500);
+                if (this.isExport(moduleType)) {
+                    await API.Blogs.export();
+                }
+                this.next(OperatorType.FILE_LIST);
+                break;
+            case OperatorType.FILE_LIST:
                 // 下载文件
                 await API.Utils.downloadAllFiles();
-                this.next(operatorType.ZIP);
+                this.next(OperatorType.ZIP);
                 break;
-            case operatorType.ZIP:
+            case OperatorType.ZIP:
                 await API.Utils.sleep(500);
                 // 压缩
                 await API.Utils.Zip(FOLDER_ROOT);
-                operator.next(operatorType.COMPLETE);
+                operator.next(OperatorType.COMPLETE);
                 break;
-            case operatorType.COMPLETE:
+            case OperatorType.COMPLETE:
                 // 延迟3秒，确保压缩完
                 await API.Utils.sleep(500);
                 $("#downloadBtn").show();
@@ -421,6 +442,15 @@ class QZoneOperator {
                 break;
         }
     }
+
+    /**
+     * 当前模块是否需要导出
+     * @param {string} moduleType 当前模块
+     */
+    isExport(moduleType) {
+        return QZone.Common.ExportType[moduleType];
+    }
+
 
     /**
      * 初始化
@@ -487,8 +517,10 @@ class QZoneOperator {
             await createModuleFolder();
 
             // 创建说明文件
+            let readmeUrl = chrome.runtime.getURL('others/README.md');
+            let res = await API.Utils.get(readmeUrl);
             QZone.Common.Filer.write(FOLDER_ROOT + "说明.md", {
-                data: README_TEXT,
+                data: res,
                 type: "text/plain"
             }, (entry) => {
                 console.debug('创建文件成功', entry);
@@ -587,8 +619,6 @@ class QZoneOperator {
             $("#modalTable").remove();
         })
     }
-
-
 }
 
 const MODAL_HTML = `
@@ -610,7 +640,9 @@ const MODAL_HTML = `
                         <p id="Messages_Comments_Tips" style="display: none;margin-bottom: 3px;" ></p>            
                         <p id="Messages_Export_Tips" style="display: none;margin-bottom: 3px;" ></p>        
                         <p id="Blogs_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Blogs_Content_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Blogs_Comments_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Blogs_Export_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Diaries_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Friends_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Boards_Tips" style="display: none;margin-bottom: 3px;" ></p>
@@ -633,114 +665,6 @@ const MODAL_HTML = `
             </div>
         </div>
     </div>
-`
-
-const README_TEXT = `
-# QQ空间导出助手
-
-> QQ空间导出助手，用于备份日志、私密日志、说说、相册、留言板、QQ好友、视频为文件，供永久保存。
-
-## 简介
-
-落叶随风，青春，稍纵即逝，QQ空间，一个承载了很多人的青春的地方。
-
-然而，新浪博客相册宣布停止运营，网易相册关闭，QQ账号支持注销等等，无不意味着，互联网产品都有着自己的生命周期，但生命周期到了尽头，记录着我们的青春的数据怎么办？
-
-数据，还是掌握到自己手里的好，QQ空间导出助手的谷歌扩展，可以导出备份QQ空间的日志、私密日志、说说、相册、留言板、QQ好友、视频为文件，供永久保存。
-
-## 安装
-#### 源码安装
-- 下载源码
-- 打开[扩展中心](chrome://extensions/)
-- 勾选开发者模式
-- 点击[加载已解压的扩展程序]按钮
-- 选择QZoneExport/src文件夹
-
-#### 在线安装
-- [Chrome浏览器](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
-
-- [360极速浏览器](https://ext.chrome.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
-
-- [360安全浏览器](https://ext.se.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
-
-## 使用
-- 登录QQ空间
-- 右上角点击插件图标
- ![](https://i.loli.net/2019/08/11/wpmyPEzFVvBSKra.png)
-- 勾选备份内容
-- 点击开始备份
-- 等待备份完成
-- 点击下载备份
-![](https://i.loli.net/2019/08/11/EyKZkBcPxgmsqUu.png)
-- 等待下载完成
-![](https://i.loli.net/2019/08/11/heysLFv2GJAW4kD.png)
-- 推荐使用 [Atom](https://atom.io/) Markdown编辑器查看.md备份内容
-- 备份目录结构如下
-└─QQ空间备份
-│  说明.md
-├─好友
-│      QQ好友.xlsx
-├─日志
-│  ├─images
-│  │      图片名称
-│  ├─日志分类
-│  │      【日志标题】.md
-├─留言板
-│      【年份】.md
-├─相册
-│  ├─相册分类
-│  │  ├─相册名称
-│  │  │      相片名称
-├─私密日记
-│  │  【日志标题】.md
-│  └─images
-│          图片名称
-├─视频
-│      视频链接.downlist
-└─说说
-│  【年份】.md
-└─images
-图片名称
-
-## 注意事项
-- 视频导出是导出视频下载链接，链接存在有效期请及时下载。
-- 如果存在图片下载失败，一般为Chrome不信任安全证书导致，建议访问链接信任后重新下载。
-- 导出他人QQ空间内容时，无法导出私密日志和QQ好友。
-- 相册导出的原图为高清原图，不包含Exif信息的。
-
-## 已知问题
-- 数据量大小达到4G的时候无法导出，会导致浏览器崩溃。
-
-## 内容预览
-![](https://i.loli.net/2019/08/11/U8AJlwxEsHeWrBm.png)
-
-
-
-## 配置
-- 右键点击插件图标
-- 弹出菜单选择【选项】  
-- 配置页面可配置备份方式和选项
-![](https://i.loli.net/2019/08/11/lDvAcmCuXwbksR8.png)
-- 推荐使用默认配置，遇到QQ冻结时，可调整查询间隔
-- 无法更改的配置表示尚未支持
-- 配置项的值存在最大值的限制，目前尚未加上校验
-
-
-## TO-DO
-- [x] 普通日志导出
-- [x] 私密日记导出
-- [x] 普通说说导出
-- [x] QQ好友导出
-- [x] 普通相册导出
-- [x] 留言板导出
-- [x] 优化插件UI
-- [x] 原图相册导出
-- [x] 视频导出
-- [ ] 支持导出指定相册
-- [ ] 支持导出Exif原图
-- [ ] 支持JSON导出
-- [ ] 支持RTF导出
-
 `
 
 // 操作器
@@ -789,34 +713,6 @@ const browserTasks = new Array();
     operator.next(QZoneOperator.OperatorType.INIT);
 })()
 
-
-
-/**
- * 通过Ajax请求下载文件
- * @param {ThunderTask} tasks
- */
-API.Utils.downloadsByAjax = async (tasks) => {
-    const _tasks = _.chunk(tasks, Qzone_Config.Common.downloadThread);
-    let indicator = new StatusIndicator('Common_File');
-    indicator.setTotal(tasks.length);
-    for (let i = 0; i < _tasks.length; i++) {
-        const list = _tasks[i];
-        let down_tasks = [];
-        for (let j = 0; j < list.length; j++) {
-            const photo = list[j];
-            let filepath = QZone.Common.Config.ZIP_NAME + '/' + photo.dir + photo.name;
-            down_tasks.push(API.Utils.writeImage(photo.url, filepath).then(() => {
-                indicator.addSuccess(photo);
-            }).catch((error) => {
-                indicator.addFailed(photo);
-                console.error('下载图片异常', error);
-            }));
-        }
-        await Promise.all(down_tasks);
-    }
-    indicator.complete();
-    return true;
-}
 
 /**
  * 添加图片下载任务
@@ -868,6 +764,35 @@ API.Utils.addDownloadTasks = async (image, url, download_dir, moudel_dir) => {
     }
 }
 
+
+/**
+ * 通过Ajax请求下载文件
+ * @param {ThunderTask} tasks
+ */
+API.Utils.downloadsByAjax = async (tasks) => {
+    const _tasks = _.chunk(tasks, Qzone_Config.Common.downloadThread);
+    let indicator = new StatusIndicator('Common_File');
+    indicator.setTotal(tasks.length);
+    for (let i = 0; i < _tasks.length; i++) {
+        const list = _tasks[i];
+        let down_tasks = [];
+        for (let j = 0; j < list.length; j++) {
+            const photo = list[j];
+            let filepath = QZone.Common.Config.ZIP_NAME + '/' + photo.dir + photo.name;
+            down_tasks.push(API.Utils.writeImage(photo.url, filepath).then(() => {
+                indicator.addSuccess(photo);
+            }).catch((error) => {
+                indicator.addFailed(photo);
+                console.error('下载图片异常', error);
+            }));
+        }
+        await Promise.all(down_tasks);
+    }
+    indicator.complete();
+    return true;
+}
+
+
 /**
  * 通过浏览器下载文件
  * @param {BrowserTask} tasks 浏览器下载任务
@@ -885,6 +810,47 @@ API.Utils.downloadByBrowser = async (tasks) => {
     return true;
 }
 
+
+/**
+ * 通过Ajax请求下载文件
+ * @param {ThunderTask} tasks
+ */
+API.Utils.downloadsByAjax = async (tasks) => {
+    const _tasks = _.chunk(tasks, Qzone_Config.Common.downloadThread);
+    let indicator = new StatusIndicator('Common_File');
+    indicator.setTotal(tasks.length);
+    for (let i = 0; i < _tasks.length; i++) {
+        const list = _tasks[i];
+        let down_tasks = [];
+        for (let j = 0; j < list.length; j++) {
+            const photo = list[j];
+            let filepath = QZone.Common.Config.ZIP_NAME + '/' + photo.dir + photo.name;
+            down_tasks.push(API.Utils.writeImage(photo.url, filepath).then(() => {
+                indicator.addSuccess(photo);
+            }).catch((error) => {
+                indicator.addFailed(photo);
+                console.error('下载图片异常', error);
+            }));
+        }
+        await Promise.all(down_tasks);
+    }
+    indicator.complete();
+    return true;
+}
+
+/**
+ * 通过迅雷下载
+ */
+API.Utils.invokeThunder = () => {
+    let indicator = new StatusIndicator('Common_Thunder');
+    indicator.setTotal(thunderInfo.tasks.length);
+    // 下载线程数
+    thunderInfo.threadCount = Qzone_Config.Common.downloadThread;
+    API.Utils.downloadByThunder(thunderInfo);
+    indicator.addSuccess(thunderInfo.tasks);
+    indicator.complete();
+}
+
 /**
  * 下载文件
  */
@@ -894,18 +860,16 @@ API.Utils.downloadAllFiles = async () => {
         // 使用QQ空间外链时，不需要下载文件
         return;
     }
+    if (thunderInfo.tasks.length === 0 || browserTasks.length === 0) {
+        // 没有下载任务的时候，不调用下载逻辑
+        return;
+    }
     switch (downloadType) {
         case 'File':
             await API.Utils.downloadsByAjax(thunderInfo.tasks);
             break;
         case 'Thunder':
-            let indicator = new StatusIndicator('Common_Thunder');
-            indicator.setTotal(thunderInfo.tasks.length);
-            // 下载线程数
-            thunderInfo.threadCount = Qzone_Config.Common.downloadThread;
-            API.Utils.downloadByThunder(thunderInfo);
-            indicator.addSuccess(thunderInfo.tasks);
-            indicator.complete();
+            API.Utils.invokeThunder();
             break;
         case 'Browser':
             API.Utils.downloadByBrowser(browserTasks);

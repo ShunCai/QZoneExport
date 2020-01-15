@@ -9,23 +9,20 @@
 API.Messages.export = async () => {
 
     // 获取所有的说说数据
-    let dataList = await API.Messages.getAllList();
-    // console.debug('所有说说列表获取完成', dataList)
+    let items = await API.Messages.getAllList();
 
     // 获取所有说说的全文
-    dataList = await API.Messages.getAllFullContent(dataList);
-    // console.debug('所有说说全文获取完成', dataList)
+    items = await API.Messages.getAllFullContent(items);
 
     // 获取所有的说说评论
-    dataList = await API.Messages.getItemsAllCommentList(dataList);
-    // console.debug('所有说说评论列表获取完成', dataList)
+    items = await API.Messages.getItemsAllCommentList(items);
 
     // 根据导出类型导出数据    
-    await API.Messages.exportAllListToFiles(dataList);
+    await API.Messages.exportAllListToFiles(items);
 }
 
 /**
- * 获取说说一页列表的数据
+ * 获取单页的说说列表
  * @param {integer} pageIndex 指定页的索引
  * @param {StatusIndicator} indicator 状态更新器
  */
@@ -51,15 +48,15 @@ API.Messages.getList = async (pageIndex, indicator) => {
         QZone.Messages.total = data.total;
         indicator.setTotal(QZone.Messages.total);
 
-        let dataList = data.msglist || [];
+        let items = data.msglist || [];
 
         // 转换数据
-        dataList = API.Messages.convert(dataList);
+        items = API.Messages.convert(items);
 
         // 更新状态-下载成功数
-        indicator.addSuccess(dataList);
+        indicator.addSuccess(items);
 
-        return dataList;
+        return items;
     })
 }
 
@@ -74,9 +71,6 @@ API.Messages.getAllList = async () => {
 
     // 说说状态更新器
     let indicator = new StatusIndicator('Messages');
-
-    // 开始
-    indicator.print();
 
     let nextPage = async function (pageIndex, indicator) {
         return await API.Messages.getList(pageIndex, indicator).then(async (dataList) => {
@@ -139,9 +133,6 @@ API.Messages.getAllFullContent = async (items) => {
     // 状态更新器
     let indicator = new StatusIndicator('Messages_Full_Content');
 
-    // 开始
-    indicator.print();
-
     let more_items = API.Messages.getMoreItems(items)
 
     // 更新总数
@@ -194,7 +185,7 @@ API.Messages.getAllFullContent = async (items) => {
 }
 
 /**
- * 获取单条说说的当页评论列表
+ * 获取单条说说的单页评论列表
  * @param {object} item 说说
  * @param {integer} pageIndex 页数索引
  */
@@ -256,9 +247,6 @@ API.Messages.getItemAllCommentList = async (item, indicator) => {
     // 更新总数
     let total = API.Utils.getCommentCount(item);
     indicator.setTotal(total);
-
-    // 开始
-    indicator.print();
 
     let nextPage = async function (item, pageIndex) {
         return await API.Messages.getItemCommentList(item, pageIndex).then(async (dataList) => {
@@ -338,15 +326,15 @@ API.Messages.getItemsAllCommentList = async (items) => {
 /**
  * 所有说说转换成导出文件
  */
-API.Messages.exportAllListToFiles = async (dataList) => {
+API.Messages.exportAllListToFiles = async (items) => {
     // 获取用户配置
     let exportType = Qzone_Config.Messages.exportType;
     switch (exportType) {
         case 'MarkDown':
-            await API.Messages.exportMdToFiles(dataList);
+            await API.Messages.exportMdToFiles(items);
             break;
         case 'JSON':
-            await API.Messages.exportJsonToFile(dataList);
+            await API.Messages.exportJsonToFile(items);
             break;
         default:
             console.warn('未支持的导出类型', exportType);
@@ -356,13 +344,13 @@ API.Messages.exportAllListToFiles = async (dataList) => {
 
 /**
  * 导出说说到Markdown文件
- * @param {Array} dataList 数据
+ * @param {Array} items 数据
  */
-API.Messages.exportMdToFiles = async (dataList) => {
+API.Messages.exportMdToFiles = async (items) => {
     // 说说数据根据年份分组
-    let yearDataMap = API.Utils.groupedByTime(dataList, "custom_create_time");
+    let yearDataMap = API.Utils.groupedByTime(items, "custom_create_time");
     let indicator = new StatusIndicator('Messages_Export');
-    indicator.setTotal(dataList.length);
+    indicator.setTotal(items.length);
     for (let yearEntry of yearDataMap) {
         let year = yearEntry[0];
         let monthDataMap = yearEntry[1];
@@ -394,13 +382,13 @@ API.Messages.exportMdToFiles = async (dataList) => {
 
 /**
  * 导出说说到JSON文件
- * @param {Array} dataList 数据
+ * @param {Array} items 数据
  */
-API.Messages.exportJsonToFile = async (dataList) => {
+API.Messages.exportJsonToFile = async (items) => {
     // 说说数据根据年份分组
-    let yearDataMap = API.Utils.groupedByTime(dataList, "custom_create_time");
+    let yearDataMap = API.Utils.groupedByTime(items, "custom_create_time");
     let indicator = new StatusIndicator('Messages_Export');
-    indicator.setTotal(dataList.length);
+    indicator.setTotal(items.length);
     for (let yearEntry of yearDataMap) {
         let year = yearEntry[0];
         let monthDataMap = yearEntry[1];
@@ -421,8 +409,8 @@ API.Messages.exportJsonToFile = async (dataList) => {
         console.debug('生成年份JSON文件完成', year, fileEntry);
     }
 
-    let json = JSON.stringify(dataList);
-    await API.Utils.writeFile(json, QZone.Messages.ROOT + '/ALL.json');
+    let json = JSON.stringify(items);
+    await API.Utils.writeFile(json, QZone.Messages.ROOT + '/说说.json');
     indicator.complete();
 }
 

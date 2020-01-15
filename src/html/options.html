@@ -186,19 +186,22 @@
 							<div class="tab-pane fade" id="nav-blogs" role="tabpanel" aria-labelledby="nav-blogs-tab">
 								<br />
 								<form id="tb_blogs">
-									<h5>日志选项：</h5>
+									<h5 style="color:cadetblue">公共选项：</h5>
 									<hr>
 									<div class="form-group row">
 										<label for="blogs_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
 											<select id="blogs_exportFormat" class="custom-select">
-												<option value="markdown" selected>MarkDown</option>
-												<option value="html">HTML</option>
-												<option value="json">JSON</option>
-												<option value="rtf">RTF</option>
+												<option value="MarkDown" selected>MarkDown</option>
+												<!-- <option value="HTML">HTML</option> -->
+												<option value="JSON">JSON</option>
+												<!-- <option value="RTF">RTF</option> -->
 											</select>
 										</div>
 									</div>
+									<br>
+									<h5 style="color:cadetblue">日志选项：</h5>
+									<hr>
 									<div class="form-group row">
 										<label class="col-sm-1 col-form-label">查询间隔：</label>
 										<div class="col-sm-1">
@@ -216,16 +219,8 @@
 										</div>
 									</div>
 									<br>
-									<h5>评论选项：</h5>
+									<h5 style="color:cadetblue">评论选项：</h5>
 									<hr>
-									<div class="form-group row">
-										<div class="col-sm-1">所有评论：</div>
-										<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="blogs_download_full_comments">
-											<label style="margin-left: 14px;" class="custom-control-label" for="blogs_download_full_comments" aria-describedby="blogs_comments_help"></label>
-											<small id="blogs_comments_help" class="text-muted">默认下载前10条评论，勾选下载全部</small>
-										</div>
-									</div>
 									<div class="form-group row">
 										<label class="col-sm-1 col-form-label">查询间隔：</label>
 										<div class="col-sm-1">
@@ -240,6 +235,14 @@
 										<label for="blogs_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="15" max="50" class="form-control" id="blogs_comments_limit" placeholder="查询每页条数">
+										</div>
+									</div>
+									<div class="form-group row">
+										<div class="col-sm-1">所有评论：</div>
+										<div class="custom-control custom-checkbox">
+											<input type="checkbox" class="custom-control-input" id="blogs_download_full_comments">
+											<label style="margin-left: 14px;" class="custom-control-label" for="blogs_download_full_comments" aria-describedby="blogs_comments_help"></label>
+											<small id="blogs_comments_help" class="text-muted">默认下载前50条评论，勾选下载全部</small>
 										</div>
 									</div>
 								</form>
@@ -494,7 +497,7 @@
 								<br />
 								<form id="tb_common">
 									<div class="form-group row">
-										<label for="common_download_type" class="col-sm-1 col-form-label">文件下载方式：</label>
+										<label for="common_download_type" class="col-sm-1 col-form-label">文件备份方式：</label>
 										<div class="col-sm-2">
 											<select id="common_download_type" class="custom-select" aria-describedby="common_download_type_help">
 												<option value="File" selected>助手内部</option>
@@ -505,7 +508,7 @@
 										</div>
 									</div>
 									<div class="form-group row">
-										<div class="col-sm-1">文件名后缀：</div>
+										<div class="col-sm-1">文件类型识别：</div>
 										<div class="custom-control custom-checkbox">
 											<input type="checkbox" class="custom-control-input" id="common_file_suffix">
 											<label style="margin-left: 14px;" class="custom-control-label" for="common_file_suffix" aria-describedby="common_file_suffix_help"></label>
@@ -535,7 +538,8 @@
 				</div>
 			</div>
 		</div>
-	</div>
+	</div>	
+	<script src="../vendor/thunder/thunder-link.js"></script>
 	<script src="../vendor/jquery/jquery-3.3.1.min.js"></script>
 	<script src="../vendor/popper/popper.min.js"></script>
 	<script src="../vendor/tableExport/tableExport.min.js"></script>
@@ -546,7 +550,6 @@
 	<script src="../vendor/bootstrap/js/bootstrap-datepicker.zh-CN.min.js"></script>
 	<script src="../vendor/bootstrap/js/bootstrap-table-filter-control.min.js"></script>
 	<script src="../vendor/bootstrap/js/bootstrap-table-export.min.js"></script>
-	<!-- <script src="../vendor/thunder/thunder-link.js"></script> -->
 	<script src="../js/config.js"></script>
 	<script src="../js/utils.js"></script>
 	<script src="../js/api.js"></script>

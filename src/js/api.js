@@ -527,8 +527,8 @@ API.Utils = {
     /**
      * 获取用户空间地址
      */
-    getUserLink(uin, nickName) {
-        return API.Utils.getLink('https://user.qzone.qq.com/' + uin, nickName);
+    getUserLink(uin, nickName, type) {
+        return API.Utils.getLink('https://user.qzone.qq.com/' + uin, nickName, type);
     },
 
     /**
@@ -869,6 +869,22 @@ API.Utils = {
                 console.debug('添加到下载器完成', res);
             })
         });
+    },
+
+    /**
+     * Base64编码
+     * @param {string} str 原始字符串
+     */
+    utf8ToBase64(str) {
+        return btoa(unescape(encodeURIComponent(str)));
+    },
+
+    /**
+     * Base64解码
+     * @param {string} str base64字符串
+     */
+    base64ToUtf8(str) {
+        return decodeURIComponent(escape(atob(str)));
     }
 };
 

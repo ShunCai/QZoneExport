@@ -18,7 +18,8 @@
             "matches": [
                 "https://*.qzone.qq.com/*"
             ],
-            "js": [
+            "js": [                
+                "vendor/thunder/thunder-link.js",
                 "vendor/jquery/jquery-3.3.1.min.js",
                 "vendor/popper/popper.min.js",
                 "vendor/bootstrap/js/bootstrap.min.js",
@@ -35,12 +36,12 @@
                 "vendor/StreamSaver/StreamSaver.js",
                 "vendor/StreamSaver/zip-stream.js",
                 "vendor/sheetjs/xlsx.full.min.js",
-                "vendor/thunder/thunder-link.js",
                 "js/utils.js",
                 "js/config.js",
                 "js/api.js",
                 "js/content.js",
-                "js/messages.js"
+                "js/messages.js",
+                "js/blogs.js"
             ],
             "css": [
                 "vendor/bootstrap/css/bootstrap.min.css",
@@ -55,7 +56,11 @@
         "default_popup": "html/popup.html"
     },
     "options_page": "html/options.html",
-    "content_security_policy": "script-src 'self' 'unsafe-eval' https://github.lvshuncai.com/ https://open.thunderurl.com/; frame-src 'self' https://github.lvshuncai.com/ https://open.thunderurl.com/; object-src 'self'",
+    "content_security_policy": "script-src 'self' 'unsafe-eval' https://github.lvshuncai.com/ https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/; frame-src 'self' https://github.lvshuncai.com/ https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/; object-src 'self'",
+    "web_accessible_resources": [
+        "others/README.md",
+        "css/export/github.css"
+    ],
     "permissions": [
         "activeTab",
         "cookies",
