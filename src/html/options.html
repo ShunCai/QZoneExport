@@ -203,7 +203,7 @@
 									<h5 style="color:cadetblue">日志选项：</h5>
 									<hr>
 									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">查询间隔：</label>
+										<label class="col-sm-1 col-form-label">列表查询间隔：</label>
 										<div class="col-sm-1">
 											<input type="number" min="1" class="form-control" id="blogs_list_cost_min" placeholder="最小间隔">
 										</div>
@@ -213,9 +213,19 @@
 										</div>
 									</div>
 									<div class="form-group row">
-										<label for="blogs_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
+										<label for="blogs_list_limit" class="col-sm-1 col-form-label">列表每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="15" max="100" class="form-control" id="blogs_list_limit" placeholder="查询每页条数">
+										</div>
+									</div>
+									<div class="form-group row">
+										<label class="col-sm-1 col-form-label">内容查询间隔：</label>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control" id="blogs_info_cost_min" placeholder="最小间隔">
+										</div>
+										<span>-</span>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control" id="blogs_info_cost_max" placeholder="最大间隔">
 										</div>
 									</div>
 									<br>
@@ -250,19 +260,24 @@
 							<div class="tab-pane fade" id="nav-diaries" role="tabpanel" aria-labelledby="nav-diaries-tab">
 								<br />
 								<form id="tb_diaries">
+									<h5 style="color:cadetblue">公共选项：</h5>
+									<hr>
 									<div class="form-group row">
 										<label for="diaries_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
 											<select id="diaries_exportFormat" class="custom-select">
-												<option value="markdown" selected>MarkDown</option>
-												<option value="html">HTML</option>
-												<option value="json">JSON</option>
-												<option value="rtf">RTF</option>
+												<option value="MarkDown" selected>MarkDown</option>
+												<!-- <option value="HTML">HTML</option> -->
+												<option value="JSON">JSON</option>
+												<!-- <option value="RTF">RTF</option> -->
 											</select>
 										</div>
 									</div>
+									<br>
+									<h5 style="color:cadetblue">日记选项：</h5>
+									<hr>
 									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">查询间隔：</label>
+										<label class="col-sm-1 col-form-label">列表查询间隔：</label>
 										<div class="col-sm-1">
 											<input type="number" min="1" class="form-control" id="diaries_list_cost_min" placeholder="最小间隔">
 										</div>
@@ -272,9 +287,19 @@
 										</div>
 									</div>
 									<div class="form-group row">
-										<label for="diaries_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
+										<label for="diaries_list_limit" class="col-sm-1 col-form-label">列表每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="15" max="100" class="form-control" id="diaries_list_limit" placeholder="查询每页条数">
+										</div>
+									</div>
+									<div class="form-group row">
+										<label class="col-sm-1 col-form-label">内容查询间隔：</label>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control" id="diaries_info_cost_min" placeholder="最小间隔">
+										</div>
+										<span>-</span>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control" id="diaries_info_cost_max" placeholder="最大间隔">
 										</div>
 									</div>
 								</form>
@@ -344,15 +369,6 @@
 										</div>
 									</div>
 									<div class="form-group row">
-										<label for="photos_down_type" class="col-sm-1 col-form-label">下载类型：</label>
-										<div class="col-sm-2">
-											<select id="photos_down_type" class="custom-select">
-												<option value="zip" selected>ZIP文件</option>
-												<option value="download">默认下载器</option>
-											</select>
-										</div>
-									</div>
-									<div class="form-group row">
 										<label for="photos_exifType" class="col-sm-1 col-form-label">照片清晰度：</label>
 										<div class="col-sm-2">
 											<select id="photos_exifType" class="custom-select">
@@ -372,11 +388,11 @@
 										<div class="col-sm-2">
 											<select id="videos_exportFormat" class="custom-select">
 												<option value="downlist" selected>迅雷下载列表</option>
-												<option value="file">File</option>
-												<option value="markdown">MarkDown</option>
-												<option value="html">HTML</option>
-												<option value="json">JSON</option>
-												<option value="rtf">RTF</option>
+												<option value="File">File</option>
+												<option value="MarkDown">MarkDown</option>
+												<option value="HTML">HTML</option>
+												<option value="JSON">JSON</option>
+												<option value="RTF">RTF</option>
 											</select>
 										</div>
 									</div>
@@ -396,15 +412,6 @@
 											<input type="number" min="10" max="20" class="form-control" id="videos_list_limit" placeholder="查询每页条数">
 										</div>
 									</div>
-									<div class="form-group row">
-										<label for="videos_down_type" class="col-sm-1 col-form-label">下载类型：</label>
-										<div class="col-sm-2">
-											<select id="videos_down_type" class="custom-select">
-												<option value="zip" selected>ZIP文件</option>
-												<option value="download">默认下载器</option>
-											</select>
-										</div>
-									</div>
 								</form>
 							</div>
 							<div class="tab-pane fade" id="nav-boards" role="tabpanel" aria-labelledby="nav-boards-tab">
@@ -414,10 +421,10 @@
 										<label for="boards_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
 											<select id="boards_exportFormat" class="custom-select">
-												<option value="markdown" selected>MarkDown</option>
-												<option value="html">HTML</option>
-												<option value="json">JSON</option>
-												<option value="rtf">RTF</option>
+												<option value="MarkDown" selected>MarkDown</option>
+												<option value="HTML">HTML</option>
+												<option value="JSON">JSON</option>
+												<option value="RTF">RTF</option>
 											</select>
 										</div>
 									</div>
@@ -468,10 +475,10 @@
 										<label for="favorites_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
 											<select id="favorites_exportFormat" class="custom-select">
-												<option value="markdown" selected>MarkDown</option>
-												<option value="html">HTML</option>
-												<option value="json">JSON</option>
-												<option value="rtf">RTF</option>
+												<option value="MarkDown" selected>MarkDown</option>
+												<option value="HTML">HTML</option>
+												<option value="JSON">JSON</option>
+												<option value="RTF">RTF</option>
 											</select>
 										</div>
 									</div>
@@ -538,7 +545,7 @@
 				</div>
 			</div>
 		</div>
-	</div>	
+	</div>
 	<script src="../vendor/thunder/thunder-link.js"></script>
 	<script src="../vendor/jquery/jquery-3.3.1.min.js"></script>
 	<script src="../vendor/popper/popper.min.js"></script>

@@ -38,6 +38,8 @@
 		$("#blogs_exportFormat").val(options.Blogs.exportType);
 		$("#blogs_list_cost_min").val(options.Blogs.randomSeconds.min);
 		$("#blogs_list_cost_max").val(options.Blogs.randomSeconds.max);
+		$("#blogs_info_cost_min").val(options.Blogs.Info.randomSeconds.min);
+		$("#blogs_info_cost_max").val(options.Blogs.Info.randomSeconds.max);
 		$("#blogs_list_limit").val(options.Blogs.pageSize);
 
 
@@ -51,6 +53,8 @@
 		$("#diaries_exportFormat").val(options.Diaries.exportType);
 		$("#diaries_list_cost_min").val(options.Diaries.randomSeconds.min);
 		$("#diaries_list_cost_max").val(options.Diaries.randomSeconds.max);
+		$("#diaries_info_cost_min").val(options.Diaries.Info.randomSeconds.min);
+		$("#diaries_info_cost_max").val(options.Diaries.Info.randomSeconds.max);
 		$("#diaries_list_limit").val(options.Diaries.pageSize);
 
 		// 相册模块赋值
@@ -119,6 +123,8 @@
 		Qzone_Config.Blogs.exportType = $("#blogs_exportFormat").val();
 		Qzone_Config.Blogs.randomSeconds.min = $("#blogs_list_cost_min").val() * 1;
 		Qzone_Config.Blogs.randomSeconds.max = $("#blogs_list_cost_max").val() * 1;
+		Qzone_Config.Blogs.Info.randomSeconds.min = $("#blogs_info_cost_min").val() * 1;
+		Qzone_Config.Blogs.Info.randomSeconds.max = $("#blogs_info_cost_max").val() * 1;
 		Qzone_Config.Blogs.pageSize = $("#blogs_list_limit").val() * 1;
 
 		// 说说评论赋值
@@ -131,6 +137,8 @@
 		Qzone_Config.Diaries.exportType = $("#diaries_exportFormat").val();
 		Qzone_Config.Diaries.randomSeconds.min = $("#diaries_list_cost_min").val() * 1;
 		Qzone_Config.Diaries.randomSeconds.max = $("#diaries_list_cost_max").val() * 1;
+		Qzone_Config.Diaries.Info.randomSeconds.min = $("#diaries_info_cost_min").val() * 1;
+		Qzone_Config.Diaries.Info.randomSeconds.max = $("#diaries_info_cost_max").val() * 1;
 		Qzone_Config.Diaries.pageSize = $("#diaries_list_limit").val() * 1;
 
 		// 相册模块赋值

@@ -62,11 +62,10 @@ API.Blogs.getAllContents = async (items) => {
             indicator.addFailed(item);
         })
         // 等待一下再请求
-        // 请求一页成功后等待一秒再请求下一页
-        // let min = Qzone_Config.Blogs.randomSeconds.min;
-        // let max = Qzone_Config.Blogs.randomSeconds.max;
-        // let seconds = API.Utils.randomSeconds(min, max);
-        // await API.Utils.sleep(seconds * 1000);
+        let min = Qzone_Config.Blogs.Info.randomSeconds.min;
+        let max = Qzone_Config.Blogs.Info.randomSeconds.max;
+        let seconds = API.Utils.randomSeconds(min, max);
+        await API.Utils.sleep(seconds * 1000);
     }
     indicator.complete();
     return items;
@@ -379,41 +378,42 @@ API.Blogs.getItemMdContent = async (item) => {
     let downloadType = Qzone_Config.Common.downloadType;
     // 是否为QQ空间外链
     let isQzoneUrl = downloadType === 'QZone';
-    if (!isQzoneUrl) {
-        // 下载相对目录
-        let moudel_dir = '日志/images/';
-        let download_dir = QZone.Common.Config.ZIP_NAME + '/';
-        // 转为本地图片
-        let imageLinkM = /!\[.*?\]\((.+?)\)/g;
-        let match;
-        let tmpResult = result;
-        while (match = imageLinkM.exec(tmpResult)) {
-            let orgUrl = match[1];
-            let url = orgUrl.replace(/http:\//, "https:/");
-            let uid = QZone.Blogs.FILE_URLS.get(url);
-            if (!uid) {
-                uid = API.Utils.newUid();
-                // 是否获取文件类型
-                if (Qzone_Config.Common.isAutoFileSuffix) {
-                    // 获取图片类型
-                    await API.Utils.getMimeType(url).then((data) => {
-                        let mimeType = data.mimeType
-                        if (mimeType) {
-                            let suffix = mimeType.split('/')[1]
-                            uid = uid + '.' + suffix;
-                        }
-                    }).catch((e) => {
-                        console.error('获取文件类型', e);
-                    });
-                }
-                // 添加浏览器下载任务
-                browserTasks.push(new BrowserTask(url, download_dir + moudel_dir + uid));
-                // 添加迅雷下载任务
-                thunderInfo.addTask(new ThunderTask(uid, moudel_dir, uid, url));
-                QZone.Blogs.FILE_URLS.set(url, uid);
+    if (isQzoneUrl) {
+        return result;
+    }
+    // 下载相对目录
+    let moudel_dir = '日志/图片/';
+    let download_dir = QZone.Common.Config.ZIP_NAME + '/';
+    // 转为本地图片
+    let imageLinkM = /!\[.*?\]\((.+?)\)/g;
+    let match;
+    let tmpResult = result;
+    while (match = imageLinkM.exec(tmpResult)) {
+        let orgUrl = match[1];
+        let url = API.Utils.replaceUrl(orgUrl);
+        let uid = QZone.Blogs.FILE_URLS.get(url);
+        if (!uid) {
+            uid = API.Utils.newUid();
+            // 是否获取文件类型
+            if (Qzone_Config.Common.isAutoFileSuffix) {
+                // 获取图片类型
+                await API.Utils.getMimeType(url).then((data) => {
+                    let mimeType = data.mimeType
+                    if (mimeType) {
+                        let suffix = mimeType.split('/')[1]
+                        uid = uid + '.' + suffix;
+                    }
+                }).catch((e) => {
+                    console.error('获取文件类型异常', url, e);
+                });
             }
-            result = result.split(orgUrl).join("../images/" + uid);
+            // 添加浏览器下载任务
+            browserTasks.push(new BrowserTask(url, download_dir + moudel_dir + uid));
+            // 添加迅雷下载任务
+            thunderInfo.addTask(new ThunderTask(uid, moudel_dir, uid, url));
+            QZone.Blogs.FILE_URLS.set(url, uid);
         }
+        result = result.split(orgUrl).join("../图片/" + uid);
     }
     return result;
 }

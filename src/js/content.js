@@ -96,6 +96,8 @@ class StatusIndicator {
         Blogs_Comments: 'Blogs_Comments_Tips',
         Blogs_Export: 'Blogs_Export_Tips',
         Diaries: 'Diaries_Tips',
+        Diaries_Content: 'Diaries_Content_Tips',
+        Diaries_Export: 'Diaries_Export_Tips',
         Friends: 'Friends_Tips',
         Boards: 'Boards_Tips',
         Photos: 'Photos_Tips',
@@ -172,6 +174,20 @@ class StatusIndicator {
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
             '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
             '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+            '请稍后...'
+        ],
+        Diaries_Content: [
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇的私密日记内容',
+            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+            '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
+            '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+            '请稍后...'
+        ],
+        Diaries_Export: [
+            '正在导出私密日记',
+            '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
             '请稍后...'
         ],
         Friends: [
@@ -418,6 +434,14 @@ class QZoneOperator {
                 if (this.isExport(moduleType)) {
                     await API.Blogs.export();
                 }
+                this.next(OperatorType.DIARY_LIST);
+                break;
+            case OperatorType.DIARY_LIST:
+                // 获取私密日记列表
+                await API.Utils.sleep(500);
+                if (this.isExport(moduleType)) {
+                    await API.Diaries.export();
+                }
                 this.next(OperatorType.FILE_LIST);
                 break;
             case OperatorType.FILE_LIST:
@@ -644,6 +668,8 @@ const MODAL_HTML = `
                         <p id="Blogs_Comments_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Blogs_Export_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Diaries_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Diaries_Content_Tips" style="display: none;margin-bottom: 3px;" ></p>
+                        <p id="Diaries_Export_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Friends_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Boards_Tips" style="display: none;margin-bottom: 3px;" ></p>
                         <p id="Photos_Tips" style="display: none;margin-bottom: 3px;" ></p>
@@ -720,16 +746,19 @@ const browserTasks = new Array();
  * @param {string} url URL
  * @param {string} download_dir 下载目录
  * @param {string} moudel_dir 模块下载目录
- * @param {string} source 图片来源
+ * @param {string} FILE_URLS 文件下载链接
  */
-API.Utils.addDownloadTasks = async (image, url, download_dir, moudel_dir) => {
+API.Utils.addDownloadTasks = async (image, url, download_dir, moudel_dir, FILE_URLS) => {
     let downloadType = Qzone_Config.Common.downloadType;
     let isQzoneUrl = downloadType === 'QZone';
     if (isQzoneUrl) {
         return;
     }
-    let uid = API.Utils.newUid();
     url = API.Utils.replaceUrl(url);
+    let uid = FILE_URLS.get(url);
+    if (!uid) {
+        uid = API.Utils.newUid();
+    }
     image.custom_url = url;
     // 是否获取文件类型
     if (Qzone_Config.Common.isAutoFileSuffix) {
@@ -742,26 +771,35 @@ API.Utils.addDownloadTasks = async (image, url, download_dir, moudel_dir) => {
             }
             image.custom_uid = uid;
             image.custom_mimeType = mimeType;
-            image.custom_dir = 'images';
+            image.custom_dir = '图片';
             image.custom_filename = uid;
-            image.custom_filepath = 'images/' + uid;
+            image.custom_filepath = '图片/' + uid;
             // 添加浏览器下载任务
             browserTasks.push(new BrowserTask(url, download_dir + moudel_dir + uid));
             // 添加迅雷下载任务
             thunderInfo.addTask(new ThunderTask(uid, moudel_dir, uid, url));
         }).catch((e) => {
-            console.error('获取文件类型', e);
+            console.error('获取文件类型异常', image, e);
+            image.custom_uid = uid;
+            image.custom_dir = '图片';
+            image.custom_filename = uid;
+            image.custom_filepath = '图片/' + uid;
+            // 添加浏览器下载任务
+            browserTasks.push(new BrowserTask(url, download_dir + moudel_dir + uid));
+            // 添加迅雷下载任务
+            thunderInfo.addTask(new ThunderTask(uid, moudel_dir, uid, url));
         });
     } else {
         image.custom_uid = uid;
-        image.custom_dir = 'images';
+        image.custom_dir = '图片';
         image.custom_filename = uid;
-        image.custom_filepath = 'images/' + uid;
+        image.custom_filepath = '图片/' + uid;
         // 添加浏览器下载任务
         browserTasks.push(new BrowserTask(url, download_dir + moudel_dir + uid));
         // 添加迅雷下载任务
         thunderInfo.addTask(new ThunderTask(uid, moudel_dir, uid, url));
     }
+    FILE_URLS.set(url, uid);
 }
 
 
@@ -829,7 +867,7 @@ API.Utils.downloadsByAjax = async (tasks) => {
                 indicator.addSuccess(photo);
             }).catch((error) => {
                 indicator.addFailed(photo);
-                console.error('下载图片异常', error);
+                console.error('下载图片异常', photo, error);
             }));
         }
         await Promise.all(down_tasks);

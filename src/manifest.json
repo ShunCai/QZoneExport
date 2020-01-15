@@ -41,7 +41,8 @@
                 "js/api.js",
                 "js/content.js",
                 "js/messages.js",
-                "js/blogs.js"
+                "js/blogs.js",
+                "js/diaries.js"
             ],
             "css": [
                 "vendor/bootstrap/css/bootstrap.min.css",

@@ -37,6 +37,12 @@ var Default_Config = {
             min: 2,
             max: 5
         },
+        Info: {
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        },
         Comments: {
             isFull: false, //是否全部评论
             pageSize: 50,
@@ -53,6 +59,12 @@ var Default_Config = {
         randomSeconds: {
             min: 2,
             max: 5
+        },
+        Info: {
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
         }
     },
     // 相册模块
@@ -64,9 +76,9 @@ var Default_Config = {
             max: 5
         },
         Images: {
-            exportType: "file",
+            exportType: "File",
             pageSize: 90,
-            downloadThread: 5,
+            downloadType: 'zip',
             exifType: "hd",
             randomSeconds: {
                 min: 2,
@@ -85,7 +97,7 @@ var Default_Config = {
     },
     // 留言板模块
     Boards: {
-        exportType: "markdown",
+        exportType: "MarkDown",
         randomSeconds: {
             min: 2,
             max: 5
@@ -94,11 +106,11 @@ var Default_Config = {
     },
     // QQ好友模块
     Friends: {
-        exportType: "excel"
+        exportType: "Excel"
     },
     // 收藏夹模块
     Favorites: {
-        exportType: "markdown",
+        exportType: "MarkDown",
         randomSeconds: {
             min: 2,
             max: 5
@@ -146,6 +158,12 @@ var Qzone_Config = {
             min: 2,
             max: 5
         },
+        Info: {
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        },
         Comments: {
             isFull: false, //是否全部评论
             pageSize: 50,
@@ -162,6 +180,12 @@ var Qzone_Config = {
         randomSeconds: {
             min: 2,
             max: 5
+        },
+        Info: {
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
         }
     },
     // 相册模块
@@ -173,7 +197,7 @@ var Qzone_Config = {
             max: 5
         },
         Images: {
-            exportType: "file",
+            exportType: "File",
             pageSize: 90,
             downloadType: 'zip',
             exifType: "hd",
@@ -194,7 +218,7 @@ var Qzone_Config = {
     },
     // 留言板模块
     Boards: {
-        exportType: "markdown",
+        exportType: "MarkDown",
         randomSeconds: {
             min: 2,
             max: 5
@@ -203,11 +227,11 @@ var Qzone_Config = {
     },
     // QQ好友模块
     Friends: {
-        exportType: "excel"
+        exportType: "Excel"
     },
     // 收藏夹模块
     Favorites: {
-        exportType: "markdown",
+        exportType: "MarkDown",
         randomSeconds: {
             min: 2,
             max: 5
@@ -256,7 +280,7 @@ var QZone = {
     // 日志模块
     Blogs: {
         ROOT: FOLDER_ROOT + '日志',
-        IMAGES_ROOT: FOLDER_ROOT + '日志/images',
+        IMAGES_ROOT: FOLDER_ROOT + '日志/图片',
         Data: [],
         Images: [],
         FILE_URLS: new Map()
@@ -264,7 +288,7 @@ var QZone = {
     // 私密日记模块
     Diaries: {
         ROOT: FOLDER_ROOT + '私密日记',
-        IMAGES_ROOT: FOLDER_ROOT + '私密日记/images',
+        IMAGES_ROOT: FOLDER_ROOT + '私密日记/图片',
         Data: [],
         Images: [],
         FILE_URLS: new Map()
@@ -285,7 +309,7 @@ var QZone = {
     // 说说模块
     Messages: {
         ROOT: FOLDER_ROOT + '说说',
-        IMAGES_ROOT: FOLDER_ROOT + '说说/images',
+        IMAGES_ROOT: FOLDER_ROOT + '说说/图片',
         Data: [],
         Images: [],
         FILE_URLS: new Map()
