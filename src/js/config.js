@@ -1,5 +1,5 @@
 // 默认配置
-var Default_Config = {
+const Default_Config = {
     // 公共配置
     Common: {
         // 附件下载类型
@@ -69,7 +69,7 @@ var Default_Config = {
     },
     // 相册模块
     Photos: {
-        exportType: "folder",
+        exportType: "Folder",
         pageSize: 90,
         randomSeconds: {
             min: 2,
@@ -78,7 +78,6 @@ var Default_Config = {
         Images: {
             exportType: "File",
             pageSize: 90,
-            downloadType: 'zip',
             exifType: "hd",
             randomSeconds: {
                 min: 2,
@@ -88,7 +87,7 @@ var Default_Config = {
     },
     // 视频模块
     Videos: {
-        exportType: "downlist",
+        exportType: "Link",
         randomSeconds: {
             min: 2,
             max: 5
@@ -120,7 +119,7 @@ var Default_Config = {
 };
 
 // 用户配置
-var Qzone_Config = {
+const Qzone_Config = {
     // 公共配置
     Common: {
         // 附件下载类型
@@ -190,7 +189,7 @@ var Qzone_Config = {
     },
     // 相册模块
     Photos: {
-        exportType: "folder",
+        exportType: "Folder",
         pageSize: 90,
         randomSeconds: {
             min: 2,
@@ -199,7 +198,6 @@ var Qzone_Config = {
         Images: {
             exportType: "File",
             pageSize: 90,
-            downloadType: 'zip',
             exifType: "hd",
             randomSeconds: {
                 min: 2,
@@ -209,7 +207,7 @@ var Qzone_Config = {
     },
     // 视频模块
     Videos: {
-        exportType: "downlist",
+        exportType: "Link",
         randomSeconds: {
             min: 2,
             max: 5
@@ -240,9 +238,8 @@ var Qzone_Config = {
     },
 };
 
-
 const FOLDER_ROOT = '/QQ空间备份/';
-var QZone = {
+const QZone = {
     Common: {
         ExportType: {
             "MESSAGES_LIST": true,

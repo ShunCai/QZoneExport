@@ -6,120 +6,119 @@ let QZoneDownloadId = 0;
 const Default_Config = {
   // 公共配置
   Common: {
-    // 附件下载类型
-    downloadType: 'File',
-    // 附件自动识别文件后缀
-    isAutoFileSuffix: true,
-    // 照片下载并发数        
-    downloadThread: 5,
-    // 是否启用下载状态栏提醒
-    enabledShelf: false
+      // 附件下载类型
+      downloadType: 'File',
+      // 附件自动识别文件后缀
+      isAutoFileSuffix: true,
+      // 照片下载并发数        
+      downloadThread: 5,
+      // 是否启用下载状态栏提醒
+      enabledShelf: false
   },
   // 说说模块
   Messages: {
-    exportType: "MarkDown",// 内容备份类型
-    pageSize: 40,
-    randomSeconds: {
-      min: 2,
-      max: 5
-    },
-    isFull: false, //是否获取全文
-    Comments: {
-      isFull: false, //是否全部评论
-      pageSize: 20,
+      exportType: "MarkDown",// 内容备份类型
+      pageSize: 40,
       randomSeconds: {
-        min: 2,
-        max: 5
+          min: 2,
+          max: 5
+      },
+      isFull: false, //是否获取全文
+      Comments: {
+          isFull: false, //是否全部评论
+          pageSize: 20,
+          randomSeconds: {
+              min: 2,
+              max: 5
+          }
       }
-    }
   },
   // 日志模块
   Blogs: {
-    exportType: "MarkDown",// 内容备份类型
-    pageSize: 50,
-    randomSeconds: {
-      min: 2,
-      max: 5
-    },
-    Info: {
-      randomSeconds: {
-        min: 1,
-        max: 2
-      }
-    },
-    Comments: {
-      isFull: false, //是否全部评论
+      exportType: "MarkDown",// 内容备份类型
       pageSize: 50,
       randomSeconds: {
-        min: 2,
-        max: 5
+          min: 2,
+          max: 5
+      },
+      Info: {
+          randomSeconds: {
+              min: 1,
+              max: 2
+          }
+      },
+      Comments: {
+          isFull: false, //是否全部评论
+          pageSize: 50,
+          randomSeconds: {
+              min: 2,
+              max: 5
+          }
       }
-    }
   },
   // 私密日记模块
   Diaries: {
-    exportType: "MarkDown",// 内容备份类型
-    pageSize: 50,
-    randomSeconds: {
-      min: 2,
-      max: 5
-    },
-    Info: {
+      exportType: "MarkDown",// 内容备份类型
+      pageSize: 50,
       randomSeconds: {
-        min: 1,
-        max: 2
+          min: 2,
+          max: 5
+      },
+      Info: {
+          randomSeconds: {
+              min: 1,
+              max: 2
+          }
       }
-    }
   },
   // 相册模块
   Photos: {
-    exportType: "folder",
-    pageSize: 90,
-    randomSeconds: {
-      min: 2,
-      max: 5
-    },
-    Images: {
-      exportType: "File",
+      exportType: "Folder",
       pageSize: 90,
-      downloadType: 'zip',
-      exifType: "hd",
       randomSeconds: {
-        min: 2,
-        max: 5
+          min: 2,
+          max: 5
+      },
+      Images: {
+          exportType: "File",
+          pageSize: 90,
+          exifType: "hd",
+          randomSeconds: {
+              min: 2,
+              max: 5
+          }
       }
-    }
   },
   // 视频模块
   Videos: {
-    exportType: "downlist",
-    randomSeconds: {
-      min: 2,
-      max: 5
-    },
-    pageSize: 20
+      exportType: "Link",
+      randomSeconds: {
+          min: 2,
+          max: 5
+      },
+      pageSize: 20
   },
   // 留言板模块
   Boards: {
-    exportType: "MarkDown",
-    randomSeconds: {
-      min: 2,
-      max: 5
-    },
-    pageSize: 20
+      exportType: "MarkDown",
+      randomSeconds: {
+          min: 2,
+          max: 5
+      },
+      pageSize: 20
   },
   // QQ好友模块
   Friends: {
-    exportType: "Excel"
+      exportType: "Excel"
   },
   // 收藏夹模块
   Favorites: {
-    exportType: "MarkDown",
-    randomSeconds: {
-      min: 2,
-      max: 5
-    },
-    pageSize: 20
+      exportType: "MarkDown",
+      randomSeconds: {
+          min: 2,
+          max: 5
+      },
+      pageSize: 20
   },
 };
 

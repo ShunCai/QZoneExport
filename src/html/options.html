@@ -307,17 +307,17 @@
 							<div class="tab-pane fade" id="nav-photos" role="tabpanel" aria-labelledby="nav-photos-tab">
 								<br />
 								<form id="tb_photos">
-									<h5>相册选项：</h5>
+									<h5 style="color:cadetblue">相册选项：</h5>
 									<hr>
 									<div class="form-group row">
 										<label for="photos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
 											<select id="photos_exportFormat" class="custom-select">
-												<option value="folder" selected>Folder</option>
-												<option value="markdown">MarkDown</option>
-												<option value="html">HTML</option>
-												<option value="json">JSON</option>
-												<option value="rtf">RTF</option>
+												<option value="Folder" selected>文件夹</option>
+												<!-- <option value="MarkDown">MarkDown</option> -->
+												<!-- <option value="HTML">HTML</option> -->
+												<option value="JSON">JSON</option>
+												<!-- <option value="RTF">RTF</option> -->
 											</select>
 										</div>
 									</div>
@@ -338,17 +338,17 @@
 										</div>
 									</div>
 									<br>
-									<h5>相片选项：</h5>
+									<h5 style="color:cadetblue">相片选项：</h5>
 									<hr>
 									<div class="form-group row">
 										<label for="photos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
 											<select id="photos_exportFormat" class="custom-select">
-												<option value="file" selected>File</option>
-												<option value="markdown">MarkDown</option>
-												<option value="html">HTML</option>
-												<option value="json">JSON</option>
-												<option value="rtf">RTF</option>
+												<option value="File" selected>文件</option>
+												<!-- <option value="MarkDown">MarkDown</option> -->
+												<!-- <option value="HTML">HTML</option> -->
+												<option value="JSON">JSON</option>
+												<!-- <option value="RTF">RTF</option> -->
 											</select>
 										</div>
 									</div>
@@ -363,13 +363,13 @@
 										</div>
 									</div>
 									<div class="form-group row">
-										<label for="photos_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
+										<label for="photos_images_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
-											<input type="number" min="10" max="90" class="form-control" id="photos_list_limit" placeholder="查询每页条数">
+											<input type="number" min="10" max="90" class="form-control" id="photos_images_limit" placeholder="查询每页条数">
 										</div>
 									</div>
 									<div class="form-group row">
-										<label for="photos_exifType" class="col-sm-1 col-form-label">照片清晰度：</label>
+										<label for="photos_exifType" class="col-sm-1 col-form-label">清晰度：</label>
 										<div class="col-sm-2">
 											<select id="photos_exifType" class="custom-select">
 												<option value="original">原图</option>
@@ -387,12 +387,12 @@
 										<label for="videos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
 											<select id="videos_exportFormat" class="custom-select">
-												<option value="downlist" selected>迅雷下载列表</option>
-												<option value="File">File</option>
-												<option value="MarkDown">MarkDown</option>
-												<option value="HTML">HTML</option>
+												<option value="Link" selected>链接</option>
+												<option value="File">文件</option>
+												<!-- <option value="MarkDown">MarkDown</option> -->
+												<!-- <option value="HTML">HTML</option> -->
 												<option value="JSON">JSON</option>
-												<option value="RTF">RTF</option>
+												<!-- <option value="RTF">RTF</option> -->
 											</select>
 										</div>
 									</div>
@@ -422,9 +422,9 @@
 										<div class="col-sm-2">
 											<select id="boards_exportFormat" class="custom-select">
 												<option value="MarkDown" selected>MarkDown</option>
-												<option value="HTML">HTML</option>
+												<!-- <option value="HTML">HTML</option> -->
 												<option value="JSON">JSON</option>
-												<option value="RTF">RTF</option>
+												<!-- <option value="RTF">RTF</option> -->
 											</select>
 										</div>
 									</div>
@@ -476,9 +476,9 @@
 										<div class="col-sm-2">
 											<select id="favorites_exportFormat" class="custom-select">
 												<option value="MarkDown" selected>MarkDown</option>
-												<option value="HTML">HTML</option>
+												<!-- <option value="HTML">HTML</option> -->
 												<option value="JSON">JSON</option>
-												<option value="RTF">RTF</option>
+												<!-- <option value="RTF">RTF</option> -->
 											</select>
 										</div>
 									</div>

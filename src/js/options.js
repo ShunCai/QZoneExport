@@ -62,8 +62,10 @@
 		$("#photos_list_cost_min").val(options.Photos.randomSeconds.min);
 		$("#photos_list_cost_max").val(options.Photos.randomSeconds.max);
 		$("#photos_list_limit").val(options.Photos.pageSize);
-		$("#photos_down_type").val(options.Photos.downloadType);
-		$("#photos_exifType").val(options.Photos.exifType);
+		$("#photos_images_limit").val(options.Photos.Images.pageSize);
+		$("#photos_images_cost_min").val(options.Photos.Images.randomSeconds.min);
+		$("#photos_images_cost_max").val(options.Photos.Images.randomSeconds.max);
+		$("#photos_exifType").val(options.Photos.Images.exifType);
 
 		// 视频模块赋值
 		$("#videos_exportFormat").val(options.Videos.exportType);
@@ -144,15 +146,17 @@
 		// 相册模块赋值
 		Qzone_Config.Photos.exportType = $("#photos_exportFormat").val();
 		Qzone_Config.Photos.pageSize = $("#photos_list_limit").val() * 1;
+		Qzone_Config.Photos.Images.pageSize = $("#photos_images_limit").val() * 1;
 		Qzone_Config.Photos.randomSeconds.min = $("#photos_list_cost_min").val() * 1;
 		Qzone_Config.Photos.randomSeconds.max = $("#photos_list_cost_max").val() * 1;
-		Qzone_Config.Photos.downloadType = $("#photos_down_type").val();
-		Qzone_Config.Photos.exifType = $("#photos_exifType").val();
+		Qzone_Config.Photos.Images.randomSeconds.min = $("#photos_images_cost_min").val() * 1;
+		Qzone_Config.Photos.Images.randomSeconds.max = $("#photos_images_cost_min").val() * 1;
+		Qzone_Config.Photos.Images.exifType = $("#photos_exifType").val();
 
 		// 视频模块赋值
 		Qzone_Config.Videos.exportType = $("#videos_exportFormat").val();
 		Qzone_Config.Videos.randomSeconds.min = $("#videos_list_cost_min").val() * 1;
-		Qzone_Config.Videos.randomSeconds.min = $("#videos_list_cost_max").val() * 1;
+		Qzone_Config.Videos.randomSeconds.max = $("#videos_list_cost_max").val() * 1;
 		Qzone_Config.Videos.pageSize = $("#videos_list_limit").val() * 1;
 
 		// 留言板模块赋值
