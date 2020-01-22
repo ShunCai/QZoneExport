@@ -7,17 +7,22 @@
 * 导出私密日记数据
 */
 API.Diaries.export = async () => {
+    try {
 
-    // 获取所有的私密日记数据
-    let items = await API.Diaries.getAllList();
-    console.debug('私密日记列表获取完成', items);
+        // 获取所有的私密日记数据
+        let items = await API.Diaries.getAllList();
+        console.debug('私密日记列表获取完成', items);
 
-    // 获取私密日记内容
-    items = await API.Diaries.getAllContents(items);
-    console.debug('私密日记内容获取完成', items);
+        // 获取私密日记内容
+        items = await API.Diaries.getAllContents(items);
+        console.debug('私密日记内容获取完成', items);
 
-    // 根据导出类型导出数据    
-    await API.Diaries.exportAllListToFiles(items);
+        // 根据导出类型导出数据    
+        await API.Diaries.exportAllListToFiles(items);
+
+    } catch (error) {
+        console.error('私密日记导出异常', error);
+    }
 }
 
 /**
@@ -176,10 +181,10 @@ API.Diaries.exportAllListToFiles = async (items) => {
     let exportType = Qzone_Config.Diaries.exportType;
     switch (exportType) {
         case 'MarkDown':
-            await API.Diaries.exportMdToFiles(items);
+            await API.Diaries.exportToMarkdown(items);
             break;
         case 'JSON':
-            await API.Diaries.exportJsonToFile(items);
+            await API.Diaries.exportToJson(items);
             break;
         default:
             console.warn('未支持的导出类型', exportType);
@@ -191,7 +196,7 @@ API.Diaries.exportAllListToFiles = async (items) => {
  * 导出私密日记到MarkDown文件
  * @param {Array} items 私密日记列表
  */
-API.Diaries.exportMdToFiles = async (items) => {
+API.Diaries.exportToMarkdown = async (items) => {
     let indicator = new StatusIndicator('Diaries_Export');
     indicator.setTotal(items.length);
     for (let index = 0; index < items.length; index++) {
@@ -208,7 +213,7 @@ API.Diaries.exportMdToFiles = async (items) => {
         await API.Utils.createFolder(categoryFolder);
         // 私密日记文件路径
         let filepath = categoryFolder + '/' + filename + ".md";
-        await API.Utils.writeFile(content, filepath).then(() => {
+        await API.Utils.writeText(content, filepath).then(() => {
             // 更新成功信息
             indicator.addSuccess(item);
         }).catch((e) => {
@@ -255,7 +260,7 @@ API.Diaries.getItemMdContent = async (item) => {
         let url = API.Utils.replaceUrl(orgUrl);
         let uid = QZone.Diaries.FILE_URLS.get(url);
         if (!uid) {
-            uid = API.Utils.newUid();
+            uid = API.Utils.newSimpleUid(16, 16);
             // 是否获取文件类型
             if (Qzone_Config.Common.isAutoFileSuffix) {
                 // 获取图片类型
@@ -269,10 +274,8 @@ API.Diaries.getItemMdContent = async (item) => {
                     console.error('获取文件类型异常', url, e);
                 });
             }
-            // 添加浏览器下载任务
-            browserTasks.push(new BrowserTask(url, download_dir + moudel_dir + uid));
-            // 添加迅雷下载任务
-            thunderInfo.addTask(new ThunderTask(uid, moudel_dir, uid, url));
+            // 添加下载任务
+            API.Utils.newDownloadTask(url, download_dir, moudel_dir, uid);
             QZone.Diaries.FILE_URLS.set(url, uid);
         }
         result = result.split(orgUrl).join("../图片/" + uid);
@@ -284,11 +287,12 @@ API.Diaries.getItemMdContent = async (item) => {
  * 导出私密日记到JSON文件
  * @param {Array} items 私密日记列表
  */
-API.Diaries.exportJsonToFile = async (items) => {
+API.Diaries.exportToJson = async (items) => {
     let indicator = new StatusIndicator('Diaries_Export');
     indicator.setTotal(items.length);
     let json = JSON.stringify(items);
-    await API.Utils.writeFile(json, QZone.Diaries.ROOT + '/私密日记.json');
+    await API.Utils.writeText(json, QZone.Diaries.ROOT + '/私密日记.json');
     indicator.addSuccess(items);
     indicator.complete();
+    return items;
 }

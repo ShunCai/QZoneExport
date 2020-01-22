@@ -8,17 +8,22 @@
  */
 API.Messages.export = async () => {
 
-    // 获取所有的说说数据
-    let items = await API.Messages.getAllList();
+    try {
 
-    // 获取所有说说的全文
-    items = await API.Messages.getAllFullContent(items);
+        // 获取所有的说说数据
+        let items = await API.Messages.getAllList();
 
-    // 获取所有的说说评论
-    items = await API.Messages.getItemsAllCommentList(items);
+        // 获取所有说说的全文
+        items = await API.Messages.getAllFullContent(items);
 
-    // 根据导出类型导出数据    
-    await API.Messages.exportAllListToFiles(items);
+        // 获取所有的说说评论
+        items = await API.Messages.getItemsAllCommentList(items);
+
+        // 根据导出类型导出数据    
+        await API.Messages.exportAllListToFiles(items);
+    } catch (error) {
+        console.error('说说导出异常', error);
+    }
 }
 
 /**
@@ -39,7 +44,7 @@ API.Messages.getList = async (pageIndex, indicator) => {
         // 更新状态-下载中的数量
         indicator.addDownload(Qzone_Config.Messages.pageSize);
 
-        // 返回的总数包括无权限的说说的条目数，这里返回为空时表示无权限获取其它的数据
+        // 返回的总数包括无权限的说说的条目数，这里返回为空时表示无权限获取其他的数据
         if (data.msglist == null || data.msglist.length == 0) {
             return [];
         }
@@ -208,7 +213,7 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
             for (let j = 0; j < images.length; j++) {
                 // 处理说说评论的配图
                 const image = images[j];
-                await API.Utils.addDownloadTasks(image, image.hd_url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+                await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
             }
 
             // 获取评论回复
@@ -218,7 +223,7 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
                 let images = repItem.pic || [];
                 for (let r = 0; r < images.length; r++) {
                     const image = images[r];
-                    await API.Utils.addDownloadTasks(image, image.hd_url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+                    await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
                 }
             }
         }
@@ -331,10 +336,10 @@ API.Messages.exportAllListToFiles = async (items) => {
     let exportType = Qzone_Config.Messages.exportType;
     switch (exportType) {
         case 'MarkDown':
-            await API.Messages.exportMdToFiles(items);
+            await API.Messages.exportToMarkdown(items);
             break;
         case 'JSON':
-            await API.Messages.exportJsonToFile(items);
+            await API.Messages.exportToJson(items);
             break;
         default:
             console.warn('未支持的导出类型', exportType);
@@ -346,7 +351,7 @@ API.Messages.exportAllListToFiles = async (items) => {
  * 导出说说到Markdown文件
  * @param {Array} items 数据
  */
-API.Messages.exportMdToFiles = async (items) => {
+API.Messages.exportToMarkdown = async (items) => {
     // 说说数据根据年份分组
     let yearDataMap = API.Utils.groupedByTime(items, "custom_create_time");
     let indicator = new StatusIndicator('Messages_Export');
@@ -374,7 +379,7 @@ API.Messages.exportMdToFiles = async (items) => {
         }
         let content = contents.join('\r\n\r\n');
         const yearFilePath = QZone.Messages.ROOT + "/" + year + "年.md";
-        let fileEntry = await API.Utils.writeFile(content, yearFilePath);
+        let fileEntry = await API.Utils.writeText(content, yearFilePath);
         console.debug('生成年份MD文件完成', year, fileEntry);
     }
     indicator.complete();
@@ -384,7 +389,7 @@ API.Messages.exportMdToFiles = async (items) => {
  * 导出说说到JSON文件
  * @param {Array} items 数据
  */
-API.Messages.exportJsonToFile = async (items) => {
+API.Messages.exportToJson = async (items) => {
     // 说说数据根据年份分组
     let yearDataMap = API.Utils.groupedByTime(items, "custom_create_time");
     let indicator = new StatusIndicator('Messages_Export');
@@ -405,13 +410,14 @@ API.Messages.exportJsonToFile = async (items) => {
             yearItems = yearItems.concat(items);
         }
         const yearFilePath = QZone.Messages.ROOT + "/" + year + "年.json";
-        let fileEntry = await API.Utils.writeFile(JSON.stringify(yearItems), yearFilePath);
+        let fileEntry = await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath);
         console.debug('生成年份JSON文件完成', year, fileEntry);
     }
 
     let json = JSON.stringify(items);
-    await API.Utils.writeFile(json, QZone.Messages.ROOT + '/说说.json');
+    await API.Utils.writeText(json, QZone.Messages.ROOT + '/说说.json');
     indicator.complete();
+    return items;
 }
 
 
@@ -528,7 +534,7 @@ API.Messages.addMediaToTasks = async (dataList) => {
             // 评论包含图片
             let images = comment.pic || [];
             for (const image of images) {
-                await API.Utils.addDownloadTasks(image, image.hd_url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+                await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
             }
 
             // 回复包含图片，理论上回复现在不能回复图片，兼容一下
@@ -536,7 +542,7 @@ API.Messages.addMediaToTasks = async (dataList) => {
             for (const repItem of replies) {
                 let images = repItem.pic || [];
                 for (const image of images) {
-                    await API.Utils.addDownloadTasks(image, image.hd_url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+                    await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
                 }
             }
         }

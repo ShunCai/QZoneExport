@@ -107,7 +107,7 @@
 								<a class="nav-item nav-link" id="nav-boards-tab" data-config="Boards" data-toggle="tab" href="#nav-boards" role="tab" aria-controls="nav-boards" aria-selected="false">留言板</a>
 								<a class="nav-item nav-link" id="nav-friends-tab" data-config="Friends" data-toggle="tab" href="#nav-friends" role="tab" aria-controls="nav-friends" aria-selected="false">好友</a>
 								<a class="nav-item nav-link" id="nav-favorites-tab" data-config="Favorites" data-toggle="tab" href="#nav-favorites" role="tab" aria-controls="nav-favorites" aria-selected="false">收藏夹</a>
-								<a class="nav-item nav-link " id="nav-common-tab" data-config="Messages" data-toggle="tab" href="#nav-common" role="tab" aria-controls="nav-common" aria-selected="false">其它</a>
+								<a class="nav-item nav-link " id="nav-common-tab" data-config="Messages" data-toggle="tab" href="#nav-common" role="tab" aria-controls="nav-common" aria-selected="false">其他</a>
 							</div>
 						</nav>
 						<div class="tab-content" id="nav-tabContent">
@@ -140,12 +140,12 @@
 											<input type="number" min="1" class="form-control" id="messages_list_cost_max" placeholder="最大间隔">
 										</div>
 									</div>
-									<div class="form-group row">
+									<!-- <div class="form-group row">
 										<label for="messages_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="20" max="40" class="form-control" id="messages_list_limit" placeholder="查询每页条数">
 										</div>
-									</div>
+									</div> -->
 									<div class="form-group row">
 										<div class="col-sm-1">全文说说：</div>
 										<div class="custom-control custom-checkbox">
@@ -167,12 +167,12 @@
 											<input type="number" min="2" class="form-control" id="messages_comments_max" placeholder="最大间隔">
 										</div>
 									</div>
-									<div class="form-group row">
+									<!-- <div class="form-group row">
 										<label for="messages_comments_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="10" max="20" class="form-control" id="messages_comments_limit" placeholder="查询每页条数">
 										</div>
-									</div>
+									</div> -->
 									<div class="form-group row">
 										<div class="col-sm-1">所有评论：</div>
 										<div class="custom-control custom-checkbox">
@@ -212,12 +212,12 @@
 											<input type="number" min="1" class="form-control" id="blogs_list_cost_max" placeholder="最大间隔">
 										</div>
 									</div>
-									<div class="form-group row">
+									<!-- <div class="form-group row">
 										<label for="blogs_list_limit" class="col-sm-1 col-form-label">列表每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="15" max="100" class="form-control" id="blogs_list_limit" placeholder="查询每页条数">
 										</div>
-									</div>
+									</div> -->
 									<div class="form-group row">
 										<label class="col-sm-1 col-form-label">内容查询间隔：</label>
 										<div class="col-sm-1">
@@ -241,12 +241,12 @@
 											<input type="number" min="1" class="form-control" id="blogs_comments_max" placeholder="最大间隔">
 										</div>
 									</div>
-									<div class="form-group row">
+									<!-- <div class="form-group row">
 										<label for="blogs_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="15" max="50" class="form-control" id="blogs_comments_limit" placeholder="查询每页条数">
 										</div>
-									</div>
+									</div> -->
 									<div class="form-group row">
 										<div class="col-sm-1">所有评论：</div>
 										<div class="custom-control custom-checkbox">
@@ -286,12 +286,12 @@
 											<input type="number" min="1" class="form-control" id="diaries_list_cost_max" placeholder="最大间隔">
 										</div>
 									</div>
-									<div class="form-group row">
+									<!-- <div class="form-group row">
 										<label for="diaries_list_limit" class="col-sm-1 col-form-label">列表每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="15" max="100" class="form-control" id="diaries_list_limit" placeholder="查询每页条数">
 										</div>
-									</div>
+									</div> -->
 									<div class="form-group row">
 										<label class="col-sm-1 col-form-label">内容查询间隔：</label>
 										<div class="col-sm-1">
@@ -313,8 +313,8 @@
 										<label for="photos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
 											<select id="photos_exportFormat" class="custom-select">
-												<option value="Folder" selected>文件夹</option>
-												<!-- <option value="MarkDown">MarkDown</option> -->
+												<option value="Folder" selected>相册文件夹</option>
+												<option value="MarkDown">MarkDown</option>
 												<!-- <option value="HTML">HTML</option> -->
 												<option value="JSON">JSON</option>
 												<!-- <option value="RTF">RTF</option> -->
@@ -331,20 +331,20 @@
 											<input type="number" min="1" class="form-control" id="photos_list_cost_max" placeholder="最大间隔">
 										</div>
 									</div>
-									<div class="form-group row">
+									<!-- <div class="form-group row">
 										<label for="photos_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="10" max="90" class="form-control" id="photos_list_limit" placeholder="查询每页条数">
 										</div>
-									</div>
+									</div> -->
 									<br>
 									<h5 style="color:cadetblue">相片选项：</h5>
 									<hr>
 									<div class="form-group row">
-										<label for="photos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
+										<label for="photos_image_exportType" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
-											<select id="photos_exportFormat" class="custom-select">
-												<option value="File" selected>文件</option>
+											<select id="photos_image_exportType" class="custom-select">
+												<option value="File" selected>图片文件</option>
 												<!-- <option value="MarkDown">MarkDown</option> -->
 												<!-- <option value="HTML">HTML</option> -->
 												<option value="JSON">JSON</option>
@@ -362,22 +362,49 @@
 											<input type="number" min="1" class="form-control" id="photos_images_cost_max" placeholder="最大间隔">
 										</div>
 									</div>
-									<div class="form-group row">
+									<!-- <div class="form-group row">
 										<label for="photos_images_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="10" max="90" class="form-control" id="photos_images_limit" placeholder="查询每页条数">
 										</div>
-									</div>
+									</div> -->
 									<div class="form-group row">
 										<label for="photos_exifType" class="col-sm-1 col-form-label">清晰度：</label>
 										<div class="col-sm-2">
 											<select id="photos_exifType" class="custom-select">
-												<option value="original">原图</option>
-												<option value="hd" selected>高清</option>
+												<option value="raw" selected>原图</option>
+												<option value="original">高清</option>
 												<option value="normal">一般</option>
 											</select>
 										</div>
 									</div>
+									<br>
+									<h5 style="color:cadetblue">评论选项：</h5>
+									<hr>
+									<div class="form-group row">
+										<div class="col-sm-1">获取评论：</div>
+										<div class="custom-control custom-checkbox">
+											<input type="checkbox" class="custom-control-input" id="photos_images_comments_has">
+											<label style="margin-left: 14px;" class="custom-control-label" for="photos_images_comments_has" aria-describedby="photos_images_comments_has_help"></label>
+											<small id="photos_images_comments_has_help" class="text-muted">默认不获取，勾选获取评论，仅适用于相片备份类型为非File类型</small>
+										</div>
+									</div>
+									<div class="form-group row">
+										<label class="col-sm-1 col-form-label">查询间隔：</label>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control" id="photos_images_comments_cost_min" placeholder="最小间隔">
+										</div>
+										<span>-</span>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control" id="photos_images_comments_cost_max" placeholder="最大间隔">
+										</div>
+									</div>
+									<!-- <div class="form-group row">
+										<label for="photos_images_comment_limit" class="col-sm-1 col-form-label">每页条数：</label>
+										<div class="col-sm-2">
+											<input type="number" min="10" max="90" class="form-control" id="photos_images_comments_limit" placeholder="查询每页条数">
+										</div>
+									</div> -->
 								</form>
 							</div>
 							<div class="tab-pane fade" id="nav-videos" role="tabpanel" aria-labelledby="nav-videos-tab">
@@ -387,8 +414,8 @@
 										<label for="videos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
 											<select id="videos_exportFormat" class="custom-select">
-												<option value="Link" selected>链接</option>
-												<option value="File">文件</option>
+												<option value="Link" selected>下载链接</option>
+												<option value="File">MP4文件</option>
 												<!-- <option value="MarkDown">MarkDown</option> -->
 												<!-- <option value="HTML">HTML</option> -->
 												<option value="JSON">JSON</option>
@@ -406,12 +433,12 @@
 											<input type="number" min="1" class="form-control" id="videos_list_cost_max" placeholder="最大间隔">
 										</div>
 									</div>
-									<div class="form-group row">
+									<!-- <div class="form-group row">
 										<label for="videos_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="10" max="20" class="form-control" id="videos_list_limit" placeholder="查询每页条数">
 										</div>
-									</div>
+									</div> -->
 								</form>
 							</div>
 							<div class="tab-pane fade" id="nav-boards" role="tabpanel" aria-labelledby="nav-boards-tab">
@@ -438,12 +465,12 @@
 											<input type="number" min="1" class="form-control" id="boards_list_cost_max" placeholder="最大间隔">
 										</div>
 									</div>
-									<div class="form-group row">
+									<!-- <div class="form-group row">
 										<label for="boards_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="10" max="20" class="form-control" id="boards_list_limit" placeholder="查询每页条数">
 										</div>
-									</div>
+									</div> -->
 								</form>
 							</div>
 							<div class="tab-pane fade" id="nav-friends" role="tabpanel" aria-labelledby="nav-friends-tab">
@@ -453,17 +480,17 @@
 										<label for="friends_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 										<div class="col-sm-2">
 											<select id="friends_exportFormat" class="custom-select">
-												<option value="excel" selected>Excel</option>
-												<option value="json">JSON</option>
+												<option value="Excel" selected>Excel</option>
+												<option value="JSON">JSON</option>
 											</select>
 										</div>
 									</div>
 									<div class="form-group row">
 										<div class="col-sm-1">添加时间：</div>
 										<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="friends_download_full_comments">
-											<label style="margin-left: 14px;" class="custom-control-label" for="friends_download_full_comments" aria-describedby="friends_comments_help"></label>
-											<small id="friends_comments_help" class="text-muted">默认不获取好友添加时间，勾选则获取</small>
+											<input type="checkbox" class="custom-control-input" id="friends_has_add_time">
+											<label style="margin-left: 14px;" class="custom-control-label" for="friends_has_add_time" aria-describedby="friends_has_add_time_help"></label>
+											<small id="friends_has_add_time_help" class="text-muted">默认不获取好友添加时间，勾选则获取，时间仅供参考</small>
 										</div>
 									</div>
 								</form>
@@ -492,19 +519,19 @@
 											<input type="number" min="1" class="form-control" id="favorites_list_cost_max" placeholder="最大间隔">
 										</div>
 									</div>
-									<div class="form-group row">
+									<!-- <div class="form-group row">
 										<label for="favorites_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="20" max="40" class="form-control" id="favorites_list_limit" placeholder="查询每页条数">
 										</div>
-									</div>
+									</div> -->
 								</form>
 							</div>
 							<div class="tab-pane fade" id="nav-common" role="tabpanel" aria-labelledby="nav-common-tab">
 								<br />
 								<form id="tb_common">
 									<div class="form-group row">
-										<label for="common_download_type" class="col-sm-1 col-form-label">文件备份方式：</label>
+										<label for="common_download_type" class="col-sm-1 col-form-label">文件下载工具：</label>
 										<div class="col-sm-2">
 											<select id="common_download_type" class="custom-select" aria-describedby="common_download_type_help">
 												<option value="File" selected>助手内部</option>
@@ -526,6 +553,12 @@
 										<label for="common_download_thread" class="col-sm-1 col-form-label">下载并发量：</label>
 										<div class="col-sm-2">
 											<input type="number" min="5" max="15" class="form-control" id="common_download_thread" placeholder="下载并发量">
+										</div>
+									</div>
+									<div class="form-group row">
+										<label for="common_download_timeout" class="col-sm-1 col-form-label">下载超时秒数：</label>
+										<div class="col-sm-2">
+											<input type="number" min="5" max="15" class="form-control" id="common_download_timeout" placeholder="下载超时秒数">
 										</div>
 									</div>
 									<div class="form-group row">

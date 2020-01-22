@@ -8,6 +8,8 @@ const Default_Config = {
         isAutoFileSuffix: true,
         // 照片下载并发数        
         downloadThread: 5,
+        // 文件下载超时秒数        
+        downloadTimeOut: 5,
         // 是否启用下载状态栏提醒
         enabledShelf: false
     },
@@ -78,10 +80,18 @@ const Default_Config = {
         Images: {
             exportType: "File",
             pageSize: 90,
-            exifType: "hd",
+            exifType: "raw",
             randomSeconds: {
                 min: 2,
                 max: 5
+            },
+            Comments: {
+                isGet: false, // 是否获取评论，默认不获取
+                pageSize: 100,
+                randomSeconds: {
+                    min: 2,
+                    max: 5
+                }
             }
         }
     },
@@ -105,7 +115,8 @@ const Default_Config = {
     },
     // QQ好友模块
     Friends: {
-        exportType: "Excel"
+        exportType: "Excel",
+        hasAddTime: false
     },
     // 收藏夹模块
     Favorites: {
@@ -119,7 +130,7 @@ const Default_Config = {
 };
 
 // 用户配置
-const Qzone_Config = {
+let Qzone_Config = {
     // 公共配置
     Common: {
         // 附件下载类型
@@ -128,6 +139,8 @@ const Qzone_Config = {
         isAutoFileSuffix: true,
         // 照片下载并发数        
         downloadThread: 5,
+        // 文件下载超时秒数        
+        downloadTimeOut: 5,
         // 是否启用下载状态栏提醒
         enabledShelf: false
     },
@@ -198,10 +211,18 @@ const Qzone_Config = {
         Images: {
             exportType: "File",
             pageSize: 90,
-            exifType: "hd",
+            exifType: "raw",
             randomSeconds: {
                 min: 2,
                 max: 5
+            },
+            Comments: {
+                isGet: false, // 是否获取评论，默认不获取
+                pageSize: 100,
+                randomSeconds: {
+                    min: 2,
+                    max: 5
+                }
             }
         }
     },
@@ -225,7 +246,8 @@ const Qzone_Config = {
     },
     // QQ好友模块
     Friends: {
-        exportType: "Excel"
+        exportType: "Excel",
+        hasAddTime: false
     },
     // 收藏夹模块
     Favorites: {
@@ -293,8 +315,16 @@ const QZone = {
     // 相册模块
     Photos: {
         ROOT: FOLDER_ROOT + '相册',
-        Data: [],
-        Images: [],
+        Album: {
+            total: 0,
+            Data: []
+        },
+        Images: {
+
+        },
+        Class: {
+
+        },
         FILE_URLS: new Map()
     },
     // 视频模块

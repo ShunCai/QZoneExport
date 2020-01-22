@@ -1,0 +1,155 @@
+/**
+ * QQ空间好友模块导出API
+ * @author https://lvshuncai.com
+ */
+
+/**
+ * 导出QQ空间好友
+ */
+API.Friends.export = async () => {
+    try {
+        // 获取所有的QQ好友
+        let friends = await API.Friends.getAllList();
+
+        // 根据导出类型导出数据
+        await API.Friends.exportAllToFiles(friends);
+
+    } catch (error) {
+        console.error('QQ好友导出异常', error);
+    }
+}
+
+/**
+ * 获取所有留言列表
+ */
+API.Friends.getAllList = async () => {
+    // 重置数据
+    QZone.Friends.Data = [];
+
+    // 进度更新器
+    let indicator = new StatusIndicator('Friends');
+
+    // 开始
+    indicator.print();
+
+    let friends = await API.Friends.getFriends().then(async (data) => {
+        data = API.Utils.toJson(data, /^_Callback\(/);
+        data = data.data;
+
+        let friends = data.items ||[];
+
+        QZone.Friends.total = friends.length;
+        indicator.setTotal(friends.length);
+
+        QZone.Friends.Data = data.items;        
+        indicator.addSuccess(friends);
+
+        // 将QQ分组进行分组
+        let groups = data.gpnames;
+        let groupMap = new Map();
+        for (const group of groups) {
+            groupMap.set(group.gpid, group.gpname);
+        }
+
+        // 处理QQ好友
+        for (const friend of friends) {
+            friend.groupName = groupMap.get(friend.groupid) || "默认分组";
+            if (!Qzone_Config.Friends.hasAddTime) {
+                // 不获取好友添加时间则跳过
+                continue;
+            }
+            let addFriendTime = await API.Friends.getFriendshipTime(friend.uin).then((time_data) => {
+                time_data = API.Utils.toJson(time_data, /^_Callback\(/);
+                let addTime = time_data.addFriendTime || 0;
+                addTime = addTime == 0 ? "老朋友啦" : API.Utils.formatDate(addTime);
+                return addTime;
+            }).catch((e) => {
+                console.error("获取好友添加时间异常", friend);
+            })
+            friend.addFriendTime = addFriendTime;
+        }
+
+        return friends;
+    }).catch((e) => {
+        console.error("获取好友列表异常", e);
+    })
+
+    // 完成
+    indicator.complete();
+
+    return friends || [];
+}
+
+/**
+ * 导出留言
+ * @param {Array} friends 留言列表
+ */
+API.Friends.exportAllToFiles = async (friends) => {
+    // 获取用户配置
+    let exportType = Qzone_Config.Friends.exportType;
+    switch (exportType) {
+        case 'Excel':
+            await API.Friends.exportToExcel(friends);
+            break;
+        case 'JSON':
+            await API.Friends.exportToJson(friends);
+            break;
+        default:
+            console.warn('未支持的导出类型', exportType);
+            break;
+    }
+}
+
+/**
+ * 导出QQ好友到Excel
+ * @param {Array} friends 留言列表
+ */
+API.Friends.exportToExcel = async (friends) => {
+    let indicator = new StatusIndicator('Friends_Export');
+    indicator.setTotal(friends.length);
+    // Excel数据
+    let ws_data = [
+        ["QQ号", "备注名称", "QQ昵称", "所在分组", "成为好友时间"],
+    ];
+
+    for (const friend of friends) {
+        let rowData = [friend.uin, friend.remark, friend.name, friend.groupName, friend.addFriendTime];
+        ws_data.push(rowData);
+    }
+
+    // 更新下载中数量
+    indicator.addDownload(friends);
+
+    // 创建WorkBook
+    let workbook = XLSX.utils.book_new();
+
+    let worksheet = XLSX.utils.aoa_to_sheet(ws_data);
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "QQ好友");
+
+    // 写入XLSX到HTML5的FileSystem
+    let xlsxArrayBuffer = API.Utils.toArrayBuffer(XLSX.write(workbook, { bookType: 'xlsx', bookSST: false, type: 'binary' }));
+    await API.Utils.writeExcel(xlsxArrayBuffer, QZone.Friends.ROOT + "/QQ好友.xlsx").then(fileEntry => {
+        indicator.addSuccess(friends);
+        console.debug('导出QQ好友到Excel成功', friends, fileEntry);
+    }).catch(error => {
+        console.error('导出QQ好友到Excel失败', friends, error);
+        indicator.addFailed(friends);
+    });
+    return friends;
+}
+
+
+/**
+ * 导出QQ好友到JSON
+ * @param {Array} friends 好友列表
+ */
+API.Friends.exportToJson = async (friends) => {
+    let indicator = new StatusIndicator('Friends_Export');
+    indicator.setTotal(friends.length);
+    let json = JSON.stringify(friends);
+    await API.Utils.writeText(json, QZone.Friends.ROOT + '/QQ好友.json');
+    indicator.addSuccess(friends);
+    indicator.complete();
+    return friends;
+}

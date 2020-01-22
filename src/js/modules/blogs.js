@@ -7,20 +7,23 @@
 * 导出日志数据
 */
 API.Blogs.export = async () => {
+    try {
+        // 获取所有的日志数据
+        let items = await API.Blogs.getAllList();
+        console.debug('日志列表获取完成', items);
 
-    // 获取所有的日志数据
-    let items = await API.Blogs.getAllList();
-    console.debug('日志列表获取完成', items);
+        // 获取日志内容
+        items = await API.Blogs.getAllContents(items);
+        console.debug('日志内容获取完成', items);
 
-    // 获取日志内容
-    items = await API.Blogs.getAllContents(items);
-    console.debug('日志内容获取完成', items);
+        // 获取所有的日志评论
+        items = await API.Blogs.getItemsAllCommentList(items);
 
-    // 获取所有的日志评论
-    items = await API.Blogs.getItemsAllCommentList(items);
-
-    // 根据导出类型导出数据    
-    await API.Blogs.exportAllListToFiles(items);
+        // 根据导出类型导出数据    
+        await API.Blogs.exportAllListToFiles(items);
+    } catch (error) {
+        console.error('日志导出异常', error);
+    }
 }
 
 /**
@@ -291,10 +294,10 @@ API.Blogs.exportAllListToFiles = async (items) => {
     let exportType = Qzone_Config.Blogs.exportType;
     switch (exportType) {
         case 'MarkDown':
-            await API.Blogs.exportMdToFiles(items);
+            await API.Blogs.exportToMarkdown(items);
             break;
         case 'JSON':
-            await API.Blogs.exportJsonToFile(items);
+            await API.Blogs.exportToJson(items);
             break;
         default:
             console.warn('未支持的导出类型', exportType);
@@ -306,7 +309,7 @@ API.Blogs.exportAllListToFiles = async (items) => {
  * 导出日志到MarkDown文件
  * @param {Array} items 日志列表
  */
-API.Blogs.exportMdToFiles = async (items) => {
+API.Blogs.exportToMarkdown = async (items) => {
     let indicator = new StatusIndicator('Blogs_Export');
     indicator.setTotal(items.length);
     for (let index = 0; index < items.length; index++) {
@@ -328,7 +331,7 @@ API.Blogs.exportMdToFiles = async (items) => {
         await API.Utils.createFolder(categoryFolder);
         // 日志文件路径
         let filepath = categoryFolder + '/' + filename + ".md";
-        await API.Utils.writeFile(content, filepath).then(() => {
+        await API.Utils.writeText(content, filepath).then(() => {
             // 更新成功信息
             indicator.addSuccess(item);
         }).catch((e) => {
@@ -393,7 +396,7 @@ API.Blogs.getItemMdContent = async (item) => {
         let url = API.Utils.replaceUrl(orgUrl);
         let uid = QZone.Blogs.FILE_URLS.get(url);
         if (!uid) {
-            uid = API.Utils.newUid();
+            uid = API.Utils.newSimpleUid(16, 16);
             // 是否获取文件类型
             if (Qzone_Config.Common.isAutoFileSuffix) {
                 // 获取图片类型
@@ -407,10 +410,8 @@ API.Blogs.getItemMdContent = async (item) => {
                     console.error('获取文件类型异常', url, e);
                 });
             }
-            // 添加浏览器下载任务
-            browserTasks.push(new BrowserTask(url, download_dir + moudel_dir + uid));
-            // 添加迅雷下载任务
-            thunderInfo.addTask(new ThunderTask(uid, moudel_dir, uid, url));
+            // 添加下载任务
+            API.Utils.newDownloadTask(url, download_dir, moudel_dir, uid);
             QZone.Blogs.FILE_URLS.set(url, uid);
         }
         result = result.split(orgUrl).join("../图片/" + uid);
@@ -422,11 +423,12 @@ API.Blogs.getItemMdContent = async (item) => {
  * 导出日志到JSON文件
  * @param {Array} items 日志列表
  */
-API.Blogs.exportJsonToFile = async (items) => {
+API.Blogs.exportToJson = async (items) => {
     let indicator = new StatusIndicator('Blogs_Export');
     indicator.setTotal(items.length);
     let json = JSON.stringify(items);
-    await API.Utils.writeFile(json, QZone.Blogs.ROOT + '/日志.json');
+    await API.Utils.writeText(json, QZone.Blogs.ROOT + '/日志.json');
     indicator.addSuccess(items);
     indicator.complete();
+    return items;
 }

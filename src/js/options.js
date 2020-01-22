@@ -19,6 +19,7 @@
 		$('#common_download_status').attr("checked", options.Common.enabledShelf);
 		chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
 		$("#common_download_thread").val(options.Common.downloadThread);
+		$("#common_download_timeout").val(options.Common.downloadTimeOut);
 
 		// 说说模块赋值
 		$("#messages_exportFormat").val(options.Messages.exportType);
@@ -62,9 +63,15 @@
 		$("#photos_list_cost_min").val(options.Photos.randomSeconds.min);
 		$("#photos_list_cost_max").val(options.Photos.randomSeconds.max);
 		$("#photos_list_limit").val(options.Photos.pageSize);
-		$("#photos_images_limit").val(options.Photos.Images.pageSize);
+
+		$("#photos_image_exportType").val(options.Photos.Images.exportType);
 		$("#photos_images_cost_min").val(options.Photos.Images.randomSeconds.min);
 		$("#photos_images_cost_max").val(options.Photos.Images.randomSeconds.max);
+		$("#photos_images_limit").val(options.Photos.Images.pageSize);
+		$("#photos_images_comments_has").attr("checked", options.Photos.Images.Comments.isGet);
+		$("#photos_images_comments_cost_min").val(options.Photos.Images.Comments.randomSeconds.min);
+		$("#photos_images_comments_cost_max").val(options.Photos.Images.Comments.randomSeconds.max);
+		$("#photos_images_comments_limit").val(options.Photos.Images.Comments.pageSize);
 		$("#photos_exifType").val(options.Photos.Images.exifType);
 
 		// 视频模块赋值
@@ -81,7 +88,8 @@
 		$("#boards_list_limit").val(options.Boards.pageSize);
 
 		// 好友模块赋值
-		$("input[type='radio'][name='friends_exportFormat'][value='" + options.Friends.exportType + "']").attr("checked", "checked");
+		$("#friends_exportFormat").val(options.Friends.exportType);
+		$("#friends_has_add_time").attr("checked", options.Friends.hasAddTime);
 
 		// 收藏夹模块赋值
 		$("#favorites_exportFormat").val(options.Favorites.exportType);
@@ -105,6 +113,7 @@
 		Qzone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
 		chrome.downloads.setShelfEnabled(Qzone_Config.Common.enabledShelf);
 		Qzone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
+		Qzone_Config.Common.downloadTimeOut = $("#common_download_timeout").val() * 1;
 
 		// 说说模块赋值
 		Qzone_Config.Messages.exportType = $("#messages_exportFormat").val();
@@ -114,7 +123,7 @@
 		Qzone_Config.Messages.isFull = $("#messages_full").prop("checked");
 
 
-		// 说说评论副职
+		// 说说评论赋值
 		Qzone_Config.Messages.Comments.isFull = $("#messages_download_full_comments").prop("checked");
 		Qzone_Config.Messages.Comments.randomSeconds.min = $("#messages_comments_min").val() * 1;
 		Qzone_Config.Messages.Comments.randomSeconds.max = $("#messages_comments_max").val() * 1;
@@ -146,11 +155,17 @@
 		// 相册模块赋值
 		Qzone_Config.Photos.exportType = $("#photos_exportFormat").val();
 		Qzone_Config.Photos.pageSize = $("#photos_list_limit").val() * 1;
-		Qzone_Config.Photos.Images.pageSize = $("#photos_images_limit").val() * 1;
 		Qzone_Config.Photos.randomSeconds.min = $("#photos_list_cost_min").val() * 1;
 		Qzone_Config.Photos.randomSeconds.max = $("#photos_list_cost_max").val() * 1;
+
+		Qzone_Config.Photos.Images.exportType = $("#photos_image_exportType").val();
 		Qzone_Config.Photos.Images.randomSeconds.min = $("#photos_images_cost_min").val() * 1;
-		Qzone_Config.Photos.Images.randomSeconds.max = $("#photos_images_cost_min").val() * 1;
+		Qzone_Config.Photos.Images.randomSeconds.max = $("#photos_images_cost_max").val() * 1;
+		Qzone_Config.Photos.Images.pageSize = $("#photos_images_limit").val() * 1;
+		Qzone_Config.Photos.Images.Comments.isGet = $("#photos_images_comments_has").prop("checked");
+		Qzone_Config.Photos.Images.Comments.randomSeconds.min = $("#photos_images_comments_cost_min").val() * 1;
+		Qzone_Config.Photos.Images.Comments.randomSeconds.max = $("#photos_images_comments_cost_max").val() * 1;
+		Qzone_Config.Photos.Images.Comments.pageSize = $("#photos_images_comments_limit").val() * 1;
 		Qzone_Config.Photos.Images.exifType = $("#photos_exifType").val();
 
 		// 视频模块赋值
@@ -167,6 +182,7 @@
 
 		// 好友模块赋值
 		Qzone_Config.Friends.exportType = $("#friends_exportFormat").val();
+		Qzone_Config.Friends.hasAddTime = $("#friends_has_add_time").prop("checked");
 
 		// 收藏夹模块赋值
 		Qzone_Config.Favorites.exportType = $("#favorites_exportFormat").val();
