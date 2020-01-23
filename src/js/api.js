@@ -120,8 +120,14 @@ API.Utils = {
             xhr.timeout = 10 * 1000;
             xhr.onreadystatechange = function () {
                 if (2 == xhr.readyState) {
+                    let contentType = xhr.getResponseHeader('content-type') || xhr.getResponseHeader('Content-Type');
+                    let suffix = contentType.split('/')[1];
+                    if ('octet-stream' === suffix) {
+                        let disposition = xhr.getResponseHeader('content-disposition') || xhr.getResponseHeader('Content-Disposition');
+                        suffix = disposition.split('=')[1].split('.')[1];
+                    }
                     var ret = {
-                        mimeType: xhr.getResponseHeader('content-type') || xhr.getResponseHeader('Content-Type'),
+                        suffix: suffix,
                         size: xhr.getResponseHeader('content-length') || xhr.getResponseHeader('Content-Length')
                     };
                     this.abort();
@@ -145,9 +151,8 @@ API.Utils = {
      */
     async getFileSuffix(url) {
         return await this.getMimeType(url).then((data) => {
-            let mimeType = data.mimeType
-            if (mimeType) {
-                let suffix = mimeType.split('/')[1]
+            let suffix = data.suffix
+            if (suffix) {
                 return '.' + suffix;
             }
             return '';
@@ -155,6 +160,20 @@ API.Utils = {
             console.error('获取文件类型异常', url, e);
             return '';
         });
+    },
+
+
+
+    /**
+     * 根据配置获取文件后缀名
+     * @param {string} url 文件地址
+     */
+    async autoFileSuffix(url) {
+        if (!Qzone_Config.Common.isAutoFileSuffix) {
+            return '';
+        }
+        url = API.Utils.makeDownloadUrl(url, true);
+        return API.Utils.getFileSuffix(url);
     },
 
     /**
@@ -1803,11 +1822,11 @@ API.Photos = {
         var result;
         var newurl;
         if ((result = reg.exec(url)) !== null) {
-            newurl = "//r.photo.store.qq.com/ps" + result[1] + "?/" + result[2] + "/" + result[3] + "/m/" + result[4];
+            newurl = "https://r.photo.store.qq.com/ps" + result[1] + "?/" + result[2] + "/" + result[3] + "/m/" + result[4];
             return newurl;
         } else {
             if ((result = reg2.exec(url)) !== null) {
-                newurl = "//r.photo.store.qq.com/psc?/" + result[1] + "/m";
+                newurl = "https://r.photo.store.qq.com/psc?/" + result[1] + "/m";
                 return newurl;
             }
         }

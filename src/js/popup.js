@@ -71,9 +71,12 @@
                 if (!data.hasOwnProperty(value)) {
                     continue;
                 }
-                const checked = data[value];
+                const checked = data[value] || true;
                 let $exportType = $("input[value='" + value + "']");
-                $exportType[0].checked = checked;
+                let hasDom = $exportType && $exportType[0];
+                if (hasDom && $exportType[0].disabled === false) {
+                    $exportType[0].checked = checked
+                }
             }
         });
     }

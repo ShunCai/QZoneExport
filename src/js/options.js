@@ -19,7 +19,6 @@
 		$('#common_download_status').attr("checked", options.Common.enabledShelf);
 		chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
 		$("#common_download_thread").val(options.Common.downloadThread);
-		$("#common_download_timeout").val(options.Common.downloadTimeOut);
 
 		// 说说模块赋值
 		$("#messages_exportFormat").val(options.Messages.exportType);
@@ -113,8 +112,7 @@
 		Qzone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
 		chrome.downloads.setShelfEnabled(Qzone_Config.Common.enabledShelf);
 		Qzone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
-		Qzone_Config.Common.downloadTimeOut = $("#common_download_timeout").val() * 1;
-
+		
 		// 说说模块赋值
 		Qzone_Config.Messages.exportType = $("#messages_exportFormat").val();
 		Qzone_Config.Messages.randomSeconds.min = $("#messages_list_cost_min").val() * 1;

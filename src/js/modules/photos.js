@@ -371,6 +371,9 @@ API.Photos.getAllImagesComments = async (items) => {
 
 /**
  * 添加相片下载任务
+ * @param {object} album 相册对象
+ * @param {Array} photos 相片列表
+ * @param {StatusIndicator} indicator 进度更新器
  */
 API.Photos.addDownloadTasks = async (album, photos) => {
     let exportType = Qzone_Config.Photos.Images.exportType;
@@ -407,13 +410,13 @@ API.Photos.addDownloadTasks = async (album, photos) => {
         // 默认高清
         let url = API.Photos.getDownloadUrl(photo, Qzone_Config.Photos.Images.exifType);
         url = API.Utils.replaceUrl(url);
-        photo.custom_url = API.Utils.makeDownloadUrl(url, true);
+        photo.custom_url = url;
 
         // 添加下载任务
         let albumClass = API.Utils.filenameValidate(photo.albumClass);
         let albumName = API.Utils.filenameValidate(photo.albumName);
         // 获取图片类型
-        let suffix = await API.Utils.autoFileSuffix(API.Utils.makeDownloadUrl(url, false));
+        let suffix = await API.Utils.autoFileSuffix(url);
         if (suffix) {
             indicator.addSuccess(photo);
         } else {
@@ -435,16 +438,18 @@ API.Photos.addDownloadTasks = async (album, photos) => {
             let images = comment.pic || [];
             for (const image of images) {
                 let url = image.hd_url || image.b_url;
-                image.custom_url = API.Utils.replaceUrl(url);
+                url = API.Utils.replaceUrl(url);
+                image.custom_url = url;
                 image.custom_filename = API.Utils.newSimpleUid(8, 16);
                 // 获取图片类型
-                let suffix = await API.Utils.autoFileSuffix(API.Utils.makeDownloadUrl(image.custom_url, false));
+                let suffix = await API.Utils.autoFileSuffix(url);
                 image.custom_filename = image.custom_filename + suffix;
                 // 添加下载任务
-                API.Utils.newDownloadTask(API.Utils.makeDownloadUrl(image.custom_url), download_dir, moudel_dir + albumClass + '/' + albumName + '/评论图片', image.custom_filename);
+                API.Utils.newDownloadTask(image.custom_url, download_dir, moudel_dir + albumClass + '/' + albumName + '/评论图片', image.custom_filename);
             }
         }
     }
+    indicator.complete();
     return photos;
 }
 
@@ -492,7 +497,7 @@ API.Photos.exportPhotosMdToFiles = async (albums) => {
         }
         const name = photoCls[key] || '其他';
         let contents = [];
-        contents.push('### {0}\r\n'.format(name));
+        contents.push('### {0}'.format(name));
         let items = [];
         for (const item of albums) {
             let clsName = QZone.Photos.Class[item.classid] || '其他';
@@ -500,16 +505,19 @@ API.Photos.exportPhotosMdToFiles = async (albums) => {
                 continue;
             }
             let albumName = item.name;
-            contents.push('---\r\n');
-            contents.push('> [{0}](https://user.qzone.qq.com/{1}/photo/{2})\r'.format(albumName, QZone.Common.Target.uin, item.id));
+            contents.push('\r\n\r\n---\r\n\r\n');
+            contents.push('>***名称：***[{0}](https://user.qzone.qq.com/{1}/photo/{2})\r'.format(albumName, QZone.Common.Target.uin, item.id));
+            contents.push('\r\n');
             contents.push('>[![{0}]({1})](https://user.qzone.qq.com/{2}/photo/{3})\r'.format(albumName, API.Photos.getPhotoPreUrl(item.pre), QZone.Common.Target.uin, item.id));
-            contents.push('> {0}\r\n'.format(item.desc || albumName));
+            contents.push('\r\n');
+            contents.push('>***描述：***{0}\r\n'.format(item.desc || albumName));
             items.push(item);
         }
         indicator.addDownload(items);
         let content = contents.join('');
         let categoryName = API.Utils.filenameValidate(name);
         let folderName = QZone.Common.Config.ZIP_NAME + '/相册/' + categoryName;
+        await API.Utils.siwtchToRoot();
         await API.Utils.createFolder(folderName);
         let filepath = folderName + '/' + categoryName + ".md";
         await API.Utils.writeText(content, filepath).then(() => {
@@ -571,7 +579,6 @@ API.Photos.exportImagesMdToFiles = async (albums) => {
  */
 API.Photos.exportImagesJsonToFile = async (albums) => {
     let photoCls = QZone.Photos.Class;
-    await API.Utils.siwtchToRoot();
     for (const key in photoCls) {
         if (!photoCls.hasOwnProperty(key)) {
             continue;
@@ -586,9 +593,10 @@ API.Photos.exportImagesJsonToFile = async (albums) => {
             indicator.setTotal(photos.length);
             let json = JSON.stringify(photos);
             indicator.addDownload(photos);
-            let folderName = QZone.Photos.ROOT + '/相册/' + categoryName + '/' + albumName;
+            let folderName = QZone.Photos.ROOT + '/' + categoryName + '/' + albumName;
+            await API.Utils.siwtchToRoot();
             await API.Utils.createFolder(folderName);
-            await API.Utils.writeText(json, QZone.Photos.ROOT + '/相册/' + categoryName + '/' + albumName + "/" + albumName + '.json');
+            await API.Utils.writeText(json, folderName + "/" + albumName + '.json');
             indicator.addSuccess(photos);
             indicator.complete();
         }

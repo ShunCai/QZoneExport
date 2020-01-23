@@ -205,6 +205,20 @@ class StatusIndicator {
             '总共 <span style="color: #1ca5fc;">{total}</span> 条',
             '请稍后...'
         ],
+        Videos: [
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的视频列表',
+            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+            '已失败 <span style="color: red;">{downloadFailed}</span> 个',
+            '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+            '请稍后...'
+        ],
+        Videos_Export: [
+            '正在导出视频',
+            '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+            '请稍后...'
+        ],
         Boards: [
             '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的留言板列表',
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
@@ -231,14 +245,14 @@ class StatusIndicator {
             '总共 <span style="color: #1ca5fc;">{total}</span> 个',
             '请稍后...'
         ],
-        Videos: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的视频列表',
+        Favorites: [
+            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的收藏列表',
             '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
             '已失败 <span style="color: red;">{downloadFailed}</span> 个',
             '总共 <span style="color: #1ca5fc;">{total}</span> 个',
             '请稍后...'
         ],
-        Videos_Export: [
+        Favorites_Export: [
             '正在导出视频',
             '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
             '已失败 <span style="color: red;">{downloadFailed}</span> 条',
@@ -450,9 +464,14 @@ class QZoneOperator {
         BOARD_LIST: 'BOARD_LIST',
 
         /**
-        * 获取好友列表
+        * 获取QQ好友列表
         */
         FRIEND_LIST: 'FRIEND_LIST',
+
+        /**
+        * 获取收藏列表
+        */
+        FAVORITE_LIST: 'FAVORITE_LIST',
 
         /**
          * 下载文件
@@ -483,12 +502,10 @@ class QZoneOperator {
                 // 显示模态对话框
                 this.showProcess();
                 await this.initModelFolder();
-                await API.Utils.sleep(500);
                 this.next(OperatorType.MESSAGES_LIST);
                 break;
             case OperatorType.MESSAGES_LIST:
                 // 获取说说列表
-                await API.Utils.sleep(500);
                 if (this.isExport(moduleType)) {
                     await API.Messages.export();
                 }
@@ -496,7 +513,6 @@ class QZoneOperator {
                 break;
             case OperatorType.BLOG_LIST:
                 // 获取日志列表
-                await API.Utils.sleep(500);
                 if (this.isExport(moduleType)) {
                     await API.Blogs.export();
                 }
@@ -504,7 +520,6 @@ class QZoneOperator {
                 break;
             case OperatorType.DIARY_LIST:
                 // 获取私密日记列表
-                await API.Utils.sleep(500);
                 if (this.isExport(moduleType)) {
                     await API.Diaries.export();
                 }
@@ -512,7 +527,6 @@ class QZoneOperator {
                 break;
             case OperatorType.PHOTO_LIST:
                 // 获取相册列表
-                await API.Utils.sleep(500);
                 if (this.isExport(moduleType)) {
                     await API.Photos.export();
                 }
@@ -520,7 +534,6 @@ class QZoneOperator {
                 break;
             case OperatorType.VIDEO_LIST:
                 // 获取视频列表
-                await API.Utils.sleep(500);
                 if (this.isExport(moduleType)) {
                     await API.Videos.export();
                 }
@@ -528,17 +541,22 @@ class QZoneOperator {
                 break;
             case OperatorType.BOARD_LIST:
                 // 获取留言列表
-                await API.Utils.sleep(500);
                 if (this.isExport(moduleType)) {
                     await API.Boards.export();
                 }
                 this.next(OperatorType.FRIEND_LIST);
                 break;
             case OperatorType.FRIEND_LIST:
-                // 获取留言列表
-                await API.Utils.sleep(500);
+                // 获取QQ好友列表
                 if (this.isExport(moduleType)) {
                     await API.Friends.export();
+                }
+                this.next(OperatorType.FAVORITE_LIST);
+                break;
+            case OperatorType.FAVORITE_LIST:
+                // 获取收藏列表
+                if (this.isExport(moduleType)) {
+                    await API.Favorites.export();
                 }
                 this.next(OperatorType.FILE_LIST);
                 break;
@@ -548,14 +566,14 @@ class QZoneOperator {
                 this.next(OperatorType.ZIP);
                 break;
             case OperatorType.ZIP:
-                await API.Utils.sleep(500);
+                await API.Utils.sleep(1000);
                 // 压缩
                 await API.Utils.Zip(FOLDER_ROOT);
                 operator.next(OperatorType.COMPLETE);
                 break;
             case OperatorType.COMPLETE:
                 // 延迟3秒，确保压缩完
-                await API.Utils.sleep(500);
+                await API.Utils.sleep(1000);
                 $("#downloadBtn").show();
                 $("#backupStatus").html("备份完成，请下载。");
                 API.Utils.notification("QQ空间导出助手通知", "空间数据已获取完成，请点击下载！");
@@ -759,7 +777,7 @@ class QZoneOperator {
 
 const MODAL_HTML = `
     <div class="modal fade" id="exampleModalCenter" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title h5" id="exampleModalLongTitle">QQ空间备份</h5>
@@ -788,12 +806,14 @@ const MODAL_HTML = `
                         <p id="Photos_Images_Comments_Tips" style="font-size: medium;" ></p>
                         <p id="Photos_Export_Tips" style="font-size: medium;" ></p>
                         <p id="Photos_Images_Export_Tips" style="font-size: medium;" ></p>
+                        <p id="Videos_Tips" style="font-size: medium;" ></p>     
+                        <p id="Videos_Export_Tips" style="font-size: medium;" ></p>  
                         <p id="Boards_Tips" style="font-size: medium;" ></p>
                         <p id="Boards_Export_Tips" style="font-size: medium;" ></p>
                         <p id="Friends_Tips" style="font-size: medium;" ></p>
                         <p id="Friends_Export_Tips" style="font-size: medium;" ></p>
-                        <p id="Videos_Tips" style="font-size: medium;" ></p>     
-                        <p id="Videos_Export_Tips" style="font-size: medium;" ></p>           
+                        <p id="Favorites_Tips" style="font-size: medium;" ></p>     
+                        <p id="Favorites_Export_Tips" style="font-size: medium;" ></p>          
                         <p id="Common_File_Tips" style="font-size: medium;" ></p>           
                         <p id="Common_Thunder_Tips" style="font-size: medium;" ></p>        
                         <p id="Common_Browser_Tips" style="font-size: medium;" ></p>   
@@ -880,56 +900,22 @@ API.Utils.addDownloadTasks = async (image, url, download_dir, moudel_dir, FILE_U
         return;
     }
     url = API.Utils.replaceUrl(url);
-    let uid = FILE_URLS.get(url);
-    if (!uid) {
-        uid = API.Utils.newSimpleUid(16, 16);
+    let filename = FILE_URLS.get(url);
+    if (!filename) {
+        filename = API.Utils.newSimpleUid(16, 16);
     }
     image.custom_url = url;
-    // 是否获取文件类型
-    if (Qzone_Config.Common.isAutoFileSuffix) {
-        // 获取图片类型
-        await API.Utils.getMimeType(url).then((data) => {
-            let mimeType = data.mimeType
-            if (mimeType) {
-                let suffix = mimeType.split('/')[1]
-                uid = uid + '.' + suffix;
-            }
-            image.custom_uid = uid;
-            image.custom_mimeType = mimeType;
-            image.custom_dir = '图片';
-            image.custom_filename = uid;
-            image.custom_filepath = '图片/' + uid;
-            // 添加下载任务
-            API.Utils.newDownloadTask(url, download_dir, moudel_dir, uid);
-        }).catch((e) => {
-            console.error('获取文件类型异常', image, e);
-            image.custom_uid = uid;
-            image.custom_dir = '图片';
-            image.custom_filename = uid;
-            image.custom_filepath = '图片/' + uid;
-            // 添加下载任务
-            API.Utils.newDownloadTask(url, download_dir, moudel_dir, uid);
-        });
-    } else {
-        image.custom_uid = uid;
-        image.custom_dir = '图片';
-        image.custom_filename = uid;
-        image.custom_filepath = '图片/' + uid;
-        // 添加下载任务
-        API.Utils.newDownloadTask(url, download_dir, moudel_dir, uid);
-    }
-    FILE_URLS.set(url, uid);
-}
 
-/**
- * 根据配置获取文件后缀名
- * @param {string} url 文件地址
- */
-API.Utils.autoFileSuffix = async (url) => {
-    if (!Qzone_Config.Common.isAutoFileSuffix) {
-        return '';
-    }
-    return API.Utils.getFileSuffix(url);
+    let suffix = await API.Utils.autoFileSuffix(url);
+    filename = filename + suffix;
+    image.custom_uid = filename;
+    image.custom_mimeType = suffix;
+    image.custom_dir = '图片';
+    image.custom_filename = filename;
+    image.custom_filepath = '图片/' + filename;
+    // 添加下载任务
+    API.Utils.newDownloadTask(url, download_dir, moudel_dir, filename);
+    FILE_URLS.set(url, filename);
 }
 
 /**
@@ -940,6 +926,7 @@ API.Utils.autoFileSuffix = async (url) => {
  * @param {name} name 文件名称
  */
 API.Utils.newDownloadTask = (url, dir, folder, name) => {
+    url = API.Utils.makeDownloadUrl(url, true)
     // 添加浏览器下载任务
     browserTasks.push(new BrowserTask(url, dir + folder + '/' + name));
     // 添加迅雷下载任务
@@ -951,8 +938,6 @@ API.Utils.newDownloadTask = (url, dir, folder, name) => {
  * @param {ThunderTask} tasks
  */
 API.Utils.downloadsByAjax = async (tasks) => {
-    // 切换到根目录
-    await API.Utils.siwtchToRoot();
 
     // 任务分组
     const _tasks = _.chunk(tasks, Qzone_Config.Common.downloadThread);
@@ -966,6 +951,10 @@ API.Utils.downloadsByAjax = async (tasks) => {
         let down_tasks = [];
         for (let j = 0; j < list.length; j++) {
             const task = list[j];
+
+
+            // 切换到根目录
+            await API.Utils.siwtchToRoot();
 
             // 创建文件夹
             let folderName = QZone.Common.Config.ZIP_NAME + '/' + task.dir;

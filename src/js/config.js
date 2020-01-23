@@ -8,8 +8,6 @@ const Default_Config = {
         isAutoFileSuffix: true,
         // 照片下载并发数        
         downloadThread: 5,
-        // 文件下载超时秒数        
-        downloadTimeOut: 5,
         // 是否启用下载状态栏提醒
         enabledShelf: false
     },
@@ -139,8 +137,6 @@ let Qzone_Config = {
         isAutoFileSuffix: true,
         // 照片下载并发数        
         downloadThread: 5,
-        // 文件下载超时秒数        
-        downloadTimeOut: 5,
         // 是否启用下载状态栏提醒
         enabledShelf: false
     },
@@ -271,7 +267,7 @@ const QZone = {
             "VIDEO_LIST": true,
             "BOARD_LIST": true,
             "FRIEND_LIST": true,
-            "FAVORITES_LIST": true
+            "FAVORITE_LIST": true
         },
         Owner: {
             uin: undefined,

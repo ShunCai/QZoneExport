@@ -12,8 +12,6 @@ const Default_Config = {
       isAutoFileSuffix: true,
       // 照片下载并发数        
       downloadThread: 5,
-      // 文件下载超时秒数        
-      downloadTimeOut: 5,
       // 是否启用下载状态栏提醒
       enabledShelf: false
   },

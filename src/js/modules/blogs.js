@@ -327,6 +327,7 @@ API.Blogs.exportToMarkdown = async (items) => {
         }
         // 文件夹路径
         let categoryFolder = QZone.Blogs.ROOT + "/" + item.category;
+        await API.Utils.siwtchToRoot();
         // 创建文件夹
         await API.Utils.createFolder(categoryFolder);
         // 日志文件路径
@@ -397,19 +398,8 @@ API.Blogs.getItemMdContent = async (item) => {
         let uid = QZone.Blogs.FILE_URLS.get(url);
         if (!uid) {
             uid = API.Utils.newSimpleUid(16, 16);
-            // 是否获取文件类型
-            if (Qzone_Config.Common.isAutoFileSuffix) {
-                // 获取图片类型
-                await API.Utils.getMimeType(url).then((data) => {
-                    let mimeType = data.mimeType
-                    if (mimeType) {
-                        let suffix = mimeType.split('/')[1]
-                        uid = uid + '.' + suffix;
-                    }
-                }).catch((e) => {
-                    console.error('获取文件类型异常', url, e);
-                });
-            }
+            let suffix = await API.Utils.autoFileSuffix(url);
+            uid = uid + suffix;
             // 添加下载任务
             API.Utils.newDownloadTask(url, download_dir, moudel_dir, uid);
             QZone.Blogs.FILE_URLS.set(url, uid);

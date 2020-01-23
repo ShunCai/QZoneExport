@@ -128,7 +128,7 @@ API.Videos.addDownloadTasks = (videos) => {
     let download_dir = QZone.Common.Config.ZIP_NAME + '/';
     for (const video of videos) {
         // 添加下载任务
-        API.Utils.newDownloadTask(API.Utils.makeDownloadUrl(video.url), download_dir, moudel_dir, API.Videos.getFileName(video.url));
+        API.Utils.newDownloadTask(video.url, download_dir, moudel_dir, API.Videos.getFileName(video.url));
     }
 }
 

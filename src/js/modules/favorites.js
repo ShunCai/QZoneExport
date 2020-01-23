@@ -6,7 +6,7 @@
 /**
  * 导出收藏板
  */
-API.Favorites.export = () => {
+API.Favorites.export = async () => {
     try {
         // 获取所有的收藏列表
         let dataList = await API.Favorites.getAllList();
@@ -43,10 +43,10 @@ API.Favorites.getPageList = async (pageIndex, indicator) => {
 
         // 更新总数
         QZone.Favorites.total = data.total_num || 0;
-        indicator.setTotal(data.total);
+        indicator.setTotal(QZone.Favorites.total);
 
         // 转换数据
-        let dataList = API.Favorites.convert(data.data.fav_list);
+        let dataList = API.Favorites.convert(data.fav_list);
 
         //  更新获取成功数据
         indicator.addSuccess(dataList);
@@ -171,37 +171,37 @@ API.Favorites.exportToMarkdown = async (favorites) => {
             indicator.setTotal(month_items.length);
 
             contents.push("## " + month + "月 ");
-            for (const borad of month_items) {
+            for (const favorite of month_items) {
 
                 contents.push("---");
                 // 收藏楼层
                 contents.push('#### 第' + (total--) + '楼');
 
-                let nickname = API.Favorites.getOwner(borad);
+                let nickname = API.Favorites.getOwner(favorite);
                 nickname = API.Utils.formatContent(nickname, "MD");
 
-                contents.push('> {0} 【{1}】'.format(borad.pubtime, nickname));
+                contents.push('> {0} 【{1}】'.format(favorite.pubtime, nickname));
                 contents.push('> 正文：');
 
                 // 他人模式兼容私密收藏
-                if (borad.secret == 1 && !borad.htmlContent) {
+                if (favorite.secret == 1 && !favorite.htmlContent) {
                     // 私密收藏提示
                     contents.push('主人收到一条私密收藏，仅彼此可见');
                     continue;
                 }
 
                 // 收藏内容
-                let html_content = borad.htmlContent.replace(/src=\"\/qzone\/em/g, 'src=\"http://qzonestyle.gtimg.cn/qzone/em');
+                let html_content = favorite.htmlContent.replace(/src=\"\/qzone\/em/g, 'src=\"http://qzonestyle.gtimg.cn/qzone/em');
                 html_content = html_content.replace(/\n/g, "\r\n");
                 let markdown_content = turndownService.turndown(html_content);
                 markdown_content = API.Utils.formatContent(markdown_content, "MD");
 
                 // 添加收藏内容
-                contents.push('- [{0}](https://user.qzone.qq.com/{1})：{2}'.format(nickname, borad.uin, mdContent));
+                contents.push('- [{0}](https://user.qzone.qq.com/{1})：{2}'.format(nickname, favorite.uin, mdContent));
 
                 // 处理收藏回复
                 contents.push('> 回复：');
-                let replyList = borad.replyList || [];
+                let replyList = favorite.replyList || [];
                 for (const reply of replyList) {
                     let replyName = API.Favorites.getOwner(reply);
                     replyName = API.Utils.formatContent(replyName, "MD");

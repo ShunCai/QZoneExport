@@ -209,6 +209,7 @@ API.Diaries.exportToMarkdown = async (items) => {
         let filename = API.Utils.filenameValidate(orderNum + "_" + date + "_【" + title + "】");
         // 文件夹路径
         let categoryFolder = QZone.Diaries.ROOT + "/" + item.category;
+        await API.Utils.siwtchToRoot();
         // 创建文件夹
         await API.Utils.createFolder(categoryFolder);
         // 私密日记文件路径
@@ -261,19 +262,9 @@ API.Diaries.getItemMdContent = async (item) => {
         let uid = QZone.Diaries.FILE_URLS.get(url);
         if (!uid) {
             uid = API.Utils.newSimpleUid(16, 16);
-            // 是否获取文件类型
-            if (Qzone_Config.Common.isAutoFileSuffix) {
-                // 获取图片类型
-                await API.Utils.getMimeType(url).then((data) => {
-                    let mimeType = data.mimeType
-                    if (mimeType) {
-                        let suffix = mimeType.split('/')[1]
-                        uid = uid + '.' + suffix;
-                    }
-                }).catch((e) => {
-                    console.error('获取文件类型异常', url, e);
-                });
-            }
+            // 获取图片类型
+            let suffix = await API.Utils.autoFileSuffix(url);
+            uid = uid + suffix;
             // 添加下载任务
             API.Utils.newDownloadTask(url, download_dir, moudel_dir, uid);
             QZone.Diaries.FILE_URLS.set(url, uid);
