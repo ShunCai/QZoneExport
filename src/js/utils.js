@@ -41,6 +41,17 @@ String.prototype.format = function (args) {
             }
         }
     } else if (arguments.length == 1 && typeof (args) == "object") {
+        // 支持属性多层嵌套替换
+        const getValueByPath = (obj, path) => {
+            const arr = path.split('.')
+            const len = arr.length - 1
+            return arr.reduce((cur, key, index) => {
+                if (index === len) {
+                    return cur[key] || ''
+                }
+                return cur[key] || ''
+            }, obj)
+        }
         for (var key in args) {
             if (args[key] != undefined) {
                 var reg = new RegExp("({" + key + "})", "g");

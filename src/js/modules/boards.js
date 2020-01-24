@@ -172,9 +172,10 @@ API.Boards.exportToMarkdown = async (boards) => {
             let month_items = month_entry[1];
 
             contents.push("## " + month + "月 ");
-            for (const borad of month_items) {
 
-                contents.push("---");
+            contents.push("---");
+
+            for (const borad of month_items) {
                 // 留言楼层
                 contents.push('#### 第' + (total--) + '楼');
 

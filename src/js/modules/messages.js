@@ -501,7 +501,7 @@ API.Messages.getItemMdContent = (item) => {
 }
 
 /**
- * 添加说说的附件下载任务
+ * 添加说说的多媒体下载任务
  * @param {Array} dataList
  */
 API.Messages.addMediaToTasks = async (dataList) => {

@@ -127,7 +127,7 @@ const Default_Config = {
           min: 2,
           max: 5
       },
-      pageSize: 20
+      pageSize: 30
   },
 };
 

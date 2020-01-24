@@ -127,10 +127,10 @@ API.Favorites.exportAllToFiles = async (favorites) => {
     let exportType = Qzone_Config.Favorites.exportType;
     switch (exportType) {
         case 'MarkDown':
-            // await API.Favorites.exportToMarkdown(favorites);
+            await API.Favorites.exportToMarkdown(favorites);
             break;
         case 'JSON':
-            // await API.Favorites.exportToJson(favorites);
+            await API.Favorites.exportToJson(favorites);
             break;
         default:
             console.warn('未支持的导出类型', exportType);
@@ -147,7 +147,7 @@ API.Favorites.exportToMarkdown = async (favorites) => {
 
     let total = favorites.length;
     // 根据年份分组，每一年生成一个MD文件
-    const yearMap = API.Utils.groupedByTime(favorites, "pubtime");
+    const yearMap = API.Utils.groupedByTime(favorites, "create_time");
     for (let year_entry of yearMap) {
         // 年份
         let year = year_entry[0];
@@ -167,55 +167,24 @@ API.Favorites.exportToMarkdown = async (favorites) => {
             // 月份收藏列表
             let month_items = month_entry[1];
 
-            // 更新年份的收藏总数
-            indicator.setTotal(month_items.length);
-
             contents.push("## " + month + "月 ");
+
+            contents.push("---");
+
+            await API.Favorites.addMediaToTasks(month_items);
+
             for (const favorite of month_items) {
-
-                contents.push("---");
-                // 收藏楼层
-                contents.push('#### 第' + (total--) + '楼');
-
-                let nickname = API.Favorites.getOwner(favorite);
-                nickname = API.Utils.formatContent(nickname, "MD");
-
-                contents.push('> {0} 【{1}】'.format(favorite.pubtime, nickname));
-                contents.push('> 正文：');
-
-                // 他人模式兼容私密收藏
-                if (favorite.secret == 1 && !favorite.htmlContent) {
-                    // 私密收藏提示
-                    contents.push('主人收到一条私密收藏，仅彼此可见');
-                    continue;
-                }
-
-                // 收藏内容
-                let html_content = favorite.htmlContent.replace(/src=\"\/qzone\/em/g, 'src=\"http://qzonestyle.gtimg.cn/qzone/em');
-                html_content = html_content.replace(/\n/g, "\r\n");
-                let markdown_content = turndownService.turndown(html_content);
-                markdown_content = API.Utils.formatContent(markdown_content, "MD");
-
-                // 添加收藏内容
-                contents.push('- [{0}](https://user.qzone.qq.com/{1})：{2}'.format(nickname, favorite.uin, mdContent));
-
-                // 处理收藏回复
-                contents.push('> 回复：');
-                let replyList = favorite.replyList || [];
-                for (const reply of replyList) {
-                    let replyName = API.Favorites.getOwner(reply);
-                    replyName = API.Utils.formatContent(replyName, "MD");
-                    let replyContent = API.Utils.formatContent(reply.content, "MD");
-                    let replyTime = API.Utils.formatDate(reply.time);
-                    let replyMd = '- [{0}](https://user.qzone.qq.com/{1})：{2} 【*{3}*】'.format(replyName, reply.uin, replyContent, replyTime);
-                    contents.push(replyMd);
-                }
+                let content = API.Favorites.getMarkDownContent(favorite);
+                contents.push(content);
                 contents.push('---');
             }
 
             items = items.concat(month_items);
-            indicator.addDownload(month_items.length);
         }
+
+        // 更新年份的收藏总数
+        indicator.setTotal(items.length);
+
         const yearFilePath = QZone.Favorites.ROOT + "/" + year + "年.md";
         await API.Utils.writeText(contents.join(newline), yearFilePath).then(fileEntry => {
             console.debug('备份收藏列表完成，当前年份=', year, items, fileEntry);
@@ -224,17 +193,157 @@ API.Favorites.exportToMarkdown = async (favorites) => {
             console.error('备份收藏列表失败，当前年份=', year, items, error);
             indicator.addFailed(items);
         });
+        indicator.complete();
     }
 }
 
+/**
+ * 获取单篇收藏的Markdown内容
+ * @param {object} favorite 收藏
+ */
+API.Favorites.getMarkDownContent = (favorite) => {
+    let contents = [];
+    // 获取收藏的类型
+    let displayType = API.Favorites.getType(favorite.type);
+    switch (displayType) {
+        case '日志':
+            // 日志模板
+            let blog_info = favorite.blog_info;
+            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 日志 [{2}]({https://user.qzone.qq.com/{3}/blog/{4}}) 【{5}】'.format(blog_info.owner_name, blog_info.owner_uin, favorite.title, blog_info.owner_uin, blog_info.id, favorite.custom_create_time));
+            contents.push('> {0}'.format(API.Utils.formatContent(favorite.custom_abstract, "MD")));
+            break;
+        case '说说':
+            // 说说模板
+            let shuoshuo_info = favorite.shuoshuo_info;
+            // 转发标识
+            let isRt = shuoshuo_info.forward_flag === 1;
+            // 长说说内容
+            let content = shuoshuo_info.detail_shuoshuo_info.content || favorite.custom_abstract;
+            contents.push('[{0}](https://user.qzone.qq.com/{1}) 说说 【{2}】'.format(shuoshuo_info.owner_name, shuoshuo_info.owner_uin, favorite.custom_create_time));
+            if (isRt) {
+                //转发说说添加转发理由
+                contents.push('> {0}'.format(API.Utils.formatContent(shuoshuo_info.reason, "MD")));
+            }
+            contents.push('> {0}'.format(API.Utils.formatContent(content, "MD")));
+            break;
+        case '分享':
+            // 分享模板（通用），暂时不区分分享的类型
+            let share_info = favorite.share_info;
+            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 分享 【{2}】'.format(share_info.owner_name, share_info.owner_uin, favorite.custom_create_time));
+            contents.push('\r\n');
+            // 分享类型
+            let share_type = share_info.share_type;
+            // 分享原因
+            let share_reason = share_info.reason;
+            if (share_reason) {
+                contents.push('{0}'.format(API.Utils.formatContent(share_reason, "MD")));
+            }
+            let target_url = share_info.share_url;
+            let share_title_content = API.Utils.formatContent(favorite.title, "MD");
+            let share_title = API.Utils.getLink(target_url, share_title_content, "MD");
+            switch (share_type) {
+                case 1:
+                    // 日志
+                    let blog_info = share_info.blog_info;
+                    let blog_owner_uin = blog_info.owner_uin;
+                    let blog_owner_name = blog_info.owner_name;
+
+                    // 日志发布人链接
+                    let blog_owner_url = API.Utils.getUserLink(blog_owner_uin, blog_owner_name, "MD");
+                    // 日志链接
+                    target_url = 'https://user.qzone.qq.com/{0}/blog/{1}'.format(blog_owner_uin, blog_info.id);
+
+                    let blog_url = API.Utils.getLink(target_url, share_title_content, "MD");
+                    share_title = '{0}的 日志 {1}'.format(blog_owner_url, blog_url);
+
+                    break;
+                case 2:
+                    // 相册
+                    let album_info = share_info.album_info;
+                    let album_owner_uin = album_info.owner_uin;
+                    let album_owner_name = album_info.owner_name;
+
+                    // 相册创建人链接
+                    let album_owner_url = API.Utils.getUserLink(album_owner_uin, album_owner_name, "MD");
+
+                    // 相册链接
+                    target_url = 'https://user.qzone.qq.com/{0}/photo/{1}'.format(album_info.owner_uin, album_info.id);
+
+                    let album_url = API.Utils.getLink(target_url, share_title_content, "MD");
+
+                    share_title = '{0}的 相册 {1}'.format(album_owner_url, album_url);
+                    break;
+                case 4:
+                    // 网页
+                    target_url = share_info.share_url;
+                    share_title = API.Utils.getLink(target_url, share_title_content, "MD");
+                    break;
+                case 5:
+                    // 视频，目前只有一条数据
+                    target_url = favorite.custom_video[0].play_url;
+                    share_title = API.Utils.getLink(target_url, share_title_content, "MD");
+                    break;
+                case 18:
+                    // 歌曲，目前只有一条数据
+                    target_url = favorite.custom_audio[0].play_url;
+                    share_title = API.Utils.getLink(target_url, share_title_content, "MD");
+                    break;
+                case 24:
+                    // 设置背景音乐？类似歌曲，目前只有一条数据
+                    target_url = favorite.custom_audio[0].play_url;
+                    share_title = API.Utils.getLink(target_url, share_title_content, "MD");
+                    break;
+                default:
+                    // 其他类型或未知类型不处理超链接跳转
+                    target_url = '#';
+                    share_title = API.Utils.getLink(target_url, share_title_content, "MD");
+                    console.warn('其他分享类型，暂不处理超链接跳转', favorite);
+                    break;
+            }
+            contents.push('> {0}'.format(share_title));
+            if (favorite.custom_abstract && favorite.custom_abstract.trim()) {
+                contents.push('> {0}'.format(API.Utils.formatContent(favorite.custom_abstract, "MD")));
+            }
+            break;
+        case '照片':
+            // 照片模板
+            let first_photo = favorite.album_info || favorite.photo_list[0];
+            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 照片 【{2}】'.format(first_photo.owner_name, first_photo.owner_uin, favorite.custom_create_time));
+            contents.push('\r\n');
+            break;
+        case '文字':
+            // 文字模板，仅适用一般长度的文字，暂不支持获取文字的全文，没有找到全文的查看地址，暂时不处理
+            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 文字 【{2}】'.format(favorite.custom_name, favorite.custom_uin, favorite.custom_create_time));
+            contents.push('\r\n');
+            contents.push('> {0}'.format(API.Utils.formatContent(favorite.custom_abstract, "MD")));
+            break;
+        case '网页':
+            // 网页模板
+            let url_info = favorite.url_info;
+            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 网页 【{2}】'.format(favorite.custom_name, favorite.custom_uin, favorite.custom_create_time));
+            contents.push('\r\n');
+            contents.push('{0} {1}'.format(favorite.title, url_info.url));
+            contents.push('> {0}'.format(favorite.custom_abstract));
+            break;
+        default:
+            // 未知类型不处理
+            console.warn('其他未知收藏类型，暂不处理', favorite);
+            break;
+    }
+    // 添加多媒体内容
+    let mediat_content = API.Messages.formatMedia(favorite);
+    contents.push('\r\n');
+    contents.push(mediat_content);
+    return contents.join('\r\n\r\n');
+}
 
 /**
  * 导出收藏到JSON文件
  * @param {Array} favorites 收藏列表
  */
 API.Favorites.exportToJson = async (favorites) => {
-    // 说说数据根据年份分组
-    let yearDataMap = API.Utils.groupedByTime(favorites, "pubtime");
+    // 收藏根据年份分组
+    let yearDataMap = API.Utils.groupedByTime(favorites, "create_time");
     for (let yearEntry of yearDataMap) {
         let year = yearEntry[0];
         let monthDataMap = yearEntry[1];
@@ -267,4 +376,38 @@ API.Favorites.exportToJson = async (favorites) => {
     });
     indicator.complete();
     return favorites;
+}
+
+
+
+/**
+ * 添加说说的附件下载任务
+ * @param {Array} dataList
+ */
+API.Favorites.addMediaToTasks = async (dataList) => {
+    // 下载相对目录
+    let moudel_dir = '收藏夹/图片/';
+    // 下载目录
+    let download_dir = QZone.Common.Config.ZIP_NAME + '/';
+
+    for (const item of dataList) {
+        // 下载说说配图
+        for (const image of item.custom_images) {
+            let url = image.url;
+            await API.Utils.addDownloadTasks(image, url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+        }
+
+        // 下载视频预览图
+        for (const video of item.custom_video) {
+            let url = video.preview_img;
+            await API.Utils.addDownloadTasks(video, url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+        }
+
+        // 下载音乐预览图
+        for (const audio of item.custom_audio) {
+            let url = audio.preview_img;
+            await API.Utils.addDownloadTasks(audio, url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+        }
+    }
+    return dataList;
 }

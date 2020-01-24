@@ -253,7 +253,7 @@ class StatusIndicator {
             '请稍后...'
         ],
         Favorites_Export: [
-            '正在导出视频',
+            '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的收藏',
             '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
             '已失败 <span style="color: red;">{downloadFailed}</span> 条',
             '总共 <span style="color: #1ca5fc;">{total}</span> 条',
@@ -893,7 +893,7 @@ const browserTasks = new Array();
  * @param {string} moudel_dir 模块下载目录
  * @param {string} FILE_URLS 文件下载链接
  */
-API.Utils.addDownloadTasks = async (image, url, download_dir, moudel_dir, FILE_URLS) => {
+API.Utils. addDownloadTasks= async (image, url, download_dir, moudel_dir, FILE_URLS) => {
     let downloadType = Qzone_Config.Common.downloadType;
     let isQzoneUrl = downloadType === 'QZone';
     if (isQzoneUrl) {

@@ -120,15 +120,15 @@ API.Utils = {
             xhr.timeout = 10 * 1000;
             xhr.onreadystatechange = function () {
                 if (2 == xhr.readyState) {
-                    let contentType = xhr.getResponseHeader('content-type') || xhr.getResponseHeader('Content-Type');
+                    let contentType = xhr.getResponseHeader('content-type') || xhr.getResponseHeader('Content-Type') || '';
                     let suffix = contentType.split('/')[1];
                     if ('octet-stream' === suffix) {
-                        let disposition = xhr.getResponseHeader('content-disposition') || xhr.getResponseHeader('Content-Disposition');
+                        let disposition = xhr.getResponseHeader('content-disposition') || xhr.getResponseHeader('Content-Disposition') || '';
                         suffix = disposition.split('=')[1].split('.')[1];
                     }
                     var ret = {
                         suffix: suffix,
-                        size: xhr.getResponseHeader('content-length') || xhr.getResponseHeader('Content-Length')
+                        size: xhr.getResponseHeader('content-length') || xhr.getResponseHeader('Content-Length') || 0
                     };
                     this.abort();
                     resolve(ret);
@@ -1584,10 +1584,15 @@ API.Messages = {
             for (let index = 0; index < audios.length; index++) {
                 const audio = audios[index];
                 result.push('\r\n\r\n');
+                let albumname = audio.albumname;
+                let singername = audio.singername;
+                let custom_url = audio.custom_url;
+                let playurl = audio.playurl;
                 if (isQzoneUrl) {
-                    result.push('[![{albumname}-{singername}]({custom_url})]({playurl})\n'.format(audio));
+                    result.push('[![{0}-{1}]({2})]({3})\n'.format(albumname, singername, custom_url, playurl));
                 } else {
-                    result.push('[![{albumname}-{singername}]({custom_filepath})]({playurl})\n'.format(audio));
+                    custom_url = audio.custom_filepath;
+                    result.push('[![{0}-{1}]({2})]({3})\n'.format(albumname, singername, custom_url, playurl));
                 }
                 result.push('\r\n\r\n');
             }
@@ -1933,62 +1938,89 @@ API.Favorites = {
             let temp = data[i];
             temp.custom_create_time = API.Utils.formatDate(temp.create_time);
             temp.custom_uin = QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin;
-            temp.custom_name = QZone.Common.Owner.name;
-            temp.custom_abstract = API.Utils.formatContent(temp.abstract || "");
+            temp.custom_name = QZone.Common.Owner.name || API.Utils.initUin().Owner.name;
+            temp.custom_abstract = temp.abstract || "";
             temp.album_info = temp.album_info || {};
             temp.blog_info = temp.blog_info || {};
             temp.photo_list = temp.photo_list || [];
             temp.shuoshuo_info = temp.shuoshuo_info || {};
             temp.share_info = temp.share_info || {};
             temp.url_info = temp.url_info || {};
-            temp.img_list = temp.img_list || [];
-            temp.origin_img_list = temp.origin_img_list || [];
-            temp.text = temp.text || '';
-            temp.custom_text = API.Utils.formatContent(temp.text || '');
-            temp.custom_title = temp.title;
-            temp.album_info.description = temp.album_info.description || '';
+            // 源信息
+            temp.source_info = {};
+            // 多媒体-配图
+            temp.custom_images = temp.img_list || [];
+            temp.custom_origin_images = temp.origin_img_list || [];
+            // 多媒体-视频
+            temp.source_info.video_list = [];
+            temp.custom_video = [];
+            // 多媒体-歌曲
+            temp.source_info.music_list = [];
+            temp.custom_audio = [];
             switch (temp.type) {
-                case 0:
-                    break;
                 case 1:
-                    temp.url_info.custom_url = API.Utils.formatContent(temp.url_info.url);
-                    temp.custom_video_list = temp.url_info.video_list;
-                    temp.custom_music_list = temp.url_info.music_list;
-                    break;
-                case 2:
+                    // 网页                   
+                    temp.source_info.video_list = temp.url_info.video_list || [];
+                    temp.source_info.music_list = temp.url_info.music_list || [];
                     break;
                 case 3:
-                    temp.custom_video_list = temp.blog_info.video_list;
-                    temp.custom_music_list = temp.blog_info.music_list;
+                    // 日志                    
+                    temp.source_info.video_list = temp.blog_info.video_list || [];
+                    temp.source_info.music_list = temp.blog_info.music_list || [];
                     break;
                 case 4:
-                    temp.custom_video_list = temp.album_info.video_list;
-                    temp.custom_music_list = temp.album_info.music_list;
+                    // 照片或相册？
+                    temp.source_info.video_list = temp.album_info.video_list || [];
+                    temp.source_info.music_list = temp.album_info.music_list || [];
                     break;
                 case 5:
-                    temp.custom_abstract = API.Utils.formatTopic(temp.custom_abstract);
-                    temp.custom_video_list = temp.shuoshuo_info.video_list;
-                    temp.custom_music_list = temp.shuoshuo_info.music_list;
-                    temp.shuoshuo_info.custom_reason = API.Utils.formatContent(temp.shuoshuo_info.reason || "");
+                    // 说说
+                    temp.source_info.video_list = temp.shuoshuo_info.video_list || [];
+                    temp.source_info.music_list = temp.shuoshuo_info.music_list || [];
                     temp.shuoshuo_info.detail_shuoshuo_info = temp.shuoshuo_info.detail_shuoshuo_info || {};
-                    temp.shuoshuo_info.detail_shuoshuo_info.content = API.Utils.formatContent(temp.shuoshuo_info.detail_shuoshuo_info.content || "");
-                    break;
-                case 6:
                     break;
                 case 7:
+                    // 分享
                     temp.share_info.reason = temp.share_info.reason.split('||')[0];
-                    temp.custom_video_list = temp.share_info.video_list;
-                    temp.custom_music_list = temp.share_info.music_list;
-                    break;
-                case 8:
+                    temp.source_info.video_list = temp.share_info.video_list || [];
+                    temp.source_info.music_list = temp.share_info.music_list || [];
                     break;
                 default:
+                    console.warn('其他收藏类型或未知类型不转换数据', temp);
                     break;
             }
-            temp.custom_video_list = temp.custom_video_list || [];
-            temp.custom_music_list = temp.custom_music_list || [];
-            if (temp.share_info.reason) {
-                temp.share_info.custom_reason = API.Utils.formatContent(temp.share_info.reason);
+            // 统一处理多媒体信息
+            // 配图
+            for (let index = 0; index < temp.custom_images.length; index++) {
+                const url = temp.custom_images[index];
+                if (temp.type === 1) {
+                    temp.custom_images[index] = {
+                        url: url
+                    };
+                    temp.custom_origin_images[index] = {
+                        url: url
+                    };
+                    continue;
+                }
+                let temp_urls = url.split('/');
+                // 删除最后一个参数
+                temp_urls.pop();
+                // 添加新的参数
+                temp_urls.push("0");
+                temp.custom_images[index] = {
+                    url: temp_urls.join('/')
+                };
+                temp.custom_origin_images[index] = {
+                    url: temp_urls.join('/')
+                };
+            }
+            // 视频
+            for (const video of temp.source_info.video_list) {
+                temp.custom_video.push(video.video_info);
+            }
+            // 歌曲
+            for (const music of temp.source_info.music_list) {
+                temp.custom_audio.push(music.music_info);
             }
         }
         return data;
@@ -2001,15 +2033,19 @@ API.Favorites = {
     getFavorites(page) {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
-            "type": "0",
+            "type": 0,//全部
+            // "type": 1,//日志
+            // "type": 3,//说说
+            // "type": 4,//分享
+            "start": page * Qzone_Config.Favorites.pageSize,
             "start": page * Qzone_Config.Favorites.pageSize,
             "num": Qzone_Config.Favorites.pageSize,
             "inCharset": "utf-8",
             "outCharset": "utf-8",
-            "need_nick": "1",
-            "need_cnt": "1",
-            "need_new_user": "1",
-            "fupdate": "1",
+            "need_nick": 1,
+            "need_cnt": 0,
+            "need_new_user": 0,
+            "fupdate": 1,
             "random": Math.random(),
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
