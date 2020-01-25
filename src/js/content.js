@@ -267,7 +267,10 @@ class StatusIndicator {
             '请稍后...'
         ],
         Common_Thunder: [
-            '正在唤起迅雷X下载文件',
+            '正在第 <span style="color: #1ca5fc;">{index}</span> 次唤起迅雷X下载文件',
+            '将在 <span style="color: #1ca5fc;">{nextTip}</span> 秒后再次唤起迅雷',
+            '已添加 <span style="color: #1ca5fc;">{downloaded}</span> ',
+            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
             '请稍后...'
         ],
         Common_Browser: [
@@ -289,7 +292,7 @@ class StatusIndicator {
         this.total = 0
         this.index = 0
         this.pageSize = 0
-        this.exported = 0
+        this.nextTip = 0
         this.downloaded = 0
         this.downloading = 0
         this.downloadFailed = 0
@@ -410,6 +413,15 @@ class StatusIndicator {
      */
     setTotal(total) {
         this.total = total
+        this.print()
+    }
+
+    /**
+     * 设置下一步提示
+     * @param {string} tip
+     */
+    setNextTip(tip) {
+        this.nextTip = tip
         this.print()
     }
 }
@@ -893,7 +905,7 @@ const browserTasks = new Array();
  * @param {string} moudel_dir 模块下载目录
  * @param {string} FILE_URLS 文件下载链接
  */
-API.Utils. addDownloadTasks= async (image, url, download_dir, moudel_dir, FILE_URLS) => {
+API.Utils.addDownloadTasks = async (image, url, download_dir, moudel_dir, FILE_URLS) => {
     let downloadType = Qzone_Config.Common.downloadType;
     let isQzoneUrl = downloadType === 'QZone';
     if (isQzoneUrl) {
@@ -1004,13 +1016,27 @@ API.Utils.downloadsByBrowser = async (tasks) => {
 /**
  * 通过迅雷下载
  */
-API.Utils.invokeThunder = () => {
+API.Utils.invokeThunder = async () => {
     let indicator = new StatusIndicator('Common_Thunder');
     indicator.setTotal(thunderInfo.tasks.length);
-    // 下载线程数
-    thunderInfo.threadCount = Qzone_Config.Common.downloadThread;
-    API.Utils.downloadByThunder(thunderInfo);
-    indicator.addSuccess(thunderInfo.tasks);
+    // 通过迅雷任务数将任务分组，任务太大时无法唤起迅雷
+    let tasks = thunderInfo.tasks;
+    const _tasks = _.chunk(tasks, Qzone_Config.Common.thunderTaskNum);
+    for (let i = 0; i < _tasks.length; i++) {
+        let index = i + 1;
+        indicator.setIndex(index);
+        const list = _tasks[i];
+        let groupTask = new ThunderInfo(thunderInfo.taskGroupName + "_" + index, Qzone_Config.Common.downloadThread, list)
+        API.Utils.downloadByThunder(groupTask);
+        indicator.addSuccess(list);
+        let sleep = Qzone_Config.Common.thunderTaskSleep * 1;
+        let interId = setInterval(function () {
+            indicator.setNextTip(--sleep);
+        }, 1000)
+        // 等待指定秒再继续唤起，并给用户提示
+        await API.Utils.sleep(sleep * 1000);
+        clearInterval(interId);
+    }
     indicator.complete();
 }
 

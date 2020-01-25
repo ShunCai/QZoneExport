@@ -1,13 +1,13 @@
 ﻿document.addEventListener('DOMContentLoaded', function () {
 
-	// 定位Tab页
-	if (window.location.hash === "") {
-		window.location.hash = "#v-pills-settings-tab";
-	}
-
 	$(window.location.hash).tab('show');
 
 	$('#v-pills-tab a').on('click', function (e) {
+		e.preventDefault();
+		window.location.hash = "#" + this.id;
+	});
+
+	$('#nav-tab a').on('click', function (e) {
 		e.preventDefault();
 		window.location.hash = "#" + this.id;
 	});
@@ -18,6 +18,8 @@
 		$('#common_file_suffix').attr("checked", options.Common.isAutoFileSuffix);
 		$('#common_download_status').attr("checked", options.Common.enabledShelf);
 		chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
+		$("#common_thunder_task_count").val(options.Common.thunderTaskNum);
+		$("#common_thunder_task_sleep").val(options.Common.thunderTaskSleep);
 		$("#common_download_thread").val(options.Common.downloadThread);
 
 		// 说说模块赋值
@@ -111,8 +113,10 @@
 		Qzone_Config.Common.downloadType = $('#common_download_type').val();
 		Qzone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
 		chrome.downloads.setShelfEnabled(Qzone_Config.Common.enabledShelf);
+		Qzone_Config.Common.thunderTaskNum = $("#common_thunder_task_count").val() * 1;
+		Qzone_Config.Common.thunderTaskSleep = $("#common_thunder_task_sleep").val() * 1;
 		Qzone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
-		
+
 		// 说说模块赋值
 		Qzone_Config.Messages.exportType = $("#messages_exportFormat").val();
 		Qzone_Config.Messages.randomSeconds.min = $("#messages_list_cost_min").val() * 1;

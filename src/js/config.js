@@ -2,11 +2,15 @@
 const Default_Config = {
     // 公共配置
     Common: {
-        // 附件下载类型
+        // 文件下载类型
         downloadType: 'File',
-        // 附件自动识别文件后缀
+        // 自动识别文件后缀
         isAutoFileSuffix: true,
-        // 照片下载并发数        
+        // 迅雷任务数        
+        thunderTaskNum: 5000,
+        // 唤起迅雷间隔        
+        thunderTaskSleep: 10,
+        // 文件下载并发数        
         downloadThread: 5,
         // 是否启用下载状态栏提醒
         enabledShelf: false
@@ -131,11 +135,15 @@ const Default_Config = {
 let Qzone_Config = {
     // 公共配置
     Common: {
-        // 附件下载类型
+        // 文件下载类型
         downloadType: 'File',
-        // 附件自动识别文件后缀
+        // 自动识别文件后缀
         isAutoFileSuffix: true,
-        // 照片下载并发数        
+        // 迅雷任务数        
+        thunderTaskNum: 5000,
+        // 唤起迅雷间隔        
+        thunderTaskSleep: 10,
+        // 文件下载并发数        
         downloadThread: 5,
         // 是否启用下载状态栏提醒
         enabledShelf: false

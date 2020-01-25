@@ -6,128 +6,132 @@ let QZoneDownloadId = 0;
 const Default_Config = {
   // 公共配置
   Common: {
-      // 附件下载类型
-      downloadType: 'File',
-      // 附件自动识别文件后缀
-      isAutoFileSuffix: true,
-      // 照片下载并发数        
-      downloadThread: 5,
-      // 是否启用下载状态栏提醒
-      enabledShelf: false
+    // 文件下载类型
+    downloadType: 'File',
+    // 自动识别文件后缀
+    isAutoFileSuffix: true,
+    // 迅雷任务数        
+    thunderTaskNum: 5000,
+    // 唤起迅雷间隔        
+    thunderTaskSleep: 10,
+    // 文件下载并发数        
+    downloadThread: 5,
+    // 是否启用下载状态栏提醒
+    enabledShelf: false
   },
   // 说说模块
   Messages: {
-      exportType: "MarkDown",// 内容备份类型
-      pageSize: 40,
+    exportType: "MarkDown",// 内容备份类型
+    pageSize: 40,
+    randomSeconds: {
+      min: 2,
+      max: 5
+    },
+    isFull: false, //是否获取全文
+    Comments: {
+      isFull: false, //是否全部评论
+      pageSize: 20,
       randomSeconds: {
-          min: 2,
-          max: 5
-      },
-      isFull: false, //是否获取全文
-      Comments: {
-          isFull: false, //是否全部评论
-          pageSize: 20,
-          randomSeconds: {
-              min: 2,
-              max: 5
-          }
+        min: 2,
+        max: 5
       }
+    }
   },
   // 日志模块
   Blogs: {
-      exportType: "MarkDown",// 内容备份类型
+    exportType: "MarkDown",// 内容备份类型
+    pageSize: 50,
+    randomSeconds: {
+      min: 2,
+      max: 5
+    },
+    Info: {
+      randomSeconds: {
+        min: 1,
+        max: 2
+      }
+    },
+    Comments: {
+      isFull: false, //是否全部评论
       pageSize: 50,
       randomSeconds: {
-          min: 2,
-          max: 5
-      },
-      Info: {
-          randomSeconds: {
-              min: 1,
-              max: 2
-          }
-      },
-      Comments: {
-          isFull: false, //是否全部评论
-          pageSize: 50,
-          randomSeconds: {
-              min: 2,
-              max: 5
-          }
+        min: 2,
+        max: 5
       }
+    }
   },
   // 私密日记模块
   Diaries: {
-      exportType: "MarkDown",// 内容备份类型
-      pageSize: 50,
+    exportType: "MarkDown",// 内容备份类型
+    pageSize: 50,
+    randomSeconds: {
+      min: 2,
+      max: 5
+    },
+    Info: {
       randomSeconds: {
-          min: 2,
-          max: 5
-      },
-      Info: {
-          randomSeconds: {
-              min: 1,
-              max: 2
-          }
+        min: 1,
+        max: 2
       }
+    }
   },
   // 相册模块
   Photos: {
-      exportType: "Folder",
+    exportType: "Folder",
+    pageSize: 90,
+    randomSeconds: {
+      min: 2,
+      max: 5
+    },
+    Images: {
+      exportType: "File",
       pageSize: 90,
+      exifType: "raw",
       randomSeconds: {
+        min: 2,
+        max: 5
+      },
+      Comments: {
+        isGet: false, // 是否获取评论，默认不获取
+        pageSize: 100,
+        randomSeconds: {
           min: 2,
           max: 5
-      },
-      Images: {
-          exportType: "File",
-          pageSize: 90,
-          exifType: "raw",
-          randomSeconds: {
-              min: 2,
-              max: 5
-          },
-          Comments: {
-              isGet: false, // 是否获取评论，默认不获取
-              pageSize: 100,
-              randomSeconds: {
-                  min: 2,
-                  max: 5
-              }
-          }
+        }
       }
+    }
   },
   // 视频模块
   Videos: {
-      exportType: "Link",
-      randomSeconds: {
-          min: 2,
-          max: 5
-      },
-      pageSize: 20
+    exportType: "Link",
+    randomSeconds: {
+      min: 2,
+      max: 5
+    },
+    pageSize: 20
   },
   // 留言板模块
   Boards: {
-      exportType: "MarkDown",
-      randomSeconds: {
-          min: 2,
-          max: 5
-      },
-      pageSize: 20
+    exportType: "MarkDown",
+    randomSeconds: {
+      min: 2,
+      max: 5
+    },
+    pageSize: 20
   },
   // QQ好友模块
   Friends: {
-      exportType: "Excel",
-      hasAddTime: false
+    exportType: "Excel",
+    hasAddTime: false
   },
   // 收藏夹模块
   Favorites: {
-      exportType: "MarkDown",
-      randomSeconds: {
-          min: 2,
-          max: 5
-      },
-      pageSize: 30
+    exportType: "MarkDown",
+    randomSeconds: {
+      min: 2,
+      max: 5
+    },
+    pageSize: 30
   },
 };
 

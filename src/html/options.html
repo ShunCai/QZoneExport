@@ -18,557 +18,520 @@
 		</button>
 		<div class="collapse navbar-collapse" id="navbarSupportedContent">
 			<ul class="navbar-nav mr-auto">
+				<!-- <li class="nav-item">
+					<a class="nav-link" href="home.html">个人中心</a>
+				</li> -->
 				<li class="nav-item active">
-					<a class="nav-link" href="#">个人中心<span class="sr-only">(current)</span></a>
+					<a id="setting-link" class="nav-link" href="options.html">设置<span class="sr-only">(current)</span></a>
 				</li>
 				<li class="nav-item">
-					<a id="setting-link" class="nav-link" href="#v-pills-settings-tab">设置</a>
-				</li>
-				<li class="nav-item">
-					<a id="about-link" class="nav-link" href="#about">关于</a>
+					<a id="about-link" class="nav-link" href="about.html">关于</a>
 				</li>
 			</ul>
 			<span id="qzone_title" class="navbar-text" style="color: skyblue;"></span>
 		</div>
 	</nav>
-	<div class="row">
-		<div class="col-md-1">
-			<div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical" style="text-align: center;">
-				<a class="nav-item nav-link active" id="v-pills-messages-tab" data-toggle="pill" href="#v-pills-messages" role="tab" aria-controls="v-pills-messages" aria-selected="true">说说</a>
-				<a class="nav-item nav-link" id="v-pills-blogs-tab" data-toggle="pill" href="#v-pills-blogs" role="tab" aria-controls="v-pills-blogs" aria-selected="false">日志</a>
-				<a class="nav-item nav-link" id="v-pills-diaries-tab" data-toggle="pill" href="#v-pills-diaries" role="tab" aria-controls="v-pills-diaries" aria-selected="false">私密日志</a>
-				<a class="nav-item nav-link" id="v-pills-photos-tab" data-toggle="pill" href="#v-pills-photos" role="tab" aria-controls="v-pills-photos" aria-selected="false">相册</a>
-				<a class="nav-item nav-link" id="v-pills-videos-tab" data-toggle="pill" href="#v-pills-videos" role="tab" aria-controls="v-pills-videos" aria-selected="false">视频</a>
-				<a class="nav-item nav-link" id="v-pills-boards-tab" data-toggle="pill" href="#v-pills-boards" role="tab" aria-controls="v-pills-boards" aria-selected="false">留言板</a>
-				<a class="nav-item nav-link" id="v-pills-friends-tab" data-toggle="pill" href="#v-pills-friends" role="tab" aria-controls="v-pills-friends" aria-selected="false">好友</a>
-				<a class="nav-item nav-link" id="v-pills-favorites-tab" data-toggle="pill" href="#v-pills-favorites" role="tab" aria-controls="v-pills-favorites" aria-selected="false">收藏夹</a>
-				<a class="nav-item nav-link" id="v-pills-settings-tab" data-toggle="pill" href="#v-pills-settings" role="tab" aria-controls="v-pills-settings" aria-selected="false">设置</a>
-			</div>
-		</div>
-		<div class="col">
-			<div class="tab-content" id="v-pills-tabContent">
-				<div class="tab-pane fade show active" id="v-pills-messages" role="tabpanel" aria-labelledby="v-pills-messages-tab">
-					<div id="messages-table-toolbar">
-						<button id="messages-export" class="btn btn-primary">导出</button>
-					</div>
-					<table id="messages-table"></table>
-				</div>
-				<div class="tab-pane fade" id="v-pills-blogs" role="tabpanel" aria-labelledby="v-pills-blogs-tab">
-					<div id="blogs-table-toolbar">
-						<button id="blogs-export" class="btn btn-primary">导出</button>
-					</div>
-					<table id="blogs-table"></table>
-				</div>
-				<div class="tab-pane fade" id="v-pills-diaries" role="tabpanel" aria-labelledby="v-pills-diaries-tab">
-					<div id="diaries-table-toolbar">
-						<button id="diaries-export" class="btn btn-primary">导出</button>
-					</div>
-					<table id="diaries-table"></table>
-				</div>
-				<div class="tab-pane fade" id="v-pills-photos" role="tabpanel" aria-labelledby="v-pills-photos-tab">
-					<div id="photos-table-toolbar">
-						<button id="photos-export" class="btn btn-primary">导出</button>
-					</div>
-					<table id="photos-table"></table>
-				</div>
-				<div class="tab-pane fade" id="v-pills-videos" role="tabpanel" aria-labelledby="v-pills-videos-tab">
-					<div id="videos-table-toolbar">
-						<button id="videos-export" class="btn btn-primary">导出</button>
-					</div>
-					<table id="videos-table"></table>
-				</div>
-				<div class="tab-pane fade" id="v-pills-boards" role="tabpanel" aria-labelledby="v-pills-boards-tab">
-					<div id="boards-table-toolbar">
-						<button id="boards-export" class="btn btn-primary">导出</button>
-					</div>
-					<table id="boards-table"></table>
-				</div>
-				<div class="tab-pane fade" id="v-pills-friends" role="tabpanel" aria-labelledby="v-pills-friends-tab">
-					<div id="friends-table-toolbar">
-						<button id="friends-export" class="btn btn-primary">导出</button>
-					</div>
-					<table id="friends-table"></table>
-				</div>
-				<div class="tab-pane fade" id="v-pills-favorites" role="tabpanel" aria-labelledby="v-pills-favorites-tab">
-					<div id="favorites-table-toolbar">
-						<button id="favorites-export" class="btn btn-primary">导出</button>
-					</div>
-					<table id="favorites-table"></table>
-				</div>
-				<div class="tab-pane fade" id="v-pills-settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
-					<div class="container-fluid">
-						<nav>
-							<div class="nav nav-tabs" id="nav-tab" role="tablist">
-								<a class="nav-item nav-link active" id="nav-messages-tab" data-config="Messages" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="true">说说</a>
-								<a class="nav-item nav-link" id="nav-blogs-tab" data-config="Blogs" data-toggle="tab" href="#nav-blogs" role="tab" aria-controls="nav-blogs" aria-selected="false">日志</a>
-								<a class="nav-item nav-link" id="nav-diaries-tab" data-config="Diaries" data-toggle="tab" href="#nav-diaries" role="tab" aria-controls="nav-diaries" aria-selected="false">私密日记</a>
-								<a class="nav-item nav-link" id="nav-photos-tab" data-config="Photos" data-toggle="tab" href="#nav-photos" role="tab" aria-controls="nav-photos" aria-selected="false">相册</a>
-								<a class="nav-item nav-link" id="nav-videos-tab" data-config="Videos" data-toggle="tab" href="#nav-videos" role="tab" aria-controls="nav-videos" aria-selected="false">视频</a>
-								<a class="nav-item nav-link" id="nav-boards-tab" data-config="Boards" data-toggle="tab" href="#nav-boards" role="tab" aria-controls="nav-boards" aria-selected="false">留言板</a>
-								<a class="nav-item nav-link" id="nav-friends-tab" data-config="Friends" data-toggle="tab" href="#nav-friends" role="tab" aria-controls="nav-friends" aria-selected="false">好友</a>
-								<a class="nav-item nav-link" id="nav-favorites-tab" data-config="Favorites" data-toggle="tab" href="#nav-favorites" role="tab" aria-controls="nav-favorites" aria-selected="false">收藏夹</a>
-								<a class="nav-item nav-link " id="nav-common-tab" data-config="Messages" data-toggle="tab" href="#nav-common" role="tab" aria-controls="nav-common" aria-selected="false">其他</a>
-							</div>
-						</nav>
-						<div class="tab-content" id="nav-tabContent">
-							<div class="tab-pane fade show active" id="nav-messages" role="tabpanel" aria-labelledby="nav-messages-tab">
-								<br />
-								<form id="tb_messages">
-									<h5 style="color:cadetblue">公共选项：</h5>
-									<hr>
-									<div class="form-group row">
-										<label for="messages_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
-										<div class="col-sm-2">
-											<select id="messages_exportFormat" class="custom-select">
-												<option value="MarkDown" selected>MarkDown</option>
-												<!-- <option value="HTML">HTML</option> -->
-												<option value="JSON">JSON</option>
-												<!-- <option value="RTF">RTF</option> -->
-											</select>
-										</div>
+	<div class="col">
+		<div class="tab-content" id="v-pills-tabContent">
+			<div class="tab-pane fade show active" id="v-pills-settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
+				<div class="container-fluid">
+					<nav>
+						<div class="nav nav-tabs" id="nav-tab" role="tablist">
+							<a class="nav-item nav-link active" id="nav-messages-tab" data-config="Messages" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="false">说说</a>
+							<a class="nav-item nav-link" id="nav-blogs-tab" data-config="Blogs" data-toggle="tab" href="#nav-blogs" role="tab" aria-controls="nav-blogs" aria-selected="false">日志</a>
+							<a class="nav-item nav-link" id="nav-diaries-tab" data-config="Diaries" data-toggle="tab" href="#nav-diaries" role="tab" aria-controls="nav-diaries" aria-selected="false">私密日记</a>
+							<a class="nav-item nav-link" id="nav-photos-tab" data-config="Photos" data-toggle="tab" href="#nav-photos" role="tab" aria-controls="nav-photos" aria-selected="false">相册</a>
+							<a class="nav-item nav-link" id="nav-videos-tab" data-config="Videos" data-toggle="tab" href="#nav-videos" role="tab" aria-controls="nav-videos" aria-selected="false">视频</a>
+							<a class="nav-item nav-link" id="nav-boards-tab" data-config="Boards" data-toggle="tab" href="#nav-boards" role="tab" aria-controls="nav-boards" aria-selected="false">留言板</a>
+							<a class="nav-item nav-link" id="nav-friends-tab" data-config="Friends" data-toggle="tab" href="#nav-friends" role="tab" aria-controls="nav-friends" aria-selected="false">好友</a>
+							<a class="nav-item nav-link" id="nav-favorites-tab" data-config="Favorites" data-toggle="tab" href="#nav-favorites" role="tab" aria-controls="nav-favorites" aria-selected="false">收藏夹</a>
+							<a class="nav-item nav-link " id="nav-common-tab" data-config="Messages" data-toggle="tab" href="#nav-common" role="tab" aria-controls="nav-common" aria-selected="false">公共</a>
+						</div>
+					</nav>
+					<div class="tab-content" id="nav-tabContent">
+						<div class="tab-pane fade show active" id="nav-messages" role="tabpanel" aria-labelledby="nav-messages-tab">
+							<br />
+							<form id="tb_messages">
+								<h5 style="color:cadetblue">公共选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label for="messages_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
+									<div class="col-sm-2">
+										<select id="messages_exportFormat" class="custom-select">
+											<option value="MarkDown" selected>MarkDown</option>
+											<!-- <option value="HTML">HTML</option> -->
+											<option value="JSON">JSON</option>
+											<!-- <option value="RTF">RTF</option> -->
+										</select>
 									</div>
-									<br>
-									<h5 style="color:cadetblue">说说选项：</h5>
-									<hr>
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="messages_list_cost_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="messages_list_cost_max" placeholder="最大间隔">
-										</div>
+								</div>
+								<br>
+								<h5 style="color:cadetblue">说说选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="messages_list_cost_min" placeholder="最小间隔">
 									</div>
-									<!-- <div class="form-group row">
-										<label for="messages_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
-										<div class="col-sm-2">
-											<input type="number" min="20" max="40" class="form-control" id="messages_list_limit" placeholder="查询每页条数">
-										</div>
-									</div> -->
-									<div class="form-group row">
-										<div class="col-sm-1">全文说说：</div>
-										<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="messages_full">
-											<label style="margin-left: 14px;" class="custom-control-label" for="messages_full" aria-describedby="messages_full_help"></label>
-											<small id="messages_full_help" class="text-muted">默认不获取全文，勾选获取全文，适用长说说</small>
-										</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="messages_list_cost_max" placeholder="最大间隔">
 									</div>
-									<br>
-									<h5 style="color:cadetblue">评论选项：</h5>
-									<hr>
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="2" class="form-control" id="messages_comments_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="2" class="form-control" id="messages_comments_max" placeholder="最大间隔">
-										</div>
+								</div>
+								<!-- <div class="form-group row">
+									<label for="messages_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="20" max="40" class="form-control" id="messages_list_limit" placeholder="查询每页条数">
 									</div>
-									<!-- <div class="form-group row">
-										<label for="messages_comments_limit" class="col-sm-1 col-form-label">每页条数：</label>
-										<div class="col-sm-2">
-											<input type="number" min="10" max="20" class="form-control" id="messages_comments_limit" placeholder="查询每页条数">
-										</div>
-									</div> -->
-									<div class="form-group row">
-										<div class="col-sm-1">所有评论：</div>
-										<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="messages_download_full_comments">
-											<label style="margin-left: 14px;" class="custom-control-label" for="messages_download_full_comments" aria-describedby="messages_comments_help"></label>
-											<small id="messages_comments_help" class="text-muted">默认下载前10条评论，勾选下载全部</small>
-										</div>
+								</div> -->
+								<div class="form-group row">
+									<div class="col-sm-1">全文说说：</div>
+									<div class="custom-control custom-checkbox">
+										<input type="checkbox" class="custom-control-input" id="messages_full">
+										<label style="margin-left: 14px;" class="custom-control-label" for="messages_full" aria-describedby="messages_full_help"></label>
+										<small id="messages_full_help" class="text-muted">默认不获取全文，勾选获取全文，适用长说说</small>
 									</div>
-								</form>
-							</div>
-							<div class="tab-pane fade" id="nav-blogs" role="tabpanel" aria-labelledby="nav-blogs-tab">
-								<br />
-								<form id="tb_blogs">
-									<h5 style="color:cadetblue">公共选项：</h5>
-									<hr>
-									<div class="form-group row">
-										<label for="blogs_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
-										<div class="col-sm-2">
-											<select id="blogs_exportFormat" class="custom-select">
-												<option value="MarkDown" selected>MarkDown</option>
-												<!-- <option value="HTML">HTML</option> -->
-												<option value="JSON">JSON</option>
-												<!-- <option value="RTF">RTF</option> -->
-											</select>
-										</div>
+								</div>
+								<br>
+								<h5 style="color:cadetblue">评论选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="2" class="form-control" id="messages_comments_min" placeholder="最小间隔">
 									</div>
-									<br>
-									<h5 style="color:cadetblue">日志选项：</h5>
-									<hr>
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">列表查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="blogs_list_cost_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="blogs_list_cost_max" placeholder="最大间隔">
-										</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="2" class="form-control" id="messages_comments_max" placeholder="最大间隔">
 									</div>
-									<!-- <div class="form-group row">
-										<label for="blogs_list_limit" class="col-sm-1 col-form-label">列表每页条数：</label>
-										<div class="col-sm-2">
-											<input type="number" min="15" max="100" class="form-control" id="blogs_list_limit" placeholder="查询每页条数">
-										</div>
-									</div> -->
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">内容查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="blogs_info_cost_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="blogs_info_cost_max" placeholder="最大间隔">
-										</div>
+								</div>
+								<!-- <div class="form-group row">
+									<label for="messages_comments_limit" class="col-sm-1 col-form-label">每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="10" max="20" class="form-control" id="messages_comments_limit" placeholder="查询每页条数">
 									</div>
-									<br>
-									<h5 style="color:cadetblue">评论选项：</h5>
-									<hr>
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="blogs_comments_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="blogs_comments_max" placeholder="最大间隔">
-										</div>
+								</div> -->
+								<div class="form-group row">
+									<div class="col-sm-1">所有评论：</div>
+									<div class="custom-control custom-checkbox">
+										<input type="checkbox" class="custom-control-input" id="messages_download_full_comments">
+										<label style="margin-left: 14px;" class="custom-control-label" for="messages_download_full_comments" aria-describedby="messages_comments_help"></label>
+										<small id="messages_comments_help" class="text-muted">默认下载前10条评论，勾选下载全部</small>
 									</div>
-									<!-- <div class="form-group row">
-										<label for="blogs_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
-										<div class="col-sm-2">
-											<input type="number" min="15" max="50" class="form-control" id="blogs_comments_limit" placeholder="查询每页条数">
-										</div>
-									</div> -->
-									<div class="form-group row">
-										<div class="col-sm-1">所有评论：</div>
-										<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="blogs_download_full_comments">
-											<label style="margin-left: 14px;" class="custom-control-label" for="blogs_download_full_comments" aria-describedby="blogs_comments_help"></label>
-											<small id="blogs_comments_help" class="text-muted">默认下载前50条评论，勾选下载全部</small>
-										</div>
+								</div>
+							</form>
+						</div>
+						<div class="tab-pane fade" id="nav-blogs" role="tabpanel" aria-labelledby="nav-blogs-tab">
+							<br />
+							<form id="tb_blogs">
+								<h5 style="color:cadetblue">公共选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label for="blogs_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
+									<div class="col-sm-2">
+										<select id="blogs_exportFormat" class="custom-select">
+											<option value="MarkDown" selected>MarkDown</option>
+											<!-- <option value="HTML">HTML</option> -->
+											<option value="JSON">JSON</option>
+											<!-- <option value="RTF">RTF</option> -->
+										</select>
 									</div>
-								</form>
-							</div>
-							<div class="tab-pane fade" id="nav-diaries" role="tabpanel" aria-labelledby="nav-diaries-tab">
-								<br />
-								<form id="tb_diaries">
-									<h5 style="color:cadetblue">公共选项：</h5>
-									<hr>
-									<div class="form-group row">
-										<label for="diaries_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
-										<div class="col-sm-2">
-											<select id="diaries_exportFormat" class="custom-select">
-												<option value="MarkDown" selected>MarkDown</option>
-												<!-- <option value="HTML">HTML</option> -->
-												<option value="JSON">JSON</option>
-												<!-- <option value="RTF">RTF</option> -->
-											</select>
-										</div>
+								</div>
+								<br>
+								<h5 style="color:cadetblue">日志选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">列表查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="blogs_list_cost_min" placeholder="最小间隔">
 									</div>
-									<br>
-									<h5 style="color:cadetblue">日记选项：</h5>
-									<hr>
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">列表查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="diaries_list_cost_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="diaries_list_cost_max" placeholder="最大间隔">
-										</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="blogs_list_cost_max" placeholder="最大间隔">
 									</div>
-									<!-- <div class="form-group row">
-										<label for="diaries_list_limit" class="col-sm-1 col-form-label">列表每页条数：</label>
-										<div class="col-sm-2">
-											<input type="number" min="15" max="100" class="form-control" id="diaries_list_limit" placeholder="查询每页条数">
-										</div>
-									</div> -->
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">内容查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="diaries_info_cost_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="diaries_info_cost_max" placeholder="最大间隔">
-										</div>
+								</div>
+								<!-- <div class="form-group row">
+									<label for="blogs_list_limit" class="col-sm-1 col-form-label">列表每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="15" max="100" class="form-control" id="blogs_list_limit" placeholder="查询每页条数">
 									</div>
-								</form>
-							</div>
-							<div class="tab-pane fade" id="nav-photos" role="tabpanel" aria-labelledby="nav-photos-tab">
-								<br />
-								<form id="tb_photos">
-									<h5 style="color:cadetblue">相册选项：</h5>
-									<hr>
-									<div class="form-group row">
-										<label for="photos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
-										<div class="col-sm-2">
-											<select id="photos_exportFormat" class="custom-select">
-												<option value="Folder" selected>相册文件夹</option>
-												<option value="MarkDown">MarkDown</option>
-												<!-- <option value="HTML">HTML</option> -->
-												<option value="JSON">JSON</option>
-												<!-- <option value="RTF">RTF</option> -->
-											</select>
-										</div>
+								</div> -->
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">内容查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="blogs_info_cost_min" placeholder="最小间隔">
 									</div>
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="photos_list_cost_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="photos_list_cost_max" placeholder="最大间隔">
-										</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="blogs_info_cost_max" placeholder="最大间隔">
 									</div>
-									<!-- <div class="form-group row">
-										<label for="photos_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
-										<div class="col-sm-2">
-											<input type="number" min="10" max="90" class="form-control" id="photos_list_limit" placeholder="查询每页条数">
-										</div>
-									</div> -->
-									<br>
-									<h5 style="color:cadetblue">相片选项：</h5>
-									<hr>
-									<div class="form-group row">
-										<label for="photos_image_exportType" class="col-sm-1 col-form-label">备份类型：</label>
-										<div class="col-sm-2">
-											<select id="photos_image_exportType" class="custom-select">
-												<option value="File" selected>图片文件</option>
-												<!-- <option value="MarkDown">MarkDown</option> -->
-												<!-- <option value="HTML">HTML</option> -->
-												<option value="JSON">JSON</option>
-												<!-- <option value="RTF">RTF</option> -->
-											</select>
-										</div>
+								</div>
+								<br>
+								<h5 style="color:cadetblue">评论选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="blogs_comments_min" placeholder="最小间隔">
 									</div>
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="photos_images_cost_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="photos_images_cost_max" placeholder="最大间隔">
-										</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="blogs_comments_max" placeholder="最大间隔">
 									</div>
-									<!-- <div class="form-group row">
-										<label for="photos_images_limit" class="col-sm-1 col-form-label">每页条数：</label>
-										<div class="col-sm-2">
-											<input type="number" min="10" max="90" class="form-control" id="photos_images_limit" placeholder="查询每页条数">
-										</div>
-									</div> -->
-									<div class="form-group row">
-										<label for="photos_exifType" class="col-sm-1 col-form-label">清晰度：</label>
-										<div class="col-sm-2">
-											<select id="photos_exifType" class="custom-select">
-												<option value="raw" selected>原图</option>
-												<option value="original">高清</option>
-												<option value="normal">一般</option>
-											</select>
-										</div>
+								</div>
+								<!-- <div class="form-group row">
+									<label for="blogs_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="15" max="50" class="form-control" id="blogs_comments_limit" placeholder="查询每页条数">
 									</div>
-									<br>
-									<h5 style="color:cadetblue">评论选项：</h5>
-									<hr>
-									<div class="form-group row">
-										<div class="col-sm-1">获取评论：</div>
-										<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="photos_images_comments_has">
-											<label style="margin-left: 14px;" class="custom-control-label" for="photos_images_comments_has" aria-describedby="photos_images_comments_has_help"></label>
-											<small id="photos_images_comments_has_help" class="text-muted">默认不获取，勾选获取评论，仅适用于相片备份类型为非File类型</small>
-										</div>
+								</div> -->
+								<div class="form-group row">
+									<div class="col-sm-1">所有评论：</div>
+									<div class="custom-control custom-checkbox">
+										<input type="checkbox" class="custom-control-input" id="blogs_download_full_comments">
+										<label style="margin-left: 14px;" class="custom-control-label" for="blogs_download_full_comments" aria-describedby="blogs_comments_help"></label>
+										<small id="blogs_comments_help" class="text-muted">默认下载前50条评论，勾选下载全部</small>
 									</div>
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="photos_images_comments_cost_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="photos_images_comments_cost_max" placeholder="最大间隔">
-										</div>
+								</div>
+							</form>
+						</div>
+						<div class="tab-pane fade" id="nav-diaries" role="tabpanel" aria-labelledby="nav-diaries-tab">
+							<br />
+							<form id="tb_diaries">
+								<h5 style="color:cadetblue">公共选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label for="diaries_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
+									<div class="col-sm-2">
+										<select id="diaries_exportFormat" class="custom-select">
+											<option value="MarkDown" selected>MarkDown</option>
+											<!-- <option value="HTML">HTML</option> -->
+											<option value="JSON">JSON</option>
+											<!-- <option value="RTF">RTF</option> -->
+										</select>
 									</div>
-									<!-- <div class="form-group row">
-										<label for="photos_images_comment_limit" class="col-sm-1 col-form-label">每页条数：</label>
-										<div class="col-sm-2">
-											<input type="number" min="10" max="90" class="form-control" id="photos_images_comments_limit" placeholder="查询每页条数">
-										</div>
-									</div> -->
-								</form>
-							</div>
-							<div class="tab-pane fade" id="nav-videos" role="tabpanel" aria-labelledby="nav-videos-tab">
-								<br />
-								<form id="tb_videos">
-									<div class="form-group row">
-										<label for="videos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
-										<div class="col-sm-2">
-											<select id="videos_exportFormat" class="custom-select">
-												<option value="Link" selected>下载链接</option>
-												<option value="File">MP4文件</option>
-												<!-- <option value="MarkDown">MarkDown</option> -->
-												<!-- <option value="HTML">HTML</option> -->
-												<option value="JSON">JSON</option>
-												<!-- <option value="RTF">RTF</option> -->
-											</select>
-										</div>
+								</div>
+								<br>
+								<h5 style="color:cadetblue">日记选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">列表查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="diaries_list_cost_min" placeholder="最小间隔">
 									</div>
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="videos_list_cost_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="videos_list_cost_max" placeholder="最大间隔">
-										</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="diaries_list_cost_max" placeholder="最大间隔">
 									</div>
-									<!-- <div class="form-group row">
-										<label for="videos_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
-										<div class="col-sm-2">
-											<input type="number" min="10" max="20" class="form-control" id="videos_list_limit" placeholder="查询每页条数">
-										</div>
-									</div> -->
-								</form>
-							</div>
-							<div class="tab-pane fade" id="nav-boards" role="tabpanel" aria-labelledby="nav-boards-tab">
-								<br />
-								<form id="tb_boards">
-									<div class="form-group row">
-										<label for="boards_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
-										<div class="col-sm-2">
-											<select id="boards_exportFormat" class="custom-select">
-												<option value="MarkDown" selected>MarkDown</option>
-												<!-- <option value="HTML">HTML</option> -->
-												<option value="JSON">JSON</option>
-												<!-- <option value="RTF">RTF</option> -->
-											</select>
-										</div>
+								</div>
+								<!-- <div class="form-group row">
+									<label for="diaries_list_limit" class="col-sm-1 col-form-label">列表每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="15" max="100" class="form-control" id="diaries_list_limit" placeholder="查询每页条数">
 									</div>
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="boards_list_cost_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="boards_list_cost_max" placeholder="最大间隔">
-										</div>
+								</div> -->
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">内容查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="diaries_info_cost_min" placeholder="最小间隔">
 									</div>
-									<!-- <div class="form-group row">
-										<label for="boards_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
-										<div class="col-sm-2">
-											<input type="number" min="10" max="20" class="form-control" id="boards_list_limit" placeholder="查询每页条数">
-										</div>
-									</div> -->
-								</form>
-							</div>
-							<div class="tab-pane fade" id="nav-friends" role="tabpanel" aria-labelledby="nav-friends-tab">
-								<br />
-								<form id="tb_friends">
-									<div class="form-group row">
-										<label for="friends_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
-										<div class="col-sm-2">
-											<select id="friends_exportFormat" class="custom-select">
-												<option value="Excel" selected>Excel</option>
-												<option value="JSON">JSON</option>
-											</select>
-										</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="diaries_info_cost_max" placeholder="最大间隔">
 									</div>
-									<div class="form-group row">
-										<div class="col-sm-1">添加时间：</div>
-										<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="friends_has_add_time">
-											<label style="margin-left: 14px;" class="custom-control-label" for="friends_has_add_time" aria-describedby="friends_has_add_time_help"></label>
-											<small id="friends_has_add_time_help" class="text-muted">默认不获取好友添加时间，勾选则获取，时间仅供参考</small>
-										</div>
+								</div>
+							</form>
+						</div>
+						<div class="tab-pane fade" id="nav-photos" role="tabpanel" aria-labelledby="nav-photos-tab">
+							<br />
+							<form id="tb_photos">
+								<h5 style="color:cadetblue">相册选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label for="photos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
+									<div class="col-sm-2">
+										<select id="photos_exportFormat" class="custom-select">
+											<option value="Folder" selected>文件夹</option>
+											<option value="MarkDown">MarkDown</option>
+											<!-- <option value="HTML">HTML</option> -->
+											<option value="JSON">JSON</option>
+											<!-- <option value="RTF">RTF</option> -->
+										</select>
 									</div>
-								</form>
-							</div>
-							<div class="tab-pane fade" id="nav-favorites" role="tabpanel" aria-labelledby="nav-favorites-tab">
-								<br />
-								<form id="tb_favorites">
-									<div class="form-group row">
-										<label for="favorites_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
-										<div class="col-sm-2">
-											<select id="favorites_exportFormat" class="custom-select">
-												<option value="MarkDown" selected>MarkDown</option>
-												<!-- <option value="HTML">HTML</option> -->
-												<option value="JSON">JSON</option>
-												<!-- <option value="RTF">RTF</option> -->
-											</select>
-										</div>
+								</div>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="photos_list_cost_min" placeholder="最小间隔">
 									</div>
-									<div class="form-group row">
-										<label class="col-sm-1 col-form-label">查询间隔：</label>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="favorites_list_cost_min" placeholder="最小间隔">
-										</div>
-										<span>-</span>
-										<div class="col-sm-1">
-											<input type="number" min="1" class="form-control" id="favorites_list_cost_max" placeholder="最大间隔">
-										</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="photos_list_cost_max" placeholder="最大间隔">
 									</div>
-									<!-- <div class="form-group row">
-										<label for="favorites_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
-										<div class="col-sm-2">
-											<input type="number" min="20" max="40" class="form-control" id="favorites_list_limit" placeholder="查询每页条数">
-										</div>
-									</div> -->
-								</form>
-							</div>
-							<div class="tab-pane fade" id="nav-common" role="tabpanel" aria-labelledby="nav-common-tab">
-								<br />
-								<form id="tb_common">
-									<div class="form-group row">
-										<label for="common_download_type" class="col-sm-1 col-form-label">文件下载工具：</label>
-										<div class="col-sm-2">
-											<select id="common_download_type" class="custom-select" aria-describedby="common_download_type_help">
-												<option value="File" selected>助手内部</option>
-												<option value="Thunder">迅雷X</option>
-												<option value="Browser">浏览器</option>
-												<option value="QZone">QQ空间外链</option>
-											</select>
-										</div>
+								</div>
+								<!-- <div class="form-group row">
+									<label for="photos_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="10" max="90" class="form-control" id="photos_list_limit" placeholder="查询每页条数">
 									</div>
-									<div class="form-group row">
-										<div class="col-sm-1">文件类型识别：</div>
+								</div> -->
+								<br>
+								<h5 style="color:cadetblue">相片选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label for="photos_image_exportType" class="col-sm-1 col-form-label">备份类型：</label>
+									<div class="col-sm-2">
+										<select id="photos_image_exportType" class="custom-select">
+											<option value="File" selected>文件</option>
+											<!-- <option value="MarkDown">MarkDown</option> -->
+											<!-- <option value="HTML">HTML</option> -->
+											<option value="JSON">JSON</option>
+											<!-- <option value="RTF">RTF</option> -->
+										</select>
+									</div>
+								</div>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="photos_images_cost_min" placeholder="最小间隔">
+									</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="photos_images_cost_max" placeholder="最大间隔">
+									</div>
+								</div>
+								<!-- <div class="form-group row">
+									<label for="photos_images_limit" class="col-sm-1 col-form-label">每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="10" max="90" class="form-control" id="photos_images_limit" placeholder="查询每页条数">
+									</div>
+								</div> -->
+								<div class="form-group row">
+									<label for="photos_exifType" class="col-sm-1 col-form-label">清晰度：</label>
+									<div class="col-sm-2">
+										<select id="photos_exifType" class="custom-select">
+											<option value="raw" selected>原图</option>
+											<option value="original">高清</option>
+											<option value="normal">一般</option>
+										</select>
+									</div>
+								</div>
+								<br>
+								<h5 style="color:cadetblue">评论选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<div class="col-sm-1">获取评论：</div>
+									<div class="custom-control custom-checkbox">
+										<input type="checkbox" class="custom-control-input" id="photos_images_comments_has">
+										<label style="margin-left: 14px;" class="custom-control-label" for="photos_images_comments_has" aria-describedby="photos_images_comments_has_help"></label>
+										<small id="photos_images_comments_has_help" class="text-muted">默认不获取，勾选获取评论，仅适用于相片备份类型为非文件类型的相片</small>
+									</div>
+								</div>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="photos_images_comments_cost_min" placeholder="最小间隔">
+									</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="photos_images_comments_cost_max" placeholder="最大间隔">
+									</div>
+								</div>
+								<!-- <div class="form-group row">
+									<label for="photos_images_comment_limit" class="col-sm-1 col-form-label">每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="10" max="90" class="form-control" id="photos_images_comments_limit" placeholder="查询每页条数">
+									</div>
+								</div> -->
+							</form>
+						</div>
+						<div class="tab-pane fade" id="nav-videos" role="tabpanel" aria-labelledby="nav-videos-tab">
+							<br />
+							<form id="tb_videos">
+								<div class="form-group row">
+									<label for="videos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
+									<div class="col-sm-2">
+										<select id="videos_exportFormat" class="custom-select">
+											<option value="Link" selected>下载链接</option>
+											<option value="File">MP4文件</option>
+											<!-- <option value="MarkDown">MarkDown</option> -->
+											<!-- <option value="HTML">HTML</option> -->
+											<option value="JSON">JSON</option>
+											<!-- <option value="RTF">RTF</option> -->
+										</select>
+									</div>
+								</div>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="videos_list_cost_min" placeholder="最小间隔">
+									</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="videos_list_cost_max" placeholder="最大间隔">
+									</div>
+								</div>
+								<!-- <div class="form-group row">
+									<label for="videos_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="10" max="20" class="form-control" id="videos_list_limit" placeholder="查询每页条数">
+									</div>
+								</div> -->
+							</form>
+						</div>
+						<div class="tab-pane fade" id="nav-boards" role="tabpanel" aria-labelledby="nav-boards-tab">
+							<br />
+							<form id="tb_boards">
+								<div class="form-group row">
+									<label for="boards_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
+									<div class="col-sm-2">
+										<select id="boards_exportFormat" class="custom-select">
+											<option value="MarkDown" selected>MarkDown</option>
+											<!-- <option value="HTML">HTML</option> -->
+											<option value="JSON">JSON</option>
+											<!-- <option value="RTF">RTF</option> -->
+										</select>
+									</div>
+								</div>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="boards_list_cost_min" placeholder="最小间隔">
+									</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="boards_list_cost_max" placeholder="最大间隔">
+									</div>
+								</div>
+								<!-- <div class="form-group row">
+									<label for="boards_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="10" max="20" class="form-control" id="boards_list_limit" placeholder="查询每页条数">
+									</div>
+								</div> -->
+							</form>
+						</div>
+						<div class="tab-pane fade" id="nav-friends" role="tabpanel" aria-labelledby="nav-friends-tab">
+							<br />
+							<form id="tb_friends">
+								<div class="form-group row">
+									<label for="friends_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
+									<div class="col-sm-2">
+										<select id="friends_exportFormat" class="custom-select">
+											<option value="Excel" selected>Excel</option>
+											<option value="JSON">JSON</option>
+										</select>
+									</div>
+								</div>
+								<div class="form-group row">
+									<div class="col-sm-1">添加时间：</div>
+									<div class="custom-control custom-checkbox">
+										<input type="checkbox" class="custom-control-input" id="friends_has_add_time">
+										<label style="margin-left: 14px;" class="custom-control-label" for="friends_has_add_time" aria-describedby="friends_has_add_time_help"></label>
+										<small id="friends_has_add_time_help" class="text-muted">默认不获取好友添加时间，勾选则获取，时间仅供参考</small>
+									</div>
+								</div>
+							</form>
+						</div>
+						<div class="tab-pane fade" id="nav-favorites" role="tabpanel" aria-labelledby="nav-favorites-tab">
+							<br />
+							<form id="tb_favorites">
+								<div class="form-group row">
+									<label for="favorites_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
+									<div class="col-sm-2">
+										<select id="favorites_exportFormat" class="custom-select">
+											<option value="MarkDown" selected>MarkDown</option>
+											<!-- <option value="HTML">HTML</option> -->
+											<option value="JSON">JSON</option>
+											<!-- <option value="RTF">RTF</option> -->
+										</select>
+									</div>
+								</div>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="favorites_list_cost_min" placeholder="最小间隔">
+									</div>
+									<span>-</span>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="favorites_list_cost_max" placeholder="最大间隔">
+									</div>
+								</div>
+								<!-- <div class="form-group row">
+									<label for="favorites_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="20" max="40" class="form-control" id="favorites_list_limit" placeholder="查询每页条数">
+									</div>
+								</div> -->
+							</form>
+						</div>
+						<div class="tab-pane fade" id="nav-common" role="tabpanel" aria-labelledby="nav-common-tab">
+							<br />
+							<form id="tb_common">
+								<h5 style="color:cadetblue">文件下载：</h5>
+								<hr>
+								<div class="form-group row">
+									<label for="common_download_type" class="col-sm-1 col-form-label">下载工具：</label>
+									<div class="col-sm-2">
+										<select id="common_download_type" class="custom-select" aria-describedby="common_download_type_help">
+											<option value="File" selected>助手内部</option>
+											<option value="Thunder">迅雷X</option>
+											<option value="Browser">浏览器</option>
+											<option value="QZone">QQ空间外链</option>
+										</select>
+									</div>
+									<small id="common_download_type_help" class="text-muted" style="margin-top: 8px;">助手内部目前暂不支持数据容量大于2G的，2G内建议使用助手内部下载，超2G的建议使用其他方式下载</small>
+								</div>
+								<div class="form-group row">
+									<div class="col-sm-1">类型识别：</div>
+									<div class="col-sm-2">
 										<div class="custom-control custom-checkbox">
 											<input type="checkbox" class="custom-control-input" id="common_file_suffix">
-											<label style="margin-left: 14px;" class="custom-control-label" for="common_file_suffix" aria-describedby="common_file_suffix_help"></label>
-											<small id="common_file_suffix_help" class="text-muted">勾选表示下载文件时自动识别文件后缀名，仅适用非QQ空间外链的方式，同时会导致数据导出时长增加。</small>
+											<label class="custom-control-label" for="common_file_suffix" aria-describedby="common_file_suffix_help"></label>
 										</div>
 									</div>
-									<div class="form-group row">
-										<label for="common_download_thread" class="col-sm-1 col-form-label">下载并发量：</label>
-										<div class="col-sm-2">
-											<input type="number" min="5" max="15" class="form-control" id="common_download_thread" placeholder="下载并发量">
-										</div>
+									<div>
+										<small id="common_file_suffix_help" class="text-muted">勾选自动识别文件后缀名，仅适用下载方式为非QQ空间外链，备份时长将延长。</small>
 									</div>
-									<div class="form-group row">
-										<div class="col-sm-1">下载状态栏：</div>
+								</div>
+								<div class="form-group row">
+									<label for="common_thunder_task_count" class="col-sm-1 col-form-label">迅雷任务数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="1000" class="form-control" id="common_thunder_task_count" placeholder="迅雷任务数" aria-describedby="common_thunder_task_count_help">
+									</div>
+									<small id="common_thunder_task_count_help" class="text-muted" style="margin-top: 8px;">迅雷的最大任务数，当值为5000，照片数量为10000时，则唤起2次迅雷，每次5000个任务，不宜太大，太大将无法唤起迅雷。</small>
+								</div>
+								<div class="form-group row">
+									<label for="common_thunder_task_sleep" class="col-sm-1 col-form-label">迅雷唤起间隔：</label>
+									<div class="col-sm-2">
+										<input type="number" min="1000" class="form-control" id="common_thunder_task_sleep" placeholder="迅雷唤起间隔" aria-describedby="common_thunder_task_sleep_help">
+									</div>
+									<small id="common_thunder_task_sleep_help" class="text-muted" style="margin-top: 8px;">每次唤醒迅雷的间隔秒数</small>
+								</div>
+								<div class="form-group row">
+									<label for="common_download_thread" class="col-sm-1 col-form-label" aria-describedby="ccommon_download_thread_help">下载并发数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="5" max="15" class="form-control" id="common_download_thread" placeholder="下载并发量">
+									</div>
+									<small id="ccommon_download_thread_help" class="text-muted" style="margin-top: 8px;">下载方式为非QQ空间外链的同时下载数</small>
+								</div>
+								<div class="form-group row">
+									<div class="col-sm-1">下载状态栏：</div>
+									<div class="col-sm-2">
 										<div class="custom-control custom-checkbox">
 											<input type="checkbox" class="custom-control-input" id="common_download_status">
-											<label style="margin-left: 14px;" class="custom-control-label" for="common_download_status" aria-describedby="common_download_status_help"></label>
-											<small id="common_download_status_help" class="text-muted">勾选表示不禁用，禁用后，会影响整个浏览器下载文件时无状态栏提醒，适用于备份方式为下载管理器的情况</small>
+											<label class="custom-control-label" for="common_download_status" aria-describedby="common_download_status_help"></label>
 										</div>
 									</div>
-								</form>
-							</div>
+									<div>
+										<small id="common_download_status_help" class="text-muted">勾选表示不禁用，禁用后，会影响整个浏览器下载文件时无状态栏提醒，适用于下载方式为浏览器</small>
+									</div>
+								</div>
+							</form>
 						</div>
-						<button id="saveQzoneConfig" type="submit" class="btn btn-primary">应用</button>
-						<button id="resetQzoneConfig" type="reset" class="btn btn-secondary">重置</button>
 					</div>
+					<button id="saveQzoneConfig" type="submit" class="btn btn-primary">应用</button>
+					<button id="resetQzoneConfig" type="reset" class="btn btn-secondary">重置</button>
 				</div>
 			</div>
 		</div>
