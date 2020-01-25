@@ -145,7 +145,6 @@ API.Favorites.exportAllToFiles = async (favorites) => {
 API.Favorites.exportToMarkdown = async (favorites) => {
     let newline = '\r\n\r\n';
 
-    let total = favorites.length;
     // 根据年份分组，每一年生成一个MD文件
     const yearMap = API.Utils.groupedByTime(favorites, "create_time");
     for (let year_entry of yearMap) {
@@ -223,6 +222,7 @@ API.Favorites.getMarkDownContent = (favorite) => {
             if (isRt) {
                 //转发说说添加转发理由
                 contents.push('> {0}'.format(API.Utils.formatContent(shuoshuo_info.reason, "MD")));
+                contents.push('\r\n');
             }
             contents.push('> {0}'.format(API.Utils.formatContent(content, "MD")));
             break;
@@ -230,12 +230,12 @@ API.Favorites.getMarkDownContent = (favorite) => {
             // 分享模板（通用），暂时不区分分享的类型
             let share_info = favorite.share_info;
             contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 分享 【{2}】'.format(share_info.owner_name, share_info.owner_uin, favorite.custom_create_time));
-            contents.push('\r\n');
             // 分享类型
             let share_type = share_info.share_type;
             // 分享原因
             let share_reason = share_info.reason;
             if (share_reason) {
+                contents.push('\r\n');
                 contents.push('{0}'.format(API.Utils.formatContent(share_reason, "MD")));
             }
             let target_url = share_info.share_url;
@@ -302,19 +302,22 @@ API.Favorites.getMarkDownContent = (favorite) => {
             }
             contents.push('> {0}'.format(share_title));
             if (favorite.custom_abstract && favorite.custom_abstract.trim()) {
+                contents.push('\r\n');
                 contents.push('> {0}'.format(API.Utils.formatContent(favorite.custom_abstract, "MD")));
             }
             break;
+        case '本地图片':
+            // 多张本地图片模板
+            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 照片 【{2}】'.format(favorite.custom_name, favorite.custom_uin, favorite.custom_create_time));
+            break;
         case '照片':
             // 照片模板
-            let first_photo = favorite.album_info || favorite.photo_list[0];
+            let first_photo = favorite.album_info.owner_uin ? favorite.album_info : favorite.photo_list[0];
             contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 照片 【{2}】'.format(first_photo.owner_name, first_photo.owner_uin, favorite.custom_create_time));
-            contents.push('\r\n');
             break;
         case '文字':
             // 文字模板，仅适用一般长度的文字，暂不支持获取文字的全文，没有找到全文的查看地址，暂时不处理
             contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 文字 【{2}】'.format(favorite.custom_name, favorite.custom_uin, favorite.custom_create_time));
-            contents.push('\r\n');
             contents.push('> {0}'.format(API.Utils.formatContent(favorite.custom_abstract, "MD")));
             break;
         case '网页':
@@ -323,6 +326,7 @@ API.Favorites.getMarkDownContent = (favorite) => {
             contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 网页 【{2}】'.format(favorite.custom_name, favorite.custom_uin, favorite.custom_create_time));
             contents.push('\r\n');
             contents.push('{0} {1}'.format(favorite.title, url_info.url));
+            contents.push('\r\n');
             contents.push('> {0}'.format(favorite.custom_abstract));
             break;
         default:
@@ -332,9 +336,8 @@ API.Favorites.getMarkDownContent = (favorite) => {
     }
     // 添加多媒体内容
     let mediat_content = API.Messages.formatMedia(favorite);
-    contents.push('\r\n');
     contents.push(mediat_content);
-    return contents.join('\r\n\r\n');
+    return contents.join('\r\n');
 }
 
 /**
@@ -356,15 +359,20 @@ API.Favorites.exportToJson = async (favorites) => {
             let items = monthEntry[1];
             yearItems = yearItems.concat(items);
         }
+
+        // 更新年份的收藏总数
+        indicator.setTotal(yearItems.length);
+
         // 更新下载中数据
         indicator.addDownload(yearItems);
+
         const yearFilePath = QZone.Favorites.ROOT + "/" + year + "年.json";
         await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath).then(fileEntry => {
-            console.debug('备份收藏列表完成，当前年份=', year, items, fileEntry);
-            indicator.addSuccess(items);
+            console.debug('备份收藏列表完成，当前年份=', year, yearItems, fileEntry);
+            indicator.addSuccess(yearItems);
         }).catch(error => {
-            console.error('备份收藏列表失败，当前年份=', year, items, error);
-            indicator.addFailed(items);
+            console.error('备份收藏列表失败，当前年份=', year, yearItems, error);
+            indicator.addFailed(yearItems);
         });
     }
 

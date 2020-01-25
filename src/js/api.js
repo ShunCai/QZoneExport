@@ -1919,7 +1919,7 @@ API.Favorites = {
         let Fav_Tyep = {
             0: "全部",
             1: "网页",
-            2: "未知",
+            2: "本地图片",
             3: "日志",
             4: "照片",
             5: "说说",
@@ -2035,6 +2035,7 @@ API.Favorites = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
             "type": 0,//全部
             // "type": 1,//日志
+            // "type": 2,//照片
             // "type": 3,//说说
             // "type": 4,//分享
             "start": page * Qzone_Config.Favorites.pageSize,
