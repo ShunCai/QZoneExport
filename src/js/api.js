@@ -1014,7 +1014,7 @@ API.Utils = {
             url = url + "?" + d
         }
         return this.trimDownloadUrl(url);
-    },
+    }
 };
 
 /**

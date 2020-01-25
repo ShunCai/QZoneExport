@@ -852,6 +852,20 @@ const thunderInfo = new ThunderInfo(QZone.Common.Config.ZIP_NAME);
 // 浏览器下载信息
 const browserTasks = new Array();
 
+// 向页面注入JS
+function injectCustomJs(path) {
+    path = path || 'js/inject.js';
+    let photo_frame = frames['tphoto'];
+    if (!photo_frame) {
+        return;
+    }
+    let photo_document = photo_frame.contentDocument;
+    var temp = photo_document.createElement('script');
+    temp.setAttribute('type', 'text/javascript');
+    temp.src = chrome.extension.getURL(path);
+    photo_document.head.appendChild(temp);
+}
+
 /**
  * 初始化监听
  */
@@ -894,6 +908,7 @@ const browserTasks = new Array();
         }
     });
     operator.next(QZoneOperator.OperatorType.INIT);
+
 })()
 
 
