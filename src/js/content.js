@@ -1041,7 +1041,11 @@ API.Utils.invokeThunder = async () => {
         let index = i + 1;
         indicator.setIndex(index);
         const list = _tasks[i];
-        let groupTask = new ThunderInfo(thunderInfo.taskGroupName + "_" + index, Qzone_Config.Common.downloadThread, list)
+        let taskGroupName = thunderInfo.taskGroupName;
+        if (_tasks.length > 1) {
+            taskGroupName = taskGroupName + "_" + index;
+        }
+        let groupTask = new ThunderInfo(taskGroupName, Qzone_Config.Common.downloadThread, list)
         API.Utils.downloadByThunder(groupTask);
         indicator.addSuccess(list);
         let sleep = Qzone_Config.Common.thunderTaskSleep * 1;

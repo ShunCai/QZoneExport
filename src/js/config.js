@@ -2,10 +2,16 @@
 const Default_Config = {
     // 公共配置
     Common: {
+        // 重试次数
+        listRetryCount: 2,
+        // 重试间隔
+        listRetrySleep: 1,
         // 文件下载类型
         downloadType: 'File',
         // 自动识别文件后缀
         isAutoFileSuffix: true,
+        // 后缀识别超时秒数
+        autoFileSuffixTimeOut: 15,
         // 迅雷任务数        
         thunderTaskNum: 5000,
         // 唤起迅雷间隔        
@@ -135,10 +141,16 @@ const Default_Config = {
 let Qzone_Config = {
     // 公共配置
     Common: {
+        // 重试次数
+        listRetryCount: 2,
+        // 重试间隔
+        listRetrySleep: 1,
         // 文件下载类型
         downloadType: 'File',
         // 自动识别文件后缀
         isAutoFileSuffix: true,
+        // 后缀识别超时秒数
+        autoFileSuffixTimeOut: 15,
         // 迅雷任务数        
         thunderTaskNum: 5000,
         // 唤起迅雷间隔        

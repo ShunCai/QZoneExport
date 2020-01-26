@@ -13,9 +13,12 @@
 	});
 
 	let loadOptions = (options) => {
-		// 公共模块赋值		
+		// 公共模块赋值
+		$("#common_list_retry_count").val(options.Common.listRetryCount);
+		$("#common_list_retry_sleep").val(options.Common.listRetrySleep);
 		$("#common_download_type").val(options.Common.downloadType);
 		$('#common_file_suffix').attr("checked", options.Common.isAutoFileSuffix);
+		$("#common_file_suffix_timeout").val(options.Common.autoFileSuffixTimeOut);
 		$('#common_download_status').attr("checked", options.Common.enabledShelf);
 		chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
 		$("#common_thunder_task_count").val(options.Common.thunderTaskNum);
@@ -109,7 +112,10 @@
 	let setOptions = () => {
 
 		// 公共模块赋值		
+		Qzone_Config.Common.listRetryCount = $("#common_list_retry_count").val() * 1;
+		Qzone_Config.Common.listRetrySleep = $("#common_list_retry_sleep").val() * 1;
 		Qzone_Config.Common.isAutoFileSuffix = $('#common_file_suffix').prop("checked");
+		Qzone_Config.Common.autoFileSuffixTimeOut = $("#common_file_suffix_timeout").val() * 1;
 		Qzone_Config.Common.downloadType = $('#common_download_type').val();
 		Qzone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
 		chrome.downloads.setShelfEnabled(Qzone_Config.Common.enabledShelf);

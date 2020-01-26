@@ -116,8 +116,8 @@ API.Utils = {
         return new Promise(function (resolve, reject) {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', url, true);
-            // 10秒超时
-            xhr.timeout = 10 * 1000;
+            // 超时设置
+            xhr.timeout = (Qzone_Config.Common.autoFileSuffixTimeOut || 15) * 1000;
             xhr.onreadystatechange = function () {
                 if (2 == xhr.readyState) {
                     let contentType = xhr.getResponseHeader('content-type') || xhr.getResponseHeader('Content-Type') || '';
@@ -317,6 +317,7 @@ API.Utils = {
             };
             request.onerror = function (error) {
                 reject(error);
+                this.abort();
             };
             request.ontimeout = function (error) {
                 reject(error);
@@ -336,42 +337,34 @@ API.Utils = {
 
     /**
      * GET 请求
-     * @param {*} url 
+     * @param {string} url 请求URL
      */
-    get(url) {
+    get(url, params) {
         return new Promise(function (resolve, reject) {
             $.ajax({
                 url: url,
-                success: function (result) {
-                    resolve(result);
-                },
-                error: function (xhr, status, error) {
-                    reject(error);
-                }
-            });
-        });
-    },
-
-    /**
-     * POST 请求
-     * @param {string} url 
-     * @param {object} params
-     */
-    post(url, params) {
-        return new Promise(function (resolve, reject) {
-            $.ajax({
-                url: url,
-                type: 'POST',
+                type: 'GET',
                 data: params,
+                // async: false,
+                cache: false,
+                retries: Qzone_Config.Common.listRetryCount,// 重试次数
+                retryInterval: Qzone_Config.Common.listRetrySleep * 1000,// 每次重试间隔秒数
                 success: function (result) {
                     resolve(result);
                 },
                 error: function (xhr, status, error) {
+                    if (this.retries > 0) {
+                        this.retries--;
+                        // 指定秒数后继续请求
+                        setTimeout(function () {
+                            $.ajax(this);
+                        }, this.retryInterval);
+                        return;
+                    }
                     reject(error);
                 }
             });
         });
-
     },
 
     /**
@@ -1087,7 +1080,7 @@ API.Blogs = {
             "verbose": "1",
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         };
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.BLOGS_LIST_URL, params));
+        return API.Utils.get(QZone_URLS.BLOGS_LIST_URL, params);
     },
 
     /**
@@ -1112,7 +1105,7 @@ API.Blogs = {
             "page": "1",
             "refererurl": "https://qzs.qq.com/qzone/app/blog/v6/bloglist.html#nojump=1&page=1&catalog=list"
         };
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.BLOGS_INFO_URL, params));
+        return API.Utils.get(QZone_URLS.BLOGS_INFO_URL, params);
     },
 
 
@@ -1137,7 +1130,7 @@ API.Blogs = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         };
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.BLOGS_COMMENTS_URL, params));
+        return API.Utils.get(QZone_URLS.BLOGS_COMMENTS_URL, params);
     },
 
     /**
@@ -1226,7 +1219,7 @@ API.Diaries = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         };
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.DIARY_LIST_URL, params));
+        return API.Utils.get(QZone_URLS.DIARY_LIST_URL, params);
     },
 
     /**
@@ -1248,7 +1241,7 @@ API.Diaries = {
             "ref": "qzone",
             "refererurl": "https://qzs.qq.com/qzone/app/blog/v6/bloglist.html#nojump=1&catalog=private&page=1"
         };
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.DIARY_INFO_URL, params));
+        return API.Utils.get(QZone_URLS.DIARY_INFO_URL, params);
     }
 };
 
@@ -1270,7 +1263,7 @@ API.Friends = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         };
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.FRIENDS_LIST_URL, params));
+        return API.Utils.get(QZone_URLS.FRIENDS_LIST_URL, params);
     },
 
     /**
@@ -1287,7 +1280,7 @@ API.Friends = {
         };
         // code = -3000 未登录
         // code = -4009 无权限
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.QZONE_USER_INFO_URL, params));
+        return API.Utils.get(QZone_URLS.QZONE_USER_INFO_URL, params);
     },
 
     /**
@@ -1303,7 +1296,7 @@ API.Friends = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         };
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.USER_ADD_TIME_URL, params));
+        return API.Utils.get(QZone_URLS.USER_ADD_TIME_URL, params);
     },
 
     /**
@@ -1317,7 +1310,7 @@ API.Friends = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         };
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.INTIMACY_URL, params));
+        return API.Utils.get(QZone_URLS.INTIMACY_URL, params);
     }
 };
 
@@ -1345,7 +1338,7 @@ API.Messages = {
             "need_private_comment": 1,
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         };
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.MESSAGES_LIST_URL, params));
+        return API.Utils.get(QZone_URLS.MESSAGES_LIST_URL, params);
     },
 
 
@@ -1462,7 +1455,7 @@ API.Messages = {
             "format": "jsonp",
             "qzreferrer": 'https://user.qzone.qq.com'
         }
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.MESSAGES_DETAIL_URL, params));
+        return API.Utils.get(QZone_URLS.MESSAGES_DETAIL_URL, params);
     },
 
 
@@ -1486,7 +1479,7 @@ API.Messages = {
             "need_private_comment": 1,
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         }
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.MESSAGES_COMMONTS_URL, params));
+        return API.Utils.get(QZone_URLS.MESSAGES_COMMONTS_URL, params);
     },
 
     /**
@@ -1653,7 +1646,7 @@ API.Boards = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         };
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.BOARD_LIST_URL, params));
+        return API.Utils.get(QZone_URLS.BOARD_LIST_URL, params);
     },
 
     /**
@@ -1704,7 +1697,7 @@ API.Photos = {
             "callbackFun": "shine0",
             "_": Date.now()
         }
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.PHOTOS_LIST_URL, params));
+        return API.Utils.get(QZone_URLS.PHOTOS_LIST_URL, params);
     },
 
     /**
@@ -1740,7 +1733,7 @@ API.Photos = {
             "callbackFun": "shine0",
             "_": Date.now()
         };
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.IMAGES_LIST_URL, params));
+        return API.Utils.get(QZone_URLS.IMAGES_LIST_URL, params);
     },
 
     /**
@@ -1768,7 +1761,7 @@ API.Photos = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         };
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.IMAGES_COMMENTS_URL, params));
+        return API.Utils.get(QZone_URLS.IMAGES_COMMENTS_URL, params);
     },
 
     /**
@@ -1869,7 +1862,7 @@ API.Videos = {
             "callbackFun": "shine0",
             "_": Date.now()
         }
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.VIDEO_LIST_URL, params));
+        return API.Utils.get(QZone_URLS.VIDEO_LIST_URL, params);
     },
 
     /**
@@ -2051,7 +2044,7 @@ API.Favorites = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         }
-        return API.Utils.get(API.Utils.toUrl(QZone_URLS.FAVORITE_LIST_URL, params));
+        return API.Utils.get(QZone_URLS.FAVORITE_LIST_URL, params);
     }
 
 };
