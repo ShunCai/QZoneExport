@@ -98,11 +98,11 @@
 								<div class="form-group row">
 									<label class="col-sm-1 col-form-label">查询间隔：</label>
 									<div class="col-sm-1">
-										<input type="number" min="2" class="form-control" id="messages_comments_min" placeholder="最小间隔">
+										<input type="number" min="1" class="form-control" id="messages_comments_min" placeholder="最小间隔">
 									</div>
 									<span>-</span>
 									<div class="col-sm-1">
-										<input type="number" min="2" class="form-control" id="messages_comments_max" placeholder="最大间隔">
+										<input type="number" min="1" class="form-control" id="messages_comments_max" placeholder="最大间隔">
 									</div>
 								</div>
 								<!-- <div class="form-group row">
@@ -480,7 +480,7 @@
 								<div class="form-group row">
 									<label for="common_list_retry_sleep" class="col-sm-1 col-form-label">列表重试间隔：</label>
 									<div class="col-sm-2">
-										<input type="number" min="1000" class="form-control" id="common_list_retry_sleep" placeholder="列表重试间隔" aria-describedby="common_list_retry_sleep_help">
+										<input type="number" min="1" class="form-control" id="common_list_retry_sleep" placeholder="列表重试间隔" aria-describedby="common_list_retry_sleep_help">
 									</div>
 									<small id="common_list_retry_sleep_help" class="text-muted" style="margin-top: 8px;">每次重试时的间隔时间</small>
 								</div>
@@ -498,7 +498,7 @@
 									</div>
 									<small id="common_download_type_help" class="text-muted" style="margin-top: 8px;">助手内部目前暂不支持数据容量大于2G的，2G内建议使用助手内部下载，超2G的建议使用其他方式下载</small>
 								</div>
-								<div class="form-group row">
+								<div class="form-group row" style="display: none;">
 									<div class="col-sm-1">图片类型识别：</div>
 									<div class="col-sm-2">
 										<div class="custom-control custom-checkbox">
@@ -510,36 +510,36 @@
 										<small id="common_file_suffix_help" class="text-muted">勾选自动识别文件后缀名，仅适用下载方式为非QQ空间外链，备份时长将延长。</small>
 									</div>
 								</div>
-								<div class="form-group row">
+								<div class="form-group row" style="display: none;">
 									<label for="common_file_suffix_timeout" class="col-sm-1 col-form-label">类型识别超时：</label>
 									<div class="col-sm-2">
-										<input type="number" min="1000" class="form-control" id="common_file_suffix_timeout" placeholder="类型识别超时秒数" aria-describedby="common_file_suffix_timeout_help">
+										<input type="number" min="10" class="form-control" id="common_file_suffix_timeout" placeholder="类型识别超时秒数" aria-describedby="common_file_suffix_timeout_help">
 									</div>
 									<small id="common_file_suffix_timeout_help" class="text-muted" style="margin-top: 8px;">图片类型识别最大超时数，识别超该数值时，将取消识别类型，即图片文件无后缀名</small>
 								</div>
-								<div class="form-group row">
+								<div class="form-group row" style="display: none;">
 									<label for="common_thunder_task_count" class="col-sm-1 col-form-label">迅雷最大任务：</label>
 									<div class="col-sm-2">
 										<input type="number" min="1000" class="form-control" id="common_thunder_task_count" placeholder="迅雷任务数" aria-describedby="common_thunder_task_count_help">
 									</div>
 									<small id="common_thunder_task_count_help" class="text-muted" style="margin-top: 8px;">迅雷的最大任务数，当值为5000，照片数量为10000时，则唤起2次迅雷，每次5000个任务，不宜太大，太大将无法唤起迅雷。</small>
 								</div>
-								<div class="form-group row">
+								<div class="form-group row" style="display: none;">
 									<label for="common_thunder_task_sleep" class="col-sm-1 col-form-label">迅雷唤起间隔：</label>
 									<div class="col-sm-2">
-										<input type="number" min="1000" class="form-control" id="common_thunder_task_sleep" placeholder="迅雷唤起间隔" aria-describedby="common_thunder_task_sleep_help">
+										<input type="number" class="form-control" id="common_thunder_task_sleep" placeholder="迅雷唤起间隔" aria-describedby="common_thunder_task_sleep_help">
 									</div>
 									<small id="common_thunder_task_sleep_help" class="text-muted" style="margin-top: 8px;">每次唤醒迅雷的间隔秒数，唤起迅雷下载时，迅雷会有任务确认弹窗，请在间隔时间内确认任务，否则无法进行下一次的唤醒！</small>
 								</div>
-								<div class="form-group row">
+								<div class="form-group row" style="display: none;">
 									<label for="common_download_thread" class="col-sm-1 col-form-label" aria-describedby="ccommon_download_thread_help">下载并发数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="5" max="15" class="form-control" id="common_download_thread" placeholder="下载并发量">
 									</div>
 									<small id="ccommon_download_thread_help" class="text-muted" style="margin-top: 8px;">下载方式为非QQ空间外链的同时下载数</small>
 								</div>
-								<div class="form-group row">
-									<div class="col-sm-1">下载状态栏：</div>
+								<div class="form-group row" style="display: none;">
+									<div class="col-sm-1">启用状态栏：</div>
 									<div class="col-sm-2">
 										<div class="custom-control custom-checkbox">
 											<input type="checkbox" class="custom-control-input" id="common_download_status">
@@ -547,7 +547,7 @@
 										</div>
 									</div>
 									<div>
-										<small id="common_download_status_help" class="text-muted">勾选表示不禁用，禁用后，会影响整个浏览器下载文件时无状态栏提醒，适用于下载方式为浏览器</small>
+										<small id="common_download_status_help" class="text-muted">勾选表示启用，禁用后，会影响整个浏览器下载文件时无状态栏提醒，适用于下载方式为浏览器</small>
 									</div>
 								</div>
 							</form>
