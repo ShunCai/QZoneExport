@@ -241,7 +241,7 @@ class StatusIndicator {
         ],
         Friends_Export: [
             '正在导出QQ好友列表',
-            '已获取好友 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+            '已导出好友 <span style="color: #1ca5fc;">{downloaded}</span> 个',
             '总共 <span style="color: #1ca5fc;">{total}</span> 个',
             '请稍后...'
         ],

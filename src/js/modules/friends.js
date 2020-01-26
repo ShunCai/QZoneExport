@@ -20,7 +20,7 @@ API.Friends.export = async () => {
 }
 
 /**
- * 获取所有留言列表
+ * 获取所有好友列表
  */
 API.Friends.getAllList = async () => {
     // 重置数据
@@ -36,12 +36,12 @@ API.Friends.getAllList = async () => {
         data = API.Utils.toJson(data, /^_Callback\(/);
         data = data.data;
 
-        let friends = data.items ||[];
+        let friends = data.items || [];
 
         QZone.Friends.total = friends.length;
         indicator.setTotal(friends.length);
 
-        QZone.Friends.Data = data.items;        
+        QZone.Friends.Data = data.items;
         indicator.addSuccess(friends);
 
         // 将QQ分组进行分组
@@ -54,7 +54,7 @@ API.Friends.getAllList = async () => {
         // 处理QQ好友
         for (const friend of friends) {
             friend.groupName = groupMap.get(friend.groupid) || "默认分组";
-            if (!Qzone_Config.Friends.hasAddTime) {
+            if (!Qzone_Config.Friends.hasAddTime || Qzone_Config.Friends.exportType === 'MarkDown') {
                 // 不获取好友添加时间则跳过
                 continue;
             }
@@ -81,8 +81,8 @@ API.Friends.getAllList = async () => {
 }
 
 /**
- * 导出留言
- * @param {Array} friends 留言列表
+ * 导出好友
+ * @param {Array} friends 好友列表
  */
 API.Friends.exportAllToFiles = async (friends) => {
     // 获取用户配置
@@ -90,6 +90,9 @@ API.Friends.exportAllToFiles = async (friends) => {
     switch (exportType) {
         case 'Excel':
             await API.Friends.exportToExcel(friends);
+            break;
+        case 'MarkDown':
+            await API.Friends.exportToMarkDown(friends);
             break;
         case 'JSON':
             await API.Friends.exportToJson(friends);
@@ -102,14 +105,14 @@ API.Friends.exportAllToFiles = async (friends) => {
 
 /**
  * 导出QQ好友到Excel
- * @param {Array} friends 留言列表
+ * @param {Array} friends 好友列表
  */
 API.Friends.exportToExcel = async (friends) => {
     let indicator = new StatusIndicator('Friends_Export');
     indicator.setTotal(friends.length);
     // Excel数据
     let ws_data = [
-        ["QQ号", "备注名称", "QQ昵称", "所在分组", "成为好友时间"],
+        ["QQ号", "备注名称", "QQ昵称", "所在分组", "添加时间"],
     ];
 
     for (const friend of friends) {
@@ -140,6 +143,51 @@ API.Friends.exportToExcel = async (friends) => {
 }
 
 
+
+/**
+ * 导出QQ好友到MarkDown
+ * @param {Array} friends 好友列表
+ */
+API.Friends.exportToMarkDown = async (friends) => {
+    let indicator = new StatusIndicator('Friends_Export');
+    indicator.setTotal(friends.length);
+
+    let groupMap = new Map();
+    for (const friend of friends) {
+        let groupName = friend.groupName;
+        let groupItems = groupMap.get(groupName) || [];
+        groupItems.push(friend);
+        groupMap.set(groupName, groupItems);
+    }
+
+    let contents = [];
+    for (const groupEntry of groupMap) {
+        let groupName = groupEntry[0];
+        let groupItems = groupEntry[1];
+        contents.push('###### ' + groupName);
+        for (const item of groupItems) {
+            let nickname = item.remark || item.name;
+            contents.push('\r\n');
+            contents.push('- {0}'.format(API.Utils.getUserLink(item.uin, nickname, "MD")));
+            contents.push('\r\n');
+        }
+        contents.push('\r\n');
+        contents.push('---');
+        contents.push('\r\n');
+    }
+    let content = contents.join('');
+    await API.Utils.writeText(content, QZone.Friends.ROOT + '/QQ好友.md').then((fileEntry) => {
+        console.info("导出QQ好友的MarkDown文件到FileSystem完成", fileEntry);
+        indicator.addSuccess(friends);
+    }).catch((error) => {
+        console.error("导出QQ好友的MarkDown文件到FileSystem异常", error);
+        indicator.addFailed(friends);
+    });
+    indicator.complete();
+    return friends;
+}
+
+
 /**
  * 导出QQ好友到JSON
  * @param {Array} friends 好友列表
@@ -148,8 +196,13 @@ API.Friends.exportToJson = async (friends) => {
     let indicator = new StatusIndicator('Friends_Export');
     indicator.setTotal(friends.length);
     let json = JSON.stringify(friends);
-    await API.Utils.writeText(json, QZone.Friends.ROOT + '/QQ好友.json');
-    indicator.addSuccess(friends);
+    await API.Utils.writeText(json, QZone.Friends.ROOT + '/QQ好友.json').then((fileEntry) => {
+        console.error("导出QQ好友的JSON文件到FileSystem完成", fileEntry);
+        indicator.addSuccess(friends);
+    }).catch((error) => {
+        console.error("导出QQ好友的JSON文件到FileSystem异常", error);
+        indicator.addFailed(friends);
+    });
     indicator.complete();
     return friends;
 }
