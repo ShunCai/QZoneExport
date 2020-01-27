@@ -394,7 +394,7 @@ API.Favorites.exportToJson = async (favorites) => {
  */
 API.Favorites.addMediaToTasks = async (dataList) => {
     // 下载相对目录
-    let moudel_dir = '收藏夹/图片/';
+    let moudel_dir = '收藏夹/图片';
     // 下载目录
     let download_dir = QZone.Common.Config.ZIP_NAME + '/';
 

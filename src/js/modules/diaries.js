@@ -250,7 +250,7 @@ API.Diaries.getItemMdContent = async (item) => {
         return result;
     }
     // 下载相对目录
-    let moudel_dir = '私密日记/图片/';
+    let moudel_dir = '私密日记/图片';
     let download_dir = QZone.Common.Config.ZIP_NAME + '/';
     // 转为本地图片
     let imageLinkM = /!\[.*?\]\((.+?)\)/g;
@@ -258,10 +258,10 @@ API.Diaries.getItemMdContent = async (item) => {
     let tmpResult = result;
     while (match = imageLinkM.exec(tmpResult)) {
         let orgUrl = match[1];
-        let url = API.Utils.replaceUrl(orgUrl);
+        let url = API.Utils.toHttps(orgUrl);
         let uid = QZone.Diaries.FILE_URLS.get(url);
         if (!uid) {
-            uid = API.Utils.newSimpleUid(16, 16);
+            uid = API.Utils.newSimpleUid(8, 16);
             // 获取图片类型
             let suffix = await API.Utils.autoFileSuffix(url);
             uid = uid + suffix;

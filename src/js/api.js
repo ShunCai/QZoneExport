@@ -932,13 +932,27 @@ API.Utils = {
      * 替换URL
      * @param {string} url URL
      */
-    replaceUrl(url) {
+    toHttps(url) {
         url = url || '';
         if (url.indexOf('//p.qpimg.cn/cgi-bin/cgi_imgproxy') > -1) {
             // 替换图片代理URL为实际URL
             url = API.Utils.toParams(url)['url'] || url;
         }
         url = url.replace(/http:\//, "https:/");
+        return url;
+    },
+
+    /**
+     * 替换URL
+     * @param {string} url URL
+     */
+    toHttp(url) {
+        url = url || '';
+        if (url.indexOf('//p.qpimg.cn/cgi-bin/cgi_imgproxy') > -1) {
+            // 替换图片代理URL为实际URL
+            url = API.Utils.toParams(url)['url'] || url;
+        }
+        url = url.replace(/https:\//, "http:/");
         return url;
     },
 
@@ -1483,7 +1497,7 @@ API.Messages = {
     },
 
     /**
-     * 转换媒体内容
+     * 转换多媒体内容
      */
     formatMedia(item) {
         let downloadType = Qzone_Config.Common.downloadType;

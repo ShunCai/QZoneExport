@@ -20,6 +20,7 @@
 		let task_sleep_dom = $('#common_thunder_task_sleep')[0].parentNode.parentNode;
 		let download_status_dom = $('#common_download_status')[0].parentNode.parentNode.parentNode;
 		let file_suffix_dom = $('#common_file_suffix')[0].parentNode.parentNode.parentNode;
+		let suffix_timeout_dom = $('#common_file_suffix_timeout')[0].parentNode.parentNode;
 		let download_thread_dom = $('#common_download_thread')[0].parentNode.parentNode;
 		switch (value) {
 			case 'File':
@@ -27,28 +28,37 @@
 				$(task_sleep_dom).hide();
 				$(download_status_dom).hide();
 				$(file_suffix_dom).show();
+				$(suffix_timeout_dom).show();
 				$(download_thread_dom).show();
+				$('#common_download_type_help').html('助手内部目前<span style="color:red">暂不支持数据容量大于2G的备份</span>，2G内建议使用助手内部下载，超2G的建议使用其他方式下载');
 				break;
 			case 'Thunder':
 				$(task_count_dom).show();
 				$(task_sleep_dom).show();
 				$(download_status_dom).hide();
 				$(file_suffix_dom).show();
+				$(suffix_timeout_dom).show();
 				$(download_thread_dom).show();
+				$('#common_download_type_help').html('仅在<span style="color:red">正版的安装版迅雷X的10.1.3以上版本</span>测试通过，破解版、便携版等未测试');
 				break;
 			case 'Browser':
 				$(task_count_dom).hide();
 				$(task_sleep_dom).hide();
 				$(download_status_dom).show();
 				$(file_suffix_dom).show();
+				$(suffix_timeout_dom).show();
 				$(download_thread_dom).show();
+
+				$('#common_download_type_help').html('使用浏览器下载，请确保已关闭浏览器设置中的<span style="color:red">【下载前询问每个文件的保存位置】</span>选项，否则浏览器将会一直弹窗提示保存文件');
 				break;
 			case 'QZone':
 				$(task_count_dom).hide();
 				$(task_sleep_dom).hide();
 				$(download_status_dom).hide();
 				$(file_suffix_dom).hide();
+				$(suffix_timeout_dom).hide();
 				$(download_thread_dom).hide();
+				$('#common_download_type_help').text('QQ空间外链仅适用于备份类型为非文件类型的，例如日志、说说等，文件类型的，例如相片、视频，将默认使用助手内部下载');
 				break;
 			default:
 				break;
@@ -57,9 +67,10 @@
 
 	// 监听类型识别开关改变事件
 	$('#common_file_suffix').change(function () {
+		let downloadType = $('#common_download_type').val();
 		let suffix_timeout = $('#common_file_suffix_timeout')[0].parentNode.parentNode;
 		let isChecked = $(this).prop("checked");
-		if (isChecked) {
+		if (isChecked && 'QZone' !== downloadType) {
 			$(suffix_timeout).show();
 		} else {
 			$(suffix_timeout).hide();

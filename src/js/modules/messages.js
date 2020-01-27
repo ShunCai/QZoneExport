@@ -202,7 +202,7 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
         data = API.Utils.toJson(data, /^_preloadCallback\(/);
 
         // 下载相对目录
-        let moudel_dir = '说说/图片/';
+        let moudel_dir = '说说/图片';
         let download_dir = QZone.Common.Config.ZIP_NAME + '/';
 
         // 处理说说评论的配图
@@ -506,7 +506,7 @@ API.Messages.getItemMdContent = (item) => {
  */
 API.Messages.addMediaToTasks = async (dataList) => {
     // 下载相对目录
-    let moudel_dir = '说说/图片/';
+    let moudel_dir = '说说/图片';
     // 下载目录
     let download_dir = QZone.Common.Config.ZIP_NAME + '/';
 

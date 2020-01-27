@@ -386,7 +386,7 @@ API.Blogs.getItemMdContent = async (item) => {
         return result;
     }
     // 下载相对目录
-    let moudel_dir = '日志/图片/';
+    let moudel_dir = '日志/图片';
     let download_dir = QZone.Common.Config.ZIP_NAME + '/';
     // 转为本地图片
     let imageLinkM = /!\[.*?\]\((.+?)\)/g;
@@ -394,10 +394,10 @@ API.Blogs.getItemMdContent = async (item) => {
     let tmpResult = result;
     while (match = imageLinkM.exec(tmpResult)) {
         let orgUrl = match[1];
-        let url = API.Utils.replaceUrl(orgUrl);
+        let url = API.Utils.toHttps(orgUrl);
         let uid = QZone.Blogs.FILE_URLS.get(url);
         if (!uid) {
-            uid = API.Utils.newSimpleUid(16, 16);
+            uid = API.Utils.newSimpleUid(8, 16);
             let suffix = await API.Utils.autoFileSuffix(url);
             uid = uid + suffix;
             // 添加下载任务

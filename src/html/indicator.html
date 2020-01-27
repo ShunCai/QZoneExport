@@ -1,0 +1,87 @@
+<div class="modal fade" id="exampleModalCenter" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title h5" id="exampleModalLongTitle">QQ空间备份</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h6 class="h6" id="backupStatus">正在导出备份，请不要关闭或刷新当前页面和打开新的QQ空间页面。</h6>
+				<hr />
+				<div class="container">
+					<p id="Messages_Tips" style="font-size: medium;"></p>
+					<p id="Messages_Full_Content_Tips" style="font-size: medium;"></p>
+					<p id="Messages_Comments_Tips" style="font-size: medium;"></p>
+					<p id="Messages_Export_Tips" style="font-size: medium;"></p>
+					<p id="Blogs_Tips" style="font-size: medium;"></p>
+					<p id="Blogs_Content_Tips" style="font-size: medium;"></p>
+					<p id="Blogs_Comments_Tips" style="font-size: medium;"></p>
+					<p id="Blogs_Export_Tips" style="font-size: medium;"></p>
+					<p id="Diaries_Tips" style="font-size: medium;"></p>
+					<p id="Diaries_Content_Tips" style="font-size: medium;"></p>
+					<p id="Diaries_Export_Tips" style="font-size: medium;"></p>
+					<p id="Photos_Tips" style="font-size: medium;"></p>
+					<p id="Photos_Images_Tips" style="font-size: medium;"></p>
+					<p id="Photos_Images_Mime_Tips" style="font-size: medium;"></p>
+					<p id="Photos_Images_Comments_Tips" style="font-size: medium;"></p>
+					<p id="Photos_Export_Tips" style="font-size: medium;"></p>
+					<p id="Photos_Images_Export_Tips" style="font-size: medium;"></p>
+					<p id="Videos_Tips" style="font-size: medium;"></p>
+					<p id="Videos_Export_Tips" style="font-size: medium;"></p>
+					<p id="Boards_Tips" style="font-size: medium;"></p>
+					<p id="Boards_Export_Tips" style="font-size: medium;"></p>
+					<p id="Friends_Tips" style="font-size: medium;"></p>
+					<p id="Friends_Export_Tips" style="font-size: medium;"></p>
+					<p id="Favorites_Tips" style="font-size: medium;"></p>
+					<p id="Favorites_Export_Tips" style="font-size: medium;"></p>
+					<p id="Common_File_Tips" style="font-size: medium;"></p>
+					<p id="Common_Thunder_Tips" style="font-size: medium;"></p>
+					<p id="Common_Browser_Tips" style="font-size: medium;"></p>
+				</div>
+				<br />
+				<div id="progress" class="progress" style="display: none;">
+					<div id="progressbar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">已下载 0%</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button id="fileList" type="button" class="btn btn-outline-danger" style="display: none;" data-toggle="modal" data-target="#modalTable">查看失败</button>
+				<button id="showFolder" type="button" class="btn btn-outline-success" style="display: none;">查看备份</button>
+				<button id="downloadBtn" type="button" class="btn btn-primary" style="display: none;">打包下载</button>
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="modalTable" data-backdrop="static" data-keyboard="false" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">文件列表</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div id="toolbar">
+					<div class="form-inline" role="form">
+						<div class="form-group">
+							<select id="statusFilter" class="form-control" name="statusFilter" style="display: inline-block;width: 100px;">
+								<option value="false" selected>失败</option>
+								<option value="true">成功</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<table id="table"></table>
+			</div>
+			<div class="modal-footer">
+				<button id="browserDownload" type="button" class="btn btn-outline-success" data-dismiss="modal">浏览器下载</button>
+				<button id="thunderDownload" type="button" class="btn btn-outline-secondary" data-dismiss="modal">迅雷下载</button>
+				<button id="againDownload" type="button" class="btn btn-primary" data-dismiss="modal">继续重试</button>
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+			</div>
+		</div>
+	</div>
+</div>

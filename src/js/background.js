@@ -15,7 +15,7 @@ const Default_Config = {
     // 自动识别文件后缀
     isAutoFileSuffix: true,
     // 后缀识别超时秒数
-    autoFileSuffixTimeOut: 15,
+    autoFileSuffixTimeOut: 30,
     // 迅雷任务数        
     thunderTaskNum: 5000,
     // 唤起迅雷间隔        

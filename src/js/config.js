@@ -11,7 +11,7 @@ const Default_Config = {
         // 自动识别文件后缀
         isAutoFileSuffix: true,
         // 后缀识别超时秒数
-        autoFileSuffixTimeOut: 15,
+        autoFileSuffixTimeOut: 30,
         // 迅雷任务数        
         thunderTaskNum: 5000,
         // 唤起迅雷间隔        
@@ -150,7 +150,7 @@ let Qzone_Config = {
         // 自动识别文件后缀
         isAutoFileSuffix: true,
         // 后缀识别超时秒数
-        autoFileSuffixTimeOut: 15,
+        autoFileSuffixTimeOut: 30,
         // 迅雷任务数        
         thunderTaskNum: 5000,
         // 唤起迅雷间隔        
@@ -309,15 +309,13 @@ const QZone = {
     // QQ好友模块
     Friends: {
         ROOT: FOLDER_ROOT + '好友',
-        Data: [],
-        Images: []
+        Data: []
     },
     // 日志模块
     Blogs: {
         ROOT: FOLDER_ROOT + '日志',
         IMAGES_ROOT: FOLDER_ROOT + '日志/图片',
         Data: [],
-        Images: [],
         FILE_URLS: new Map()
     },
     // 私密日记模块
@@ -325,7 +323,6 @@ const QZone = {
         ROOT: FOLDER_ROOT + '私密日记',
         IMAGES_ROOT: FOLDER_ROOT + '私密日记/图片',
         Data: [],
-        Images: [],
         FILE_URLS: new Map()
     },
     // 相册模块
@@ -354,21 +351,18 @@ const QZone = {
         ROOT: FOLDER_ROOT + '说说',
         IMAGES_ROOT: FOLDER_ROOT + '说说/图片',
         Data: [],
-        Images: [],
         FILE_URLS: new Map()
     },
     // 留言板模块
     Boards: {
         ROOT: FOLDER_ROOT + '留言板',
         Data: [],
-        Images: [],
         FILE_URLS: new Map()
     },
     // 收藏夹模块
     Favorites: {
         ROOT: FOLDER_ROOT + '收藏夹',
         Data: [],
-        Images: [],
         FILE_URLS: new Map()
     }
 };

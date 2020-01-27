@@ -65,6 +65,7 @@
     "web_accessible_resources": [
         "js/inject.js",
         "others/README.md",
+        "html/indicator.html",
         "css/export/github.css",
         "css/export/sidebar.css",
         "js/export/sidebar.js"

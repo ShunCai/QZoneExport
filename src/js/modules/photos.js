@@ -409,7 +409,7 @@ API.Photos.addDownloadTasks = async (album, photos) => {
 
         // 默认高清
         let url = API.Photos.getDownloadUrl(photo, Qzone_Config.Photos.Images.exifType);
-        url = API.Utils.replaceUrl(url);
+        url = API.Utils.toHttps(url);
         photo.custom_url = url;
 
         // 添加下载任务
@@ -438,7 +438,7 @@ API.Photos.addDownloadTasks = async (album, photos) => {
             let images = comment.pic || [];
             for (const image of images) {
                 let url = image.hd_url || image.b_url;
-                url = API.Utils.replaceUrl(url);
+                url = API.Utils.toHttps(url);
                 image.custom_url = url;
                 image.custom_filename = API.Utils.newSimpleUid(8, 16);
                 // 获取图片类型

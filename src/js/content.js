@@ -1,13 +1,11 @@
 streamSaver.mitm = 'https://github.lvshuncai.com/StreamSaver.js/mitm.html'
 
 /**
- * 迅雷任务
+ * Ajax下载任务
  */
-class ThunderTask {
+class DownloadTask {
 
     /**
-     * 
-     * @param {string} uid 唯一标识
      * @param {string} dir 下载目录
      * @param {string} name 文件名，包含后缀
      * @param {string} url 文件地址
@@ -15,7 +13,34 @@ class ThunderTask {
     constructor(dir, name, url) {
         this.dir = dir
         this.name = name
-        this.url = url.replace(/http:\//, "https:/");
+        this.url = url
+        this.success = true
+    }
+
+    /**
+     * 设置成功标识
+     * @param {boolean} success 成功标识
+     */
+    setSuccess(success) {
+        this.success = success;
+    }
+}
+
+/**
+ * 迅雷任务
+ */
+class ThunderTask {
+
+    /**
+     * 
+     * @param {string} dir 下载目录
+     * @param {string} name 文件名，包含后缀
+     * @param {string} url 文件地址
+     */
+    constructor(dir, name, url) {
+        this.dir = dir
+        this.name = name
+        this.url = url;
     }
 }
 
@@ -72,7 +97,7 @@ class BrowserTask {
      * @param {filename} filename 文件名称
      */
     constructor(url, filename) {
-        this.url = url.replace(/http:\//, "https:/");
+        this.url = url;
         this.filename = filename;
     }
 }
@@ -512,7 +537,7 @@ class QZoneOperator {
                 break;
             case OperatorType.SHOW:
                 // 显示模态对话框
-                this.showProcess();
+                await this.showProcess();
                 await this.initModelFolder();
                 this.next(OperatorType.MESSAGES_LIST);
                 break;
@@ -573,6 +598,10 @@ class QZoneOperator {
                 this.next(OperatorType.FILE_LIST);
                 break;
             case OperatorType.FILE_LIST:
+                // 保存数据
+                chrome.storage.sync.set(QZone, function () {
+                    console.info("保存数据完成", QZone);
+                });
                 // 下载文件
                 await API.Utils.downloadAllFiles();
                 this.next(OperatorType.ZIP);
@@ -587,7 +616,11 @@ class QZoneOperator {
                 // 延迟3秒，确保压缩完
                 await API.Utils.sleep(1000);
                 $("#downloadBtn").show();
-                $("#backupStatus").html("备份完成，请下载。");
+                let tasks = API.Utils.getFailedTasks();
+                if (tasks.length > 0) {
+                    $("#fileList").show();
+                }
+                $("#backupStatus").html("数据采集完成，请下载。");
                 API.Utils.notification("QQ空间导出助手通知", "空间数据已获取完成，请点击下载！");
                 break;
             default:
@@ -683,13 +716,20 @@ class QZoneOperator {
     /**
      * 显示备份进度窗口
      */
-    showProcess() {
-        $('body').append(MODAL_HTML);
+    async showProcess() {
 
-        $('#exampleModalCenter').modal({})
+        let html = await API.Utils.get(chrome.extension.getURL('html/indicator.html'));
+
+        $('body').append(html);
+
+        $('#exampleModalCenter').modal({
+            backdrop: "static",
+            keyboard: false
+        })
 
         let $progressbar = $("#progressbar");
         let $downloadBtn = $('#downloadBtn');
+        let $fileListBtn = $('#fileList');
 
         $downloadBtn.click(() => {
 
@@ -698,61 +738,11 @@ class QZoneOperator {
             $progressbar.attr("aria-valuenow", "0");
             $progressbar.text('已下载0%');
 
-            $('#showFailedImages').attr('disabled', true);
+            $fileListBtn.attr('disabled', true);
             $downloadBtn.attr('disabled', true);
             $downloadBtn.text('正在下载');
 
             let zipName = QZone.Common.Config.ZIP_NAME + "_" + QZone.Common.Target.uin + ".zip";
-            // QZone.Common.Filer.df(function (used, free, cap) {
-            //     let usedSize = API.Utils.bytesToSize(used);
-            //     console.debug("已使用：", API.Utils.bytesToSize(used));
-            //     console.debug("剩余：", API.Utils.bytesToSize(free));
-            //     console.debug("总容量：", API.Utils.bytesToSize(cap));
-
-            //     // 1G
-            //     let usedMax = 1024 * 1024 * 1024;
-            //     if (usedMax > used) {
-            //         QZone.Common.Zip.generateAsync({ type: "blob" }, (metadata) => {
-            //             $progressbar.css("width", metadata.percent.toFixed(2) + "%");
-            //             $progressbar.attr("aria-valuenow", metadata.percent.toFixed(2));
-            //             $progressbar.text('已下载' + metadata.percent.toFixed(2) + '%');
-            //         }).then(function (content) {
-            //             saveAs(content, zipName);
-            //             $progressbar.css("width", "100%");
-            //             $progressbar.attr("aria-valuenow", 100);
-            //             $progressbar.text('已下载' + '100%');
-            //             $downloadBtn.text('已下载');
-            //             $downloadBtn.attr('disabled', false);
-            //             $("#showFolder").show();
-            //             API.Utils.notification("QQ空间导出助手通知", "你的QQ空间数据下载完成！");
-            //         });
-            //     } else {
-            //         let writeStream = streamSaver.createWriteStream(zipName).getWriter()
-            //         QZone.Common.Zip.generateInternalStream({
-            //             type: "blob",
-            //             streamFiles: usedSize.endsWith('MB')
-            //         }).on('data', (data, metadata) => {
-            //             $progressbar.css("width", metadata.percent.toFixed(2) + "%");
-            //             $progressbar.attr("aria-valuenow", metadata.percent.toFixed(2));
-            //             $progressbar.text('已下载' + metadata.percent.toFixed(2) + '%');
-            //             writeStream.write(data)
-            //         }).on('error', (e) => {
-            //             console.error(e);
-            //             writeStream.abort(e);
-            //             $downloadBtn.text('下载失败，请重试。');
-            //             $downloadBtn.attr('disabled', false);
-            //         }).on('end', () => {
-            //             writeStream.close();
-            //             $progressbar.css("width", "100%");
-            //             $progressbar.attr("aria-valuenow", 100);
-            //             $progressbar.text('已下载' + '100%');
-            //             $downloadBtn.text('已下载');
-            //             $downloadBtn.attr('disabled', false);
-            //             $("#showFolder").show();
-            //             API.Utils.notification("QQ空间导出助手通知", "你的QQ空间数据下载完成！");
-            //         }).resume();
-            //     }
-            // });
 
             QZone.Common.Zip.generateAsync({ type: "blob" }, (metadata) => {
                 $progressbar.css("width", metadata.percent.toFixed(2) + "%");
@@ -765,12 +755,14 @@ class QZoneOperator {
                 $progressbar.text('已下载' + '100%');
                 $downloadBtn.text('已下载');
                 $downloadBtn.attr('disabled', false);
+                $fileListBtn.attr('disabled', false);
                 $("#showFolder").show();
                 API.Utils.notification("QQ空间导出助手通知", "你的QQ空间数据下载完成！");
             });
 
         });
 
+        // 显示【查看备份】按钮
         let $showFolder = $('#showFolder');
         $showFolder.click(() => {
             chrome.runtime.sendMessage({
@@ -784,69 +776,95 @@ class QZoneOperator {
             $("#exampleModalCenter").remove();
             $("#modalTable").remove();
         })
+
+        // 查看指定状态的数据
+        $('#statusFilter').change(function () {
+            let value = $(this).val();
+            $("#table").bootstrapTable('filterBy', {
+                success: value === 'true'
+            })
+        })
+
+        // 重试按钮点击事件
+        $("#againDownload").click(function () {
+            let tasks = $('#table').bootstrapTable('getSelections');
+            API.Utils.downloadsByAjax(tasks)
+        })
+
+        // 迅雷下载点击事件
+        $("#thunderDownload").click(function () {
+            let tasks = $('#table').bootstrapTable('getSelections');
+            let newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, Qzone_Config.Common.downloadThread);
+            for (const task of tasks) {
+                newThunderInfo.tasks.push(new ThunderTask(task.dir, task.name, API.Utils.toHttp(task.url)));
+                task.setSuccess(true);
+            }
+            API.Utils.invokeThunder(newThunderInfo)
+        })
+
+        // 浏览器下载点击事件
+        $("#browserDownload").click(function () {
+            let tasks = $('#table').bootstrapTable('getSelections');
+            let newBrowserTasks = [];
+            for (const task of tasks) {
+                newBrowserTasks.push(new BrowserTask(API.Utils.toHttp(task.url), thunderInfo.taskGroupName + '/' + task.dir + '/' + task.name));
+                task.setSuccess(true);
+            }
+            API.Utils.downloadsByBrowser(newBrowserTasks);
+        })
+
+        //显示下载任务列表
+        $('#modalTable').on('shown.bs.modal', function () {
+
+            // 重置筛选条件
+            $('#statusFilter').val('false');
+
+            $("#table").bootstrapTable('destroy').bootstrapTable({
+                undefinedText: '-',
+                toggle: 'table',
+                locale: 'zh-CN',
+                search: true,
+                searchAlign: 'right',
+                height: "50%",
+                pagination: true,
+                pageList: [10, 25, 50, 100, 200, 'All'],
+                paginationHAlign: 'left',
+                clickToSelect: true,
+                paginationDetailHAlign: 'right',
+                toolbar: '#toolbar',
+                columns: [{
+                    field: 'state',
+                    checkbox: true,
+                    align: 'left'
+                }, {
+                    field: 'name',
+                    title: '名称',
+                    titleTooltip: '名称',
+                    align: 'left',
+                    visible: true
+                }, {
+                    field: 'dir',
+                    title: '路径',
+                    titleTooltip: '路径',
+                    align: 'left',
+                    visible: true
+                }],
+                data: downloadTasks || []
+            })
+            $('#table').bootstrapTable('resetView')
+
+            // 默认加载失败的数据
+            $("#table").bootstrapTable('filterBy', {
+                success: $('#statusFilter').val() === 'true'
+            })
+        })
     }
 }
 
-const MODAL_HTML = `
-    <div class="modal fade" id="exampleModalCenter" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title h5" id="exampleModalLongTitle">QQ空间备份</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <h6 class="h6" id="backupStatus">正在导出备份，请不要关闭或刷新当前页面和打开新的QQ空间页面。</h6>
-                    <hr/>
-                    <div class="container">  
-                        <p id="Messages_Tips" style="font-size: medium;" ></p>
-                        <p id="Messages_Full_Content_Tips" style="font-size: medium;" ></p>            
-                        <p id="Messages_Comments_Tips" style="font-size: medium;" ></p>            
-                        <p id="Messages_Export_Tips" style="font-size: medium;" ></p>        
-                        <p id="Blogs_Tips" style="font-size: medium;" ></p>
-                        <p id="Blogs_Content_Tips" style="font-size: medium;" ></p>
-                        <p id="Blogs_Comments_Tips" style="font-size: medium;" ></p>
-                        <p id="Blogs_Export_Tips" style="font-size: medium;" ></p>
-                        <p id="Diaries_Tips" style="font-size: medium;" ></p>
-                        <p id="Diaries_Content_Tips" style="font-size: medium;" ></p>
-                        <p id="Diaries_Export_Tips" style="font-size: medium;" ></p>
-                        <p id="Photos_Tips" style="font-size: medium;" ></p>
-                        <p id="Photos_Images_Tips" style="font-size: medium;" ></p>
-                        <p id="Photos_Images_Mime_Tips" style="font-size: medium;" ></p>
-                        <p id="Photos_Images_Comments_Tips" style="font-size: medium;" ></p>
-                        <p id="Photos_Export_Tips" style="font-size: medium;" ></p>
-                        <p id="Photos_Images_Export_Tips" style="font-size: medium;" ></p>
-                        <p id="Videos_Tips" style="font-size: medium;" ></p>     
-                        <p id="Videos_Export_Tips" style="font-size: medium;" ></p>  
-                        <p id="Boards_Tips" style="font-size: medium;" ></p>
-                        <p id="Boards_Export_Tips" style="font-size: medium;" ></p>
-                        <p id="Friends_Tips" style="font-size: medium;" ></p>
-                        <p id="Friends_Export_Tips" style="font-size: medium;" ></p>
-                        <p id="Favorites_Tips" style="font-size: medium;" ></p>     
-                        <p id="Favorites_Export_Tips" style="font-size: medium;" ></p>          
-                        <p id="Common_File_Tips" style="font-size: medium;" ></p>           
-                        <p id="Common_Thunder_Tips" style="font-size: medium;" ></p>        
-                        <p id="Common_Browser_Tips" style="font-size: medium;" ></p>   
-                    </div>
-                    <br/>
-                    <div id="progress" class="progress" style="display: none;">
-                        <div id="progressbar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">已下载 0%</div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="showFolder" type="button" class="btn btn-success" style="display: none;" >查看备份</button>
-                    <button id="downloadBtn" type="button" class="btn btn-primary" style="display: none;" >下载</button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
-                </div>
-            </div>
-        </div>
-    </div>
-`
-
 // 操作器
 const operator = new QZoneOperator();
+// Ajax下载任务
+const downloadTasks = new Array();
 // 迅雷下载信息
 const thunderInfo = new ThunderInfo(QZone.Common.Config.ZIP_NAME);
 // 浏览器下载信息
@@ -923,16 +941,15 @@ function injectCustomJs(path) {
 API.Utils.addDownloadTasks = async (image, url, download_dir, moudel_dir, FILE_URLS) => {
     let downloadType = Qzone_Config.Common.downloadType;
     let isQzoneUrl = downloadType === 'QZone';
+    url = API.Utils.toHttps(url);
+    image.custom_url = url;
     if (isQzoneUrl) {
         return;
     }
-    url = API.Utils.replaceUrl(url);
     let filename = FILE_URLS.get(url);
     if (!filename) {
-        filename = API.Utils.newSimpleUid(16, 16);
+        filename = API.Utils.newSimpleUid(8, 16);
     }
-    image.custom_url = url;
-
     let suffix = await API.Utils.autoFileSuffix(url);
     filename = filename + suffix;
     image.custom_uid = filename;
@@ -954,15 +971,23 @@ API.Utils.addDownloadTasks = async (image, url, download_dir, moudel_dir, FILE_U
  */
 API.Utils.newDownloadTask = (url, dir, folder, name) => {
     url = API.Utils.makeDownloadUrl(url, true)
+
+    // 添加Ajax请求下载任务
+    downloadTasks.push(new DownloadTask(folder, name, url));
+
+    // 浏览器与迅雷下载不需要Https协议，需要Https协议反而下载失败，这里转换为http协议
+    url = API.Utils.toHttp(url);
+
     // 添加浏览器下载任务
     browserTasks.push(new BrowserTask(url, dir + folder + '/' + name));
+
     // 添加迅雷下载任务
     thunderInfo.addTask(new ThunderTask(folder, name, url));
 }
 
 /**
  * 通过Ajax请求下载文件
- * @param {ThunderTask} tasks
+ * @param {Array} tasks
  */
 API.Utils.downloadsByAjax = async (tasks) => {
 
@@ -979,7 +1004,6 @@ API.Utils.downloadsByAjax = async (tasks) => {
         for (let j = 0; j < list.length; j++) {
             const task = list[j];
 
-
             // 切换到根目录
             await API.Utils.siwtchToRoot();
 
@@ -991,11 +1015,12 @@ API.Utils.downloadsByAjax = async (tasks) => {
             }
 
             let filepath = folderName + '/' + task.name;
-
             down_tasks.push(API.Utils.writeFile(task.url, filepath).then(() => {
+                task.setSuccess(true);
                 indicator.addSuccess(task);
             }).catch((error) => {
                 indicator.addFailed(task);
+                task.setSuccess(false);
                 console.error('下载文件异常', task, error);
             }));
         }
@@ -1030,8 +1055,9 @@ API.Utils.downloadsByBrowser = async (tasks) => {
 
 /**
  * 通过迅雷下载
+ * @param {ThunderInfo} thunderInfo 迅雷下载信息
  */
-API.Utils.invokeThunder = async () => {
+API.Utils.invokeThunder = async (thunderInfo) => {
     let indicator = new StatusIndicator('Common_Thunder');
     indicator.setTotal(thunderInfo.tasks.length);
     // 通过迅雷任务数将任务分组，任务太大时无法唤起迅雷
@@ -1068,16 +1094,16 @@ API.Utils.downloadAllFiles = async () => {
         // 使用QQ空间外链时，不需要下载文件
         return;
     }
-    if (thunderInfo.tasks.length === 0 || browserTasks.length === 0) {
+    if (downloadTasks.length === 0 || thunderInfo.tasks.length === 0 || browserTasks.length === 0) {
         // 没有下载任务的时候，不调用下载逻辑
         return;
     }
     switch (downloadType) {
         case 'File':
-            await API.Utils.downloadsByAjax(thunderInfo.tasks);
+            await API.Utils.downloadsByAjax(downloadTasks);
             break;
         case 'Thunder':
-            API.Utils.invokeThunder();
+            API.Utils.invokeThunder(thunderInfo);
             break;
         case 'Browser':
             await API.Utils.downloadsByBrowser(browserTasks);
@@ -1086,4 +1112,21 @@ API.Utils.downloadAllFiles = async () => {
             console.warn('未识别类型', downloadType);
             break;
     }
+}
+
+/**
+ * 获取下载失败的下载任务
+ */
+API.Utils.getFailedTasks = () => {
+    if (downloadTasks && downloadTasks.length === 0) {
+        return;
+    }
+    let tasks = [];
+    for (const downloadTask of downloadTasks) {
+        if (downloadTask.success) {
+            continue;
+        }
+        tasks.push(downloadTask);
+    }
+    return tasks;
 }
