@@ -44,6 +44,42 @@
         });
     }
 
+    // 获取相册列表
+    const getAlbumList = () => {
+        sendMessage({
+            from: 'popup',
+            subject: 'getAlbumList'
+        }, (albums) => {
+            console.info('获取相册列表完成：', albums);
+            // 赋值所有的相册给全局变量
+            window.albums = albums;
+            let albumMap = new Map();
+            for (const album of albums) {
+                let items = albumMap.get(album.className) || [];
+                items.push(album);
+                albumMap.set(album.className, items);
+            }
+            let contents = [];
+            for (const albumEntry of albumMap) {
+                let className = albumEntry[0];
+                let albums = albumEntry[1];
+                contents.push('<optgroup label="' + className + '">');
+                for (const album of albums) {
+                    contents.push('<option value="{0}" >{1}</option>'.format(album.id, album.name));
+                }
+                contents.push('</optgroup>');
+            }
+            let content = contents.join('\n');
+            let $export_albums = $('#export_albums');
+            $export_albums.empty();
+            $export_albums.append(content);
+            $export_albums.selectpicker('refresh');
+            // 默认选择全部相册
+            $export_albums.selectpicker('selectAll');
+        });
+    }
+
+
     const initOwnerOp = (data) => {
         // 是否为当前用户
         let isOwner = data.Owner.uin == data.Target.uin;
@@ -75,7 +111,7 @@
                 let $exportType = $("input[value='" + value + "']");
                 let hasDom = $exportType && $exportType[0];
                 if (hasDom && $exportType[0].disabled === false) {
-                    $exportType[0].checked = checked
+                    $exportType[0].checked = checked;
                 }
             }
         });
@@ -92,6 +128,8 @@
         initModules();
         // 检测私密日记密码
         checkDiaries();
+        // 获取相册列表
+        getAlbumList();
     });
 
     // 私密日志独立密码提示
@@ -99,18 +137,42 @@
         checkDiaries();
     });
 
+    $("#Photos").change(function () {
+        let isCheck = $(this).prop('checked');
+        let $export_albums_div = $('#export_albums_div');
+        if (isCheck) {
+            $export_albums_div.show();
+        } else {
+            $export_albums_div.hide();
+        }
+    });
+    $("#Photos").change();
+
     // 绑定备份按钮事件
     $('#backup').click(() => {
         let exportType = {};
-        // let $exportType = $("input[name='exportType']:checked");
         let $exportType = $("input[name='exportType']");
         $exportType.each(function () {
             exportType[$(this).val()] = $(this).prop("checked");
         });
+
+        // 获取选中的相册
+        let _albums = [];
+        let albumValues = $("#export_albums").val();
+        for (const albumId of albumValues) {
+            let index = window.albums.findIndex((obj) => {
+                if (obj.id === albumId) {
+                    return obj;
+                }
+            })
+            _albums.push(window.albums[index])
+        }
+
         let message = {
             from: 'popup',
             subject: 'startBackup',
-            exportType: exportType
+            exportType: exportType,
+            albums: _albums
         };
         sendMessage(message, (res) => {
             console.info("开始备份！", res);

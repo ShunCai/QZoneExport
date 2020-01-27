@@ -80,7 +80,7 @@ const Default_Config = {
     // 相册模块
     Photos: {
         exportType: "Folder",
-        pageSize: 90,
+        pageSize: 3000,
         randomSeconds: {
             min: 2,
             max: 5
@@ -219,7 +219,7 @@ let Qzone_Config = {
     // 相册模块
     Photos: {
         exportType: "Folder",
-        pageSize: 90,
+        pageSize: 3000,
         randomSeconds: {
             min: 2,
             max: 5

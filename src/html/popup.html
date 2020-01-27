@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../vendor/bootstrap/css/bootstrap-select.min.css" rel="stylesheet">
     <link href="../css/popup.css" rel="stylesheet" type="text/css">
     <title>QQ空间导出助手</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
@@ -64,12 +65,28 @@
         </div>
         <div class="container" style="margin-top: 10px">
             <span id="tips" style="display: none;color: red;"></span>
+            <div id="export_albums_div" class="form-group row" style="display: none;">
+                <label for="export_albums" class="col-sm-1 col-form-label">相册列表：</label>
+                <div class="col-sm-2">
+                    <select id="export_albums" class="form-control selectpicker" data-live-search="true" multiple title="请选择相册" data-live-search-placeholder="搜索相册" data-actions-box="true" data-selected-text-format="count > 3">
+                        <optgroup label="分类">
+                            <option value="1">相册一</option>
+                            <option value="2">相册二</option>
+                            <option value="3">相册三</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
         </div>
         <br>
         <button id="backup" type="button" class="btn btn-primary">开始备份</button>
     </div>
+    <script src="../js/utils.js"></script>
     <script src="../vendor/jquery/jquery-3.3.1.min.js"></script>
+    <script src="../vendor/popper/popper.min.js"></script>
     <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+    <script src="../vendor/bootstrap/js/bootstrap-select.min.js"></script>
+    <script src="../vendor/bootstrap/js/bootstrap-select-zh_CN.min.js"></script>
     <script src="../js/popup.js"></script>
 </body>
 

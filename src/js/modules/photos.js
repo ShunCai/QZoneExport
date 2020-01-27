@@ -10,7 +10,11 @@
 API.Photos.export = async () => {
     try {
         // 获取所有的相册列表
-        let albumList = await API.Photos.getAllAlbumList();
+        let albumList = QZone.Photos.Album.Data || [];
+        if (albumList.length === 0) {
+            // 相册列表为空时才获取相册列表，不为空时代表是指定相册备份
+            albumList = await API.Photos.getAllAlbumList();
+        }
         console.info('获取所有的相册列表完成', albumList);
 
         // 获取所有相册的相片列表
@@ -137,12 +141,17 @@ API.Photos.getAllAlbumList = async () => {
         });
     }
 
-    await nextPage(0, indicator);
+    let albums = await nextPage(0, indicator);
+
+    // 更新相册类别
+    for (const album of albums) {
+        album.className = QZone.Photos.Class[album.classid] || '其他';
+    }
 
     // 完成
     indicator.complete();
 
-    return QZone.Photos.Album.Data;
+    return albums;
 
 }
 
@@ -397,7 +406,7 @@ API.Photos.addDownloadTasks = async (album, photos) => {
         photo.albumId = album.id;
         photo.albumName = album.name;
         photo.albumClassId = album.classid;
-        photo.albumClass = QZone.Photos.Class[album.classid] || '其他';
+        photo.albumClass = album.className || QZone.Photos.Class[album.classid] || '其他';
 
         let orderNumber = API.Utils.prefixNumber(index + 1, photos.length.toString().length);
 
@@ -500,7 +509,7 @@ API.Photos.exportPhotosMdToFiles = async (albums) => {
         contents.push('### {0}'.format(name));
         let items = [];
         for (const item of albums) {
-            let clsName = QZone.Photos.Class[item.classid] || '其他';
+            let clsName = item.className || QZone.Photos.Class[item.classid] || '其他';
             if (name !== clsName) {
                 continue;
             }
@@ -540,8 +549,13 @@ API.Photos.exportPhotosJsonToFile = async (albums) => {
     let indicator = new StatusIndicator('Photos_Export');
     indicator.setTotal(albums.length);
     let json = JSON.stringify(albums);
-    await API.Utils.writeText(json, QZone.Photos.ROOT + '/相册.json');
-    indicator.addSuccess(albums);
+    await API.Utils.writeText(json, QZone.Photos.ROOT + '/相册.json').then((fileEntry) => {
+        console.info('导出相册JSON文件到FileSystem完成', albums, fileEntry);
+        indicator.addSuccess(albums);
+    }).catch((error) => {
+        console.info('导出相册JSON文件到FileSystem异常', albums, error);
+        indicator.addFailed(albums);
+    });
     indicator.complete();
 }
 

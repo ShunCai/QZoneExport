@@ -898,6 +898,10 @@ function injectCustomJs(path) {
                     switch (request.subject) {
                         case 'startBackup':
                             QZone.Common.ExportType = request.exportType;
+                            // 清空相册信息
+                            QZone.Photos.Album.Data = [];
+                            QZone.Photos.Album.Data = QZone.Photos.Album.Data.concat(request.albums || []);
+                            // 显示进度窗口
                             operator.next(QZoneOperator.OperatorType.SHOW);
                             port.postMessage(QZone.Common.ExportType);
                             break;
@@ -915,6 +919,12 @@ function injectCustomJs(path) {
                         case 'initModules':
                             // 获取上次勾选的模块
                             port.postMessage(QZone.Common.ExportType);
+                            break;
+                        case 'getAlbumList':
+                            // 获取相册列表
+                            API.Photos.getAllAlbumList().then((data) => {
+                                port.postMessage(data);
+                            });
                             break;
                         default:
                             break;
