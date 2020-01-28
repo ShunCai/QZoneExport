@@ -789,6 +789,8 @@ class QZoneOperator {
         $("#againDownload").click(function () {
             let tasks = $('#table').bootstrapTable('getSelections');
             API.Utils.downloadsByAjax(tasks)
+            // 重新压缩
+            operator.next(QZoneOperator.OperatorType.ZIP);
         })
 
         // 迅雷下载点击事件
@@ -837,6 +839,7 @@ class QZoneOperator {
                     checkbox: true,
                     align: 'left'
                 }, {
+
                     field: 'name',
                     title: '名称',
                     titleTooltip: '名称',
@@ -1128,10 +1131,10 @@ API.Utils.downloadAllFiles = async () => {
  * 获取下载失败的下载任务
  */
 API.Utils.getFailedTasks = () => {
-    if (downloadTasks && downloadTasks.length === 0) {
-        return;
-    }
     let tasks = [];
+    if (!downloadTasks) {
+        return tasks;
+    }
     for (const downloadTask of downloadTasks) {
         if (downloadTask.success) {
             continue;

@@ -382,9 +382,6 @@ API.Blogs.getItemMdContent = async (item) => {
     let downloadType = Qzone_Config.Common.downloadType;
     // 是否为QQ空间外链
     let isQzoneUrl = downloadType === 'QZone';
-    if (isQzoneUrl) {
-        return result;
-    }
     // 下载相对目录
     let moudel_dir = '日志/图片';
     let download_dir = QZone.Common.Config.ZIP_NAME + '/';
@@ -394,17 +391,26 @@ API.Blogs.getItemMdContent = async (item) => {
     let tmpResult = result;
     while (match = imageLinkM.exec(tmpResult)) {
         let orgUrl = match[1];
-        let url = API.Utils.toHttps(orgUrl);
-        let uid = QZone.Blogs.FILE_URLS.get(url);
-        if (!uid) {
-            uid = API.Utils.newSimpleUid(8, 16);
-            let suffix = await API.Utils.autoFileSuffix(url);
-            uid = uid + suffix;
-            // 添加下载任务
-            API.Utils.newDownloadTask(url, download_dir, moudel_dir, uid);
-            QZone.Blogs.FILE_URLS.set(url, uid);
+        if (isQzoneUrl) {
+            // QQ空间外链时，需要转换相对协议的图片地址
+            let newUrl = orgUrl;
+            if (newUrl.startsWith('//')) {
+                newUrl = 'http:' + newUrl;
+            }
+            result = result.split(orgUrl).join(newUrl);
+        } else {
+            let url = API.Utils.toHttps(orgUrl);
+            let uid = QZone.Blogs.FILE_URLS.get(url);
+            if (!uid) {
+                uid = API.Utils.newSimpleUid(8, 16);
+                let suffix = await API.Utils.autoFileSuffix(url);
+                uid = uid + suffix;
+                // 添加下载任务
+                API.Utils.newDownloadTask(url, download_dir, moudel_dir, uid);
+                QZone.Blogs.FILE_URLS.set(url, uid);
+            }
+            result = result.split(orgUrl).join("../图片/" + uid);
         }
-        result = result.split(orgUrl).join("../图片/" + uid);
     }
     return result;
 }

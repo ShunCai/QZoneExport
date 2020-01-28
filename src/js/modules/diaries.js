@@ -258,18 +258,27 @@ API.Diaries.getItemMdContent = async (item) => {
     let tmpResult = result;
     while (match = imageLinkM.exec(tmpResult)) {
         let orgUrl = match[1];
-        let url = API.Utils.toHttps(orgUrl);
-        let uid = QZone.Diaries.FILE_URLS.get(url);
-        if (!uid) {
-            uid = API.Utils.newSimpleUid(8, 16);
-            // 获取图片类型
-            let suffix = await API.Utils.autoFileSuffix(url);
-            uid = uid + suffix;
-            // 添加下载任务
-            API.Utils.newDownloadTask(url, download_dir, moudel_dir, uid);
-            QZone.Diaries.FILE_URLS.set(url, uid);
+        if (isQzoneUrl) {
+            // QQ空间外链时，需要转换相对协议的图片地址
+            let newUrl = orgUrl;
+            if (newUrl.startsWith('//')) {
+                newUrl = 'http:' + newUrl;
+            }
+            result = result.split(orgUrl).join(newUrl);
+        } else {
+            let url = API.Utils.toHttps(orgUrl);
+            let uid = QZone.Diaries.FILE_URLS.get(url);
+            if (!uid) {
+                uid = API.Utils.newSimpleUid(8, 16);
+                // 获取图片类型
+                let suffix = await API.Utils.autoFileSuffix(url);
+                uid = uid + suffix;
+                // 添加下载任务
+                API.Utils.newDownloadTask(url, download_dir, moudel_dir, uid);
+                QZone.Diaries.FILE_URLS.set(url, uid);
+            }
+            result = result.split(orgUrl).join("../图片/" + uid);
         }
-        result = result.split(orgUrl).join("../图片/" + uid);
     }
     return result;
 }

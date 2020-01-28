@@ -139,6 +139,7 @@ API.Friends.exportToExcel = async (friends) => {
         console.error('导出QQ好友到Excel失败', friends, error);
         indicator.addFailed(friends);
     });
+    indicator.complete();
     return friends;
 }
 
