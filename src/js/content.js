@@ -796,14 +796,14 @@ class QZoneOperator {
         })
 
         // 迅雷下载点击事件
-        $("#thunderDownload").click(function () {
+        $("#thunderDownload").click(async function () {
             let tasks = $('#table').bootstrapTable('getSelections');
             let newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, Qzone_Config.Common.downloadThread);
             for (const task of tasks) {
                 newThunderInfo.tasks.push(new ThunderTask(task.dir, task.name, API.Utils.toHttp(task.url)));
                 task.setSuccess(true);
             }
-            API.Utils.invokeThunder(newThunderInfo)
+            await API.Utils.invokeThunder(newThunderInfo)
         })
 
         // 浏览器下载点击事件
@@ -1118,7 +1118,7 @@ API.Utils.downloadAllFiles = async () => {
             await API.Utils.downloadsByAjax(downloadTasks);
             break;
         case 'Thunder':
-            API.Utils.invokeThunder(thunderInfo);
+            await API.Utils.invokeThunder(thunderInfo);
             break;
         case 'Browser':
             await API.Utils.downloadsByBrowser(browserTasks);

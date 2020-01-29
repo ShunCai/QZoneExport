@@ -359,11 +359,14 @@ API.Utils = {
                     if (this.retries > 0) {
                         this.retries--;
                         // 指定秒数后继续请求
+                        let scope = this;
                         setTimeout(function () {
-                            $.ajax(this);
+                            console.warn('请求接口异常，正在尝试重试', url, params, scope.retries);
+                            $.ajax(scope);
                         }, this.retryInterval);
                         return;
                     }
+                    console.info('重试次数已用完，准备回调');
                     reject(error);
                 }
             });
@@ -1739,8 +1742,8 @@ API.Photos = {
             "batchId": "",
             "notice": 0,
             "appid": 4,
-            "inCharset": "gbk2312",
-            "outCharset": "gbk2312",
+            "inCharset": "gb2312",
+            "outCharset": "gb2312",
             "source": "qzone",
             "plat": "qzone",
             "outstyle": "json",

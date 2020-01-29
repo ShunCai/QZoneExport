@@ -179,7 +179,7 @@ API.Photos.getAlbumImagePageList = async (item, pageIndex, indicator) => {
 
         // 更新总数
         QZone.Photos.Images[item.id].total = data.totalInAlbum || 0;
-        indicator.setTotal(data.totalInAlbum);
+        indicator.setTotal(data.totalInAlbum || 0);
 
         // 相片列表
         let dataList = data.photoList || [];
@@ -358,7 +358,7 @@ API.Photos.getImageComments = async (item, indicator) => {
  */
 API.Photos.getAllImagesComments = async (items) => {
     // 是否需要获取相片的评论
-    if (!Qzone_Config.Photos.Images.Comments.isGet && Qzone_Config.Photos.Images.exportType !== 'File') {
+    if (!Qzone_Config.Photos.Images.Comments.isGet || Qzone_Config.Photos.Images.exportType !== 'File') {
         return items;
     }
     for (let index = 0; index < items.length; index++) {
