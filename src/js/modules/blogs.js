@@ -130,7 +130,7 @@ API.Blogs.getAllList = async () => {
             QZone.Blogs.Data = QZone.Blogs.Data.concat(dataList);
 
             // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, CONFIG.pageSize, QZone.Blogs.total, QZone.Blogs.Data);
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Blogs.total, QZone.Blogs.Data);
             if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = CONFIG.randomSeconds.min;
@@ -150,7 +150,7 @@ API.Blogs.getAllList = async () => {
             });
             // 当前页失败后，跳过继续请求下一页
             // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, CONFIG.pageSize, QZone.Blogs.total, QZone.Blogs.Data);
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Blogs.total, QZone.Blogs.Data);
             if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = CONFIG.randomSeconds.min;
@@ -242,7 +242,7 @@ API.Blogs.getItemAllCommentList = async (item, indicator) => {
             indicator.addSuccess(item.comments);
 
             // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, CONFIG.pageSize, total, item.comments);
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, total, item.comments);
             if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = CONFIG.randomSeconds.min;
@@ -262,7 +262,7 @@ API.Blogs.getItemAllCommentList = async (item, indicator) => {
             });
             // 当前页失败后，跳过继续请求下一页
             // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, CONFIG.pageSize, QZone.Blogs.total, QZone.Blogs.Data);
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Blogs.total, QZone.Blogs.Data);
             if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = CONFIG.randomSeconds.min;

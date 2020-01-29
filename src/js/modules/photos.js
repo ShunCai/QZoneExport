@@ -60,6 +60,7 @@ API.Photos.getAlbumPageList = async (pageIndex, indicator) => {
     // 更新获取中数据
     indicator.addDownload(Qzone_Config.Photos.pageSize);
 
+    // 查询相册
     return await API.Photos.getPhotos(pageIndex).then(async (data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^shine0_Callback\(/);
@@ -107,7 +108,7 @@ API.Photos.getAllAlbumList = async () => {
             QZone.Photos.Album.Data = QZone.Photos.Album.Data.concat(dataList);
 
             // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, CONFIG.pageSize, QZone.Photos.Album.total, QZone.Photos.Album.Data);
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Photos.Album.total, QZone.Photos.Album.Data);
             if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = CONFIG.randomSeconds.min;
@@ -127,7 +128,7 @@ API.Photos.getAllAlbumList = async () => {
             });
             // 当前页失败后，跳过继续请求下一页
             // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, CONFIG.pageSize, QZone.Photos.Album.total, QZone.Photos.Album.Data);
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Photos.Album.total, QZone.Photos.Album.Data);
             if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = CONFIG.randomSeconds.min;
@@ -214,7 +215,7 @@ API.Photos.getAlbumImageAllList = async (item) => {
             QZone.Photos.Images[item.id].Data = QZone.Photos.Images[item.id].Data.concat(dataList);
 
             // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, CONFIG.pageSize, QZone.Photos.Images[item.id].total, QZone.Photos.Images[item.id].Data);
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Photos.Images[item.id].total, QZone.Photos.Images[item.id].Data);
             if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = CONFIG.randomSeconds.min;
@@ -234,7 +235,7 @@ API.Photos.getAlbumImageAllList = async (item) => {
             });
             // 当前页失败后，跳过继续请求下一页
             // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, CONFIG.pageSize, QZone.Photos.Images[item.id].total, QZone.Photos.Images[item.id].Data);
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Photos.Images[item.id].total, QZone.Photos.Images[item.id].Data);
             if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = CONFIG.randomSeconds.min;
@@ -312,7 +313,7 @@ API.Photos.getImageComments = async (item, indicator) => {
             indicator.addSuccess(data.comments);
 
             // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, CONFIG.pageSize, item.forum, item.comments);
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, item.forum, item.comments);
             if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = CONFIG.randomSeconds.min;
@@ -332,7 +333,7 @@ API.Photos.getImageComments = async (item, indicator) => {
             });
             // 当前页失败后，跳过继续请求下一页
             // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, CONFIG.pageSize, item.forum, item.comments);
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, item.forum, item.comments);
             if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = CONFIG.randomSeconds.min;

@@ -296,7 +296,8 @@ const QZone = {
         Target: {
             uin: undefined,
             name: undefined,
-            title: undefined
+            title: undefined,
+            route: 102
         },
         Config: {
             ZIP_NAME: 'QQ空间备份'

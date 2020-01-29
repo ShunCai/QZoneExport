@@ -75,7 +75,7 @@ API.Videos.getAllList = async () => {
             QZone.Videos.Data = QZone.Videos.Data.concat(dataList);
 
             // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, CONFIG.pageSize, QZone.Videos.total, QZone.Videos.Data);
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Videos.total, QZone.Videos.Data);
             if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = CONFIG.randomSeconds.min;
@@ -95,7 +95,7 @@ API.Videos.getAllList = async () => {
             });
             // 当前页失败后，跳过继续请求下一页
             // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex, CONFIG.pageSize, QZone.Videos.total, QZone.Videos.Data);
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Videos.total, QZone.Videos.Data);
             if (hasNextPage) {
                 // 请求一页成功后等待一秒再请求下一页
                 let min = CONFIG.randomSeconds.min;

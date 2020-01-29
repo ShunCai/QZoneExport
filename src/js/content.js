@@ -658,6 +658,8 @@ class QZoneOperator {
             API.Utils.initUin();
             // 获取用户信息
             API.Utils.getOwnerProfile();
+            // 获取相册路由
+            API.Photos.getRoute();
 
             // 初始化文件夹
             QZone.Common.Filer.init({ persistent: false, size: 10 * 1024 * 1024 * 1024 }, function (fs) {

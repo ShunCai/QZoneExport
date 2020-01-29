@@ -27,6 +27,9 @@ const QZone_URLS = {
     /** 私密日志详情URL */
     DIARY_INFO_URL: "https://user.qzone.qq.com/proxy/domain/b.qzone.qq.com/cgi-bin/privateblog/privateblog_output_data",
 
+    /** 相册路由URL */
+    PHOTOS_ROUTE_URL: 'https://user.qzone.qq.com/proxy/domain/route.store.qq.com/GetRoute',
+
     /** 相册列表URL */
     PHOTOS_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3',
 
@@ -875,6 +878,7 @@ API.Utils = {
     toJson(json, jsonpKey) {
         json = json.replace(jsonpKey, "");
         json = json.replace(/\);$/, "");
+        json = json.replace(/\)$/, "");
         return JSON.parse(json);
     },
 
@@ -1145,63 +1149,6 @@ API.Blogs = {
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         };
         return API.Utils.get(QZone_URLS.BLOGS_COMMENTS_URL, params);
-    },
-
-    /**
-     * 获取日志所有的评论
-     * @param {object} 日志信息
-     * @param {function} 回调函数
-     */
-    getAllComments(item, callback) {
-        // 清空原有的评论列表
-        item.comments = [];
-
-        // 获取一页的评论列表
-        var nextPage = function (item, page) {
-
-            // 更新获取评论进度
-            callback('working', item, page);
-
-            // 开始获取评论
-            API.Blogs.getComments(item.blogid || item.blogId, page).then(async (data) => {
-                // 去掉函数，保留json
-                data = API.Utils.toJson(data, /^_Callback\(/);
-
-                item.comments = item.comments.concat(data.data.comments || []);
-
-                let total = item.replynum || 0;
-
-                let comment_config = Qzone_Config.Blogs.Comments;
-
-                // 是否还有下一页
-                let hasNextPage = API.Utils.hasNextPage(page, comment_config.pageSize, total, item.comments);
-                if (hasNextPage) {
-                    // 请求一页成功后等待一秒再请求下一页
-                    let min = comment_config.randomSeconds.min;
-                    let max = comment_config.randomSeconds.max;
-                    let seconds = API.Utils.randomSeconds(min, max);
-                    await API.Utils.sleep(seconds * 1000);
-                    // 总数不相等时继续获取
-                    await arguments.callee(item, page + 1);
-                } else {
-                    callback('end', item, page);
-                }
-            }).catch(async (e) => {
-                // 当前页失败后，跳过继续请求下一页
-                console.error("获取日志评论列表异常！", item, page, e);
-                callback('error', item, page);
-                let comment_config = Qzone_Config.Blogs.Comments;
-                let min = comment_config.randomSeconds.min;
-                let max = comment_config.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(item, page + 1);
-            })
-        }
-
-        // 开始请求
-        nextPage(item, 0);
     }
 
 };
@@ -1680,6 +1627,61 @@ API.Boards = {
 API.Photos = {
 
     /**
+     * 获取相册路由
+     */
+    async getRoute() {
+        let params = {
+            "UIN": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "type": "json",
+            "version": 2,
+            "json_esc": 1,
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        let data = await API.Utils.get(QZone_URLS.PHOTOS_ROUTE_URL, params);
+        data = API.Utils.toJson(data, /^photoDomainNameCallback\(/);
+
+        var e = new RegExp("^domain_\\d$"), o, c = [];
+
+        function u(t, a, e) {
+            for (var i = 0, o = c.length; i < o; i++) {
+                if (c[i].domain === t) {
+                    c[i].failed = a;
+                    return
+                }
+            }
+            c.push({
+                domain: t,
+                failed: a,
+                idcNum: e
+            })
+        }
+        function m() {
+            for (var e = 0, i = c.length; e < i; e++) {
+                if (!c[e].failed) {
+                    return c[e]
+                }
+            }
+            return false
+        }
+
+        if (data.domain && data.domain["default"]) {
+            o = data.domain["default"];
+            if (data[o] && data[o].p) {
+                u(data[o].p, 0, data.idcno || 102)
+            }
+        }
+        for (o in data) {
+            if (e.test(o) && data[o].p) {
+                u(data[o].p, 0, 102)
+            }
+        }
+        let res = m();
+        QZone.Common.Target.route = res.idcNum || 102
+        return QZone.Common.Target.route;
+    },
+
+    /**
      * 获取相册列表
      * @param {integer} page 当前页
      */
@@ -1702,7 +1704,7 @@ API.Photos = {
             // "pageNumModeSort": 3000, //排序每页条目数？
             // "pageNumModeClass": 3000, //类别每页条目数？
             "needUserInfo": 1,
-            // "idcNum": 4, // 存储相册的服务器？
+            "idcNum": QZone.Common.Target.route || this.getRoute(), // 存储相册的服务器路由？
             "mode": 2, // 视图：普通视图
             "sortOrder": 2, // 排序类型：自定义排序
             "pageStart": page * Qzone_Config.Photos.pageSize,
