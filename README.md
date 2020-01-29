@@ -1,6 +1,6 @@
 # QQ空间导出助手
 
-> QQ空间导出助手，用于备份日志、私密日志、说说、相册、留言板、QQ好友、视频为文件，供永久保存。
+> QQ空间导出助手，用于备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友、收藏夹为文件，便于迁移与保存。
 
 ## 简介
 
@@ -11,26 +11,27 @@
 数据，还是掌握到自己手里的好，QQ空间导出助手，可以导出备份QQ空间的日志、私密日志、说说、相册、留言板、QQ好友、视频、收藏夹为文件，便于永久保存与迁移。
 
 ## 前言
-助手的初衷是便于个人备份空间数据的，因此不保证永久可用，因为TX接口存在更新的场景，接口一旦更新，助手需要同步修改，但一般来说，短时间内基本没什么问题，如果大家尽早使用、低调使用以及勿用于非法行为，以提高助手存活率。
+助手的初衷是便于个人备份空间数据的，因此不保证永久可用，因为QQ空间接口会更新，接口一旦更新，助手需要同步修改，但一般来说，短时间内基本没什么问题，希望大家尽早使用、低调使用以及勿用于非法行为，以提高助手存活率。
 
 ## 安装
 #### 在线安装
-- [Chrome浏览器](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
+- [Chrome浏览器(V1.0.3发布审核中)](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
 
-- [360极速浏览器](https://ext.chrome.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
+- [360极速浏览器(V1.0.3未发布)](https://ext.chrome.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
 
-- [360安全浏览器](https://ext.se.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
+- [360安全浏览器(V1.0.3未发布)](https://ext.se.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
 
-- [Edge浏览器(Chromium)](https://microsoftedge.microsoft.com/addons/search/QQ%E7%A9%BA%E9%97%B4%E5%AF%BC%E5%87%BA%E5%8A%A9%E6%89%8B?hl=zh-CN)
+- [Edge浏览器(V1.0.3发布审核中)](https://microsoftedge.microsoft.com/addons/detail/djfalpkpjgpkfnkfmnegbalnicdoljcn)
 
 - 其他Chromium->[离线安装](#离线安装)。
 
 #### 离线安装
-- 下载源码
+- [下载ZIP包](https://github.com/ShunCai/QZoneExport/releases/latest)
+- 解压ZIP包
 - 打开[扩展中心](chrome://extensions)
 - 勾选开发者模式
 - 点击[加载已解压的扩展程序]按钮
-- 选择QZoneExport/src文件夹
+- 选择ZIP包解压文件夹
 
 ## 常见问题
 
