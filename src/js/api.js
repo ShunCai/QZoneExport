@@ -1730,7 +1730,7 @@ API.Photos = {
             "callback": "shine0_Callback",
             "t": String(Math.random().toFixed(16)).slice(-9).replace(/^0/, '9'),
             "mode": 0,
-            // "idcNum": "4", // 存储相册的服务器？
+            "idcNum": QZone.Common.Target.route || this.getRoute(), // 存储相册的服务器路由？
             "hostUin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
             "topicId": topicId,
             "noTopic": 0,
