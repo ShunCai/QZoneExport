@@ -326,6 +326,7 @@ API.Messages.getItemsAllCommentList = async (items) => {
         // 获取说说的全部评论
         await API.Messages.getItemAllCommentList(item, indicator);
     }
+    return items;
 }
 
 /**
