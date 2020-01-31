@@ -103,208 +103,208 @@ class BrowserTask {
 }
 
 /**
+ * 提示信息
+ */
+const MAX_MSG = {
+    Messages: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的说说列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Messages_Full_Content: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的全文',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Messages_Comments: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的评论列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Messages_Export: [
+        '正在导出说说',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Blogs: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的日志列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+        '请稍后...'
+    ],
+    Blogs_Content: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇的日志内容',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+        '请稍后...'
+    ],
+    Blogs_Comments: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日志的评论列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Blogs_Export: [
+        '正在导出日志',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Diaries: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的私密日记列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+        '请稍后...'
+    ],
+    Diaries_Content: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇的私密日记内容',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+        '请稍后...'
+    ],
+    Diaries_Export: [
+        '正在导出私密日记',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Photos: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的相册列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Photos_Images: [
+        '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Photos_Images_Comments: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 张相片的评论列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Photos_Images_Mime: [
+        '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片类型',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Photos_Export: [
+        '正在导出相册',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Photos_Images_Export: [
+        '正在导出 <span style="color: #1ca5fc;">{index}</span> 的相片',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Videos: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的视频列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Videos_Export: [
+        '正在导出视频',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Boards: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的留言板列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Boards_Export: [
+        '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的留言',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Friends: [
+        '正在获取QQ好友列表',
+        '已获取好友 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Friends_Export: [
+        '正在导出QQ好友列表',
+        '已导出好友 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Favorites: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的收藏列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Favorites_Export: [
+        '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的收藏',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Common_File: [
+        '正在下载文件',
+        '已下载 <span style="color: #1ca5fc;">{downloaded}</span> ',
+        '已失败 <span style="color: red;">{downloadFailed}</span> ',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Common_Thunder: [
+        '正在第 <span style="color: #1ca5fc;">{index}</span> 次唤起迅雷X下载文件',
+        '将在 <span style="color: #1ca5fc;">{nextTip}</span> 秒后再次唤起迅雷',
+        '已添加 <span style="color: #1ca5fc;">{downloaded}</span> ',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Common_Browser: [
+        '正在添加下载任务到浏览器',
+        '已添加 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ]
+}
+
+/**
  * 备份进度
  */
 class StatusIndicator {
-
-    /**
-     * 提示信息
-     */
-    static MAX_MSG = {
-        Messages: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的说说列表',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Messages_Full_Content: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的全文',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Messages_Comments: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的评论列表',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Messages_Export: [
-            '正在导出说说',
-            '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Blogs: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的日志列表',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-            '请稍后...'
-        ],
-        Blogs_Content: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇的日志内容',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-            '请稍后...'
-        ],
-        Blogs_Comments: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日志的评论列表',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Blogs_Export: [
-            '正在导出日志',
-            '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Diaries: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的私密日记列表',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-            '请稍后...'
-        ],
-        Diaries_Content: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇的私密日记内容',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-            '请稍后...'
-        ],
-        Diaries_Export: [
-            '正在导出私密日记',
-            '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Photos: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的相册列表',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 个',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-            '请稍后...'
-        ],
-        Photos_Images: [
-            '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片列表',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 个',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-            '请稍后...'
-        ],
-        Photos_Images_Comments: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 张相片的评论列表',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 个',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-            '请稍后...'
-        ],
-        Photos_Images_Mime: [
-            '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片类型',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 个',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-            '请稍后...'
-        ],
-        Photos_Export: [
-            '正在导出相册',
-            '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Photos_Images_Export: [
-            '正在导出 <span style="color: #1ca5fc;">{index}</span> 的相片',
-            '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Videos: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的视频列表',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 个',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-            '请稍后...'
-        ],
-        Videos_Export: [
-            '正在导出视频',
-            '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Boards: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的留言板列表',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Boards_Export: [
-            '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的留言',
-            '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Friends: [
-            '正在获取QQ好友列表',
-            '已获取好友 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-            '请稍后...'
-        ],
-        Friends_Export: [
-            '正在导出QQ好友列表',
-            '已导出好友 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-            '请稍后...'
-        ],
-        Favorites: [
-            '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的收藏列表',
-            '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 个',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-            '请稍后...'
-        ],
-        Favorites_Export: [
-            '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的收藏',
-            '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Common_File: [
-            '正在下载文件',
-            '已下载 <span style="color: #1ca5fc;">{downloaded}</span> ',
-            '已失败 <span style="color: red;">{downloadFailed}</span> ',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Common_Thunder: [
-            '正在第 <span style="color: #1ca5fc;">{index}</span> 次唤起迅雷X下载文件',
-            '将在 <span style="color: #1ca5fc;">{nextTip}</span> 秒后再次唤起迅雷',
-            '已添加 <span style="color: #1ca5fc;">{downloaded}</span> ',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ],
-        Common_Browser: [
-            '正在添加下载任务到浏览器',
-            '已添加 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-            '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-            '请稍后...'
-        ]
-    }
 
     /**
      * 
@@ -313,7 +313,7 @@ class StatusIndicator {
     constructor(type) {
         this.id = type + '_Tips'
         this.type = type
-        this.tip = StatusIndicator.MAX_MSG[type] || ''
+        this.tip = MAX_MSG[type] || ''
         this.total = 0
         this.index = 0
         this.pageSize = 0
@@ -451,86 +451,86 @@ class StatusIndicator {
     }
 }
 
+
+/**
+ * 操作类型
+ */
+const OperatorType = {
+
+    /**
+     * 初始化
+     */
+    INIT: 'INIT',
+    /**
+     * 显示弹窗
+     */
+    SHOW: 'SHOW',
+
+    /**
+     * 获取所有说说列表
+     */
+    MESSAGES_LIST: 'MESSAGES_LIST',
+
+    /**
+     * 获取日志所有列表
+     */
+    BLOG_LIST: 'BLOG_LIST',
+
+    /**
+     * 获取私密日记所有列表
+     */
+    DIARY_LIST: 'DIARY_LIST',
+
+    /**
+    * 获取相册照片
+    */
+    PHOTO_LIST: 'PHOTO_LIST',
+
+    /**
+    * 获取视频列表
+    */
+    VIDEO_LIST: 'VIDEO_LIST',
+
+    /**
+    * 获取留言板列表
+    */
+    BOARD_LIST: 'BOARD_LIST',
+
+    /**
+    * 获取QQ好友列表
+    */
+    FRIEND_LIST: 'FRIEND_LIST',
+
+    /**
+    * 获取收藏列表
+    */
+    FAVORITE_LIST: 'FAVORITE_LIST',
+
+    /**
+     * 下载文件
+     */
+    FILE_LIST: 'FILE_LIST',
+
+    /**
+     * 压缩
+     */
+    ZIP: 'ZIP',
+
+    /**
+     * 压缩
+     */
+    COMPLETE: 'COMPLETE'
+}
+
 /**
  * 导出操作
  */
 class QZoneOperator {
 
     /**
-     * 操作类型
-     */
-    static OperatorType = {
-
-        /**
-         * 初始化
-         */
-        INIT: 'INIT',
-        /**
-         * 显示弹窗
-         */
-        SHOW: 'SHOW',
-
-        /**
-         * 获取所有说说列表
-         */
-        MESSAGES_LIST: 'MESSAGES_LIST',
-
-        /**
-         * 获取日志所有列表
-         */
-        BLOG_LIST: 'BLOG_LIST',
-
-        /**
-         * 获取私密日记所有列表
-         */
-        DIARY_LIST: 'DIARY_LIST',
-
-        /**
-        * 获取相册照片
-        */
-        PHOTO_LIST: 'PHOTO_LIST',
-
-        /**
-        * 获取视频列表
-        */
-        VIDEO_LIST: 'VIDEO_LIST',
-
-        /**
-        * 获取留言板列表
-        */
-        BOARD_LIST: 'BOARD_LIST',
-
-        /**
-        * 获取QQ好友列表
-        */
-        FRIEND_LIST: 'FRIEND_LIST',
-
-        /**
-        * 获取收藏列表
-        */
-        FAVORITE_LIST: 'FAVORITE_LIST',
-
-        /**
-         * 下载文件
-         */
-        FILE_LIST: 'FILE_LIST',
-
-        /**
-         * 压缩
-         */
-        ZIP: 'ZIP',
-
-        /**
-         * 压缩
-         */
-        COMPLETE: 'COMPLETE'
-    }
-
-    /**
      * 下一步操作
      */
     async next(moduleType) {
-        let OperatorType = QZoneOperator.OperatorType
         switch (moduleType) {
             case OperatorType.INIT:
                 this.init();
@@ -792,7 +792,7 @@ class QZoneOperator {
             let tasks = $('#table').bootstrapTable('getSelections');
             API.Utils.downloadsByAjax(tasks)
             // 重新压缩
-            operator.next(QZoneOperator.OperatorType.ZIP);
+            operator.next(OperatorType.ZIP);
         })
 
         // 迅雷下载点击事件
@@ -907,7 +907,7 @@ function injectCustomJs(path) {
                             QZone.Photos.Album.Data = [];
                             QZone.Photos.Album.Data = QZone.Photos.Album.Data.concat(request.albums || []);
                             // 显示进度窗口
-                            operator.next(QZoneOperator.OperatorType.SHOW);
+                            operator.next(OperatorType.SHOW);
                             port.postMessage(QZone.Common.ExportType);
                             break;
                         case 'initUin':
@@ -940,7 +940,7 @@ function injectCustomJs(path) {
                 break;
         }
     });
-    operator.next(QZoneOperator.OperatorType.INIT);
+    operator.next(OperatorType.INIT);
 
 })()
 

@@ -349,7 +349,7 @@ API.Utils = {
                 type: 'GET',
                 data: params,
                 // async: false,
-                cache: false,
+                // cache: false,
                 retries: Qzone_Config.Common.listRetryCount,// 重试次数
                 retryInterval: Qzone_Config.Common.listRetrySleep * 1000,// 每次重试间隔秒数
                 success: function (result) {

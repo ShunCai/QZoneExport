@@ -251,6 +251,18 @@ chrome.runtime.onInstalled.addListener((details) => {
   switch (reason) {
     case 'update':
       switch (previousVersion) {
+        case '1.0.0':
+          // 上一个版本为1.0.0时，清楚上一个版本的配置项
+          chrome.storage.sync.set(Default_Config, function () {
+            console.info("重置默认配置成功", Default_Config);
+          });
+          break;
+        case '1.0.1':
+          // 上一个版本为1.0.1时，清楚上一个版本的配置项
+          chrome.storage.sync.set(Default_Config, function () {
+            console.info("重置默认配置成功", Default_Config);
+          });
+          break;
         case '1.0.2':
           // 上一个版本为1.0.2时，清楚上一个版本的配置项
           chrome.storage.sync.set(Default_Config, function () {
