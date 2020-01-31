@@ -28,7 +28,7 @@ const Default_Config = {
   // 说说模块
   Messages: {
     exportType: "MarkDown",// 内容备份类型
-    pageSize: 40,
+    pageSize: 20,
     randomSeconds: {
       min: 2,
       max: 5
