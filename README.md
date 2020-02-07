@@ -15,13 +15,11 @@
 
 ## 安装
 #### 在线安装
-- [Chrome浏览器(V1.0.3发布审核中)](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
+- [Chrome浏览器](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
 
 - [360极速浏览器(V1.0.3未发布)](https://ext.chrome.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
 
 - [360安全浏览器(V1.0.3未发布)](https://ext.se.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
-
-- [Edge浏览器(V1.0.3发布审核中)](https://microsoftedge.microsoft.com/addons/detail/djfalpkpjgpkfnkfmnegbalnicdoljcn)
 
 - 其他Chromium->[离线安装](#离线安装)。
 
