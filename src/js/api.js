@@ -473,28 +473,6 @@ API.Utils = {
     },
 
     /**
-     * 从 HTML 页面找到用户信息
-     */
-    getOwnerProfile() {
-        $("script").each(function () {
-            var t = $(this).text();
-            t = t.replace(/\ /g, "");
-            if (t.indexOf('ownerProfileSummary') !== -1) {
-                let regRes = /ownerProfileSummary=([\s\S]+)]/g.exec(t)[1];
-                let profile = JSON.parse(regRes.substr(0, regRes.indexOf('"]') + 2));
-                QZone.Common.Owner = {
-                    uin: QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
-                    name: profile[0],
-                    city: profile[3],
-                    title: profile[4],
-                    desc: profile[5]
-                }
-            }
-        });
-        return QZone.Common.Owner;
-    },
-
-    /**
      * 获取QQ号
      */
     initUin() {
@@ -2049,7 +2027,7 @@ API.Favorites = {
             let temp = data[i];
             temp.custom_create_time = API.Utils.formatDate(temp.create_time);
             temp.custom_uin = QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin;
-            temp.custom_name = QZone.Common.Owner.name || API.Utils.initUin().Owner.name;
+            temp.custom_name = '我';
             temp.custom_abstract = temp.abstract || "";
             temp.album_info = temp.album_info || {};
             temp.blog_info = temp.blog_info || {};

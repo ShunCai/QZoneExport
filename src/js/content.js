@@ -645,33 +645,29 @@ class QZoneOperator {
             return;
         }
 
+        // 获取gtk
+        API.Utils.initGtk();
+        // 获取Token
+        API.Utils.getQzoneToken();
+        // 获取QQ号
+        API.Utils.initUin();
+        // 获取相册路由
+        API.Photos.getRoute();
+
         // 读取配置项
         chrome.storage.sync.get(Default_Config, function (item) {
-
             Qzone_Config = item;
-
-            // 获取gtk
-            API.Utils.initGtk();
-            // 获取Token
-            API.Utils.getQzoneToken();
-            // 获取QQ号
-            API.Utils.initUin();
-            // 获取用户信息
-            API.Utils.getOwnerProfile();
-            // 获取相册路由
-            API.Photos.getRoute();
-
-            // 初始化文件夹
-            QZone.Common.Filer.init({ persistent: false, size: 10 * 1024 * 1024 * 1024 }, function (fs) {
-                QZone.Common.Filer.ls(FOLDER_ROOT, function (entries) {
-                    console.debug('当前子目录：', entries);
-                    QZone.Common.Filer.rm(FOLDER_ROOT, function () {
-                        console.debug('清除历史数据成功！');
-                    });
-                });
-            })
         })
 
+        // 初始化文件夹
+        QZone.Common.Filer.init({ persistent: false, size: 10 * 1024 * 1024 * 1024 }, function (fs) {
+            QZone.Common.Filer.ls(FOLDER_ROOT, function (entries) {
+                console.debug('当前子目录：', entries);
+                QZone.Common.Filer.rm(FOLDER_ROOT, function () {
+                    console.debug('清除历史数据成功！');
+                });
+            });
+        })
     }
 
     /**
