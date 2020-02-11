@@ -208,7 +208,8 @@ API.Favorites.getMarkDownContent = (favorite) => {
         case '日志':
             // 日志模板
             let blog_info = favorite.blog_info;
-            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 日志 [{2}]({https://user.qzone.qq.com/{3}/blog/{4}}) 【{5}】'.format(blog_info.owner_name, blog_info.owner_uin, favorite.title, blog_info.owner_uin, blog_info.id, favorite.custom_create_time));
+            let blog_owner_name = API.Utils.formatContent(blog_info.owner_name, "MD");
+            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 日志 [{2}]({https://user.qzone.qq.com/{3}/blog/{4}}) 【{5}】'.format(blog_owner_name, blog_info.owner_uin, favorite.title, blog_info.owner_uin, blog_info.id, favorite.custom_create_time));
             contents.push('> {0}'.format(API.Utils.formatContent(favorite.custom_abstract, "MD")));
             break;
         case '说说':
@@ -218,7 +219,8 @@ API.Favorites.getMarkDownContent = (favorite) => {
             let isRt = shuoshuo_info.forward_flag === 1;
             // 长说说内容
             let content = shuoshuo_info.detail_shuoshuo_info.content || favorite.custom_abstract;
-            contents.push('[{0}](https://user.qzone.qq.com/{1}) 说说 【{2}】'.format(shuoshuo_info.owner_name, shuoshuo_info.owner_uin, favorite.custom_create_time));
+            let shuoshuo_owner_name = API.Utils.formatContent(shuoshuo_info.owner_name, "MD");
+            contents.push('[{0}](https://user.qzone.qq.com/{1}) 说说 【{2}】'.format(shuoshuo_owner_name, shuoshuo_info.owner_uin, favorite.custom_create_time));
             if (isRt) {
                 //转发说说添加转发理由
                 contents.push('> {0}'.format(API.Utils.formatContent(shuoshuo_info.reason, "MD")));
@@ -229,7 +231,8 @@ API.Favorites.getMarkDownContent = (favorite) => {
         case '分享':
             // 分享模板（通用），暂时不区分分享的类型
             let share_info = favorite.share_info;
-            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 分享 【{2}】'.format(share_info.owner_name, share_info.owner_uin, favorite.custom_create_time));
+            let share_owner_name = API.Utils.formatContent(share_info.owner_name, "MD");
+            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 分享 【{2}】'.format(share_owner_name, share_info.owner_uin, favorite.custom_create_time));
             // 分享类型
             let share_type = share_info.share_type;
             // 分享原因
@@ -246,10 +249,10 @@ API.Favorites.getMarkDownContent = (favorite) => {
                     // 日志
                     let blog_info = share_info.blog_info;
                     let blog_owner_uin = blog_info.owner_uin;
-                    let blog_owner_name = blog_info.owner_name;
+                    let _blog_owner_name = API.Utils.formatContent(blog_info.owner_name, "MD");
 
                     // 日志发布人链接
-                    let blog_owner_url = API.Utils.getUserLink(blog_owner_uin, blog_owner_name, "MD");
+                    let blog_owner_url = API.Utils.getUserLink(blog_owner_uin, _blog_owner_name, "MD");
                     // 日志链接
                     target_url = 'https://user.qzone.qq.com/{0}/blog/{1}'.format(blog_owner_uin, blog_info.id);
 
@@ -261,7 +264,7 @@ API.Favorites.getMarkDownContent = (favorite) => {
                     // 相册
                     let album_info = share_info.album_info;
                     let album_owner_uin = album_info.owner_uin;
-                    let album_owner_name = album_info.owner_name;
+                    let album_owner_name = API.Utils.formatContent(album_info.owner_name, "MD");
 
                     // 相册创建人链接
                     let album_owner_url = API.Utils.getUserLink(album_owner_uin, album_owner_name, "MD");
@@ -313,7 +316,7 @@ API.Favorites.getMarkDownContent = (favorite) => {
         case '照片':
             // 照片模板
             let first_photo = favorite.album_info.owner_uin ? favorite.album_info : favorite.photo_list[0];
-            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 照片 【{2}】'.format(first_photo.owner_name, first_photo.owner_uin, favorite.custom_create_time));
+            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 照片 【{2}】'.format(API.Utils.formatContent(first_photo.owner_name, "MD"), first_photo.owner_uin, favorite.custom_create_time));
             break;
         case '文字':
             // 文字模板，仅适用一般长度的文字，暂不支持获取文字的全文，没有找到全文的查看地址，暂时不处理
