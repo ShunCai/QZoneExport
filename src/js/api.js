@@ -3,6 +3,9 @@
  */
 const QZone_URLS = {
 
+    /** 个人统计 */
+    MAIN_INFO_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/main_page_cgi",
+
     /** 说说列表URL */
     MESSAGES_LIST_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6",
 
@@ -31,7 +34,10 @@ const QZone_URLS = {
     PHOTOS_ROUTE_URL: 'https://user.qzone.qq.com/proxy/domain/route.store.qq.com/GetRoute',
 
     /** 相册列表URL */
-    PHOTOS_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3',
+    ALBUM_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3',
+
+    /** 相册评论列表URL */
+    ALBUM_COMMENTS_URL: 'https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3',
 
     /** 相片列表URL */
     IMAGES_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo',
@@ -39,13 +45,13 @@ const QZone_URLS = {
     /** 相片评论列表 */
     IMAGES_COMMENTS_URL: 'https://user.qzone.qq.com/proxy/domain/app.photo.qzone.qq.com/cgi-bin/app/cgi_pcomment_xml_v2',
 
-    /** QQ好友列表URL */
+    /** 好友列表URL */
     FRIENDS_LIST_URL: "https://h5.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/tfriend/friend_show_qqfriends.cgi",
 
-    /** QQ好友QQ空间个人档资料 */
+    /** 好友资料 */
     QZONE_USER_INFO_URL: "https://h5.qzone.qq.com/proxy/domain/base.qzone.qq.com/cgi-bin/user/cgi_userinfo_get_all",
 
-    /** QQ好友添加时间 */
+    /** 好友添加时间 */
     USER_ADD_TIME_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/friendship/cgi_friendship",
 
     /** 好友亲密度 */
@@ -58,7 +64,16 @@ const QZone_URLS = {
     VIDEO_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/video_get_data',
 
     /** 我的收藏 */
-    FAVORITE_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/fav.qzone.qq.com/cgi-bin/get_fav_list'
+    FAVORITE_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/fav.qzone.qq.com/cgi-bin/get_fav_list',
+
+    /** 点赞数目 */
+    LIKE_COUNT_URL: 'https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/user/qz_opcnt2',
+
+    /** 点赞数目 */
+    LIKE_COUNT_URL_88: 'https://rsh.qzone.qq.com/cgi-bin/user/qz_opcnt2_sh',
+
+    /** 点赞列表 */
+    LIKE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/users.qzone.qq.com/cgi-bin/likes/get_like_list_app'
 };
 
 var API = {
@@ -166,7 +181,6 @@ API.Utils = {
     },
 
 
-
     /**
      * 根据配置获取文件后缀名
      * @param {string} url 文件地址
@@ -217,20 +231,6 @@ API.Utils = {
      */
     writeFile(url, path) {
         return new Promise(async function (resolve, reject) {
-            // const res = await fetch(url).then(res => {
-            //     if (res.ok) {
-            //         return res;
-            //     } else {
-            //         throw Error(`Request rejected with status ${res.status}`);
-            //     }
-            // });
-            // const blob = await res.blob();
-            // QZone.Common.Filer.write(path, { data: blob, type: "blob" }, (fileEntry) => {
-            //     resolve(fileEntry);
-            // }, (e) => {
-            //     reject(e);
-            // });
-
             await API.Utils.send(url, 'blob').then((xhr) => {
                 let res = xhr.response;
                 QZone.Common.Filer.write(path, { data: res, type: "blob" }, (fileEntry) => {
@@ -1031,6 +1031,54 @@ API.Utils = {
     }
 };
 
+API.Common = {
+
+    /**
+     * 获取用户统计信息
+     */
+    getUserStatistics() {
+        let params = {
+            "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "param": 16,
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        return API.Utils.get(QZone_URLS.MAIN_INFO_URL, params);
+    },
+
+    /**
+     * 获取点赞列表
+     * @param {string} unikey 来源Key
+     */
+    getLikeInfo(unikey) {
+        let params = {
+            "fupdate": 1,
+            "unikey": unikey,
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+        }
+        let _like_info_url = QZone.Common.Owner.uin % 100 == 88 ? LIKE_COUNT_URL_88 : LIKE_COUNT_URL
+        return API.Utils.get(_like_info_url, params);
+    },
+
+    /**
+     * 获取点赞列表
+     * @param {string} unikey 来源Key
+     * @param {string} begin_uin 分页拉取，第一次为0，以后为上次数据最末uin的值
+     */
+    getLikeList(unikey, begin_uin) {
+        let params = {
+            "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "unikey": unikey,
+            "begin_uin": begin_uin || 0,
+            "query_count": 60,
+            "if_first_page": begin_uin === 1 ? 1 : 0,//标识是否为首次请求 第一次请求为1，以后为0
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        return API.Utils.get(QZone_URLS.LIKE_LIST_URL, params);
+    }
+}
+
 /**
  * 日志模块API
  */
@@ -1074,6 +1122,14 @@ API.Blogs = {
         } else if (t < 64) {
             return e.effect2 & 1 << t
         }
+    },
+
+    /**
+     * 获取日志UniKey，用于获取点赞数据
+     * @param {string} blogid 日志ID
+     */
+    getUniKey(blogid) {
+        return 'http://user.qzone.qq.com/{0}/blog/{1}'.format(QZone.Common.Target.uin, blogid);
     },
 
     /**
@@ -1282,6 +1338,14 @@ API.Friends = {
  * 说说模块API
  */
 API.Messages = {
+
+    /**
+     * 获取说说UniKey，用于获取点赞数据
+     * @param {string} tid 说说ID
+     */
+    getUniKey(tid) {
+        return 'http://user.qzone.qq.com/{0}/mood/{1}'.format(QZone.Common.Target.uin, tid);
+    },
 
     /**
      * 获取说说列表
@@ -1685,10 +1749,18 @@ API.Photos = {
     },
 
     /**
+     * 获取相册UniKey，用于获取点赞数据
+     * @param {string} albumId 相册ID
+     */
+    getUniKey(albumId) {
+        return 'http://user.qzone.qq.com/{0}/mood/{1}'.format(QZone.Common.Target.uin, albumId);
+    },
+
+    /**
      * 获取相册列表
      * @param {integer} page 当前页
      */
-    getPhotos(page) {
+    getAlbums(page) {
         let params = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "callback": "shine0_Callback",
@@ -1704,10 +1776,8 @@ API.Photos = {
             "notice": 0,
             "filter": 1,
             "handset": 4,
-            // "pageNumModeSort": 3000, //排序每页条目数？
-            // "pageNumModeClass": 3000, //类别每页条目数？
             "needUserInfo": 1,
-            "idcNum": QZone.Common.Target.route || this.getRoute(), // 存储相册的服务器路由？
+            "idcNum": QZone.Common.Target.route || this.getRoute(),
             "mode": 2, // 视图：普通视图
             "sortOrder": 2, // 排序类型：自定义排序
             "pageStart": page * Qzone_Config.Photos.pageSize,
@@ -1716,7 +1786,36 @@ API.Photos = {
             "callbackFun": "shine0",
             "_": Date.now()
         }
-        return API.Utils.get(QZone_URLS.PHOTOS_LIST_URL, params);
+        return API.Utils.get(QZone_URLS.ALBUM_LIST_URL, params);
+    },
+
+    /**
+     * 获取相册评论列表
+     * @param {string} albumId 相册ID
+     * @param {integer} page 当前页
+     */
+    getAlbumComments(albumId, page) {
+        let params = {
+            "need_private_comment": 1,
+            "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
+            "hostUin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "start": page * Qzone_Config.Photos.Comments.pageSize,
+            "num": Qzone_Config.Photos.Comments.pageSize,
+            "order": 1, //倒序
+            "topicId": albumId,
+            "format": "json",
+            "inCharset": "utf-8",
+            "outCharset": "utf-8",
+            "t": Date.now(),
+            "cmtType": 1,
+            "plat": "qzone",
+            "source": "qzone",
+            // "total": 2,// 相册评论条目数，是否必填？
+            "random": Math.random(),
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        };
+        return API.Utils.get(QZone_URLS.ALBUM_COMMENTS_URL, params);
     },
 
     /**
@@ -1760,7 +1859,7 @@ API.Photos = {
      * @param {string} albumId 相册ID
      * @param {integer} page 当前页
      */
-    getComments(albumId, picKey, page) {
+    getImageComments(albumId, picKey, page) {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
             "hostUin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
@@ -2045,11 +2144,7 @@ API.Favorites = {
     getFavorites(page) {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
-            "type": 0,//全部
-            // "type": 1,//日志
-            // "type": 2,//照片
-            // "type": 3,//说说
-            // "type": 4,//分享
+            "type": 0,//全部\
             "start": page * Qzone_Config.Favorites.pageSize,
             "start": page * Qzone_Config.Favorites.pageSize,
             "num": Qzone_Config.Favorites.pageSize,

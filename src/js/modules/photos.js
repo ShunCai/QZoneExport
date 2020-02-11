@@ -61,7 +61,7 @@ API.Photos.getAlbumPageList = async (pageIndex, indicator) => {
     indicator.addDownload(Qzone_Config.Photos.pageSize);
 
     // 查询相册
-    return await API.Photos.getPhotos(pageIndex).then(async (data) => {
+    return await API.Photos.getAlbums(pageIndex).then(async (data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^shine0_Callback\(/);
         data = data.data;
@@ -284,7 +284,7 @@ API.Photos.getAllAlbumImageList = async (items) => {
  *  @param {integer} pageIndex 页索引
  */
 API.Photos.getImagePageComments = async (item, pageIndex) => {
-    return await API.Photos.getComments(item.albumId, item.lloc, pageIndex).then((data) => {
+    return await API.Photos.getImageComments(item.albumId, item.lloc, pageIndex).then((data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
         return data.data;
