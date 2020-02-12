@@ -15,7 +15,7 @@ const Default_Config = {
         // 迅雷任务数        
         thunderTaskNum: 5000,
         // 唤起迅雷间隔        
-        thunderTaskSleep: 10,
+        thunderTaskSleep: 60,
         // 文件下载并发数        
         downloadThread: 5,
         // 是否启用下载状态栏提醒
@@ -154,7 +154,7 @@ let Qzone_Config = {
         // 迅雷任务数        
         thunderTaskNum: 5000,
         // 唤起迅雷间隔        
-        thunderTaskSleep: 10,
+        thunderTaskSleep: 60,
         // 文件下载并发数        
         downloadThread: 5,
         // 是否启用下载状态栏提醒
