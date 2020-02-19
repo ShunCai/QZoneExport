@@ -89,6 +89,14 @@ const Default_Config = {
             min: 1,
             max: 2
         },
+        Comments: {
+            isGet: false, // 是否获取评论，默认不获取
+            pageSize: 100,
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        },
         Images: {
             exportType: "File",
             pageSize: 90,

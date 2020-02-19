@@ -275,6 +275,33 @@
 										<input type="number" min="10" max="90" class="form-control" id="photos_list_limit" placeholder="查询每页条数">
 									</div>
 								</div>
+								<div id="photos_albums_comments_panel" style="display: none;">
+									<hr>
+									<div class="form-group row">
+										<div class="col-sm-1">获取评论：</div>
+										<div class="custom-control custom-checkbox">
+											<input type="checkbox" class="custom-control-input" id="photos_albums_comments_has">
+											<label style="margin-left: 14px;" class="custom-control-label" for="photos_albums_comments_has" aria-describedby="photos_albums_comments_has_help"></label>
+											<small id="photos_albums_comments_has_help" class="text-muted">默认不获取，勾选获取评论</small>
+										</div>
+									</div>
+									<div class="form-group row">
+										<label class="col-sm-1 col-form-label">查询间隔：</label>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control" id="photos_albums_comments_cost_min" placeholder="最小间隔">
+										</div>
+										<span>-</span>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control" id="photos_albums_comments_cost_max" placeholder="最大间隔">
+										</div>
+									</div>
+									<div class="form-group row">
+										<label for="photos_albums_comment_limit" class="col-sm-1 col-form-label">每页条数：</label>
+										<div class="col-sm-2">
+											<input type="number" min="10" max="90" class="form-control" id="photos_albums_comments_limit" placeholder="查询每页条数">
+										</div>
+									</div>
+								</div>
 								<br>
 								<h5 style="color:cadetblue">相片选项：</h5>
 								<hr>
@@ -306,7 +333,7 @@
 										<input type="number" min="10" max="90" class="form-control" id="photos_images_limit" placeholder="查询每页条数">
 									</div>
 								</div>
-								<div class="form-group row">
+								<div class="form-group row" style="display: none;">
 									<label for="photos_exifType" class="col-sm-1 col-form-label">清晰度：</label>
 									<div class="col-sm-2">
 										<select id="photos_exifType" class="custom-select">
@@ -316,31 +343,31 @@
 										</select>
 									</div>
 								</div>
-								<br>
-								<h5 style="color:cadetblue">评论选项：</h5>
-								<hr>
-								<div class="form-group row">
-									<div class="col-sm-1">获取评论：</div>
-									<div class="custom-control custom-checkbox">
-										<input type="checkbox" class="custom-control-input" id="photos_images_comments_has">
-										<label style="margin-left: 14px;" class="custom-control-label" for="photos_images_comments_has" aria-describedby="photos_images_comments_has_help"></label>
-										<small id="photos_images_comments_has_help" class="text-muted">默认不获取，勾选获取评论，仅适用于相片备份类型为非文件类型的相片</small>
+								<div id="photos_images_comments_panel" style="display: none;">
+									<hr>
+									<div class="form-group row">
+										<div class="col-sm-1">获取评论：</div>
+										<div class="custom-control custom-checkbox">
+											<input type="checkbox" class="custom-control-input" id="photos_images_comments_has">
+											<label style="margin-left: 14px;" class="custom-control-label" for="photos_images_comments_has" aria-describedby="photos_images_comments_has_help"></label>
+											<small id="photos_images_comments_has_help" class="text-muted">默认不获取，勾选获取评论</small>
+										</div>
 									</div>
-								</div>
-								<div class="form-group row">
-									<label class="col-sm-1 col-form-label">查询间隔：</label>
-									<div class="col-sm-1">
-										<input type="number" min="1" class="form-control" id="photos_images_comments_cost_min" placeholder="最小间隔">
+									<div class="form-group row">
+										<label class="col-sm-1 col-form-label">查询间隔：</label>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control" id="photos_images_comments_cost_min" placeholder="最小间隔">
+										</div>
+										<span>-</span>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control" id="photos_images_comments_cost_max" placeholder="最大间隔">
+										</div>
 									</div>
-									<span>-</span>
-									<div class="col-sm-1">
-										<input type="number" min="1" class="form-control" id="photos_images_comments_cost_max" placeholder="最大间隔">
-									</div>
-								</div>
-								<div class="form-group row">
-									<label for="photos_images_comment_limit" class="col-sm-1 col-form-label">每页条数：</label>
-									<div class="col-sm-2">
-										<input type="number" min="10" max="90" class="form-control" id="photos_images_comments_limit" placeholder="查询每页条数">
+									<div class="form-group row">
+										<label for="photos_images_comment_limit" class="col-sm-1 col-form-label">每页条数：</label>
+										<div class="col-sm-2">
+											<input type="number" min="10" max="90" class="form-control" id="photos_images_comments_limit" placeholder="查询每页条数">
+										</div>
 									</div>
 								</div>
 							</form>

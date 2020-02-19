@@ -17,11 +17,14 @@ API.Photos.export = async () => {
         }
         console.info('获取所有的相册列表完成', albumList);
 
+        // 获取相册的评论列表
+        albumList = await API.Photos.getAllAlbumsComments(albumList);
+
         // 获取所有相册的相片列表
         let imagesMapping = await API.Photos.getAllAlbumImageList(albumList);
         console.info('获取所有相册的所有相片列表完成', imagesMapping);
 
-        // 获取所有相册的所有相片的评论列表
+        // 获取相片的评论列表
         let images = API.Photos.toImages(imagesMapping);
         images = await API.Photos.getAllImagesComments(images);
         console.info('获取所有相册的所有相片的评论列表完成', images);
@@ -184,6 +187,8 @@ API.Photos.getAlbumImagePageList = async (item, pageIndex, indicator) => {
         // 相片列表
         let dataList = data.photoList || [];
 
+        // 添加相册信息到相片
+
         // 更新获取成功数据
         indicator.addSuccess(dataList);
 
@@ -249,9 +254,17 @@ API.Photos.getAlbumImageAllList = async (item) => {
         });
     }
 
-    let dataList = await nextPage(0, indicator);
+    let dataList = await nextPage(0, indicator) || [];
 
-    // 处理数据与添加下载任务
+    // 添加相册基本信息到相片
+    for (const photo of dataList) {
+        photo.albumId = item.id;
+        photo.albumName = item.name;
+        photo.albumClassId = item.classid;
+        photo.albumClass = item.className || QZone.Photos.Class[item.classid] || '其他';
+    }
+
+    // 添加下载任务
     await API.Photos.addDownloadTasks(item, dataList);
 
     // 完成
@@ -279,16 +292,96 @@ API.Photos.getAllAlbumImageList = async (items) => {
 
 
 /**
- * 获取单张相片的评论
- *  @param {Object} item 相片对象
- *  @param {integer} pageIndex 页索引
+ * 获取单个相册的所有评论
+ * @param {Object} item 相册对象
+ * @param {StatusIndicator} indicator 进度更新器
  */
-API.Photos.getImagePageComments = async (item, pageIndex) => {
-    return await API.Photos.getImageComments(item.albumId, item.lloc, pageIndex).then((data) => {
-        // 去掉函数，保留json
-        data = API.Utils.toJson(data, /^_Callback\(/);
-        return data.data;
-    });
+API.Photos.getAlbumAllComments = async (item, indicator) => {
+    // 清空相册原有的评论
+    item.comments = [];
+
+    let CONFIG = Qzone_Config.Photos.Comments;
+
+    // 更新下载中
+    indicator.addDownload(item);
+
+    let nextPage = async function (item, pageIndex) {
+        return await API.Photos.getAlbumComments(item.id, pageIndex).then(async (data) => {
+
+            // 去掉函数，保留json
+            data = API.Utils.toJson(data, /^_Callback\(/);
+            data = data.data;
+
+            // 合并评论列表
+            item.comments = item.comments.concat(data.comments || []);
+            indicator.addSuccess(data.comments);
+
+            // 是否还有下一页
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, item.forum, item.comments);
+            if (hasNextPage) {
+                // 请求一页成功后等待一秒再请求下一页
+                let min = CONFIG.randomSeconds.min;
+                let max = CONFIG.randomSeconds.max;
+                let seconds = API.Utils.randomSeconds(min, max);
+                await API.Utils.sleep(seconds * 1000);
+                // 总数不相等时继续获取
+                return await arguments.callee(item, pageIndex + 1);
+            }
+            return item.comments;
+        }).catch(async (e) => {
+            console.error("获取单个相册的评论列表异常：", pageIndex + 1, item, e);
+            indicator.addFailed({
+                pageIndex: pageIndex,
+                pageSize: CONFIG.pageSize,
+                isPage: true
+            });
+            // 当前页失败后，跳过继续请求下一页
+            // 是否还有下一页
+            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, item.forum, item.comments);
+            if (hasNextPage) {
+                // 请求一页成功后等待一秒再请求下一页
+                let min = CONFIG.randomSeconds.min;
+                let max = CONFIG.randomSeconds.max;
+                let seconds = API.Utils.randomSeconds(min, max);
+                await API.Utils.sleep(seconds * 1000);
+                // 总数不相等时继续获取
+                return await arguments.callee(item, pageIndex + 1);
+            }
+            return item.comments;
+        });
+    }
+
+    await nextPage(item, 0);
+
+    return item.comments;
+}
+
+
+/**
+ * 获取所有的相册的评论
+ * @param {Array} items 相册列表
+ */
+API.Photos.getAllAlbumsComments = async (items) => {
+    // 是否需要获取相册的评论
+    if (!Qzone_Config.Photos.Comments.isGet || Qzone_Config.Photos.exportType == 'Folder') {
+        return items;
+    }
+    for (let index = 0; index < items.length; index++) {
+        // 相册评论进度更新器
+        let indicator = new StatusIndicator('Photos_Albums_Comments');
+        const item = items[index];
+        if (item.comment === 0) {
+            // 没评论时，跳过
+            continue;
+        }
+        // 更新总数
+        indicator.setTotal(item.comment);
+        indicator.setIndex(index + 1);
+        await API.Photos.getAlbumAllComments(item, indicator);
+        // 完成
+        indicator.complete();
+    }
+    return items;
 }
 
 /**
@@ -296,8 +389,8 @@ API.Photos.getImagePageComments = async (item, pageIndex) => {
  * @param {Object} item 相片对象
  * @param {StatusIndicator} indicator 进度更新器
  */
-API.Photos.getImageComments = async (item, indicator) => {
-    // 清空相册原有的评论
+API.Photos.getImageAllComments = async (item, indicator) => {
+    // 清空相片原有的评论
     item.comments = [];
 
     let CONFIG = Qzone_Config.Photos.Images.Comments;
@@ -306,7 +399,11 @@ API.Photos.getImageComments = async (item, indicator) => {
     indicator.addDownload(item);
 
     let nextPage = async function (item, pageIndex) {
-        return await API.Photos.getImagePageComments(item, pageIndex).then(async (data) => {
+        return await API.Photos.getImageComments(item.albumId, item.lloc, pageIndex).then(async (data) => {
+
+            // 去掉函数，保留json
+            data = API.Utils.toJson(data, /^_Callback\(/);
+            data = data.data;
 
             // 合并评论列表
             item.comments = item.comments.concat(data.comments || []);
@@ -358,7 +455,7 @@ API.Photos.getImageComments = async (item, indicator) => {
  */
 API.Photos.getAllImagesComments = async (items) => {
     // 是否需要获取相片的评论
-    if (!Qzone_Config.Photos.Images.Comments.isGet || Qzone_Config.Photos.Images.exportType !== 'File') {
+    if (!Qzone_Config.Photos.Images.Comments.isGet || Qzone_Config.Photos.Images.exportType == 'File') {
         return items;
     }
     for (let index = 0; index < items.length; index++) {
@@ -372,7 +469,7 @@ API.Photos.getAllImagesComments = async (items) => {
         // 更新总数
         indicator.setTotal(item.forum);
         indicator.setIndex(index + 1);
-        await API.Photos.getImageComments(item, indicator);
+        await API.Photos.getImageAllComments(item, indicator);
         // 完成
         indicator.complete();
     }

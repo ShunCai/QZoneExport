@@ -37,7 +37,7 @@ const QZone_URLS = {
     ALBUM_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3',
 
     /** 相册评论列表URL */
-    ALBUM_COMMENTS_URL: 'https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/fcg_list_album_v3',
+    ALBUM_COMMENTS_URL: 'https://user.qzone.qq.com/proxy/domain/app.photo.qzone.qq.com/cgi-bin/app/cgi_pcomment_xml_v2',
 
     /** 相片列表URL */
     IMAGES_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo',
@@ -1877,7 +1877,6 @@ API.Photos = {
             "cmtType": 1,
             "plat": "qzone",
             "source": "qzone",
-            // "total": 2,// 相册评论条目数，是否必填？
             "random": Math.random(),
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()

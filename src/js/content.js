@@ -204,25 +204,32 @@ const MAX_MSG = {
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
         '请稍后...'
     ],
-    Photos_Images: [
-        '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片列表',
+    Photos_Albums_Comments: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 个相册的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已失败 <span style="color: red;">{downloadFailed}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Photos_Images: [
+        '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 张',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 张',
         '请稍后...'
     ],
     Photos_Images_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 张相片的评论列表',
-        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
     Photos_Images_Mime: [
         '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片类型',
-        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 张',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 张',
         '请稍后...'
     ],
     Photos_Export: [

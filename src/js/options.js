@@ -48,7 +48,6 @@
 				$(file_suffix_dom).show();
 				$(suffix_timeout_dom).show();
 				$(download_thread_dom).show();
-
 				$('#common_download_type_help').html('使用浏览器下载，请确保已关闭浏览器设置中的<span style="color:red">【下载前询问每个文件的保存位置】</span>选项，否则浏览器将会一直弹窗提示保存文件');
 				break;
 			case 'QZone':
@@ -61,6 +60,36 @@
 				$('#common_download_type_help').text('QQ空间外链仅适用于备份类型为非文件类型的，例如日志、说说等，文件类型的，例如相片、视频，将默认使用助手内部下载');
 				break;
 			default:
+				break;
+		}
+	})
+
+	// 监听相册备份类型选择事件
+	$('#photos_exportFormat').change(function () {
+		let value = $(this).val();
+		switch (value) {
+			case 'JSON':
+				// 显示相册评论模块
+				$('#photos_albums_comments_panel').show();
+				break;
+			default:
+				// 显示相册评论模块
+				$('#photos_albums_comments_panel').hide();
+				break;
+		}
+	})
+
+	// 监听相片备份类型选择事件
+	$('#photos_image_exportType').change(function () {
+		let value = $(this).val();
+		switch (value) {
+			case 'JSON':
+				// 显示相册评论模块
+				$('#photos_images_comments_panel').show();
+				break;
+			default:
+				// 显示相册评论模块
+				$('#photos_images_comments_panel').hide();
 				break;
 		}
 	})
@@ -128,12 +157,16 @@
 		$("#diaries_list_limit").val(options.Diaries.pageSize);
 
 		// 相册模块赋值
-		$("#photos_exportFormat").val(options.Photos.exportType);
+		$("#photos_exportFormat").val(options.Photos.exportType).change();
 		$("#photos_list_cost_min").val(options.Photos.randomSeconds.min);
 		$("#photos_list_cost_max").val(options.Photos.randomSeconds.max);
 		$("#photos_list_limit").val(options.Photos.pageSize);
+		$("#photos_albums_comments_has").prop("checked", options.Photos.Comments.isGet);
+		$("#photos_albums_comments_cost_min").val(options.Photos.Comments.randomSeconds.min);
+		$("#photos_albums_comments_cost_max").val(options.Photos.Comments.randomSeconds.max);
+		$("#photos_albums_comments_limit").val(options.Photos.Comments.pageSize);
 
-		$("#photos_image_exportType").val(options.Photos.Images.exportType);
+		$("#photos_image_exportType").val(options.Photos.Images.exportType).change();
 		$("#photos_images_cost_min").val(options.Photos.Images.randomSeconds.min);
 		$("#photos_images_cost_max").val(options.Photos.Images.randomSeconds.max);
 		$("#photos_images_limit").val(options.Photos.Images.pageSize);
@@ -230,6 +263,10 @@
 		Qzone_Config.Photos.pageSize = $("#photos_list_limit").val() * 1;
 		Qzone_Config.Photos.randomSeconds.min = $("#photos_list_cost_min").val() * 1;
 		Qzone_Config.Photos.randomSeconds.max = $("#photos_list_cost_max").val() * 1;
+		Qzone_Config.Photos.Comments.isGet = $("#photos_albums_comments_has").prop("checked");
+		Qzone_Config.Photos.Comments.randomSeconds.min = $("#photos_albums_comments_cost_min").val() * 1;
+		Qzone_Config.Photos.Comments.randomSeconds.max = $("#photos_albums_comments_cost_max").val() * 1;
+		Qzone_Config.Photos.Comments.pageSize = $("#photos_albums_comments_limit").val() * 1;
 
 		Qzone_Config.Photos.Images.exportType = $("#photos_image_exportType").val();
 		Qzone_Config.Photos.Images.randomSeconds.min = $("#photos_images_cost_min").val() * 1;
