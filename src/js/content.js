@@ -14,15 +14,15 @@ class DownloadTask {
         this.dir = dir
         this.name = name
         this.url = url
-        this.success = true
+        this.downloadState = 'in_progress'
     }
 
     /**
-     * 设置成功标识
-     * @param {boolean} success 成功标识
+     * 设置下载状态
+     * @param {string} downloadState 下载状态
      */
-    setSuccess(success) {
-        this.success = success;
+    setState(downloadState) {
+        this.downloadState = downloadState;
     }
 }
 
@@ -94,11 +94,25 @@ class BrowserTask {
     /**
      * 
      * @param {string} url 下载地址
-     * @param {filename} filename 文件名称
+     * @param {string} root 下载根目录名称
+     * @param {string} folder 根目录相对名称
+     * @param {string} name 文件名称
      */
-    constructor(url, filename) {
+    constructor(url, root, folder, name) {
+        this.id = 0;
         this.url = url;
-        this.filename = filename;
+        this.root = root;
+        this.dir = folder;
+        this.name = name;
+        this.filename = root + '/' + folder + '/' + name;
+    }
+
+    /**
+     * 设置下载管理器ID
+     * @param {integer} id 下载管理器ID
+     */
+    setId(id) {
+        this.id = id
     }
 }
 
@@ -617,7 +631,10 @@ class QZoneOperator {
                 await API.Utils.sleep(1000);
                 $("#downloadBtn").show();
                 let tasks = API.Utils.getFailedTasks();
-                if (tasks.length > 0) {
+                // 下载工具是否为浏览器下载
+                let downloadType = Qzone_Config.Common.downloadType;
+                let isBrowser = 'Browser' === downloadType
+                if (tasks.length > 0 || isBrowser) {
                     $("#fileList").show();
                 }
                 $("#backupStatus").html("数据采集完成，请下载。");
@@ -716,6 +733,7 @@ class QZoneOperator {
      */
     async showProcess() {
 
+
         let html = await API.Utils.get(chrome.extension.getURL('html/indicator.html'));
 
         $('body').append(html);
@@ -725,10 +743,22 @@ class QZoneOperator {
             keyboard: false
         })
 
+        // 下载工具是否为浏览器下载
+        let downloadType = Qzone_Config.Common.downloadType;
+        let isBrowser = 'Browser' === downloadType;
+
+        let $browserDownload = $("#browserDownload");
+        if (isBrowser) {
+            // 浏览器下载隐藏【浏览器下载】按钮
+            $browserDownload.hide();
+        }
+
         let $progressbar = $("#progressbar");
         let $downloadBtn = $('#downloadBtn');
         let $fileListBtn = $('#fileList');
+        let $againDownloadBtn = $("#againDownload");
 
+        // 【打包下载】按钮点击事件
         $downloadBtn.click(() => {
 
             $('#progress').show();
@@ -760,7 +790,7 @@ class QZoneOperator {
 
         });
 
-        // 显示【查看备份】按钮
+        // 【查看备份】按钮点击事件
         let $showFolder = $('#showFolder');
         $showFolder.click(() => {
             chrome.runtime.sendMessage({
@@ -775,40 +805,74 @@ class QZoneOperator {
             $("#modalTable").remove();
         })
 
+        /**
+         * 筛选数据
+         * @param {string} value 过滤标识
+         */
+        const filterData = async function (value) {
+            if (value === 'all') {
+                $("#table").bootstrapTable('filterBy');
+                return;
+            }
+            if (isBrowser) {
+                // 查询全部下载列表
+                let downlist = await API.Utils.getDownloadList(undefined);
+                for (const task of browserTasks) {
+                    // 更新下载状态到表格
+                    let index = downlist.getIndex(task.id, 'id');
+                    let downloadItem = downlist[index];
+                    task.downloadState = downloadItem.state;
+                }
+            }
+            $("#table").bootstrapTable('filterBy', {
+                downloadState: value
+            })
+        }
+
         // 查看指定状态的数据
         $('#statusFilter').change(function () {
             let value = $(this).val();
-            $("#table").bootstrapTable('filterBy', {
-                success: value === 'true'
-            })
+            if ('interrupted' === value) {
+                // 已失败列表才展示【继续重试】按钮
+                $againDownloadBtn.show();
+            } else {
+                $againDownloadBtn.hide();
+            }
+            filterData(value);
         })
 
-        // 重试按钮点击事件
-        $("#againDownload").click(function () {
+        // 【重试】按钮点击事件
+        $againDownloadBtn.click(async function () {
             let tasks = $('#table').bootstrapTable('getSelections');
-            API.Utils.downloadsByAjax(tasks)
-            // 重新压缩
-            operator.next(OperatorType.ZIP);
+            if (isBrowser) {
+                for (const task of tasks) {
+                    await API.Utils.resumeDownload(task.id);
+                }
+            } else {
+                await API.Utils.downloadsByAjax(tasks)
+                // 重新压缩
+                operator.next(OperatorType.ZIP);
+            }
         })
 
-        // 迅雷下载点击事件
+        // 【迅雷下载】点击事件
         $("#thunderDownload").click(async function () {
             let tasks = $('#table').bootstrapTable('getSelections');
             let newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, Qzone_Config.Common.downloadThread);
             for (const task of tasks) {
                 newThunderInfo.tasks.push(new ThunderTask(task.dir, task.name, API.Utils.toHttp(task.url)));
-                task.setSuccess(true);
+                task.setState('complete');
             }
             await API.Utils.invokeThunder(newThunderInfo)
         })
 
-        // 浏览器下载点击事件
-        $("#browserDownload").click(function () {
+        // 【浏览器下载】点击事件
+        $browserDownload.click(function () {
             let tasks = $('#table').bootstrapTable('getSelections');
             let newBrowserTasks = [];
             for (const task of tasks) {
-                newBrowserTasks.push(new BrowserTask(API.Utils.toHttp(task.url), thunderInfo.taskGroupName + '/' + task.dir + '/' + task.name));
-                task.setSuccess(true);
+                newBrowserTasks.push(new BrowserTask(API.Utils.toHttp(task.url), thunderInfo.taskGroupName, task.dir, task.name));
+                task.setState('in_progress');
             }
             API.Utils.downloadsByBrowser(newBrowserTasks);
         })
@@ -817,7 +881,7 @@ class QZoneOperator {
         $('#modalTable').on('shown.bs.modal', function () {
 
             // 重置筛选条件
-            $('#statusFilter').val('false');
+            $('#statusFilter').val('interrupted');
 
             $("#table").bootstrapTable('destroy').bootstrapTable({
                 undefinedText: '-',
@@ -825,7 +889,7 @@ class QZoneOperator {
                 locale: 'zh-CN',
                 search: true,
                 searchAlign: 'right',
-                height: "50%",
+                height: "400",
                 pagination: true,
                 pageList: [10, 25, 50, 100, 200, 'All'],
                 paginationHAlign: 'left',
@@ -837,7 +901,6 @@ class QZoneOperator {
                     checkbox: true,
                     align: 'left'
                 }, {
-
                     field: 'name',
                     title: '名称',
                     titleTooltip: '名称',
@@ -850,14 +913,12 @@ class QZoneOperator {
                     align: 'left',
                     visible: true
                 }],
-                data: downloadTasks || []
+                data: (isBrowser ? browserTasks : downloadTasks) || []
             })
             $('#table').bootstrapTable('resetView')
 
             // 默认加载失败的数据
-            $("#table").bootstrapTable('filterBy', {
-                success: $('#statusFilter').val() === 'true'
-            })
+            filterData("interrupted");
         })
     }
 }
@@ -870,20 +931,6 @@ const downloadTasks = new Array();
 const thunderInfo = new ThunderInfo(QZone.Common.Config.ZIP_NAME);
 // 浏览器下载信息
 const browserTasks = new Array();
-
-// 向页面注入JS
-function injectCustomJs(path) {
-    path = path || 'js/inject.js';
-    let photo_frame = frames['tphoto'];
-    if (!photo_frame) {
-        return;
-    }
-    let photo_document = photo_frame.contentDocument;
-    var temp = photo_document.createElement('script');
-    temp.setAttribute('type', 'text/javascript');
-    temp.src = chrome.extension.getURL(path);
-    photo_document.head.appendChild(temp);
-}
 
 /**
  * 初始化监听
@@ -945,11 +992,10 @@ function injectCustomJs(path) {
  * 添加图片下载任务
  * @param {string} image 图片对象
  * @param {string} url URL
- * @param {string} download_dir 下载目录
  * @param {string} moudel_dir 模块下载目录
  * @param {string} FILE_URLS 文件下载链接
  */
-API.Utils.addDownloadTasks = async (image, url, download_dir, moudel_dir, FILE_URLS) => {
+API.Utils.addDownloadTasks = async (image, url, moudel_dir, FILE_URLS) => {
     let downloadType = Qzone_Config.Common.downloadType;
     let isQzoneUrl = downloadType === 'QZone';
     url = API.Utils.toHttps(url);
@@ -969,18 +1015,17 @@ API.Utils.addDownloadTasks = async (image, url, download_dir, moudel_dir, FILE_U
     image.custom_filename = filename;
     image.custom_filepath = '图片/' + filename;
     // 添加下载任务
-    API.Utils.newDownloadTask(url, download_dir, moudel_dir, filename);
+    API.Utils.newDownloadTask(url, moudel_dir, filename);
     FILE_URLS.set(url, filename);
 }
 
 /**
  * 添加下载任务
  * @param {url} url 下载地址
- * @param {dir} dir 下载目录
  * @param {folder} folder 下载相对目录
  * @param {name} name 文件名称
  */
-API.Utils.newDownloadTask = (url, dir, folder, name) => {
+API.Utils.newDownloadTask = (url, folder, name) => {
     url = API.Utils.makeDownloadUrl(url, true)
 
     // 添加Ajax请求下载任务
@@ -990,7 +1035,7 @@ API.Utils.newDownloadTask = (url, dir, folder, name) => {
     url = API.Utils.toHttp(url);
 
     // 添加浏览器下载任务
-    browserTasks.push(new BrowserTask(url, dir + folder + '/' + name));
+    browserTasks.push(new BrowserTask(url, QZone.Common.Config.ZIP_NAME, folder, name));
 
     // 添加迅雷下载任务
     thunderInfo.addTask(new ThunderTask(folder, name, url));
@@ -1027,11 +1072,11 @@ API.Utils.downloadsByAjax = async (tasks) => {
 
             let filepath = folderName + '/' + task.name;
             down_tasks.push(API.Utils.writeFile(task.url, filepath).then(() => {
-                task.setSuccess(true);
+                task.setState('complete');
                 indicator.addSuccess(task);
             }).catch((error) => {
                 indicator.addFailed(task);
-                task.setSuccess(false);
+                task.setState('interrupted');
                 console.error('下载文件异常', task, error);
             }));
         }
@@ -1054,7 +1099,7 @@ API.Utils.downloadsByBrowser = async (tasks) => {
         const list = _tasks[i];
         for (let j = 0; j < list.length; j++) {
             const task = list[j];
-            API.Utils.downloadByBrowser(task);
+            await API.Utils.downloadByBrowser(task);
         }
         // 等待1秒再继续添加
         await API.Utils.sleep(1000);

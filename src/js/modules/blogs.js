@@ -384,7 +384,6 @@ API.Blogs.getItemMdContent = async (item) => {
     let isQzoneUrl = downloadType === 'QZone';
     // 下载相对目录
     let moudel_dir = '日志/图片';
-    let download_dir = QZone.Common.Config.ZIP_NAME + '/';
     // 转为本地图片
     let imageLinkM = /!\[.*?\]\((.+?)\)/g;
     let match;
@@ -406,7 +405,7 @@ API.Blogs.getItemMdContent = async (item) => {
                 let suffix = await API.Utils.autoFileSuffix(url);
                 uid = uid + suffix;
                 // 添加下载任务
-                API.Utils.newDownloadTask(url, download_dir, moudel_dir, uid);
+                API.Utils.newDownloadTask(url, moudel_dir, uid);
                 QZone.Blogs.FILE_URLS.set(url, uid);
             }
             result = result.split(orgUrl).join("../图片/" + uid);

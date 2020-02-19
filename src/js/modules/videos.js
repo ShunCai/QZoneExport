@@ -124,11 +124,10 @@ API.Videos.getAllList = async () => {
  */
 API.Videos.addDownloadTasks = (videos) => {
     // 下载相对目录
-    let moudel_dir = '视频/';
-    let download_dir = QZone.Common.Config.ZIP_NAME + '/';
+    let moudel_dir = '视频';
     for (const video of videos) {
         // 添加下载任务
-        API.Utils.newDownloadTask(video.url, download_dir, moudel_dir, API.Videos.getFileName(video.url));
+        API.Utils.newDownloadTask(video.url, moudel_dir, API.Videos.getFileName(video.url));
     }
 }
 

@@ -26,16 +26,16 @@ const Default_Config = {
         exportType: "MarkDown",// 内容备份类型
         pageSize: 20,
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         isFull: false, //是否获取全文
         Comments: {
             isFull: false, //是否全部评论
             pageSize: 20,
             randomSeconds: {
-                min: 2,
-                max: 5
+                min: 1,
+                max: 2
             }
         }
     },
@@ -44,8 +44,8 @@ const Default_Config = {
         exportType: "MarkDown",// 内容备份类型
         pageSize: 50,
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         Info: {
             randomSeconds: {
@@ -57,8 +57,8 @@ const Default_Config = {
             isFull: false, //是否全部评论
             pageSize: 50,
             randomSeconds: {
-                min: 2,
-                max: 5
+                min: 1,
+                max: 2
             }
         }
     },
@@ -67,8 +67,8 @@ const Default_Config = {
         exportType: "MarkDown",// 内容备份类型
         pageSize: 50,
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         Info: {
             randomSeconds: {
@@ -82,23 +82,23 @@ const Default_Config = {
         exportType: "Folder",
         pageSize: 3000,
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         Images: {
             exportType: "File",
             pageSize: 90,
             exifType: "raw",
             randomSeconds: {
-                min: 2,
-                max: 5
+                min: 1,
+                max: 2
             },
             Comments: {
                 isGet: false, // 是否获取评论，默认不获取
                 pageSize: 100,
                 randomSeconds: {
-                    min: 2,
-                    max: 5
+                    min: 1,
+                    max: 2
                 }
             }
         }
@@ -107,8 +107,8 @@ const Default_Config = {
     Videos: {
         exportType: "Link",
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         pageSize: 20
     },
@@ -116,8 +116,8 @@ const Default_Config = {
     Boards: {
         exportType: "MarkDown",
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         pageSize: 20
     },
@@ -130,8 +130,8 @@ const Default_Config = {
     Favorites: {
         exportType: "MarkDown",
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         pageSize: 30
     },
@@ -165,16 +165,16 @@ let Qzone_Config = {
         exportType: "MarkDown",// 内容备份类型
         pageSize: 20,
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         isFull: false, //是否获取全文
         Comments: {
             isFull: false, //是否全部评论
             pageSize: 20,
             randomSeconds: {
-                min: 2,
-                max: 5
+                min: 1,
+                max: 2
             }
         }
     },
@@ -183,8 +183,8 @@ let Qzone_Config = {
         exportType: "MarkDown",// 内容备份类型
         pageSize: 50,
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         Info: {
             randomSeconds: {
@@ -196,8 +196,8 @@ let Qzone_Config = {
             isFull: false, //是否全部评论
             pageSize: 50,
             randomSeconds: {
-                min: 2,
-                max: 5
+                min: 1,
+                max: 2
             }
         }
     },
@@ -206,8 +206,8 @@ let Qzone_Config = {
         exportType: "MarkDown",// 内容备份类型
         pageSize: 50,
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         Info: {
             randomSeconds: {
@@ -221,23 +221,23 @@ let Qzone_Config = {
         exportType: "Folder",
         pageSize: 3000,
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         Images: {
             exportType: "File",
             pageSize: 90,
             exifType: "raw",
             randomSeconds: {
-                min: 2,
-                max: 5
+                min: 1,
+                max: 2
             },
             Comments: {
                 isGet: false, // 是否获取评论，默认不获取
                 pageSize: 100,
                 randomSeconds: {
-                    min: 2,
-                    max: 5
+                    min: 1,
+                    max: 2
                 }
             }
         }
@@ -246,8 +246,8 @@ let Qzone_Config = {
     Videos: {
         exportType: "Link",
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         pageSize: 20
     },
@@ -255,8 +255,8 @@ let Qzone_Config = {
     Boards: {
         exportType: "MarkDown",
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         pageSize: 20
     },
@@ -269,8 +269,8 @@ let Qzone_Config = {
     Favorites: {
         exportType: "MarkDown",
         randomSeconds: {
-            min: 2,
-            max: 5
+            min: 1,
+            max: 2
         },
         pageSize: 30
     },

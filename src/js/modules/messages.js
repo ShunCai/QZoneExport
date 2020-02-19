@@ -203,7 +203,6 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
 
         // 下载相对目录
         let moudel_dir = '说说/图片';
-        let download_dir = QZone.Common.Config.ZIP_NAME + '/';
 
         // 处理说说评论的配图
         let comments = data.commentlist || [];
@@ -213,7 +212,7 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
             for (let j = 0; j < images.length; j++) {
                 // 处理说说评论的配图
                 const image = images[j];
-                await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+                await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, moudel_dir, QZone.Messages.FILE_URLS);
             }
 
             // 获取评论回复
@@ -223,7 +222,7 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
                 let images = repItem.pic || [];
                 for (let r = 0; r < images.length; r++) {
                     const image = images[r];
-                    await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+                    await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, moudel_dir, QZone.Messages.FILE_URLS);
                 }
             }
         }
@@ -508,24 +507,22 @@ API.Messages.getItemMdContent = (item) => {
 API.Messages.addMediaToTasks = async (dataList) => {
     // 下载相对目录
     let moudel_dir = '说说/图片';
-    // 下载目录
-    let download_dir = QZone.Common.Config.ZIP_NAME + '/';
 
     for (const item of dataList) {
         // 下载说说配图
         for (const image of item.custom_images) {
             let url = image.url2 || image.url1;
-            await API.Utils.addDownloadTasks(image, url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(image, url, moudel_dir, QZone.Messages.FILE_URLS);
         }
 
         // 下载视频预览图
         for (const video of item.custom_video) {
-            await API.Utils.addDownloadTasks(video, video.url1, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(video, video.url1, moudel_dir, QZone.Messages.FILE_URLS);
         }
 
         // 下载音乐预览图
         for (const audio of item.custom_audio) {
-            await API.Utils.addDownloadTasks(audio, audio.image, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(audio, audio.image, moudel_dir, QZone.Messages.FILE_URLS);
         }
 
         // 获取评论的配图
@@ -535,7 +532,7 @@ API.Messages.addMediaToTasks = async (dataList) => {
             // 评论包含图片
             let images = comment.pic || [];
             for (const image of images) {
-                await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+                await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, moudel_dir, QZone.Messages.FILE_URLS);
             }
 
             // 回复包含图片，理论上回复现在不能回复图片，兼容一下
@@ -543,7 +540,7 @@ API.Messages.addMediaToTasks = async (dataList) => {
             for (const repItem of replies) {
                 let images = repItem.pic || [];
                 for (const image of images) {
-                    await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+                    await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, moudel_dir, QZone.Messages.FILE_URLS);
                 }
             }
         }

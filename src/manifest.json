@@ -63,7 +63,6 @@
     "options_page": "html/options.html",
     "content_security_policy": "script-src 'self' 'unsafe-eval' https://github.lvshuncai.com/ https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/; frame-src 'self' https://github.lvshuncai.com/ https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/; object-src 'self'",
     "web_accessible_resources": [
-        "js/inject.js",
         "others/README.md",
         "html/indicator.html",
         "css/export/github.css",

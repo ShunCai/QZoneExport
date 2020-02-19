@@ -951,16 +951,102 @@ API.Utils = {
 
     /**
      * 浏览器下载(发送消息给背景页下载)
-     * @param {object} options
+     * @param {BrowserTask} task
      */
-    downloadByBrowser(options) {
-        chrome.runtime.sendMessage({
-            from: 'content',
-            type: 'download_browser',
-            options: options
-        }, function (res) {
-            console.debug('添加到下载器完成', res);
-        })
+    downloadByBrowser(task) {
+        return new Promise(function (resolve, reject) {
+            try {
+                // 简单克隆
+                let options = JSON.parse(JSON.stringify(task));
+
+                // 删除多余属性
+                delete options.id;
+                delete options.root;
+                delete options.dir;
+                delete options.name;
+
+                chrome.runtime.sendMessage({
+                    from: 'content',
+                    type: 'download_browser',
+                    options: options
+                }, function (id) {
+                    task.setId(id);
+                    resolve(task);
+                    console.debug('添加到下载器完成', id);
+                })
+            } catch (error) {
+                reject(0)
+            }
+        });
+    },
+
+    /**
+     * 获取浏览器下载管理器的列表
+     * @param {string} state
+     */
+    getDownloadList(state) {
+        return new Promise(function (resolve, reject) {
+            try {
+                chrome.runtime.sendMessage({
+                    from: 'content',
+                    type: 'download_list',
+                    options: {
+                        limit: 0,
+                        orderBy: ['-startTime'],
+                        state: state
+                    }
+                }, function (data) {
+                    resolve(data)
+                    console.debug('获取下载器列表完成', data);
+                })
+            } catch (error) {
+                reject([])
+            }
+        });
+    },
+
+    /**
+     * 根据ID获取指定下载项
+     * @param {integer} downloadId
+     */
+    getDownloadById(downloadId) {
+        return new Promise(function (resolve, reject) {
+            try {
+                chrome.runtime.sendMessage({
+                    from: 'content',
+                    type: 'download_list',
+                    options: {
+                        id: downloadId
+                    }
+                }, function (data) {
+                    resolve(data)
+                    console.debug('获取下载项完成', data);
+                })
+            } catch (error) {
+                reject([])
+            }
+        });
+    },
+
+    /**
+     * 恢复下载
+     * @param {integer} downloadId
+     */
+    resumeDownload(downloadId) {
+        return new Promise(function (resolve, reject) {
+            try {
+                chrome.runtime.sendMessage({
+                    from: 'content',
+                    type: 'download_resume',
+                    downloadId: downloadId
+                }, function (data) {
+                    resolve(data)
+                    console.debug('获取下载器列表完成', data);
+                })
+            } catch (error) {
+                reject(0)
+            }
+        });
     },
 
     /**
@@ -1009,6 +1095,9 @@ API.Utils = {
     }
 };
 
+/**
+ * QQ空间公共模块
+ */
 API.Common = {
 
     /**

@@ -46,7 +46,7 @@
 				</div>
 			</div>
 			<div class="modal-footer">
-				<button id="fileList" type="button" class="btn btn-outline-danger" style="display: none;" data-toggle="modal" data-target="#modalTable">查看失败</button>
+				<button id="fileList" type="button" class="btn btn-outline-info" style="display: none;" data-toggle="modal" data-target="#modalTable">下载管理</button>
 				<button id="showFolder" type="button" class="btn btn-outline-success" style="display: none;">查看备份</button>
 				<button id="downloadBtn" type="button" class="btn btn-primary" style="display: none;">打包下载</button>
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
@@ -68,8 +68,10 @@
 					<div class="form-inline" role="form">
 						<div class="form-group">
 							<select id="statusFilter" class="form-control" name="statusFilter" style="display: inline-block;width: 100px;">
-								<option value="false" selected>失败</option>
-								<option value="true">成功</option>
+								<option value="all">全部</option>
+								<option value="interrupted" selected>已失败</option>
+								<option value="complete">已完成</option>
+								<option value="in_progress" selected>下载中</option>
 							</select>
 						</div>
 					</div>

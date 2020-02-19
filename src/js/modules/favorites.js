@@ -398,26 +398,24 @@ API.Favorites.exportToJson = async (favorites) => {
 API.Favorites.addMediaToTasks = async (dataList) => {
     // 下载相对目录
     let moudel_dir = '收藏夹/图片';
-    // 下载目录
-    let download_dir = QZone.Common.Config.ZIP_NAME + '/';
 
     for (const item of dataList) {
         // 下载说说配图
         for (const image of item.custom_images) {
             let url = image.url;
-            await API.Utils.addDownloadTasks(image, url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(image, url, moudel_dir, QZone.Messages.FILE_URLS);
         }
 
         // 下载视频预览图
         for (const video of item.custom_video) {
             let url = video.preview_img;
-            await API.Utils.addDownloadTasks(video, url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(video, url, moudel_dir, QZone.Messages.FILE_URLS);
         }
 
         // 下载音乐预览图
         for (const audio of item.custom_audio) {
             let url = audio.preview_img;
-            await API.Utils.addDownloadTasks(audio, url, download_dir, moudel_dir, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(audio, url, moudel_dir, QZone.Messages.FILE_URLS);
         }
     }
     return dataList;
