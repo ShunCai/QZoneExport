@@ -1041,7 +1041,7 @@ API.Utils = {
                     downloadId: downloadId
                 }, function (data) {
                     resolve(data)
-                    console.debug('获取下载器列表完成', data);
+                    console.debug('恢复下载完成', data);
                 })
             } catch (error) {
                 reject(0)
