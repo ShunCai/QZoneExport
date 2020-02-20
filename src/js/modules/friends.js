@@ -44,30 +44,8 @@ API.Friends.getAllList = async () => {
         QZone.Friends.Data = data.items;
         indicator.addSuccess(friends);
 
-        // 将QQ分组进行分组
-        let groups = data.gpnames;
-        let groupMap = new Map();
-        for (const group of groups) {
-            groupMap.set(group.gpid, group.gpname);
-        }
-
-        // 处理QQ好友
-        for (const friend of friends) {
-            friend.groupName = groupMap.get(friend.groupid) || "默认分组";
-            if (!Qzone_Config.Friends.hasAddTime || Qzone_Config.Friends.exportType === 'MarkDown') {
-                // 不获取好友添加时间则跳过
-                continue;
-            }
-            let addFriendTime = await API.Friends.getFriendshipTime(friend.uin).then((time_data) => {
-                time_data = API.Utils.toJson(time_data, /^_Callback\(/);
-                let addTime = time_data.addFriendTime || 0;
-                addTime = addTime == 0 ? "老朋友啦" : API.Utils.formatDate(addTime);
-                return addTime;
-            }).catch((e) => {
-                console.error("获取好友添加时间异常", friend);
-            })
-            friend.addFriendTime = addFriendTime;
-        }
+        // 获取好友成立时间
+        friends = await API.Friends.getFriendsTime(data, friends);
 
         return friends;
     }).catch((e) => {
@@ -78,6 +56,42 @@ API.Friends.getAllList = async () => {
     indicator.complete();
 
     return friends || [];
+}
+
+/**
+ * 获取好友添加时间
+ */
+API.Friends.getFriendsTime = async (data, friends) => {
+    // 进度更新器
+    let indicator = new StatusIndicator('Friends_Time');
+    // 将QQ分组进行分组
+    let groups = data.gpnames;
+    let groupMap = new Map();
+    for (const group of groups) {
+        groupMap.set(group.gpid, group.gpname);
+    }
+    indicator.setTotal(friends.length);
+    for (const friend of friends) {
+        friend.groupName = groupMap.get(friend.groupid) || "默认分组";
+        if (!Qzone_Config.Friends.hasAddTime || Qzone_Config.Friends.exportType === 'MarkDown') {
+            // 不获取好友添加时间则跳过
+            continue;
+        }
+        let addFriendTime = await API.Friends.getFriendshipTime(friend.uin).then((time_data) => {
+            indicator.addSuccess(1);
+            time_data = API.Utils.toJson(time_data, /^_Callback\(/);
+            time_data = time_data.data;
+            let addTime = time_data.addFriendTime || 0;
+            addTime = addTime == 0 ? "老朋友啦" : API.Utils.formatDate(addTime);
+            return addTime;
+        }).catch((e) => {
+            indicator.addFailed(1);
+            console.error("获取好友添加时间异常", friend, e);
+        })
+        friend.addFriendTime = addFriendTime;
+    }
+    indicator.complete();
+    return friends;
 }
 
 /**
@@ -112,11 +126,15 @@ API.Friends.exportToExcel = async (friends) => {
     indicator.setTotal(friends.length);
     // Excel数据
     let ws_data = [
-        ["QQ号", "备注名称", "QQ昵称", "所在分组", "添加时间"],
+        ["QQ号", "备注名称", "QQ昵称", "所在分组", "添加时间", "用户主页", "即时消息"]
     ];
 
     for (const friend of friends) {
-        let rowData = [friend.uin, friend.remark, friend.name, friend.groupName, friend.addFriendTime];
+        // QQ空间超链接
+        const user_qzone_url = { t: 's', v: "QQ空间", l: { Target: API.Common.getUserUrl(friend.uin), Tooltip: "QQ空间" } };
+        // QQ聊天超链接
+        const user_message_url = { t: 's', v: "QQ聊天", l: { Target: API.Common.getMessageUrl(friend.uin), Tooltip: "QQ聊天" } };
+        let rowData = [friend.uin, friend.remark, friend.name, friend.groupName, friend.addFriendTime, user_qzone_url, user_message_url];
         ws_data.push(rowData);
     }
 
@@ -169,7 +187,7 @@ API.Friends.exportToMarkDown = async (friends) => {
         for (const item of groupItems) {
             let nickname = item.remark || item.name;
             contents.push('\r\n');
-            contents.push('- {0}'.format(API.Utils.getUserLink(item.uin, nickname, "MD")));
+            contents.push('- {0}'.format(API.Common.getUserLink(item.uin, nickname, "MD")));
             contents.push('\r\n');
         }
         contents.push('\r\n');

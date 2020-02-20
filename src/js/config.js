@@ -132,7 +132,7 @@ const Default_Config = {
     // QQ好友模块
     Friends: {
         exportType: "Excel",
-        hasAddTime: false
+        hasAddTime: true
     },
     // 收藏夹模块
     Favorites: {
@@ -279,7 +279,7 @@ let Qzone_Config = {
     // QQ好友模块
     Friends: {
         exportType: "Excel",
-        hasAddTime: false
+        hasAddTime: true
     },
     // 收藏夹模块
     Favorites: {

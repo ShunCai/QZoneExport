@@ -252,7 +252,7 @@ API.Favorites.getMarkDownContent = (favorite) => {
                     let _blog_owner_name = API.Utils.formatContent(blog_info.owner_name, "MD");
 
                     // 日志发布人链接
-                    let blog_owner_url = API.Utils.getUserLink(blog_owner_uin, _blog_owner_name, "MD");
+                    let blog_owner_url = API.Common.getUserLink(blog_owner_uin, _blog_owner_name, "MD");
                     // 日志链接
                     target_url = 'https://user.qzone.qq.com/{0}/blog/{1}'.format(blog_owner_uin, blog_info.id);
 
@@ -267,7 +267,7 @@ API.Favorites.getMarkDownContent = (favorite) => {
                     let album_owner_name = API.Utils.formatContent(album_info.owner_name, "MD");
 
                     // 相册创建人链接
-                    let album_owner_url = API.Utils.getUserLink(album_owner_uin, album_owner_name, "MD");
+                    let album_owner_url = API.Common.getUserLink(album_owner_uin, album_owner_name, "MD");
 
                     // 相册链接
                     target_url = 'https://user.qzone.qq.com/{0}/photo/{1}'.format(album_info.owner_uin, album_info.id);

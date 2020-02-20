@@ -530,7 +530,7 @@
 			align: 'center',
 			visible: true,
 			formatter: (value, row, index, field) => {
-				return API.Utils.getUserLink(row.uin, value);
+				return API.Common.getUserLink(row.uin, value);
 			}
 		}, {
 			field: 'htmlContent',
@@ -560,7 +560,7 @@
 			align: 'center',
 			visible: true,
 			formatter: (value, row, index, field) => {
-				return API.Utils.getUserLink(value, value);
+				return API.Common.getUserLink(value, value);
 			}
 		}, {
 			field: 'name',

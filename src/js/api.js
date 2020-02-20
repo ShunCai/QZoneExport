@@ -605,13 +605,6 @@ API.Utils = {
     },
 
     /**
-     * 获取用户空间地址
-     */
-    getUserLink(uin, nickName, type) {
-        return API.Utils.getLink('https://user.qzone.qq.com/' + uin, nickName, type);
-    },
-
-    /**
      * 转换@内容
      * @param {string} contet @内容
      * @param {string} type 转换类型，默认TEXT,可选HTML,MD
@@ -961,9 +954,9 @@ API.Utils = {
 
                 // 删除多余属性
                 delete options.id;
-                delete options.root;
                 delete options.dir;
                 delete options.name;
+                delete options.downloadState;
 
                 chrome.runtime.sendMessage({
                     from: 'content',
@@ -1143,6 +1136,35 @@ API.Common = {
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         }
         return API.Utils.get(QZone_URLS.LIKE_LIST_URL, params);
+    },
+
+    /**
+     * 获取用户空间地址
+     */
+    getUserUrl(uin) {
+        return 'https://user.qzone.qq.com/' + uin;
+    },
+
+    /**
+     * 获取唤起QQ聊天地址
+     * @param {string} uin 目标QQ号
+     */
+    getMessageUrl(uin) {
+        return "tencent://message/?uin=" + uin;
+    },
+
+    /**
+     * 获取用户空间超链接
+     */
+    getUserLink(uin, nickName, type) {
+        return API.Utils.getLink(this.getUserUrl(uin), nickName, type);
+    },
+
+    /**
+     * 获取用户空间超链接
+     */
+    getMessageLink(uin, nickName, type) {
+        return API.Utils.getLink(this.getMessageUrl(uin), nickName, type);
     }
 }
 

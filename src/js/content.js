@@ -40,7 +40,16 @@ class ThunderTask {
     constructor(dir, name, url) {
         this.dir = dir
         this.name = name
-        this.url = url;
+        this.url = url
+        this.downloadState = 'in_progress'
+    }
+
+    /**
+     * 设置下载状态
+     * @param {string} downloadState 下载状态
+     */
+    setState(downloadState) {
+        this.downloadState = downloadState;
     }
 }
 
@@ -101,10 +110,10 @@ class BrowserTask {
     constructor(url, root, folder, name) {
         this.id = 0;
         this.url = url;
-        this.root = root;
         this.dir = folder;
         this.name = name;
         this.filename = root + '/' + folder + '/' + name;
+        this.downloadState = 'in_progress'
     }
 
     /**
@@ -113,6 +122,14 @@ class BrowserTask {
      */
     setId(id) {
         this.id = id
+    }
+
+    /**
+     * 设置下载状态
+     * @param {string} downloadState 下载状态
+     */
+    setState(downloadState) {
+        this.downloadState = downloadState;
     }
 }
 
@@ -277,6 +294,12 @@ const MAX_MSG = {
     Friends: [
         '正在获取QQ好友列表',
         '已获取好友 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Friends_Time: [
+        '正在获取好友添加时间',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
         '请稍后...'
     ],
@@ -826,8 +849,10 @@ class QZoneOperator {
          * @param {string} value 过滤标识
          */
         const filterData = async function (value) {
+            $("#loadingModal").modal({ backdrop: 'static', keyboard: false }).show();
             if (value === 'all') {
                 $("#table").bootstrapTable('filterBy');
+                $("#loadingModal").modal('hide').hide();
                 return;
             }
             switch (downloadType) {
@@ -838,6 +863,11 @@ class QZoneOperator {
                     for (const task of browserTasks) {
                         // 更新下载状态到表格
                         let index = downlist.getIndex(task.id, 'id');
+                        if (index == -1) {
+                            // 根据ID找下载项没找到表示没成功添加到浏览器中
+                            task.downloadState = 'interrupted';
+                            continue;
+                        }
                         let downloadItem = downlist[index];
                         task.downloadState = downloadItem.state;
                     }
@@ -848,6 +878,7 @@ class QZoneOperator {
             $("#table").bootstrapTable('filterBy', {
                 downloadState: value
             })
+            $("#loadingModal").modal('hide').hide();
         }
 
         // 查看指定状态的数据
@@ -875,6 +906,11 @@ class QZoneOperator {
                 case 'Browser':
                     // 下载方式为浏览器下载时
                     for (const task of tasks) {
+                        if (!task.id) {
+                            // 无ID时表示添加到下载器失败，需要重新添加
+                            await API.Utils.downloadByBrowser(task);
+                            return;
+                        }
                         await API.Utils.resumeDownload(task.id);
                     }
                     break;
@@ -1160,9 +1196,13 @@ API.Utils.invokeThunder = async (thunderInfo) => {
         if (_tasks.length > 1) {
             taskGroupName = taskGroupName + "_" + index;
         }
-        let groupTask = new ThunderInfo(taskGroupName, Qzone_Config.Common.downloadThread, list)
+        const _list = JSON.parse(JSON.stringify(list))
+        for (const _temp of _list) {
+            delete _temp.downloadState;
+        }
+        let groupTask = new ThunderInfo(taskGroupName, Qzone_Config.Common.downloadThread, _list)
         API.Utils.downloadByThunder(groupTask);
-        indicator.addSuccess(list);
+        indicator.addSuccess(_list);
         if (index < _tasks.length) {
             let sleep = Qzone_Config.Common.thunderTaskSleep * 1;
             let interId = setInterval(function () {
