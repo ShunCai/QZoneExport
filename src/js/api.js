@@ -916,6 +916,9 @@ API.Utils = {
             // 替换图片代理URL为实际URL
             url = API.Utils.toParams(url)['url'] || url;
         }
+        // 替换相对协议
+        url = url.replace(/^\/\//g, 'https://');
+        // 替换HTTP协议
         url = url.replace(/http:\//, "https:/");
         return url;
     },
@@ -930,6 +933,9 @@ API.Utils = {
             // 替换图片代理URL为实际URL
             url = API.Utils.toParams(url)['url'] || url;
         }
+        // 替换相对协议
+        url = url.replace(/^\/\//g, 'http://');
+        // 替换HTTPS协议
         url = url.replace(/https:\//, "http:/");
         return url;
     },
@@ -956,6 +962,7 @@ API.Utils = {
                 delete options.id;
                 delete options.dir;
                 delete options.name;
+                delete options.source;
                 delete options.downloadState;
 
                 chrome.runtime.sendMessage({
@@ -1085,6 +1092,20 @@ API.Utils = {
             url = url + "?" + d
         }
         return this.trimDownloadUrl(url);
+    },
+
+    /**
+     * 转换查看地址
+     * @param {string} e 
+     */
+    makeViewUrl(url) {
+        url = url.replace("?save=1&d=1", "")
+        url = url.replace("&save=1&d=1", "")
+        url = url.replace("?save=1", "")
+        url = url.replace("&save=1", "")
+        url = url.replace("?d=1", "")
+        url = url.replace("&d=1", "")
+        return url
     }
 };
 
@@ -1092,6 +1113,22 @@ API.Utils = {
  * QQ空间公共模块
  */
 API.Common = {
+
+    /**
+     * 获取来源类型（该判断不严谨）
+     */
+    getSourceType(source) {
+        if (source.tid) {
+            return 'Messages';
+        } else if (source.vid) {
+            return 'Videos';
+        } else if (source.phototype) {
+            return 'Images';
+        } else if (source.blogid) {
+            return 'Blogs';
+        }
+        return 'Others';
+    },
 
     /**
      * 获取用户统计信息
@@ -1846,6 +1883,14 @@ API.Photos = {
     },
 
     /**
+     * 获取查看相片的在线链接
+     * @param {object} photo 相片对象
+     */
+    getImageViewLink(photo) {
+        return 'https://user.qzone.qq.com/{0}/photo/{1}/{2}'.format(QZone.Common.Target.uin, photo.albumId, photo.lloc || photo.sloc);
+    },
+
+    /**
      * 获取相册列表
      * @param {integer} page 当前页
      */
@@ -2035,6 +2080,34 @@ API.Photos = {
             }
         }
         return API.Utils.trimDownloadUrl(url);
+    },
+
+    /**
+     * 获取相片类型
+     * @param {string} photo 相片对象
+     */
+    getPhotoType(photo) {
+        const type = photo.phototype;
+        // 默认类型
+        let extName = ".jpeg";
+        switch (type) {
+            case 1:
+                extName = ".jpeg";
+                break;
+            case 2:
+                extName = ".gif";
+                break;
+            case 3:
+                extName = ".png";
+                break;
+            case 4:
+                extName = ".bmp";
+                break;
+            case 5:
+                extName = ".jpeg";
+                break;
+        }
+        return extName;
     }
 
 };

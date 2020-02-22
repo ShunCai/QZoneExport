@@ -403,19 +403,19 @@ API.Favorites.addMediaToTasks = async (dataList) => {
         // 下载说说配图
         for (const image of item.custom_images) {
             let url = image.url;
-            await API.Utils.addDownloadTasks(image, url, moudel_dir, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(image, url, moudel_dir, item, QZone.Messages.FILE_URLS);
         }
 
         // 下载视频预览图
         for (const video of item.custom_video) {
             let url = video.preview_img;
-            await API.Utils.addDownloadTasks(video, url, moudel_dir, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(video, url, moudel_dir, item, QZone.Messages.FILE_URLS);
         }
 
         // 下载音乐预览图
         for (const audio of item.custom_audio) {
             let url = audio.preview_img;
-            await API.Utils.addDownloadTasks(audio, url, moudel_dir, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(audio, url, moudel_dir, item, QZone.Messages.FILE_URLS);
         }
     }
     return dataList;
