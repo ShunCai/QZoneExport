@@ -273,7 +273,7 @@ API.Diaries.getItemMdContent = async (item) => {
                 let suffix = await API.Utils.autoFileSuffix(url);
                 uid = uid + suffix;
                 // 添加下载任务
-                API.Utils.newDownloadTask(url, moudel_dir, uid);
+                API.Utils.newDownloadTask(url, moudel_dir, uid, item);
                 QZone.Diaries.FILE_URLS.set(url, uid);
             }
             result = result.split(orgUrl).join("../图片/" + uid);

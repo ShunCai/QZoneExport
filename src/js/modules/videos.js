@@ -127,7 +127,7 @@ API.Videos.addDownloadTasks = (videos) => {
     let moudel_dir = '视频';
     for (const video of videos) {
         // 添加下载任务
-        API.Utils.newDownloadTask(video.url, moudel_dir, API.Videos.getFileName(video.url));
+        API.Utils.newDownloadTask(video.url, moudel_dir, API.Videos.getFileName(video.url), video);
     }
 }
 

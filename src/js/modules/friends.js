@@ -77,6 +77,10 @@ API.Friends.getFriendsTime = async (data, friends) => {
             // 不获取好友添加时间则跳过
             continue;
         }
+        if (friend.uin === QZone.Common.Owner.uin) {
+            // 好友号为自己号的跳过
+            continue;
+        }
         let addFriendTime = await API.Friends.getFriendshipTime(friend.uin).then((time_data) => {
             indicator.addSuccess(1);
             time_data = API.Utils.toJson(time_data, /^_Callback\(/);

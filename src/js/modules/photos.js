@@ -522,17 +522,13 @@ API.Photos.addDownloadTasks = async (album, photos) => {
         let albumClass = API.Utils.filenameValidate(photo.albumClass);
         let albumName = API.Utils.filenameValidate(photo.albumName);
         // 获取图片类型
-        let suffix = await API.Utils.autoFileSuffix(url);
-        if (suffix) {
-            indicator.addSuccess(photo);
-        } else {
-            indicator.addFailed(photo);
-        }
+        let suffix = API.Photos.getPhotoType(photo);
+        indicator.addSuccess(photo);
         photo.custom_filename = photo.custom_filename + suffix;
         let fileName = API.Utils.filenameValidate(photo.custom_filename);
 
         // 添加下载任务
-        API.Utils.newDownloadTask(photo.custom_url, moudel_dir + albumClass + '/' + albumName, fileName);
+        API.Utils.newDownloadTask(photo.custom_url, moudel_dir + albumClass + '/' + albumName, fileName, photo);
 
         if (Qzone_Config.Photos.Images.exportType === 'File') {
             // 如果相片导出类型为文件时，则不处理评论的配图// 评论图片
@@ -551,7 +547,7 @@ API.Photos.addDownloadTasks = async (album, photos) => {
                 let suffix = await API.Utils.autoFileSuffix(url);
                 image.custom_filename = image.custom_filename + suffix;
                 // 添加下载任务
-                API.Utils.newDownloadTask(image.custom_url, moudel_dir + albumClass + '/' + albumName + '/评论图片', image.custom_filename);
+                API.Utils.newDownloadTask(image.custom_url, moudel_dir + albumClass + '/' + albumName + '/评论图片', image.custom_filename, photo);
             }
         }
     }
