@@ -1029,12 +1029,6 @@ class QZoneOperator {
                         }
                     }
                 }],
-                onPreBody: function () {
-                    $("#loadingModal").modal('show').show();
-                },
-                onPostBody: function () {
-                    $("#loadingModal").modal('hide').hide();
-                },
                 data: API.Utils.getDownloadTasks()
             })
             $('#table').bootstrapTable('resetView')
@@ -1131,9 +1125,9 @@ API.Utils.addDownloadTasks = async (image, url, moudel_dir, source, FILE_URLS) =
         filename = API.Utils.newSimpleUid(8, 16);
         let suffix = await API.Utils.autoFileSuffix(url);
         filename = filename + suffix;
+        image.custom_mimeType = suffix;
     }
     image.custom_uid = filename;
-    image.custom_mimeType = suffix;
     image.custom_dir = '图片';
     image.custom_filename = filename;
     image.custom_filepath = '图片/' + filename;
