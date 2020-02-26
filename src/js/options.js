@@ -482,7 +482,7 @@
 			visible: true,
 			filterControl: "select",
 			formatter: (value, row, index, field) => {
-				return QZone.Photos.ClassMap[value] || "其他";
+				return QZone.Photos.Class[value] || "其他";
 			}
 		}], QZone.Photos && QZone.Photos.Album || []);
 

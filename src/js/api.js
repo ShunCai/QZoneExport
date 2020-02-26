@@ -42,6 +42,9 @@ const QZone_URLS = {
     /** 相片列表URL */
     IMAGES_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo',
 
+    /** 相片详情URL */
+    IMAGES_INFO_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_floatview_photo_list_v2',
+
     /** 相片评论列表 */
     IMAGES_COMMENTS_URL: 'https://user.qzone.qq.com/proxy/domain/app.photo.qzone.qq.com/cgi-bin/app/cgi_pcomment_xml_v2',
 
@@ -1887,7 +1890,15 @@ API.Photos = {
      * @param {object} photo 相片对象
      */
     getImageViewLink(photo) {
-        return 'https://user.qzone.qq.com/{0}/photo/{1}/{2}'.format(QZone.Common.Target.uin, photo.albumId, photo.lloc || photo.sloc);
+        return 'https://user.qzone.qq.com/{0}/photo/{1}/{2}'.format(QZone.Common.Target.uin, photo.albumId, this.getImageKey(photo));
+    },
+
+    /**
+     * 获取相片Key
+     * @param {object} photo 相片对象
+     */
+    getImageKey(photo) {
+        return photo.lloc || photo.sloc;
     },
 
     /**
@@ -1985,6 +1996,43 @@ API.Photos = {
             "_": Date.now()
         };
         return API.Utils.get(QZone_URLS.IMAGES_LIST_URL, params);
+    },
+
+
+    /**
+     * 获取相片详情
+     * @param {string} topicId 相册ID
+     * @param {integer} picKey 相片ID
+     */
+    getImageInfo(topicId, picKey) {
+        let params = {
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "t": String(Math.random().toFixed(16)).slice(-9).replace(/^0/, '9'),
+            "topicId": topicId,
+            "picKey": picKey,
+            "shootTime": "",
+            "cmtOrder": 1,
+            "fupdate": 1,
+            "plat": "qzone",
+            "source": "qzone",
+            "cmtNum": 10,
+            "likeNum": 5,
+            "inCharset": "utf-8",
+            "outCharset": "utf-8",
+            "offset": 0,// 偏移量
+            "number": 40,
+            "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
+            "hostUin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "appid": 4,
+            "isFirst": 1,
+            "sortOrder": 1,
+            "showMode": 1,
+            "need_private_comment": 1,
+            "prevNum": 0,// 前序的照片数量
+            "postNum": 0,// 后续的照片数量
+            "_": Date.now()
+        }
+        return API.Utils.get(QZone_URLS.IMAGES_INFO_URL, params);
     },
 
     /**
@@ -2108,6 +2156,21 @@ API.Photos = {
                 break;
         }
         return extName;
+    },
+
+    /**
+     * 获取已用容量显示值
+     * @param {Number} t 已用容量
+     */
+    getCapacityDisplay(t) {
+        t = t > 0 ? t : 0;
+        if (t < 100) {
+            return t + "M"
+        } else if (t < 1024 * 1024) {
+            return Math.round(t / 1024 * 10) / 10 + "G"
+        } else {
+            return Math.round(t / 1024 / 1024 * 10) / 10 + "T"
+        }
     }
 
 };

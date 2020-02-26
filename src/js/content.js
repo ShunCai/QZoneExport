@@ -239,6 +239,13 @@ const MAX_MSG = {
         '总共 <span style="color: #1ca5fc;">{total}</span> 张',
         '请稍后...'
     ],
+    Photos_Images_Info: [
+        '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片详情',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 张',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 张',
+        '请稍后...'
+    ],
     Photos_Images_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 张相片的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
@@ -961,7 +968,7 @@ class QZoneOperator {
                 searchAlign: 'right',
                 height: "450",
                 pagination: true,
-                pageList: [10, 25, 50, 100, 200, 'All'],
+                pageList: "[10, 20, 50, 100, 200, 500, 1000, 2000, 5000, All]",
                 paginationHAlign: 'left',
                 clickToSelect: true,
                 paginationDetailHAlign: 'right',

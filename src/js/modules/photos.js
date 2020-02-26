@@ -24,10 +24,16 @@ API.Photos.export = async () => {
         let imagesMapping = await API.Photos.getAllAlbumImageList(albumList);
         console.info('获取所有相册的所有相片列表完成', imagesMapping);
 
+        // 获取所有相片的详情
+        albumList = await API.Photos.getAllImagesInfos(albumList);
+
         // 获取相片的评论列表
         let images = API.Photos.toImages(imagesMapping);
         images = await API.Photos.getAllImagesComments(images);
         console.info('获取所有相册的所有相片的评论列表完成', images);
+
+        // 添加相片下载任务
+        await API.Photos.addAlbumsDownloadTasks(albumList);
 
         // 根据导出类型导出数据    
         await API.Photos.exportAllListToFiles(albumList);
@@ -47,6 +53,58 @@ API.Photos.toImages = (imagesMapping) => {
         allImages = allImages.concat(obj.Data || []);
     }
     return allImages;
+}
+
+/**
+ * 获取所有相片的详情
+ * @param {Array} albumList 相册列表
+ */
+API.Photos.getAllImagesInfos = async (albumList) => {
+    console.info('获取所有相片的详情开始', albumList);
+
+    for (let album of albumList) {
+
+        // 进度更新器
+        let indicator = new StatusIndicator('Photos_Images_Info');
+
+        // 开始
+        indicator.print();
+
+        // 设置当前相册
+        indicator.setIndex(album.name);
+
+        let photos = album.photoList || [];
+
+        // 设置总数
+        indicator.setTotal(photos.length);
+
+        for (let photo of photos) {
+
+            // 更新获取进度
+            indicator.addDownload(photo);
+
+            let picKey = API.Photos.getImageKey(photo);
+            let data = await API.Photos.getImageInfo(album.id, picKey);
+            // 去掉函数，保留json
+            data = API.Utils.toJson(data, /^_Callback\(/);
+            data = data.data.photos || [];
+            if (!data || data.length < 0) {
+                continue;
+            }
+
+            // 拷贝覆盖属性到photo
+            Object.assign(photo, data[0])
+
+            // 更新获取进度
+            indicator.addSuccess(photo);
+        }
+
+        // 完成
+        indicator.complete();
+    }
+
+    console.info('获取所有相片的详情完成', albumList);
+    return albumList;
 }
 
 /**
@@ -76,12 +134,6 @@ API.Photos.getAlbumPageList = async (pageIndex, indicator) => {
         indicator.setTotal(QZone.Photos.Album.total);
 
         let dataList = data.albumList || [];
-
-        // 相片分类信息
-        let classList = data.classList || [];
-        for (const cls of classList) {
-            QZone.Photos.Class[cls.id] = cls.name;
-        }
 
         //  更新获取成功数据
         indicator.addSuccess(dataList);
@@ -263,9 +315,6 @@ API.Photos.getAlbumImageAllList = async (item) => {
         photo.albumClassId = item.classid;
         photo.albumClass = item.className || QZone.Photos.Class[item.classid] || '其他';
     }
-
-    // 添加下载任务
-    await API.Photos.addDownloadTasks(item, dataList);
 
     // 完成
     indicator.complete();
@@ -476,13 +525,26 @@ API.Photos.getAllImagesComments = async (items) => {
     return items;
 }
 
+
 /**
- * 添加相片下载任务
+ * 添加所有相册的相片下载任务
+ * @param {object} albums 相册列表
+ */
+API.Photos.addAlbumsDownloadTasks = async (albums) => {
+    for (const album of albums) {
+        let photos = album.photoList || [];
+        // 添加下载任务
+        await API.Photos.addAlbumDownloadTasks(album, photos);
+    }
+}
+
+/**
+ * 添加单个相册的相片下载任务
  * @param {object} album 相册对象
  * @param {Array} photos 相片列表
  * @param {StatusIndicator} indicator 进度更新器
  */
-API.Photos.addDownloadTasks = async (album, photos) => {
+API.Photos.addAlbumDownloadTasks = async (album, photos) => {
     let exportType = Qzone_Config.Photos.Images.exportType;
     if (exportType === 'JSON') {
         // JSON文件导出时，不需要添加下载任务
