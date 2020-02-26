@@ -84,19 +84,20 @@ API.Photos.getAllImagesInfos = async (albumList) => {
             indicator.addDownload(photo);
 
             let picKey = API.Photos.getImageKey(photo);
-            let data = await API.Photos.getImageInfo(album.id, picKey);
-            // 去掉函数，保留json
-            data = API.Utils.toJson(data, /^_Callback\(/);
-            data = data.data.photos || [];
-            if (!data || data.length < 0) {
-                continue;
-            }
+            await API.Photos.getImageInfo(album.id, picKey).then((data) => {
+                // 去掉函数，保留json
+                data = API.Utils.toJson(data, /^_Callback\(/);
+                data = data.data.photos || [];
+                // 拷贝覆盖属性到photo
+                Object.assign(photo, data[0])
 
-            // 拷贝覆盖属性到photo
-            Object.assign(photo, data[0])
-
-            // 更新获取进度
-            indicator.addSuccess(photo);
+                // 更新获取进度
+                indicator.addSuccess(photo);
+            }).catch((error) => {
+                console.error('获取相片详情异常', photo, error);
+                // 更新获取进度
+                indicator.addFailed(photo);
+            });
         }
 
         // 完成
