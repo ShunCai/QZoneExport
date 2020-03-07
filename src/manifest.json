@@ -32,8 +32,6 @@
                 "vendor/FileSaver/FileSaver.min.js",
                 "vendor/ponyfill/ponyfill.min.js",
                 "vendor/blob/Blob.js",
-                "vendor/StreamSaver/StreamSaver.js",
-                "vendor/StreamSaver/zip-stream.js",
                 "vendor/sheetjs/xlsx.full.min.js",
                 "js/utils.js",
                 "js/config.js",

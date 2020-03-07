@@ -1,0 +1,9 @@
+table{
+    table-layout:fixed;
+}
+
+table td{
+    overflow: hidden;
+    text-overflow:ellipsis;
+    white-space: nowrap;
+}

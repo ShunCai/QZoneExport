@@ -654,7 +654,7 @@ class QZoneOperator {
                 break;
             case OperatorType.FILE_LIST:
                 // 保存数据
-                chrome.storage.sync.set(QZone, function () {
+                chrome.storage.local.set(QZone, function () {
                     console.info("保存数据完成", QZone);
                 });
                 // 下载文件

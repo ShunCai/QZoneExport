@@ -717,7 +717,7 @@ API.Utils = {
     formatContent(item, type, isRt) {
         if (typeof item === 'string') {
             // 转换特殊符号
-            item = API.Utils.escHTML(item);
+            //item = API.Utils.escHTML(item);
             // 转换话题
             item = API.Utils.formatTopic(item, type);
             // 转换表情
@@ -736,7 +736,7 @@ API.Utils = {
                 case 0:
                     info.custom_url = "http://user.qzone.qq.com/{uin}".format(info);
                     // 转换特殊符号
-                    info.custom_display = API.Utils.escHTML(info.nick);
+                    //info.custom_display = API.Utils.escHTML(info.nick);
                     // 转换表情
                     info.custom_display = API.Utils.formatEmoticon(info.custom_display, type);
                     // 转换@内容
@@ -1756,7 +1756,7 @@ API.Messages = {
      */
     getVideoUrl(video) {
         // URL3个人相册视频？
-        let url = video.url3;
+        let url = video.url3 || video.url;
         if (video.source_type == "share") {
             // 分享视频连接？
             url = video.rt_url;
