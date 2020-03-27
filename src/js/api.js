@@ -2165,11 +2165,11 @@ API.Photos = {
     getCapacityDisplay(t) {
         t = t > 0 ? t : 0;
         if (t < 100) {
-            return t + "M"
+            return t + " M"
         } else if (t < 1024 * 1024) {
-            return Math.round(t / 1024 * 10) / 10 + "G"
+            return Math.round(t / 1024 * 10) / 10 + " G"
         } else {
-            return Math.round(t / 1024 / 1024 * 10) / 10 + "T"
+            return Math.round(t / 1024 / 1024 * 10) / 10 + " T"
         }
     }
 

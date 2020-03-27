@@ -60,6 +60,13 @@ API.Photos.toImages = (imagesMapping) => {
  * @param {Array} albumList 相册列表
  */
 API.Photos.getAllImagesInfos = async (albumList) => {
+    // 是否为当前用户
+    const isOwner = QZone.Common.Owner.uin == QZone.Common.Target.uin;
+    if(isOwner){
+        // 如果是个人模式，则不需要获取相片详情
+        return albumList;
+    }
+
     console.info('获取所有相片的详情开始', albumList);
 
     for (let album of albumList) {

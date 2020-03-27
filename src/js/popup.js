@@ -45,6 +45,27 @@
     }
 
     // 获取相册列表
+    const initAlbumInfo = () => {
+        sendMessage({
+            from: 'popup',
+            subject: 'initAlbumInfo'
+        }, (data) => {
+            console.info('获取相册信息完成：', data);
+            const $album_tips = $("#album_tips");
+            const $photos = $("#Photos");
+            if ($photos.prop('checked')) {
+                $album_tips.show();
+                $album_tips.html('目标相册已用容量：{0}'.format(data.data.user.capacity));
+                if (data.data.user.diskused > 1000) {
+                    $album_tips.append('<br>建议使用【浏览器】或【迅雷】下载方式！');
+                }
+            } else {
+                $album_tips.hide();
+            }
+        });
+    }
+
+    // 获取相册列表
     const getAlbumList = () => {
         sendMessage({
             from: 'popup',
@@ -130,6 +151,8 @@
         checkDiaries();
         // 获取相册列表
         getAlbumList();
+        // 获取相册信息
+        initAlbumInfo();
     });
 
     // 私密日志独立密码提示
@@ -145,6 +168,7 @@
         } else {
             $export_albums_div.hide();
         }
+        initAlbumInfo();
     });
     $("#Photos").change();
 

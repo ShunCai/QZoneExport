@@ -1091,6 +1091,15 @@ const browserTasks = new Array();
                             // 获取上次勾选的模块
                             port.postMessage(QZone.Common.ExportType);
                             break;
+                        case 'initAlbumInfo':
+                            // 获取相册信息
+                            API.Photos.getAlbums(0).then((data) => {
+                                // 去掉函数，保留json
+                                data = API.Utils.toJson(data, /^shine0_Callback\(/);
+                                data.data.user.capacity = API.Photos.getCapacityDisplay(data.data.user.diskused);
+                                port.postMessage(data);
+                            });
+                            break;
                         case 'getAlbumList':
                             // 获取相册列表
                             API.Photos.getAllAlbumList().then((data) => {
