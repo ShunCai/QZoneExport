@@ -674,6 +674,7 @@ API.Photos.exportPhotosMdToFiles = async (albums) => {
         for (const item of albums) {
             let clsName = item.className || QZone.Photos.Class[item.classid] || '其他';
             if (name !== clsName) {
+                // 过滤非当前分类的相册
                 continue;
             }
             let albumName = item.name;
@@ -763,6 +764,11 @@ API.Photos.exportImagesJsonToFile = async (albums) => {
         let categoryName = photoCls[key] || '其他';
         categoryName = API.Utils.filenameValidate(categoryName);
         for (const album of albums) {
+            let clsName = album.className || QZone.Photos.Class[album.classid] || '其他';
+            if (categoryName !== clsName) {
+                // 过滤非当前分类的相册
+                continue;
+            }
             let albumName = API.Utils.filenameValidate(album.name);
             const photos = album.photoList || [];
             let indicator = new StatusIndicator('Photos_Images_Export');

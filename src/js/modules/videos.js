@@ -36,13 +36,13 @@ API.Videos.getPageList = async (pageIndex, indicator) => {
     return await API.Videos.getVideos(pageIndex).then(data => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^shine0_Callback\(/);
-        data = data.data;
+        data = data.data || {};
 
         console.debug("成功获取视频列表，当前页：", pageIndex + 1, data);
 
         // 更新总数
         QZone.Videos.total = data.total || 0;
-        indicator.setTotal(data.total);
+        indicator.setTotal(QZone.Videos.total);
 
         let dataList = data.Videos || [];
 

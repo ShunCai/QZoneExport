@@ -43,7 +43,7 @@ API.Boards.getPageList = async (pageIndex, indicator) => {
 
         // 更新总数
         QZone.Boards.total = data.total || 0;
-        indicator.setTotal(data.total);
+        indicator.setTotal(QZone.Boards.total);
 
         let dataList = data.commentList || [];
 
