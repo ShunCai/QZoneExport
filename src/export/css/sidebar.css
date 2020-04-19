@@ -1,4 +1,5 @@
 /*markdown_box*/
+
 .html_header {
     display: block;
     height: 60px;
@@ -40,7 +41,6 @@
         margin: 40px 40px 40px 250px;
         padding: 20px 40px;
     }
-
     .BlogAnchor {
         width: 210px !important
     }
@@ -51,7 +51,6 @@
         margin: 30px 30px 30px 230px;
         padding: 20px 40px;
     }
-
     .BlogAnchor {
         width: 200px !important
     }
@@ -71,15 +70,12 @@
         font-size: 15px;
         line-height: 170%
     }
-
     .BlogAnchor {
         width: 180px !important
     }
-
     .html_header span::before {
         margin-left: 0
     }
-
     .html_header span::after {
         font-size: 15px;
     }
@@ -92,22 +88,19 @@
         font-size: 14px;
         line-height: 160%
     }
-
     .BlogAnchor {
         display: none;
     }
-
     h2 {
         font-size: 28px;
     }
-
     h3 {
         font-size: 22px;
     }
 }
 
-
 /*scroll_style*/
+
 .AnchorContent {
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -117,7 +110,7 @@
 .AnchorContent::-webkit-scrollbar {
     width: 6px;
     height: 10px;
-    background-color: rgba(0,0,0,0) !important;
+    background-color: rgba(0, 0, 0, 0) !important;
     position: absolute;
     right: 10px
 }
@@ -125,7 +118,7 @@
 .AnchorContent::-webkit-scrollbar-track {
     -webkit-box-shadow: none;
     border-radius: 0;
-    background-color: rgba(0,0,0,0) !important
+    background-color: rgba(0, 0, 0, 0) !important
 }
 
 .AnchorContent::-webkit-scrollbar-thumb {
@@ -148,11 +141,11 @@
     background-color: #c0c2c4 !important
 }
 
-
 /*导航*/
+
 .BlogAnchor {
     background: #fff;
-    padding: 10px 0;
+    /* padding: 10px 0; */
     line-height: 180%;
     position: fixed;
     height: 100%;
@@ -200,7 +193,7 @@
 
 .BlogAnchor li .nav_item.current {
     color: #087cd2;
-    background-color: rgba(238,242,249,.8);
+    background-color: rgba(238, 242, 249, .8);
     border-left: 4px solid #087cd2;
     text-indent: 20px;
     font-weight: bold;
@@ -212,14 +205,14 @@
     color: #FFF;
     display: inline-block;
     line-height: 20px;
-    background: rgb(7,196,189);
+    background: rgb(7, 196, 189);
     font-style: normal;
     padding: 1px 8px;
 }
 
 .BlogAnchor a:hover {
     color: #087cd2;
-    background: rgba(238,242,249,.5);
+    background: rgba(238, 242, 249, .5);
 }
 
 .BlogAnchor a {

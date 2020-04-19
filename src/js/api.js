@@ -4,7 +4,10 @@
 const QZone_URLS = {
 
     /** 个人统计 */
-    MAIN_INFO_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/main_page_cgi",
+    USER_COUNT_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/main_page_cgi",
+
+    /** 个人信息 */
+    USER_INFO_URL: "https://h5.qzone.qq.com/proxy/domain/base.qzone.qq.com/cgi-bin/user/cgi_userinfo_get_all",
 
     /** 说说列表URL */
     MESSAGES_LIST_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6",
@@ -14,6 +17,9 @@ const QZone_URLS = {
 
     /** 说说评论列表URL */
     MESSAGES_COMMONTS_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msgdetail_v6",
+
+    /** 语音详情URL */
+    MESSAGES_VOICE_INFO_URL: "https://h5.qzone.qq.com/proxy/domain/snsapp.qzone.qq.com/cgi-bin/sound/GetVoice",
 
     /** 日志列表URL */
     BLOGS_LIST_URL: "https://user.qzone.qq.com/proxy/domain/b.qzone.qq.com/cgi-bin/blognew/get_abs",
@@ -80,7 +86,16 @@ const QZone_URLS = {
 };
 
 var API = {
-
+    Utils: {},  // 工具类
+    Common: {}, // 公共模块
+    Blogs: {},  // 日志模块
+    Diaries: {},// 日记模块
+    Friends: {},// 好友模块
+    Messages: {},// 说说模块
+    Boards: {},// 留言模块
+    Photos: {},// 相册模块
+    Videos: {},// 视频模块
+    Favorites: {}// 收藏模块
 };
 
 /**
@@ -124,6 +139,23 @@ API.Utils = {
             monthTempData.push(item);
             yearTempData.set(date.getMonth() + 1, monthTempData);
             groupData.set(date.getFullYear(), yearTempData);
+        }
+        return groupData;
+    },
+
+    /**
+     * 根据指定字段分组
+     * @param {array} data 数据集合
+     * @param {string} field 字段名
+     */
+    groupedByField(data, field) {
+        data = data || [];
+        const groupData = new Map();
+        for (const item of data) {
+            const targetVal = item[field];
+            const targetList = groupData.get(targetVal) || [];
+            targetList.push(item);
+            groupData.set(targetVal, targetList);
         }
         return groupData;
     },
@@ -192,8 +224,9 @@ API.Utils = {
         if (!Qzone_Config.Common.isAutoFileSuffix) {
             return '';
         }
+        // 转换HTTPS
         url = API.Utils.makeDownloadUrl(url, true);
-        return API.Utils.getFileSuffix(url);
+        return API.Utils.getFileSuffix(this.toHttps(url));
     },
 
     /**
@@ -381,19 +414,8 @@ API.Utils = {
      * @param {string} name 
      */
     getUrlParam(name) {
-        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
-        var r = window.location.search.substr(1).match(reg);
-        if (r != null) return decodeURI(r[2]); return null;
-    },
-
-    /**
-     * 获取URL参数值
-     * @param {string} url 
-     * @param {string} name 
-     */
-    getUrlParam(url, name) {
-        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
-        var r = url.search.substr(1).match(reg);
+        const reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        const r = window.location.search.substr(1).match(reg);
         if (r != null) return decodeURI(r[2]); return null;
     },
 
@@ -664,26 +686,6 @@ API.Utils = {
     },
 
     /**
-     * 替换URL链接
-     * @param {string} contet URL
-     * @param {string} type 转换类型，默认TEXT,可选HTML,MD
-     */
-    urlFormat(contet, type) {
-        if (!contet) {
-            return contet;
-        }
-
-        return contet = contet.replace(/(https|http|ftp|rtsp|mms)?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*/g, function (url) {
-            switch (type) {
-                case 'MD':
-                    url = '[网页链接](' + url + ')';
-                    break;
-            }
-            return url;
-        })
-    },
-
-    /**
      * 转换HTML特殊字符
      */
     escHTML(content) {
@@ -713,11 +715,16 @@ API.Utils = {
      * @param {string} contet @内容
      * @param {string} type 转换类型，默认TEXT,可选HTML,MD
      * @param {boolean} isRt 是否是处理转发内容
+     * @param {boolean} hasHtml 内容本身是否支持HTML
      */
-    formatContent(item, type, isRt) {
+    formatContent(item, type, isRt, hasHtml) {
         if (typeof item === 'string') {
             // 转换特殊符号
-            //item = API.Utils.escHTML(item);
+            if (!hasHtml) {
+                item = API.Utils.escHTML(item);
+            }
+            // 转换超链接
+            // item = API.Utils.formatLink(item, type);
             // 转换话题
             item = API.Utils.formatTopic(item, type);
             // 转换表情
@@ -736,7 +743,9 @@ API.Utils = {
                 case 0:
                     info.custom_url = "http://user.qzone.qq.com/{uin}".format(info);
                     // 转换特殊符号
-                    //info.custom_display = API.Utils.escHTML(info.nick);
+                    info.custom_display = API.Utils.escHTML(info.nick);
+                    // 转换话题
+                    info.custom_display = API.Utils.formatTopic(info.con, type);
                     // 转换表情
                     info.custom_display = API.Utils.formatEmoticon(info.custom_display, type);
                     // 转换@内容
@@ -766,13 +775,17 @@ API.Utils = {
                         info.custom_display = API.Utils.formatTopic(info.con, type);
                         // 转换表情
                         info.custom_display = API.Utils.formatEmoticon(info.custom_display, type);
+                        // 转换@内容
+                        info.custom_display = API.Utils.formatMention({
+                            uin: info.uin || '',
+                            name: info.custom_display
+                        }, type);
                         // 替换换行符
                         switch (type) {
                             case 'MD':
                                 info.custom_display = info.custom_display.replaceAll('\n', '\r\r\r\n');
                                 break;
                             default:
-                                info.custom_display = info.custom_display.replaceAll('\n', '<br>');
                                 break;
                         }
                         // 添加到内容数组
@@ -860,23 +873,50 @@ API.Utils = {
     },
 
     /**
+     * 转换超链接
+     * @param {string} content 内容
+     * @param {string} type 转换类型，默认HTML,MD
+     */
+    formatLink(content, type) {
+        return content.replace(/(https|http|ftp|rtsp|mms)?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*/g, function (e, t, i) {
+            return API.Utils.getLink(e, '网页链接', type);
+        })
+    },
+
+    /**
      * 转换话题
      * @param {string} content 内容
      * @param {string} type 转换类型，默认HTML,MD
      */
     formatTopic(content, type) {
-        return content.replace(/^(?!&)#((?:.|<br\/>)+?)(?!&)#/gi, function (t, e) {
-            let url = 'http://rc.qzone.qq.com/qzonesoso/?search=' + encodeURIComponent(e);
-            let res = '<a href="{0}" target="_blank">{1}</a>'.format(url, API.Utils.escHTML(t));
-            switch (type) {
-                case 'MD':
-                    res = API.Utils.getLink(url, t, type);
-                    break;
-                default:
-                    break;
+        content = (content || "") + "";
+        var t = content.split(/(#(?:.|<br\/>)+?#)/g);
+        var o = false;
+        var n = ""
+            , res = "";
+        for (var a = 0; a < t.length; a++) {
+            tag = t[a];
+            o = false;
+            n = "";
+            n = tag.replace(/#((?:.|<br\/>)+?)#/g, function (e, t, n) {
+                o = true;
+                let url = 'http://rc.qzone.qq.com/qzonesoso/?search=' + encodeURIComponent(t);
+                var a = API.Utils.getLink(url, '#{0}#'.format(t));
+                switch (type) {
+                    case 'MD':
+                        a = API.Utils.getLink(url, '#{0}#'.format(t), type);
+                        break;
+                    default:
+                        break;
+                }
+                return a
+            });
+            if (!o) {
+                n = tag;
             }
-            return res;
-        });
+            res += n
+        }
+        return res;
     },
 
     /**
@@ -1143,7 +1183,22 @@ API.Common = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         }
-        return API.Utils.get(QZone_URLS.MAIN_INFO_URL, params);
+        return API.Utils.get(QZone_URLS.USER_COUNT_URL, params);
+    },
+
+    /**
+     * 获取用户信息
+     */
+    getUserInfos() {
+        let params = {
+            "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "vuin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
+            "fupdate": 1,
+            "rd": Math.random(),
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        return API.Utils.get(QZone_URLS.USER_INFO_URL, params);
     },
 
     /**
@@ -1502,73 +1557,50 @@ API.Messages = {
     /**
      * 转换数据
      * @param pageIndex 需要转换的数据
-     * @param data 需要转换的数据
+     * @param items 需要转换的数据
      * @param onprocess 获取评论进度回调函数
      */
-    convert(data) {
-        data = data || [];
-        for (let index = 0; index < data.length; index++) {
-
-            let item = data[index];
-            item.index = index;
-
-            // ID
-            item.custom_id = item.tid;
-            item.custom_owner = {
-                uin: item.uin,
-                name: item.name
-            }
+    convert(items) {
+        items = items || [];
+        for (const item of items) {
             // 内容
             item.custom_content = item.content;
+            item.conlist = item.conlist || [];
+
             // 评论
+            item.commenttotal = API.Utils.getCommentCount(item);
             item.custom_comments = item.commentlist || [];
-            // 评论数
-            item.custom_comment_total = API.Utils.getCommentCount(item);
+
             // 配图
+            item.imagetotal = item.pictotal || 0;
             item.custom_images = item.pic || [];
-            // 配图数
-            item.custom_image_total = item.pictotal || 0;
+
+            // 语音
+            item.voicetotal = item.voicetotal || 0;
+            item.custom_voices = item.voice || [];
+
             // 音乐
-            item.custom_audio = item.audio || [];
-            // 音乐数，一般没有或一条
-            item.custom_audio_total = item.audiototal || 0;
+            item.audiototal = item.audiototal || 0;
+            item.custom_audios = item.audio || [];
+
             // 视频
-            item.custom_video = item.video || [];
-            for (let index = 0; index < item.custom_video.length; index++) {
-                let video = item.custom_video[index];
+            item.videototal = item.videototal || 0;
+            item.custom_videos = item.video || [];
+            for (const video of item.custom_videos) {
                 // 处理异常数据的视频URL
                 video.video_id = video.video_id || '';
                 video.video_id = video.video_id.replace("http://v.qq.com/", "");
             }
-            // 视频数
-            item.custom_video_total = item.videototal || 0;
+
+            // 投票
+            
             // 位置
-            item.custom_location = {
-                id: item.lbs['id'] || '',
-                idname: item.lbs['idname'] || '',
-                name: item.lbs['name'] || '',
-                pos_x: item.lbs['pos_x'] || '',
-                pos_y: item.lbs['pos_y'] || ''
-            };
-            // 来源说说，一般为转发说说
-            // 转发的说说
-            item.custom_original = {
-                data: item.rt_con,
-                uin: item.rt_uin || '',
-                nickname: item.rt_uinname || ''
-            };
-            // 来源
-            item.custom_source = {
-                id: item.source_appid,
-                name: item.source_name,
-                url: item.source_url,
-            };
-            // 转发数量
-            item.custom_forward_total = item.fwdnum || 0;
+            item.lbs = item.lbs || {};
+
             // 创建时间
             item.custom_create_time = API.Utils.formatDate(item.created_time);
         }
-        return data;
+        return items;
     },
 
     /**
@@ -1615,7 +1647,6 @@ API.Messages = {
         return API.Utils.get(QZone_URLS.MESSAGES_DETAIL_URL, params);
     },
 
-
     /**
      * 获取说说评论列表
      * @param {integer} page 第几页
@@ -1640,14 +1671,91 @@ API.Messages = {
     },
 
     /**
+     * 获取说说语音的实际地址
+     * @param {Object} voice 语音信息
+     */
+    getVoiceInfo(voice) {
+        const params = API.Utils.toParams(voice.url);
+        return API.Utils.get(QZone_URLS.MESSAGES_VOICE_INFO_URL, params);
+    },
+
+    /**
+     * 转换说说多媒体内容（HTML）
+     * @param {Object} item 说说
+     */
+    formatMediaHTML(item) {
+        // 转换视频
+        // 转换图片
+        // 转换特殊表情
+        // 转换音乐
+        // 转换附件（已废弃）
+        // 转换投票（无新入口）
+    },
+
+    /**
+     * 获取语音内容（HTML）
+     * @param {Object} item 说说
+     */
+    getVoiceHTML(item) {
+    },
+
+    /**
+     * 获取视频内容（HTML）
+     * @param {Object} item 说说
+     */
+    getVideoThumbHTML(item) {
+
+    },
+
+    /**
+     * 获取图片内容（HTML）
+     * @param {Object} item 说说
+     */
+    getPhotoThumbHTML(item) {
+
+    },
+
+    /**
+     * 获取音乐内容（HTML）
+     * @param {Object} item 说说
+     */
+    getMusicThumbHTML(item) {
+
+    },
+
+    /**
+     * 获取特殊表情内容（HTML）
+     * @param {Object} item 说说
+     */
+    getMagicHTML(item) {
+
+    },
+
+    /**
+     * 获取投票内容（HTML）
+     * @param {Object} item 说说
+     */
+    getVoteHTML(item) {
+
+    },
+
+    /**
+     * 获取附件内容（HTML）
+     * @param {Object} item 说说
+     */
+    getAttachHTML(item) {
+
+    },
+
+    /**
      * 转换多媒体内容
      */
-    formatMedia(item) {
+    formatMediaMarkdown(item) {
         let downloadType = Qzone_Config.Common.downloadType;
         let isQzoneUrl = downloadType === 'QZone';
         let images = item.custom_images || [];
-        let videos = item.custom_video || [];
-        let audios = item.custom_audio || [];
+        let videos = item.custom_videos || [];
+        let audios = item.custom_audios || [];
         let result = [];
         if (images.length > 0) {
             // 说说配图
@@ -1719,7 +1827,8 @@ API.Messages = {
                 }
                 result.push('\r\n\r\n');
             }
-        } else if (videos.length > 0) {
+        }
+        if (videos.length > 0) {
             // 视频
             for (let index = 0; index < videos.length; index++) {
                 const video = videos[index];
@@ -1729,20 +1838,16 @@ API.Messages = {
                 result.push('[![点击查看视频]({0})]({1})\n'.format(filepath, url));
                 result.push('\r\n\r\n');
             }
-        } else if (audios.length > 0) {
+        }
+        if (audios.length > 0) {
             // 歌曲
             for (let index = 0; index < audios.length; index++) {
                 const audio = audios[index];
                 result.push('\r\n\r\n');
-                let albumname = audio.albumname;
-                let singername = audio.singername;
-                let custom_url = audio.custom_url;
-                let playurl = audio.playurl;
                 if (isQzoneUrl) {
-                    result.push('[![{0}-{1}]({2})]({3})\n'.format(albumname, singername, custom_url, playurl));
+                    result.push('[![{0}-{1}]({2})]({3})\n'.format(audio.albumname, audio.singername, audio.custom_url, audio.playurl));
                 } else {
-                    custom_url = audio.custom_filepath;
-                    result.push('[![{0}-{1}]({2})]({3})\n'.format(albumname, singername, custom_url, playurl));
+                    result.push('[![{0}-{1}]({2})]({3})\n'.format(audio.albumname, audio.singername, audio.custom_filepath, audio.playurl));
                 }
                 result.push('\r\n\r\n');
             }
@@ -1811,8 +1916,8 @@ API.Boards = {
      * @param {object} board 留言对象
      */
     getOwner(board) {
-        let nickname = QZone.Common.Owner.uin == board.uin ? "我" : (board.nickname || board.nick);
-        nickname = nickname || '匿名用户';
+        let nickname = board.nickname || board.nick;
+        nickname = nickname || '神秘者';
         return nickname;
     }
 };
@@ -2221,8 +2326,6 @@ API.Videos = {
     }
 };
 
-
-
 /**
  * 收藏夹模块API
  */
@@ -2254,7 +2357,7 @@ API.Favorites = {
         let Fav_Tyep = {
             0: "全部",
             1: "网页",
-            2: "本地图片",
+            2: "照片",
             3: "日志",
             4: "照片",
             5: "说说",
@@ -2263,6 +2366,49 @@ API.Favorites = {
             8: "未知"
         }
         return Fav_Tyep[innerType] || "未知";
+    },
+
+    /**
+     * 获取收藏源用户
+     * @param {Object} favorite 收藏夹
+     */
+    getFavoriteOwner(favorite) {
+        const user = {
+            uin: favorite.custom_uin,
+            name: favorite.custom_name
+        };
+        switch (favorite.type) {
+            case 3:
+                // 日志                    
+                user.uin = favorite.blog_info && favorite.blog_info.owner_uin;
+                user.name = favorite.blog_info && favorite.blog_info.owner_name;
+                break;
+            case 4:
+                if (favorite.album_info && favorite.album_info.owner_uin) {
+                    // 相册收藏？暂无数据
+                    user.uin = favorite.album_info.owner_uin;
+                    user.name = favorite.album_info.owner_name;
+                } else {
+                    // 照片收藏
+                    user.uin = favorite.photo_list && favorite.photo_list[0].owner_uin;
+                    user.name = favorite.photo_list && favorite.photo_list[0].owner_name;
+                }
+                break;
+            case 5:
+                // 说说
+                user.uin = favorite.shuoshuo_info && favorite.shuoshuo_info.owner_uin;
+                user.name = favorite.shuoshuo_info && favorite.shuoshuo_info.owner_name;
+                break;
+            case 7:
+                // 分享
+                user.uin = favorite.share_info && favorite.share_info.owner_uin;
+                user.name = favorite.share_info && favorite.share_info.owner_name;
+                break;
+            default:
+                break;
+        }
+        console.dir(user);
+        return user;
     },
 
     /**
@@ -2288,10 +2434,10 @@ API.Favorites = {
             temp.custom_origin_images = temp.origin_img_list || [];
             // 多媒体-视频
             temp.source_info.video_list = [];
-            temp.custom_video = [];
+            temp.custom_videos = [];
             // 多媒体-歌曲
             temp.source_info.music_list = [];
-            temp.custom_audio = [];
+            temp.custom_audios = [];
             switch (temp.type) {
                 case 1:
                     // 网页                   
@@ -2351,11 +2497,11 @@ API.Favorites = {
             }
             // 视频
             for (const video of temp.source_info.video_list) {
-                temp.custom_video.push(video.video_info);
+                temp.custom_videos.push(video.video_info);
             }
             // 歌曲
             for (const music of temp.source_info.music_list) {
-                temp.custom_audio.push(music.music_info);
+                temp.custom_audios.push(music.music_info);
             }
         }
         return data;

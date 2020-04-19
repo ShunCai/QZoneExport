@@ -4,7 +4,6 @@
 <head>
 	<link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 	<link href="../vendor/bootstrap/css/bootstrap-table.min.css" rel="stylesheet">
-	<link href="../vendor/bootstrap/css/bootstrap-datepicker.min.css" rel="stylesheet">	
 	<link rel="icon" href="../img/icon-128.png">
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<title>QQ空间导出助手-选项</title>
@@ -354,6 +353,22 @@
 										</div>
 									</div>
 									<div class="form-group row">
+										<div class="col-sm-1">下载视频：</div>
+										<div class="custom-control custom-checkbox">
+											<input type="checkbox" class="custom-control-input" id="photos_images_download_video">
+											<label style="margin-left: 14px;" class="custom-control-label" for="photos_images_download_video" aria-describedby="photos_images_download_video_help"></label>
+											<small id="photos_images_download_video_help" class="text-muted">直接下载相册中的视频到相册中，若勾选，助手将自动获取相片详情，建议勾选后备份时取消备份【视频】模块</small>
+										</div>
+									</div>
+									<div class="form-group row">
+										<div class="col-sm-1">获取详情：</div>
+										<div class="custom-control custom-checkbox">
+											<input type="checkbox" class="custom-control-input" id="photos_images_is_detail">
+											<label style="margin-left: 14px;" class="custom-control-label" for="photos_images_is_detail" aria-describedby="photos_images_is_detail_help"></label>
+											<small id="photos_images_is_detail_help" class="text-muted">详情含相片关联的视频信息、说说信息、以及有权限的加密相册的相片实际地址，视频信息用于下载视频到相册中，相片实际地址用于第三方（如迅雷）下载，建议：备份个人不勾选，备份他人空间勾选，基于JSON迁移数据的开发者勾选</small>
+										</div>
+									</div>
+									<div class="form-group row">
 										<label class="col-sm-1 col-form-label">查询间隔：</label>
 										<div class="col-sm-1">
 											<input type="number" min="1" class="form-control" id="photos_images_comments_cost_min" placeholder="最小间隔">
@@ -535,7 +550,7 @@
 										</div>
 									</div>
 									<div>
-										<small id="common_file_suffix_help" class="text-muted">勾选自动识别文件后缀名，仅适用下载方式为非QQ空间外链，备份时长将延长。</small>
+										<small id="common_file_suffix_help" class="text-muted">勾选将自动识别说说、日志、私密日记、留言板、收藏夹图片文件后缀名，仅适用下载方式为非QQ空间外链，备份时长将延长。</small>
 									</div>
 								</div>
 								<div class="form-group row" style="display: none;">

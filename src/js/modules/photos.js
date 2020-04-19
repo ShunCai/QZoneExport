@@ -62,7 +62,7 @@ API.Photos.toImages = (imagesMapping) => {
 API.Photos.getAllImagesInfos = async (albumList) => {
     // 是否为当前用户
     const isOwner = QZone.Common.Owner.uin == QZone.Common.Target.uin;
-    if(isOwner){
+    if (isOwner) {
         // 如果是个人模式，则不需要获取相片详情
         return albumList;
     }
@@ -243,6 +243,9 @@ API.Photos.getAlbumImagePageList = async (item, pageIndex, indicator) => {
         // 更新总数
         QZone.Photos.Images[item.id].total = data.totalInAlbum || 0;
         indicator.setTotal(data.totalInAlbum || 0);
+
+        // 合并相册信息到相册
+        Object.assign(item, data.topic || item);
 
         // 相片列表
         let dataList = data.photoList || [];
@@ -584,9 +587,7 @@ API.Photos.addAlbumDownloadTasks = async (album, photos) => {
         let moudel_dir = '相册/';
 
         // 默认高清
-        let url = API.Photos.getDownloadUrl(photo, Qzone_Config.Photos.Images.exifType);
-        url = API.Utils.toHttps(url);
-        photo.custom_url = url;
+        photo.custom_url = API.Photos.getDownloadUrl(photo, Qzone_Config.Photos.Images.exifType);
 
         // 添加下载任务
         let albumClass = API.Utils.filenameValidate(photo.albumClass);
@@ -609,12 +610,10 @@ API.Photos.addAlbumDownloadTasks = async (album, photos) => {
             // 获取评论的图片
             let images = comment.pic || [];
             for (const image of images) {
-                let url = image.hd_url || image.b_url;
-                url = API.Utils.toHttps(url);
-                image.custom_url = url;
+                image.custom_url = image.hd_url || image.b_url;
                 image.custom_filename = API.Utils.newSimpleUid(8, 16);
                 // 获取图片类型
-                let suffix = await API.Utils.autoFileSuffix(url);
+                let suffix = await API.Utils.autoFileSuffix(image.custom_url);
                 image.custom_filename = image.custom_filename + suffix;
                 // 添加下载任务
                 API.Utils.newDownloadTask(image.custom_url, moudel_dir + albumClass + '/' + albumName + '/评论图片', image.custom_filename, photo);

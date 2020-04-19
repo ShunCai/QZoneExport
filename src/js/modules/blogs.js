@@ -35,6 +35,9 @@ API.Blogs.getAllContents = async (items) => {
     indicator.setTotal(items.length);
     for (let index = 0; index < items.length; index++) {
         let item = items[index];
+        if (item.blogId === 1552827504) {
+            debugger;
+        }
         indicator.index = index + 1;
         await API.Blogs.getInfo(item.blogId).then((data) => {
             // 添加成功提示
@@ -56,8 +59,19 @@ API.Blogs.getAllContents = async (items) => {
                 item = JSON.parse(blogData[1]).data;
             }
             // 获得网页中的日志正文
-            item.html = blogPage.find("#blogDetailDiv:first").html();
-            item.html = API.Utils.utf8ToBase64(item.html);
+            const $blogPage = blogPage.find("#blogDetailDiv:first");
+            $blogPage.find("img").each(function () {
+                const $img = $(this);
+                const orgsrc = $img.attr('orgsrc');
+                if (orgsrc) {
+                    $img.attr('src', orgsrc);
+                }
+                const src = $img.attr('src');
+                if (src && src.startsWith('//')) {
+                    $img.attr('src', 'http:' + src);
+                }
+            });
+            item.html = API.Utils.utf8ToBase64($blogPage.html());
             items[index] = item;
         }).catch((e) => {
             console.error("获取日志内容异常", item, e);
@@ -392,21 +406,17 @@ API.Blogs.getItemMdContent = async (item) => {
         let orgUrl = match[1];
         if (isQzoneUrl) {
             // QQ空间外链时，需要转换相对协议的图片地址
-            let newUrl = orgUrl;
-            if (newUrl.startsWith('//')) {
-                newUrl = 'http:' + newUrl;
-            }
+            let newUrl = API.Utils.toHttp(orgUrl);
             result = result.split(orgUrl).join(newUrl);
         } else {
-            let url = API.Utils.toHttps(orgUrl);
-            let uid = QZone.Blogs.FILE_URLS.get(url);
+            let uid = QZone.Blogs.FILE_URLS.get(orgUrl);
             if (!uid) {
                 uid = API.Utils.newSimpleUid(8, 16);
-                let suffix = await API.Utils.autoFileSuffix(url);
+                let suffix = await API.Utils.autoFileSuffix(orgUrl);
                 uid = uid + suffix;
                 // 添加下载任务
-                API.Utils.newDownloadTask(url, moudel_dir, uid, item);
-                QZone.Blogs.FILE_URLS.set(url, uid);
+                API.Utils.newDownloadTask(orgUrl, moudel_dir, uid, item);
+                QZone.Blogs.FILE_URLS.set(orgUrl, uid);
             }
             result = result.split(orgUrl).join("../图片/" + uid);
         }

@@ -50,6 +50,10 @@
             from: 'popup',
             subject: 'initAlbumInfo'
         }, (data) => {
+            if (data.code < 0) {
+                $('#backup').attr('disabled', true);
+                return;
+            }
             console.info('获取相册信息完成：', data);
             const $album_tips = $("#album_tips");
             const $photos = $("#Photos");

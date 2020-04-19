@@ -220,7 +220,7 @@ API.Friends.exportToJson = async (friends) => {
     indicator.setTotal(friends.length);
     let json = JSON.stringify(friends);
     await API.Utils.writeText(json, QZone.Friends.ROOT + '/QQ好友.json').then((fileEntry) => {
-        console.error("导出QQ好友的JSON文件到FileSystem完成", fileEntry);
+        console.info("导出QQ好友的JSON文件到FileSystem完成", fileEntry);
         indicator.addSuccess(friends);
     }).catch((error) => {
         console.error("导出QQ好友的JSON文件到FileSystem异常", error);

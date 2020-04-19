@@ -29,9 +29,9 @@ const Default_Config = {
             min: 1,
             max: 2
         },
-        isFull: false, //是否获取全文
+        isFull: true, //是否获取全文
         Comments: {
-            isFull: false, //是否全部评论
+            isFull: true, //是否全部评论
             pageSize: 20,
             randomSeconds: {
                 min: 1,
@@ -54,7 +54,7 @@ const Default_Config = {
             }
         },
         Comments: {
-            isFull: false, //是否全部评论
+            isFull: true, //是否全部评论
             pageSize: 50,
             randomSeconds: {
                 min: 1,
@@ -176,9 +176,9 @@ let Qzone_Config = {
             min: 1,
             max: 2
         },
-        isFull: false, //是否获取全文
+        isFull: true, //是否获取全文
         Comments: {
-            isFull: false, //是否全部评论
+            isFull: true, //是否全部评论
             pageSize: 20,
             randomSeconds: {
                 min: 1,
@@ -201,7 +201,7 @@ let Qzone_Config = {
             }
         },
         Comments: {
-            isFull: false, //是否全部评论
+            isFull: true, //是否全部评论
             pageSize: 50,
             randomSeconds: {
                 min: 1,
@@ -322,6 +322,10 @@ const QZone = {
         Zip: window['JSZip'] ? new JSZip() : undefined,
         MD: window['TurndownService'] ? new TurndownService() : undefined,
         Filer: window['Filer'] ? new Filer() : undefined
+    },
+    // 用户信息
+    User: {
+        ROOT: FOLDER_ROOT + '其他'
     },
     // QQ好友模块
     Friends: {

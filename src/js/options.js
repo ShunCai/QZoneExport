@@ -388,10 +388,10 @@
 			align: 'center',
 			width: "100",
 			formatter: (value, row, index, field) => {
-				return row.rt_uin ? '转发' : '原创';
+				return row.rt_tid ? '转发' : '原创';
 			}
 		}, {
-			field: 'custom_location.name',
+			field: 'lbs.idname',
 			title: '位置',
 			align: 'center',
 			width: "150"

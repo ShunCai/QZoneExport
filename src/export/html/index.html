@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+	<link rel="icon" href="../../img/icon-128.png">
+	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<title>QQ空间备份-个人中心</title>
+	<link href="../../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link href="../css/github.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="../css/qzone.css">
+	<script type="text/javascript" src="../../vendor/jquery/jquery-3.3.1.min.js"></script>
+	<script type="text/javascript" src="../../vendor/bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../vendor/template/template.js"></script>
+	<script type="text/javascript" src="../js/index.js"></script>
+</head>
+
+<body>
+	<header>
+		<nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-dark">
+			<a class="navbar-brand" target="_blank"  href="https://github.com/ShunCai/QZoneExport">QQ空间导出助手</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<nav aria-label="breadcrumb">
+					<ol class="breadcrumb bg-dark">
+						<li class="breadcrumb-item active" aria-current="page">个人中心</li>
+					</ol>
+				</nav>
+			</div>
+		</nav>
+	</header>
+	<main role="main" class="flex-shrink-0">
+		<div class="container">
+			<div id="index_html" class="header">
+				<script id="index_tpl" type="text/html">
+					<div class="head-avatar">
+						<img src="<%:=user.avatar%>" class="user-avatar">
+					</div>
+					<div class="head-info">
+						<h3 class="head-title" id="top_head_title">
+							<span class="title-text ui-mr5"><%:=user.spacename%></span>
+						</h3>
+						<div>
+							<span class="text-muted"><%:=user.desc%></span>
+						</div>
+					</div>
+					<div class="export-tips">
+						<h4>致我们终（yi）将（jing）逝去的青春</h4>
+					</div>
+					<div class="data-info">
+						<div class="list-group list-group-horizontal">
+							<a href="messages.html" class="list-group-item list-group-item-action">
+								说说<span class="badge badge-primary badge-pill"><%:=user.messages%></span>
+							</a>
+							<a href="blogs.html" class="list-group-item list-group-item-action">
+								日志<span class="badge badge-primary badge-pill"><%:=user.blogs%></span>
+							</a>
+							<a href="diaries.html" class="list-group-item list-group-item-action">
+								私密日记<span class="badge badge-primary badge-pill"><%:=user.diaries%></span>
+							</a>
+							<a href="albums.html" class="list-group-item list-group-item-action">
+								相册<span class="badge badge-primary badge-pill"><%:=user.photos%></span>
+							</a>
+							<a href="videos.html" class="list-group-item list-group-item-action">
+								视频<span class="badge badge-primary badge-pill"><%:=user.videos%></span>
+							</a>
+							<a href="boards.html" class="list-group-item list-group-item-action">
+								留言板<span class="badge badge-primary badge-pill"><%:=user.boards%></span>
+							</a>
+							<a href="favorites.html" class="list-group-item list-group-item-action">
+								收藏夹<span class="badge badge-primary badge-pill"><%:=user.favorites%></span>
+							</a>
+							<a href="friends.html" class="list-group-item list-group-item-action">
+								好友<span class="badge badge-primary badge-pill"><%:=user.friends%></span>
+							</a>
+						</div>
+					</div>
+				</script>
+			</div>
+		</div>
+	</main>
+	<footer class="footer mt-auto py-3 bg-dark fixed-bottom">
+		<div class="container text-center">
+			<span class="text-white">落叶随风，青春，稍纵即逝。</span>
+		</div>
+	</footer>
+</body>
+
+</html>

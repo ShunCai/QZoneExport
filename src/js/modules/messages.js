@@ -16,6 +16,9 @@ API.Messages.export = async () => {
         // 获取所有说说的全文
         items = await API.Messages.getAllFullContent(items);
 
+        // 获取所有的语音说说信息
+        items = API.Messages.getAllVoices(items);
+
         // 获取所有的说说评论
         items = await API.Messages.getItemsAllCommentList(items);
 
@@ -152,34 +155,22 @@ API.Messages.getAllFullContent = async (items) => {
         // 更新状态-下载中的数量
         indicator.addDownload(1);
 
-        if (item.has_more_con === 1) {
-            // 获取自身说说的全文
-            await API.Messages.getFullContent(item.tid).then((data) => {
-                // 更新状态-下载成功数
-                indicator.addSuccess(item)
-                data = API.Utils.toJson(data, /^_Callback\(/);
-                item.content = data.content;
-                item.conlist = data.conlist || [];
-            }).catch((e) => {
-                console.error("获取说说自身全文异常", item, e);
-                indicator.addFailed(item);
-            });
-        }
-
-        if (item.rt_uin && item.rt_has_more_con === 1) {
-            // 获取转发说说的全文
-            await API.Messages.getFullContent(item.tid).then((data) => {
-                // 更新状态-下载成功数
-                indicator.addSuccess(item)
-
-                data = API.Utils.toJson(data, /^_Callback\(/);
+        // 获取自身说说的全文
+        await API.Messages.getFullContent(item.tid).then((data) => {
+            // 更新状态-下载成功数
+            indicator.addSuccess(item)
+            data = API.Utils.toJson(data, /^_Callback\(/);
+            // 自身全文
+            item.content = data.content;
+            item.conlist = data.conlist || [];
+            // 转发全文
+            if (item.rt_tid) {
                 item.rt_con = data.rt_con;
-
-            }).catch((e) => {
-                console.error("获取说说转发全文异常", item, e);
-                indicator.addFailed(item);
-            });
-        }
+            }
+        }).catch((e) => {
+            console.error("获取说说自身全文异常", item, e);
+            indicator.addFailed(item);
+        });
     }
 
     // 完成
@@ -237,7 +228,7 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
  * @param {StatusIndicator} indicator 状态更新器
  */
 API.Messages.getItemAllCommentList = async (item, indicator) => {
-    if (!(item.custom_comment_total > item.custom_comments.length)) {
+    if (!(item.commenttotal > item.custom_comments.length)) {
         // 当前列表比评论总数小的时候才需要获取全部评论，否则则跳过
         // console.debug('当前说说不需要获取全部评论列表', item);
         return item.custom_comments;
@@ -429,14 +420,14 @@ API.Messages.getItemMdContent = (item) => {
     let isQzoneUrl = downloadType === 'QZone';
 
     // 地理位置
-    let location = item.custom_location['name'];
+    let location = item.lbs.idname || '';
     var result = "> " + item.custom_create_time;
     if (location && location !== "") {
         result += "【" + location + "】";
     }
 
     // 转发标示
-    let isRt = item.rt_uin;
+    let isRt = item.rt_tid;
     if (isRt) {
         result += "【转发】";
     }
@@ -448,7 +439,7 @@ API.Messages.getItemMdContent = (item) => {
 
     if (!isRt) {
         // 说说为转发说说时，对应的图片，视频，歌曲信息属于源说说的
-        result += API.Messages.formatMedia(item);
+        result += API.Messages.formatMediaMarkdown(item);
     }
 
     // 添加转发内容
@@ -461,12 +452,12 @@ API.Messages.getItemMdContent = (item) => {
         result += "\r\n" + rtContent + "\r\n";
 
         // 说说为转发说说时，对应的图片，视频，歌曲信息属于源说说的
-        result += API.Messages.formatMedia(item);
+        result += API.Messages.formatMediaMarkdown(item);
     }
 
     // 评论内容
     let comments = item.custom_comments || [];
-    result += "> 评论(" + item.custom_comment_total + ")：" + '\r\n\r\n';
+    result += "> 评论(" + item.commenttotal + ")：" + '\r\n\r\n';
     for (let i = 0; i < comments.length; i++) {
         const comment = comments[i];
         let contentName = API.Utils.formatContent(comment.name, 'MD');
@@ -516,13 +507,18 @@ API.Messages.addMediaToTasks = async (dataList) => {
         }
 
         // 下载视频预览图
-        for (const video of item.custom_video) {
+        for (const video of item.custom_videos) {
             await API.Utils.addDownloadTasks(video, video.url1, moudel_dir, item, QZone.Messages.FILE_URLS);
         }
 
         // 下载音乐预览图
-        for (const audio of item.custom_audio) {
+        for (const audio of item.custom_audios) {
             await API.Utils.addDownloadTasks(audio, audio.image, moudel_dir, item, QZone.Messages.FILE_URLS);
+        }
+
+        // 下载语音
+        for (const voice of item.custom_voices) {
+            await API.Utils.addDownloadTasks(voice, voice.custom_url, moudel_dir, item, QZone.Messages.FILE_URLS);
         }
 
         // 获取评论的配图
@@ -546,4 +542,26 @@ API.Messages.addMediaToTasks = async (dataList) => {
         }
     }
     return dataList;
+}
+
+/**
+ * 获取语音说说的实际地址
+ * @param {Array} items 说说列表
+ */
+API.Messages.getAllVoices = async (items) => {
+    if (!items) {
+        return items;
+    }
+    for (const item of items) {
+        const voices = item.custom_voices;
+        for (const voice of voices) {
+            await API.Messages.getVoiceInfo(voice).then(() => {
+                voiceInfo = API.Utils.toJson(voiceInfo, /^_Callback\(/);
+                voice.custom_url = voiceInfo.data.url;
+            }).catch((error) => {
+                console.error('获取说说语音失败', item);
+            });
+        }
+    }
+    return items;
 }

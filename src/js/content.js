@@ -522,6 +522,11 @@ const OperatorType = {
     SHOW: 'SHOW',
 
     /**
+     * 获取用户个人档信息
+     */
+    USER_INFO: 'USER_INFO',
+
+    /**
      * 获取所有说说列表
      */
     MESSAGES_LIST: 'MESSAGES_LIST',
@@ -650,6 +655,11 @@ class QZoneOperator {
                 if (this.isExport(moduleType)) {
                     await API.Favorites.export();
                 }
+                this.next(OperatorType.USER_INFO);
+                break;
+            case OperatorType.USER_INFO:
+                // 获取目标用户个人档信息
+                await API.Common.exportUser();
                 this.next(OperatorType.FILE_LIST);
                 break;
             case OperatorType.FILE_LIST:
@@ -1096,7 +1106,9 @@ const browserTasks = new Array();
                             API.Photos.getAlbums(0).then((data) => {
                                 // 去掉函数，保留json
                                 data = API.Utils.toJson(data, /^shine0_Callback\(/);
-                                data.data.user.capacity = API.Photos.getCapacityDisplay(data.data.user.diskused);
+                                if (data.data && data.data.user && data.data.user.diskused) {
+                                    data.data.user.capacity = API.Photos.getCapacityDisplay(data.data.user.diskused);
+                                }
                                 port.postMessage(data);
                             });
                             break;
@@ -1121,8 +1133,8 @@ const browserTasks = new Array();
 
 
 /**
- * 添加图片下载任务
- * @param {string} image 图片对象
+ * 添加下载任务
+ * @param {string} image 对象
  * @param {string} url URL
  * @param {string} moudel_dir 模块下载目录
  * @param {object} source 来源
@@ -1131,7 +1143,6 @@ const browserTasks = new Array();
 API.Utils.addDownloadTasks = async (image, url, moudel_dir, source, FILE_URLS) => {
     let downloadType = Qzone_Config.Common.downloadType;
     let isQzoneUrl = downloadType === 'QZone';
-    url = API.Utils.toHttps(url);
     image.custom_url = url;
     if (isQzoneUrl) {
         return;
@@ -1163,10 +1174,7 @@ API.Utils.newDownloadTask = (url, folder, name, source) => {
     url = API.Utils.makeDownloadUrl(url, true)
 
     // 添加Ajax请求下载任务
-    downloadTasks.push(new DownloadTask(folder, name, url, source));
-
-    // 浏览器与迅雷下载不需要Https协议，需要Https协议反而下载失败，这里转换为http协议
-    url = API.Utils.toHttp(url);
+    downloadTasks.push(new DownloadTask(folder, name, API.Utils.toHttps(url), source));
 
     // 添加浏览器下载任务
     browserTasks.push(new BrowserTask(url, QZone.Common.Config.ZIP_NAME, folder, name, source));

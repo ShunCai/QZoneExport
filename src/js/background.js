@@ -33,9 +33,9 @@ const Default_Config = {
             min: 1,
             max: 2
         },
-        isFull: false, //是否获取全文
+        isFull: true, //是否获取全文
         Comments: {
-            isFull: false, //是否全部评论
+            isFull: true, //是否全部评论
             pageSize: 20,
             randomSeconds: {
                 min: 1,
@@ -58,7 +58,7 @@ const Default_Config = {
             }
         },
         Comments: {
-            isFull: false, //是否全部评论
+            isFull: true, //是否全部评论
             pageSize: 50,
             randomSeconds: {
                 min: 1,

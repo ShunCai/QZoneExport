@@ -55,8 +55,20 @@ API.Diaries.getAllContents = async (items) => {
                 item = JSON.parse(blogData[1]).data;
             }
             // 获得网页中的私密日记正文
-            item.html = blogPage.find("#blogDetailDiv:first").html();
-            item.html = API.Utils.utf8ToBase64(item.html);
+            // 获得网页中的日志正文
+            const $blogPage = blogPage.find("#blogDetailDiv:first");
+            $blogPage.find("img").each(function () {
+                const $img = $(this);
+                const orgsrc = $img.attr('orgsrc');
+                if (orgsrc) {
+                    $img.attr('src', orgsrc);
+                }
+                const src = $img.attr('src');
+                if (src && src.startsWith('//')) {
+                    $img.attr('src', 'http:' + src);
+                }
+            });
+            item.html = API.Utils.utf8ToBase64($blogPage.html());
             items[index] = item;
         }).catch((e) => {
             console.error("获取私密日记内容异常", item, e);
@@ -259,22 +271,17 @@ API.Diaries.getItemMdContent = async (item) => {
         let orgUrl = match[1];
         if (isQzoneUrl) {
             // QQ空间外链时，需要转换相对协议的图片地址
-            let newUrl = orgUrl;
-            if (newUrl.startsWith('//')) {
-                newUrl = 'http:' + newUrl;
-            }
+            let newUrl = API.Utils.toHttp(orgUrl);
             result = result.split(orgUrl).join(newUrl);
         } else {
-            let url = API.Utils.toHttps(orgUrl);
-            let uid = QZone.Diaries.FILE_URLS.get(url);
+            let uid = QZone.Diaries.FILE_URLS.get(orgUrl);
             if (!uid) {
                 uid = API.Utils.newSimpleUid(8, 16);
-                // 获取图片类型
-                let suffix = await API.Utils.autoFileSuffix(url);
+                let suffix = await API.Utils.autoFileSuffix(orgUrl);
                 uid = uid + suffix;
                 // 添加下载任务
-                API.Utils.newDownloadTask(url, moudel_dir, uid, item);
-                QZone.Diaries.FILE_URLS.set(url, uid);
+                API.Utils.newDownloadTask(orgUrl, moudel_dir, uid, item);
+                QZone.Diaries.FILE_URLS.set(orgUrl, uid);
             }
             result = result.split(orgUrl).join("../图片/" + uid);
         }

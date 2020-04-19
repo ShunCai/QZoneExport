@@ -44,7 +44,8 @@
                 "js/modules/videos.js",
                 "js/modules/boards.js",
                 "js/modules/friends.js",
-                "js/modules/favorites.js"
+                "js/modules/favorites.js",
+                "js/modules/user.js"
             ],
             "css": [
                 "vendor/bootstrap/css/bootstrap.min.css",
@@ -75,7 +76,6 @@
         "unlimitedStorage",
         "downloads",
         "downloads.shelf",
-        "contextMenus",
         "declarativeContent",
         "<all_urls>"
     ]

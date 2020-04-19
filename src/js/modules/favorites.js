@@ -283,17 +283,17 @@ API.Favorites.getMarkDownContent = (favorite) => {
                     break;
                 case 5:
                     // 视频，目前只有一条数据
-                    target_url = favorite.custom_video[0].play_url;
+                    target_url = favorite.custom_videos[0].play_url;
                     share_title = API.Utils.getLink(target_url, share_title_content, "MD");
                     break;
                 case 18:
                     // 歌曲，目前只有一条数据
-                    target_url = favorite.custom_audio[0].play_url;
+                    target_url = favorite.custom_audios[0].play_url;
                     share_title = API.Utils.getLink(target_url, share_title_content, "MD");
                     break;
                 case 24:
                     // 设置背景音乐？类似歌曲，目前只有一条数据
-                    target_url = favorite.custom_audio[0].play_url;
+                    target_url = favorite.custom_audios[0].play_url;
                     share_title = API.Utils.getLink(target_url, share_title_content, "MD");
                     break;
                 default:
@@ -338,7 +338,7 @@ API.Favorites.getMarkDownContent = (favorite) => {
             break;
     }
     // 添加多媒体内容
-    let mediat_content = API.Messages.formatMedia(favorite);
+    let mediat_content = API.Messages.formatMediaMarkdown(favorite);
     contents.push(mediat_content);
     return contents.join('\r\n');
 }
@@ -363,6 +363,9 @@ API.Favorites.exportToJson = async (favorites) => {
             yearItems = yearItems.concat(items);
         }
 
+        // 添加多媒体下载任务
+        await API.Favorites.addMediaToTasks(yearItems);
+
         // 更新年份的收藏总数
         indicator.setTotal(yearItems.length);
 
@@ -385,11 +388,8 @@ API.Favorites.exportToJson = async (favorites) => {
     }).catch(error => {
         console.error('备份收藏列表失败', favorites, error);
     });
-    indicator.complete();
     return favorites;
 }
-
-
 
 /**
  * 添加说说的附件下载任务
@@ -403,19 +403,19 @@ API.Favorites.addMediaToTasks = async (dataList) => {
         // 下载说说配图
         for (const image of item.custom_images) {
             let url = image.url;
-            await API.Utils.addDownloadTasks(image, url, moudel_dir, item, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(image, url, moudel_dir, item, QZone.Favorites.FILE_URLS);
         }
 
         // 下载视频预览图
-        for (const video of item.custom_video) {
+        for (const video of item.custom_videos) {
             let url = video.preview_img;
-            await API.Utils.addDownloadTasks(video, url, moudel_dir, item, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(video, url, moudel_dir, item, QZone.Favorites.FILE_URLS);
         }
 
         // 下载音乐预览图
-        for (const audio of item.custom_audio) {
+        for (const audio of item.custom_audios) {
             let url = audio.preview_img;
-            await API.Utils.addDownloadTasks(audio, url, moudel_dir, item, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(audio, url, moudel_dir, item, QZone.Favorites.FILE_URLS);
         }
     }
     return dataList;

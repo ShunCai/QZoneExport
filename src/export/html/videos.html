@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<link rel="icon" href="../../img/icon-128.png">
+	<link href="../../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="../../vendor/lightgallery/css/lightgallery.min.css">
+	<link rel="stylesheet" type="text/css" href="../css/qzone.css">
+	<link rel="stylesheet" type="text/css" href="../css/photo.css">
+	<link rel="stylesheet" type="text/css" href="../css/album.css">
+	<script type="text/javascript" src="../../vendor/jquery/jquery-3.3.1.min.js"></script>
+	<script type="text/javascript" src="../../vendor/bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../../vendor/template/template.js"></script>
+	<script type="text/javascript" src="../../vendor/lightgallery/js/lightgallery-all.min.js"></script>
+	<script type="text/javascript" src="../../vendor/jquery/jquery.mousewheel.min.js"></script>
+	<script type="text/javascript" src="../js/qzone.js"></script>
+	<script type="text/javascript" src="../../js/utils.js"></script>
+	<script type="text/javascript" src="../../js/api.js"></script>
+	<script type="text/javascript" src="../js/videos.js"></script>
+	<title>QQ空间备份-视频</title>
+</head>
+
+<body>
+	<header>
+		<nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-dark">
+			<a class="navbar-brand" target="_blank"  href="https://github.com/ShunCai/QZoneExport">QQ空间导出助手</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<nav aria-label="breadcrumb">
+					<ol class="breadcrumb bg-dark">
+						<li class="breadcrumb-item"><a href="index.html">个人中心</a></li>
+						<li class="breadcrumb-item active" aria-current="page">视频</li>
+					</ol>
+				</nav>
+			</div>
+		</nav>
+	</header>
+	<main role="main">
+		<div class="albums py-5 bg-light" style="padding-top: 4rem!important;">
+			<div class="container-fluid tz-gallery">
+				<div id="lightgallery" class="row">
+					<script id="videos_tpl" type="text/html">
+						<%/* 遍历视频 */%>
+						<%for (var video of videos) {%>
+							<div class="col-md-2 mb-2">
+								<div class="card thumbnail mb-2 shadow-sm h-100">
+									<div style="display:none;" id="<%:=video.vid%>">
+										<video class="lg-video-object lg-html5" loop="loop" controls="controls" preload="none">
+											<source src="<%:=video.url%>" type="video/mp4">
+										</video>
+									</div>
+									<a class="lightbox" data-poster="<%:=video.pre%>" title="<%:=video.desc%>" data-html="#<%:=video.vid%>">
+										<span class="photo-video"></span>
+										<img src="<%:=video.pre%>" />
+									</a>
+									<div class="card-body">
+										<h5 class="card-title"><%:=video.desc ? API.Utils.formatContent(video.desc) : API.Utils.formatDate(video.uploadTime)%></h5>
+									</div>
+								</div>
+							</div>
+						<%}%>
+					</script>
+				</div>
+			</div>
+		</div>
+	</main>
+</body>
+
+</html>

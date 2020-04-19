@@ -111,11 +111,40 @@ API.Boards.getAllList = async () => {
 
     let dataList = await nextPage(0, indicator);
 
+    // 处理异常数据
+    dataList = API.Boards.handerData(dataList);
+
     // 完成
     indicator.complete();
 
     return dataList;
 }
+
+/**
+ * 处理异常数据
+ * @param {Array} boards 留言列表
+ */
+API.Boards.handerData = (boards) => {
+    if (!boards) {
+        return [];
+    }
+    // 处理留言数据
+    for (const board of boards) {
+        board.uin = board.uin || 0;
+        board.nickname = board.nickname || '神秘者';
+        board.htmlContent = board.htmlContent || '';
+        // 他人模式兼容私密留言
+        if (board.secret == 1 && !board.htmlContent) {
+            // 私密留言提示
+            board.htmlContent = '主人收到一条私密留言，仅彼此可见';
+            continue;
+        }
+        // 替换无协议图片地址
+        board.htmlContent = board.htmlContent.replace(/src=\"\/qzone\/em/g, 'src=\"http://qzonestyle.gtimg.cn/qzone/em');
+    }
+    return boards;
+}
+
 
 /**
  * 导出留言
@@ -185,16 +214,8 @@ API.Boards.exportToMarkdown = async (boards) => {
                 contents.push('> {0} 【{1}】'.format(borad.pubtime, nickname));
                 contents.push('> 正文：');
 
-                // 他人模式兼容私密留言
-                if (borad.secret == 1 && !borad.htmlContent) {
-                    // 私密留言提示
-                    contents.push('主人收到一条私密留言，仅彼此可见');
-                    continue;
-                }
-
                 // 留言内容
-                let html_content = borad.htmlContent.replace(/src=\"\/qzone\/em/g, 'src=\"http://qzonestyle.gtimg.cn/qzone/em');
-                html_content = html_content.replace(/\n/g, "\r\n");
+                let html_content = borad.htmlContent.replace(/\n/g, "\r\n");
                 let markdown_content = QZone.Common.MD.turndown(html_content);
                 markdown_content = API.Utils.formatContent(markdown_content, "MD");
 
