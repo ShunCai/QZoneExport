@@ -61,7 +61,12 @@
                 $album_tips.show();
                 $album_tips.html('目标相册已用容量：{0}'.format(data.data.user.capacity));
                 if (data.data.user.diskused > 1000) {
-                    $album_tips.append('<br>建议使用【浏览器】或【迅雷】下载方式！');
+                    $album_tips.append('<br>助手内部下载暂不支持容量过大的文件下载');
+                    $album_tips.append('<br>请调整<a id="downloadType" href="#">文件下载工具</a>为【浏览器】或【迅雷】');
+                    // 打开公共配置
+                    $("#downloadType").click(() => {
+                        chrome.tabs.create({ url: "html/options.html#nav-common-tab" })
+                    });
                 }
             } else {
                 $album_tips.hide();
@@ -207,4 +212,8 @@
         });
     });
 
+    // 打开选项页
+    $("#openOptions").click(() => {
+        chrome.runtime.openOptionsPage();
+    });
 })();

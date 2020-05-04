@@ -1,9 +1,6 @@
-$(async function () {
-    // 获取好友列表
-    const friendList = await $.getJSON('../json/friends.json');
-
+$(function () {
     // 初始化好友表格
-    readerTable("friends-table", [{
+    API.Utils.initTable("friends-table", [{
         checkbox: true,
         clickToSelect: true,
         width: "50"
@@ -11,13 +8,18 @@ $(async function () {
         field: 'uin',
         title: 'QQ号',
         align: 'center',
+        sortable: true,
         formatter: (value) => {
             return API.Common.getUserLink(value, value);
         }
     }, {
         field: 'name',
         title: '昵称',
-        align: 'center'
+        align: 'center',
+        sortable: true,
+        formatter: (value) => {
+            return API.Common.formatContent(value, 'HTML');
+        }
     }, {
         field: 'remark',
         title: '备注',
@@ -25,7 +27,8 @@ $(async function () {
     }, {
         field: 'groupName',
         title: '分组',
-        align: 'center'
+        align: 'center',
+        sortable: true
     }, {
         field: 'message',
         title: '通讯',
@@ -36,6 +39,7 @@ $(async function () {
     }, {
         field: 'addFriendTime',
         title: '相识',
-        align: 'center'
-    }], friendList);
+        align: 'center',
+        sortable: true
+    }], dataList);
 });

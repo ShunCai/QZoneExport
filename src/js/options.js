@@ -68,28 +68,16 @@
 	$('#photos_exportFormat').change(function () {
 		let value = $(this).val();
 		switch (value) {
-			case 'JSON':
-				// 显示相册评论模块
-				$('#photos_albums_comments_panel').show();
-				break;
-			default:
-				// 显示相册评论模块
+			case 'File':
+				// 隐藏相册评论模块
 				$('#photos_albums_comments_panel').hide();
-				break;
-		}
-	})
-
-	// 监听相片备份类型选择事件
-	$('#photos_image_exportType').change(function () {
-		let value = $(this).val();
-		switch (value) {
-			case 'JSON':
-				// 显示相册评论模块
-				$('#photos_images_comments_panel').show();
+				// 显示相片评论模块
+				$('#photos_images_comments_panel').hide();
 				break;
 			default:
-				// 显示相册评论模块
-				$('#photos_images_comments_panel').hide();
+				$('#photos_albums_comments_panel').show();
+				// 显示相片评论模块
+				$('#photos_images_comments_panel').show();
 				break;
 		}
 	})
@@ -166,7 +154,6 @@
 		$("#photos_albums_comments_cost_max").val(options.Photos.Comments.randomSeconds.max);
 		$("#photos_albums_comments_limit").val(options.Photos.Comments.pageSize);
 
-		$("#photos_image_exportType").val(options.Photos.Images.exportType).change();
 		$("#photos_images_cost_min").val(options.Photos.Images.randomSeconds.min);
 		$("#photos_images_cost_max").val(options.Photos.Images.randomSeconds.max);
 		$("#photos_images_limit").val(options.Photos.Images.pageSize);
@@ -268,7 +255,6 @@
 		Qzone_Config.Photos.Comments.randomSeconds.max = $("#photos_albums_comments_cost_max").val() * 1;
 		Qzone_Config.Photos.Comments.pageSize = $("#photos_albums_comments_limit").val() * 1;
 
-		Qzone_Config.Photos.Images.exportType = $("#photos_image_exportType").val();
 		Qzone_Config.Photos.Images.randomSeconds.min = $("#photos_images_cost_min").val() * 1;
 		Qzone_Config.Photos.Images.randomSeconds.max = $("#photos_images_cost_max").val() * 1;
 		Qzone_Config.Photos.Images.pageSize = $("#photos_images_limit").val() * 1;
@@ -348,9 +334,6 @@
 	chrome.storage.local.get(QZone, function (OLD_QZone) {
 		// 赋值全局变量
 		Object.assign(QZone, OLD_QZone);
-
-		// 设置目标信息
-		$("#qzone_title").text(QZone.Common.Target.title);
 
 
 		// 初始化说说表格

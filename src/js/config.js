@@ -9,7 +9,7 @@ const Default_Config = {
         // 文件下载类型
         downloadType: 'File',
         // 自动识别文件后缀
-        isAutoFileSuffix: true,
+        isAutoFileSuffix: false,
         // 后缀识别超时秒数
         autoFileSuffixTimeOut: 30,
         // 迅雷任务数        
@@ -17,13 +17,13 @@ const Default_Config = {
         // 唤起迅雷间隔        
         thunderTaskSleep: 60,
         // 文件下载并发数        
-        downloadThread: 5,
+        downloadThread: 10,
         // 是否启用下载状态栏提醒
         enabledShelf: true
     },
     // 说说模块
     Messages: {
-        exportType: "MarkDown",// 内容备份类型
+        exportType: "HTML",// 内容备份类型
         pageSize: 20,
         randomSeconds: {
             min: 1,
@@ -41,7 +41,7 @@ const Default_Config = {
     },
     // 日志模块
     Blogs: {
-        exportType: "MarkDown",// 内容备份类型
+        exportType: "HTML",// 内容备份类型
         pageSize: 50,
         randomSeconds: {
             min: 1,
@@ -64,7 +64,7 @@ const Default_Config = {
     },
     // 私密日记模块
     Diaries: {
-        exportType: "MarkDown",// 内容备份类型
+        exportType: "HTML",// 内容备份类型
         pageSize: 50,
         randomSeconds: {
             min: 1,
@@ -79,7 +79,7 @@ const Default_Config = {
     },
     // 相册模块
     Photos: {
-        exportType: "Folder",
+        exportType: "HTML",
         pageSize: 3000,
         randomSeconds: {
             min: 1,
@@ -94,7 +94,6 @@ const Default_Config = {
             }
         },
         Images: {
-            exportType: "File",
             pageSize: 90,
             exifType: "raw",
             randomSeconds: {
@@ -113,7 +112,7 @@ const Default_Config = {
     },
     // 视频模块
     Videos: {
-        exportType: "Link",
+        exportType: "HTML",
         randomSeconds: {
             min: 1,
             max: 2
@@ -122,7 +121,7 @@ const Default_Config = {
     },
     // 留言板模块
     Boards: {
-        exportType: "MarkDown",
+        exportType: "HTML",
         randomSeconds: {
             min: 1,
             max: 2
@@ -131,12 +130,12 @@ const Default_Config = {
     },
     // QQ好友模块
     Friends: {
-        exportType: "Excel",
+        exportType: "HTML",
         hasAddTime: true
     },
     // 收藏夹模块
     Favorites: {
-        exportType: "MarkDown",
+        exportType: "HTML",
         randomSeconds: {
             min: 1,
             max: 2
@@ -156,7 +155,7 @@ let Qzone_Config = {
         // 文件下载类型
         downloadType: 'File',
         // 自动识别文件后缀
-        isAutoFileSuffix: true,
+        isAutoFileSuffix: false,
         // 后缀识别超时秒数
         autoFileSuffixTimeOut: 30,
         // 迅雷任务数        
@@ -164,13 +163,13 @@ let Qzone_Config = {
         // 唤起迅雷间隔        
         thunderTaskSleep: 60,
         // 文件下载并发数        
-        downloadThread: 5,
+        downloadThread: 10,
         // 是否启用下载状态栏提醒
         enabledShelf: true
     },
     // 说说模块
     Messages: {
-        exportType: "MarkDown",// 内容备份类型
+        exportType: "HTML",// 内容备份类型
         pageSize: 20,
         randomSeconds: {
             min: 1,
@@ -188,7 +187,7 @@ let Qzone_Config = {
     },
     // 日志模块
     Blogs: {
-        exportType: "MarkDown",// 内容备份类型
+        exportType: "HTML",// 内容备份类型
         pageSize: 50,
         randomSeconds: {
             min: 1,
@@ -211,7 +210,7 @@ let Qzone_Config = {
     },
     // 私密日记模块
     Diaries: {
-        exportType: "MarkDown",// 内容备份类型
+        exportType: "HTML",// 内容备份类型
         pageSize: 50,
         randomSeconds: {
             min: 1,
@@ -226,7 +225,7 @@ let Qzone_Config = {
     },
     // 相册模块
     Photos: {
-        exportType: "Folder",
+        exportType: "HTML",
         pageSize: 3000,
         randomSeconds: {
             min: 1,
@@ -241,7 +240,6 @@ let Qzone_Config = {
             }
         },
         Images: {
-            exportType: "File",
             pageSize: 90,
             exifType: "raw",
             randomSeconds: {
@@ -260,7 +258,7 @@ let Qzone_Config = {
     },
     // 视频模块
     Videos: {
-        exportType: "Link",
+        exportType: "HTML",
         randomSeconds: {
             min: 1,
             max: 2
@@ -269,7 +267,7 @@ let Qzone_Config = {
     },
     // 留言板模块
     Boards: {
-        exportType: "MarkDown",
+        exportType: "HTML",
         randomSeconds: {
             min: 1,
             max: 2
@@ -278,12 +276,12 @@ let Qzone_Config = {
     },
     // QQ好友模块
     Friends: {
-        exportType: "Excel",
+        exportType: "HTML",
         hasAddTime: true
     },
     // 收藏夹模块
     Favorites: {
-        exportType: "MarkDown",
+        exportType: "HTML",
         randomSeconds: {
             min: 1,
             max: 2
@@ -295,6 +293,7 @@ let Qzone_Config = {
 const FOLDER_ROOT = '/QQ空间备份/';
 const QZone = {
     Common: {
+        ROOT: FOLDER_ROOT + 'Common',
         ExportType: {
             "MESSAGES_LIST": true,
             "BLOG_LIST": true,
@@ -306,13 +305,10 @@ const QZone = {
             "FAVORITE_LIST": true
         },
         Owner: {
-            uin: undefined,
-            name: undefined
+            uin: undefined
         },
         Target: {
             uin: undefined,
-            name: undefined,
-            title: undefined,
             route: 102
         },
         Config: {
@@ -321,34 +317,72 @@ const QZone = {
         FILE_URLS: new Map(),
         Zip: window['JSZip'] ? new JSZip() : undefined,
         MD: window['TurndownService'] ? new TurndownService() : undefined,
-        Filer: window['Filer'] ? new Filer() : undefined
-    },
-    // 用户信息
-    User: {
-        ROOT: FOLDER_ROOT + '其他'
+        Filer: window['Filer'] ? new Filer() : undefined,
+        ExportFiles: [
+            {
+                original: 'export/css/common.css',
+                target: FOLDER_ROOT + 'Common/css/common.css'
+            }, {
+                original: 'export/js/sidebar.js',
+                target: FOLDER_ROOT + 'Common/js/sidebar.js'
+            }, {
+                original: 'export/images/index.jpg',
+                target: FOLDER_ROOT + 'Common/images/index.jpg'
+            }, {
+                original: 'export/images/video-play.png',
+                target: FOLDER_ROOT + 'Common/images/video-play.png'
+            }, {
+                original: 'vendor/template/template.js',
+                target: FOLDER_ROOT + 'Common/js/template.js'
+            }, {
+                original: 'export/js/common.js',
+                target: FOLDER_ROOT + 'Common/js/common.js'
+            }, {
+                original: 'export/js/blogs.js',
+                target: FOLDER_ROOT + 'Common/js/blogs.js'
+            }, {
+                original: 'export/js/bloginfo.js',
+                target: FOLDER_ROOT + 'Common/js/bloginfo.js'
+            }, {
+                original: 'export/js/diaries.js',
+                target: FOLDER_ROOT + 'Common/js/diaries.js'
+            }, {
+                original: 'export/js/diaryinfo.js',
+                target: FOLDER_ROOT + 'Common/js/diaryinfo.js'
+            }, {
+                original: 'export/js/friends.js',
+                target: FOLDER_ROOT + 'Common/js/friends.js'
+            }, {
+                original: 'export/js/photos.js',
+                target: FOLDER_ROOT + 'Common/js/photos.js'
+            }, {
+                original: 'export/js/videos.js',
+                target: FOLDER_ROOT + 'Common/js/videos.js'
+            }
+        ]
     },
     // QQ好友模块
     Friends: {
-        ROOT: FOLDER_ROOT + '好友',
+        ROOT: FOLDER_ROOT + 'Friends',
         Data: []
     },
     // 日志模块
     Blogs: {
-        ROOT: FOLDER_ROOT + '日志',
-        IMAGES_ROOT: FOLDER_ROOT + '日志/图片',
+        ROOT: FOLDER_ROOT + 'Blogs',
+        IMAGES_ROOT: FOLDER_ROOT + 'Blogs/Images',
         Data: [],
         FILE_URLS: new Map()
     },
     // 私密日记模块
     Diaries: {
-        ROOT: FOLDER_ROOT + '私密日记',
-        IMAGES_ROOT: FOLDER_ROOT + '私密日记/图片',
+        ROOT: FOLDER_ROOT + 'Diaries',
+        IMAGES_ROOT: FOLDER_ROOT + 'Diaries/Images',
         Data: [],
         FILE_URLS: new Map()
     },
     // 相册模块
     Photos: {
-        ROOT: FOLDER_ROOT + '相册',
+        ROOT: FOLDER_ROOT + 'Albums',
         Album: {
             total: 0,
             Data: []
@@ -394,26 +428,27 @@ const QZone = {
     },
     // 视频模块
     Videos: {
-        ROOT: FOLDER_ROOT + '视频',
+        ROOT: FOLDER_ROOT + 'Videos',
         Data: [],
         FILE_URLS: new Map()
     },
     // 说说模块
     Messages: {
-        ROOT: FOLDER_ROOT + '说说',
-        IMAGES_ROOT: FOLDER_ROOT + '说说/图片',
+        ROOT: FOLDER_ROOT + 'Messages',
+        IMAGES_ROOT: FOLDER_ROOT + 'Messages/Images',
         Data: [],
         FILE_URLS: new Map()
     },
     // 留言板模块
     Boards: {
-        ROOT: FOLDER_ROOT + '留言板',
+        ROOT: FOLDER_ROOT + 'Boards',
         Data: [],
         FILE_URLS: new Map()
     },
     // 收藏夹模块
     Favorites: {
-        ROOT: FOLDER_ROOT + '收藏夹',
+        ROOT: FOLDER_ROOT + 'Favorites',
+        IMAGES_ROOT: FOLDER_ROOT + 'Favorites/Images',
         Data: [],
         FILE_URLS: new Map()
     }

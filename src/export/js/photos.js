@@ -1,11 +1,9 @@
-$(async function () {
-    // 获取相册列表
-    const albumsList = await $.getJSON('../json/albums.json');
+$(function () {
     // 获取相册ID
     const albumId = API.Utils.getUrlParam('albumId');
     // 获取指定相册数据
-    const albumIndex = albumsList.getIndex(albumId, 'id');
-    const album = albumsList[albumIndex];
+    const albumIndex = dataList.getIndex(albumId, 'id');
+    const album = dataList[albumIndex];
     // 渲染导航相册名称
     $(".breadcrumb-item.active").text(album.name);
     // 获取模板元素

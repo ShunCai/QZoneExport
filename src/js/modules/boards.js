@@ -11,6 +11,9 @@ API.Boards.export = async () => {
         // 获取所有的留言
         let dataList = await API.Boards.getAllList();
 
+        // 处理数据
+        dataList = await API.Boards.handerData(dataList);
+
         // 根据导出类型导出数据
         await API.Boards.exportAllToFiles(dataList);
 
@@ -37,12 +40,12 @@ API.Boards.getPageList = async (pageIndex, indicator) => {
     return await API.Boards.getBoards(pageIndex).then(data => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
-        data = data.data;
+        data = data.data || {};
 
         console.debug("成功获取留言列表，当前页：", pageIndex + 1, data);
 
         // 更新总数
-        QZone.Boards.total = data.total || 0;
+        QZone.Boards.total = data.total || QZone.Boards.total || 0;
         indicator.setTotal(QZone.Boards.total);
 
         let dataList = data.commentList || [];
@@ -111,9 +114,6 @@ API.Boards.getAllList = async () => {
 
     let dataList = await nextPage(0, indicator);
 
-    // 处理异常数据
-    dataList = API.Boards.handerData(dataList);
-
     // 完成
     indicator.complete();
 
@@ -121,15 +121,19 @@ API.Boards.getAllList = async () => {
 }
 
 /**
- * 处理异常数据
+ * 处理数据
  * @param {Array} boards 留言列表
  */
-API.Boards.handerData = (boards) => {
+API.Boards.handerData = async (boards) => {
     if (!boards) {
         return [];
     }
+    // 进度更新器
+    let indicator = new StatusIndicator('Boards_Images_Mime');
+
     // 处理留言数据
-    for (const board of boards) {
+    for (let i = 0; i < boards.length; i++) {
+        const board = boards[i];
         board.uin = board.uin || 0;
         board.nickname = board.nickname || '神秘者';
         board.htmlContent = board.htmlContent || '';
@@ -139,9 +143,45 @@ API.Boards.handerData = (boards) => {
             board.htmlContent = '主人收到一条私密留言，仅彼此可见';
             continue;
         }
+
+        // 处理留言内容
+        const $boardDom = jQuery('<div>{0}</div>'.format(board.htmlContent));
+        // 处理图片信息
+        const images = $boardDom.find("img") || [];
+        for (let j = 0; j < images.length; j++) {
+            const $img = $(images[j]);
+
+            // 处理相对协议
+            let url = $img.attr('orgsrc') || $img.attr('src');
+            // 处理表情表情相对协议
+            url = url.replace(/^\/qzone\/em/g, 'http://qzonestyle.gtimg.cn/qzone/em');
+            url = API.Utils.toHttp(url);
+            $img.attr('src', url);
+
+            // 添加下载任务
+            if (API.Common.isQzoneUrl()) {
+                // QQ空间外链不处理
+                continue;
+            }
+
+            let custom_filename = QZone.Boards.FILE_URLS.get(url);
+            if (!custom_filename) {
+                custom_filename = API.Utils.newSimpleUid(8, 16);
+                let autoSuffix = await API.Utils.autoFileSuffix(url);
+                custom_filename = custom_filename + autoSuffix;
+                // 添加下载任务
+                API.Utils.newDownloadTask(url, 'Boards/Images', custom_filename, board);
+                QZone.Boards.FILE_URLS.set(url, custom_filename);
+            }
+            $img.attr('src', 'images/' + custom_filename);
+
+            indicator.addSuccess(1);
+        }
+
         // 替换无协议图片地址
-        board.htmlContent = board.htmlContent.replace(/src=\"\/qzone\/em/g, 'src=\"http://qzonestyle.gtimg.cn/qzone/em');
+        board.htmlContent = $boardDom.html();
     }
+    indicator.complete();
     return boards;
 }
 
@@ -154,6 +194,9 @@ API.Boards.exportAllToFiles = async (boards) => {
     // 获取用户配置
     let exportType = Qzone_Config.Boards.exportType;
     switch (exportType) {
+        case 'HTML':
+            await API.Boards.exportToHtml(boards);
+            break;
         case 'MarkDown':
             await API.Boards.exportToMarkdown(boards);
             break;
@@ -166,101 +209,151 @@ API.Boards.exportAllToFiles = async (boards) => {
     }
 }
 
+
+/**
+ * 导出留言到HTML文件
+ * @param {Array} boards 留言列表
+ */
+API.Boards.exportToHtml = async (boards) => {
+    // 进度更新器
+    const indicator = new StatusIndicator('Boards_Export_Other');
+    indicator.setIndex("HTML");
+    try {
+        // 留言数据根据年份分组
+        let yearMaps = API.Utils.groupedByTime(boards, "pubtime", 'year');
+        // 基于模板生成年份留言HTML
+        for (const [year, yearItems] of yearMaps) {
+            console.info('生成年份HTML文件开始', year, yearItems);
+            // 基于模板生成所有留言HTML
+            let _boardMaps = new Map();
+            const monthMaps = API.Utils.groupedByTime(yearItems, "pubtime", 'month');
+            _boardMaps.set(year, monthMaps);
+            let params = {
+                boardMaps: _boardMaps,
+                total: yearItems.length
+            }
+            let yearFile = await API.Common.writeHtmlofTpl('boards', params, QZone.Boards.ROOT + "/" + year + ".html");
+            console.info('生成年份HTML文件结束', year, yearItems, yearFile);
+        }
+
+        console.info('生成汇总HTML文件开始', boards);
+        // 基于模板生成汇总说说HTML
+        let params = {
+            boardMaps: API.Utils.groupedByTime(boards, "pubtime", 'all'),
+            total: boards.length
+        }
+        let allFile = await API.Common.writeHtmlofTpl('boards', params, QZone.Boards.ROOT + "/index.html");
+        console.info('生成汇总HTML文件结束', allFile, boards);
+    } catch (error) {
+        console.error('导出留言到HTML异常', error, boards);
+    }
+    indicator.complete();
+    return boards;
+}
+
 /**
  * 导出留言到MD文件
  * @param {Array} boards 留言列表
  */
 API.Boards.exportToMarkdown = async (boards) => {
-    let newline = '\r\n\r\n';
+    // 进度更新器
+    const indicator = new StatusIndicator('Boards_Export_Other');
+    indicator.setIndex('Markdown');
 
-    let total = boards.length;
-    // 根据年份分组，每一年生成一个MD文件
-    const yearMap = API.Utils.groupedByTime(boards, "pubtime");
+    try {
+        // 总数，用于计算楼层
+        let total = boards.length;
 
-    let indicator = new StatusIndicator('Boards_Export');
+        // 根据年份分组，每一年生成一个MD文件
+        const yearMap = API.Utils.groupedByTime(boards, "pubtime");
 
-    // 更新年份的留言总数
-    indicator.setTotal(boards.length);
+        // 汇总内容
+        const allYearContents = [];
 
-    for (let year_entry of yearMap) {
-        // 年份
-        let year = year_entry[0];
-        // 月份Map
-        let monthMap = year_entry[1];
+        for (const [year, monthMaps] of yearMap) {
+            // 年份内容
+            const year_contents = [];
+            year_contents.push("# " + year + "年");
+            for (const [month, month_items] of monthMaps) {
 
-        indicator.setIndex(year);
-
-        let contents = [];
-        contents.push("# " + year + "年");
-
-        let items = [];
-        for (let month_entry of monthMap) {
-            // 月份
-            let month = month_entry[0];
-            // 月份留言列表
-            let month_items = month_entry[1];
-
-            contents.push("## " + month + "月 ");
-
-            contents.push("---");
-
-            for (const borad of month_items) {
-                // 留言楼层
-                contents.push('#### 第' + (total--) + '楼');
-
-                let nickname = API.Boards.getOwner(borad);
-                nickname = API.Utils.formatContent(nickname, "MD");
-
-                contents.push('> {0} 【{1}】'.format(borad.pubtime, nickname));
-                contents.push('> 正文：');
-
-                // 留言内容
-                let html_content = borad.htmlContent.replace(/\n/g, "\r\n");
-                let markdown_content = QZone.Common.MD.turndown(html_content);
-                markdown_content = API.Utils.formatContent(markdown_content, "MD");
-
-                // 添加留言内容
-                contents.push('- [{0}](https://user.qzone.qq.com/{1})：{2}'.format(nickname, borad.uin, markdown_content));
-
-                // 处理留言回复
-                contents.push('> 回复：');
-                let replyList = borad.replyList || [];
-                for (const reply of replyList) {
-                    let replyName = API.Boards.getOwner(reply);
-                    replyName = API.Utils.formatContent(replyName, "MD");
-                    let replyContent = API.Utils.formatContent(reply.content, "MD");
-                    let replyTime = API.Utils.formatDate(reply.time);
-                    let replyMd = '- [{0}](https://user.qzone.qq.com/{1})：{2} 【*{3}*】'.format(replyName, reply.uin, replyContent, replyTime);
-                    contents.push(replyMd);
+                year_contents.push("## " + month + "月 ");
+                // 年份内容
+                for (const borad of month_items) {
+                    // 留言楼层
+                    year_contents.push('#### 第' + (total--) + '楼');
+                    const board_content = API.Boards.getMarkdown(borad);
+                    year_contents.push(board_content);
+                    // 楼层分割线
+                    year_contents.push('---');
                 }
-                contents.push('---');
             }
 
-            items = items.concat(month_items);
+            // 年份内容
+            const yearContent = year_contents.join('\r\n');
+            // 汇总年份内容
+            allYearContents.push(yearContent);
+
+            const yearFilePath = QZone.Boards.ROOT + "/" + year + ".md";
+            await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
+                console.debug('备份留言列表完成，当前年份=', year, fileEntry);
+            }).catch(error => {
+                console.error('备份留言列表失败，当前年份=', year, error);
+            });
         }
 
-        const yearFilePath = QZone.Boards.ROOT + "/" + year + "年.md";
-        await API.Utils.writeText(contents.join(newline), yearFilePath).then(fileEntry => {
-            console.debug('备份留言列表完成，当前年份=', year, items, fileEntry);
-            indicator.addSuccess(items);
-        }).catch(error => {
-            console.error('备份留言列表失败，当前年份=', year, items, error);
-            indicator.addFailed(items);
-        });
+        // 生成汇总文件
+        await API.Utils.writeText(allYearContents.join('\r\n'), QZone.Boards.ROOT + '/Boards.md');
+    } catch (error) {
+        console.error('导出留言到Markdown文件异常', error, boards);
     }
+
     indicator.complete();
+    return boards;
 }
 
+/**
+ * 生成单个留言的Markdown内容
+ * @param {Object} boards 留言列表
+ */
+API.Boards.getMarkdown = (borad) => {
+    const year_contents = [];
+
+    const nickname = API.Common.formatContent(API.Boards.getOwner(borad), "MD");
+    year_contents.push('> {0} 【{1}】'.format(borad.pubtime, nickname));
+    year_contents.push("\r\n");
+    year_contents.push('> 正文：');
+    year_contents.push("\r\n");
+
+    // 留言内容
+    const html_content = borad.htmlContent.replace(/\n/g, "\r\n");
+    let markdown_content = QZone.Common.MD.turndown(html_content);
+    markdown_content = API.Common.formatContent(markdown_content, "MD");
+
+    // 添加留言内容
+    year_contents.push('- [{0}](https://user.qzone.qq.com/{1})：{2}'.format(nickname, borad.uin, markdown_content));
+
+    // 处理留言回复
+    year_contents.push('> 回复：');
+    year_contents.push("\r\n");
+    let replyList = borad.replyList || [];
+    for (const reply of replyList) {
+        const replyName = API.Common.formatContent(API.Boards.getOwner(reply), "MD");
+        const replyContent = API.Common.formatContent(reply.content, "MD");
+        const replyTime = API.Utils.formatDate(reply.time);
+        const replyMd = '- [{0}](https://user.qzone.qq.com/{1})：{2} 【*{3}*】'.format(replyName, reply.uin, replyContent, replyTime);
+        year_contents.push(replyMd);
+    }
+    return year_contents.join('\r\n');
+}
 
 /**
  * 导出留言到JSON文件
  * @param {Array} boards 留言列表
  */
 API.Boards.exportToJson = async (boards) => {
-    let indicator = new StatusIndicator('Boards_Export');
-
-    // 更新年份的留言总数
-    indicator.setTotal(boards.length);
+    // 进度更新器
+    const indicator = new StatusIndicator('Boards_Export_Other');
+    indicator.setIndex('JSON');
 
     // 根据年份分组
     let yearDataMap = API.Utils.groupedByTime(boards, "pubtime");
@@ -268,25 +361,21 @@ API.Boards.exportToJson = async (boards) => {
         let year = yearEntry[0];
         let monthDataMap = yearEntry[1];
 
-        indicator.setIndex(year);
-
         let yearItems = [];
         for (let monthEntry of monthDataMap) {
             let items = monthEntry[1];
             yearItems = yearItems.concat(items);
         }
-        const yearFilePath = QZone.Boards.ROOT + "/" + year + "年.json";
+        const yearFilePath = QZone.Boards.ROOT + "/" + year + ".json";
         await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath).then(fileEntry => {
             console.debug('备份留言列表完成，当前年份=', year, yearItems, fileEntry);
-            indicator.addSuccess(yearItems);
         }).catch(error => {
             console.error('备份留言列表失败，当前年份=', year, yearItems, error);
-            indicator.addFailed(yearItems);
         });
     }
 
     let json = JSON.stringify(boards);
-    await API.Utils.writeText(json, QZone.Boards.ROOT + '/留言.json').then(fileEntry => {
+    await API.Utils.writeText(json, QZone.Boards.ROOT + '/boards.json').then(fileEntry => {
         console.debug('备份留言列表完成', boards, fileEntry);
     }).catch(error => {
         console.error('备份留言列表失败', boards, error);

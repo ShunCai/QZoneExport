@@ -44,6 +44,7 @@ class ThunderTask {
         this.url = url
         this.downloadState = 'in_progress'
         this.source = source
+        this.referer = window.location.href
     }
 
     /**
@@ -162,11 +163,20 @@ const MAX_MSG = {
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
+    Messages_Images_Mime: [
+        '正在识别说说的图片类型',
+        '已识别 <span style="color: #1ca5fc;">{downloaded}</span> 张',
+        '请稍后...'
+    ],
     Messages_Export: [
         '正在导出说说',
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Messages_Export_Other: [
+        '正在导出说说到 <span style="color: #1ca5fc;">{index}</span> 文件',
         '请稍后...'
     ],
     Blogs: [
@@ -197,6 +207,10 @@ const MAX_MSG = {
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
+    Blogs_Export_Other: [
+        '正在导出日志到 <span style="color: #1ca5fc;">{index}</span> 文件',
+        '请稍后...'
+    ],
     Diaries: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的私密日记列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
@@ -216,6 +230,68 @@ const MAX_MSG = {
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Diaries_Export_Other: [
+        '正在导出私密日记到 <span style="color: #1ca5fc;">{index}</span> 文件',
+        '请稍后...'
+    ],
+    Boards: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的留言板列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Boards_Images_Mime: [
+        '正在识别留言的图片类型',
+        '已识别 <span style="color: #1ca5fc;">{downloaded}</span> 张',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 张',
+        '请稍后...'
+    ],
+    Boards_Export: [
+        '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的留言',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Boards_Export_Other: [
+        '正在导出留言到 <span style="color: #1ca5fc;">{index}</span> 文件',
+        '请稍后...'
+    ],
+    Friends: [
+        '正在获取QQ好友列表',
+        '已获取好友 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Friends_Time: [
+        '正在获取好友添加时间',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Friends_Export: [
+        '正在导出QQ好友到 <span style="color: #1ca5fc;">{index}</span> 文件',
+        '请稍后...'
+    ],
+    Favorites: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的收藏列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Favorites_Export: [
+        '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的收藏',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Favorites_Export_Other: [
+        '正在导出收藏到 <span style="color: #1ca5fc;">{index}</span> 文件',
         '请稍后...'
     ],
     Photos: [
@@ -261,10 +337,7 @@ const MAX_MSG = {
         '请稍后...'
     ],
     Photos_Export: [
-        '正在导出相册',
-        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '正在导出相册到 <span style="color: #1ca5fc;">{index}</span> 文件',
         '请稍后...'
     ],
     Photos_Images_Export: [
@@ -272,6 +345,10 @@ const MAX_MSG = {
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Photos_Images_Export_Other: [
+        '正在导出相片到 <span style="color: #1ca5fc;">{index}</span> 文件',
         '请稍后...'
     ],
     Videos: [
@@ -282,56 +359,7 @@ const MAX_MSG = {
         '请稍后...'
     ],
     Videos_Export: [
-        '正在导出视频',
-        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
-    ],
-    Boards: [
-        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的留言板列表',
-        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
-    ],
-    Boards_Export: [
-        '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的留言',
-        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
-    ],
-    Friends: [
-        '正在获取QQ好友列表',
-        '已获取好友 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
-    ],
-    Friends_Time: [
-        '正在获取好友添加时间',
-        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
-    ],
-    Friends_Export: [
-        '正在导出QQ好友列表',
-        '已导出好友 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
-    ],
-    Favorites: [
-        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的收藏列表',
-        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
-    ],
-    Favorites_Export: [
-        '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的收藏',
-        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '正在导出视频到 <span style="color: #1ca5fc;">{index}</span> 文件',
         '请稍后...'
     ],
     Common_File: [
@@ -351,6 +379,7 @@ const MAX_MSG = {
     Common_Browser: [
         '正在添加下载任务到浏览器',
         '已添加 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> ',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ]
@@ -402,7 +431,7 @@ class StatusIndicator {
     complete() {
         let $tip_dom = $("#" + this.id)
         $tip_dom.show()
-        $tip_dom.html(this.tip.join('，').format(this).replace('正在', '已').replace('请稍后', '已完成'))
+        $tip_dom.html(this.tip.join('，').format(this).replace('正在', '已').replace('请稍后', '已完成').replace('...', ''))
     }
 
     /**
@@ -522,7 +551,12 @@ const OperatorType = {
     SHOW: 'SHOW',
 
     /**
-     * 获取用户个人档信息
+     * 初始化用户信息
+     */
+    INIT_USER_INFO: 'INIT_USER_INFO',
+
+    /**
+     * 导出用户信息
      */
     USER_INFO: 'USER_INFO',
 
@@ -599,6 +633,11 @@ class QZoneOperator {
                 // 显示模态对话框
                 await this.showProcess();
                 await this.initModelFolder();
+                this.next(OperatorType.INIT_USER_INFO);
+                break;
+            case OperatorType.INIT_USER_INFO:
+                // 初始化用户信息
+                await API.Common.initUserInfo();
                 this.next(OperatorType.MESSAGES_LIST);
                 break;
             case OperatorType.MESSAGES_LIST:
@@ -619,20 +658,6 @@ class QZoneOperator {
                 // 获取私密日记列表
                 if (this.isExport(moduleType)) {
                     await API.Diaries.export();
-                }
-                this.next(OperatorType.PHOTO_LIST);
-                break;
-            case OperatorType.PHOTO_LIST:
-                // 获取相册列表
-                if (this.isExport(moduleType)) {
-                    await API.Photos.export();
-                }
-                this.next(OperatorType.VIDEO_LIST);
-                break;
-            case OperatorType.VIDEO_LIST:
-                // 获取视频列表
-                if (this.isExport(moduleType)) {
-                    await API.Videos.export();
                 }
                 this.next(OperatorType.BOARD_LIST);
                 break;
@@ -655,10 +680,24 @@ class QZoneOperator {
                 if (this.isExport(moduleType)) {
                     await API.Favorites.export();
                 }
+                this.next(OperatorType.PHOTO_LIST);
+                break;
+            case OperatorType.PHOTO_LIST:
+                // 获取相册列表
+                if (this.isExport(moduleType)) {
+                    await API.Photos.export();
+                }
+                this.next(OperatorType.VIDEO_LIST);
+                break;
+            case OperatorType.VIDEO_LIST:
+                // 获取视频列表
+                if (this.isExport(moduleType)) {
+                    await API.Videos.export();
+                }
                 this.next(OperatorType.USER_INFO);
                 break;
             case OperatorType.USER_INFO:
-                // 获取目标用户个人档信息
+                // 导出用户信息
                 await API.Common.exportUser();
                 this.next(OperatorType.FILE_LIST);
                 break;
@@ -667,6 +706,8 @@ class QZoneOperator {
                 chrome.storage.local.set(QZone, function () {
                     console.info("保存数据完成", QZone);
                 });
+                // 显示下载管理
+                // $("#fileList").show();
                 // 下载文件
                 await API.Utils.downloadAllFiles();
                 this.next(OperatorType.ZIP);
@@ -739,11 +780,8 @@ class QZoneOperator {
      * 初始化各个备份模块的文件夹
      */
     async initModelFolder() {
-        console.debug('初始化模块文件夹开始', QZone);
+        console.info('初始化模块文件夹开始', QZone);
 
-        // 切换到根目录
-        let root = await API.Utils.siwtchToRoot();
-        console.debug("切换到根目录", root);
         // 创建模块文件夹
         let createModuleFolder = async function () {
             // 创建所有模块的目录
@@ -757,7 +795,7 @@ class QZoneOperator {
                     continue;
                 }
                 let entry = await API.Utils.createFolder(rootPath);
-                console.debug('创建目录成功', entry);
+                console.info('创建目录成功', entry);
             }
         }
 
@@ -765,15 +803,10 @@ class QZoneOperator {
         await createModuleFolder();
 
         // 创建说明文件
-        let readmeUrl = chrome.runtime.getURL('others/README.md');
-        let res = await API.Utils.get(readmeUrl);
-        QZone.Common.Filer.write(FOLDER_ROOT + "说明.md", {
-            data: res,
-            type: "text/plain"
-        }, (entry) => {
-            console.debug('创建文件成功', entry);
-        });
-        console.debug('初始化模块文件夹结束', QZone);
+        let res = await API.Utils.get(chrome.runtime.getURL('others/README.md'));
+        let fileEntry = await API.Utils.writeText(res, FOLDER_ROOT + "README.md");
+        console.info('生成说明文件完成', fileEntry);
+        console.info('初始化模块文件夹结束', QZone);
     }
 
     /**
@@ -924,7 +957,7 @@ class QZoneOperator {
                 case 'Browser':
                     // 下载方式为浏览器下载时
                     for (const task of tasks) {
-                        if (!task.id) {
+                        if (!task.id || task.id === 0) {
                             // 无ID时表示添加到下载器失败，需要重新添加
                             await API.Utils.downloadByBrowser(task);
                             return;
@@ -998,11 +1031,12 @@ class QZoneOperator {
                     title: '路径',
                     titleTooltip: '路径',
                     align: 'left',
-                    visible: true
+                    visible: true,
+                    sortable: true
                 }, {
                     field: 'url',
-                    title: '地址',
-                    titleTooltip: '地址',
+                    title: '地址（建议点击预览）',
+                    titleTooltip: '地址（建议点击预览）',
                     align: 'left',
                     visible: true,
                     formatter: (value) => {
@@ -1010,8 +1044,8 @@ class QZoneOperator {
                     }
                 }, {
                     field: 'source',
-                    title: '来源',
-                    titleTooltip: '来源',
+                    title: '来源（<span style="color:red">打包下载前请勿点击访问</span>）',
+                    titleTooltip: '来源，未打包下载前，请勿点击超链接访问，否则将清理已收集的数据。',
                     align: 'left',
                     visible: true,
                     formatter: (value, row, index, field) => {
@@ -1134,33 +1168,37 @@ const browserTasks = new Array();
 
 /**
  * 添加下载任务
- * @param {string} image 对象
+ * @param {string} item 对象
  * @param {string} url URL
- * @param {string} moudel_dir 模块下载目录
+ * @param {string} module_dir 模块下载目录
  * @param {object} source 来源
  * @param {string} FILE_URLS 文件下载链接
+ * @param {string} suffix 文件后缀
  */
-API.Utils.addDownloadTasks = async (image, url, moudel_dir, source, FILE_URLS) => {
-    let downloadType = Qzone_Config.Common.downloadType;
-    let isQzoneUrl = downloadType === 'QZone';
-    image.custom_url = url;
-    if (isQzoneUrl) {
+API.Utils.addDownloadTasks = async (item, url, module_dir, source, FILE_URLS, suffix) => {
+    item.custom_url = url;
+    if (API.Common.isQzoneUrl()) {
         return;
     }
     let filename = FILE_URLS.get(url);
     if (!filename) {
         filename = API.Utils.newSimpleUid(8, 16);
-        let suffix = await API.Utils.autoFileSuffix(url);
-        filename = filename + suffix;
-        image.custom_mimeType = suffix;
+        if (suffix) {
+            filename = filename + suffix;
+            item.custom_mimeType = suffix;
+        } else {
+            let autoSuffix = await API.Utils.autoFileSuffix(url);
+            filename = filename + autoSuffix;
+            item.custom_mimeType = autoSuffix;
+        }
     }
-    image.custom_uid = filename;
-    image.custom_dir = '图片';
-    image.custom_filename = filename;
-    image.custom_filepath = '图片/' + filename;
-    // 添加下载任务
-    API.Utils.newDownloadTask(url, moudel_dir, filename, source);
-    FILE_URLS.set(url, filename);
+    item.custom_filename = filename;
+    item.custom_filepath = 'Images/' + filename;
+    if (!FILE_URLS.has(url)) {
+        // 添加下载任务
+        API.Utils.newDownloadTask(url, module_dir, filename, source, suffix);
+        FILE_URLS.set(url, filename);
+    }
 }
 
 /**
@@ -1170,17 +1208,30 @@ API.Utils.addDownloadTasks = async (image, url, moudel_dir, source, FILE_URLS) =
  * @param {name} name 文件名称
  * @param {object} source 文件来源
  */
-API.Utils.newDownloadTask = (url, folder, name, source) => {
-    url = API.Utils.makeDownloadUrl(url, true)
+API.Utils.newDownloadTask = (url, folder, name, source, makeOrg) => {
+    if (!url) {
+        return;
+    }
+    url = makeOrg ? url : API.Utils.makeDownloadUrl(url, true);
 
     // 添加Ajax请求下载任务
-    downloadTasks.push(new DownloadTask(folder, name, API.Utils.toHttps(url), source));
-
+    const ajax_down = new DownloadTask(folder, name, API.Utils.toHttps(url), source);
     // 添加浏览器下载任务
-    browserTasks.push(new BrowserTask(url, QZone.Common.Config.ZIP_NAME, folder, name, source));
-
+    const browser_down = new BrowserTask(url, QZone.Common.Config.ZIP_NAME, folder, name, source);
     // 添加迅雷下载任务
-    thunderInfo.addTask(new ThunderTask(folder, name, url, source));
+    const thunder_down = new ThunderTask(folder, name, url, source);
+
+    // 因为视频存在有效期，所以尽量将MP4文件前置，尽早下载
+    if (name && name.indexOf('mp4') > -1) {
+        downloadTasks.unshift();
+        downloadTasks.unshift(ajax_down);
+        browserTasks.unshift(browser_down);
+        thunderInfo.addTask(thunder_down);
+        return;
+    }
+    downloadTasks.push(ajax_down);
+    browserTasks.push(browser_down);
+    thunderInfo.addTask(thunder_down);
 }
 
 /**
@@ -1192,9 +1243,8 @@ API.Utils.downloadsByAjax = async (tasks) => {
     // 任务分组
     const _tasks = _.chunk(tasks, Qzone_Config.Common.downloadThread);
 
-    let indicator = new StatusIndicator('Common_File');
+    const indicator = new StatusIndicator('Common_File');
     indicator.setTotal(tasks.length);
-    let folderMapping = new Map();
 
     for (let i = 0; i < _tasks.length; i++) {
         const list = _tasks[i];
@@ -1202,18 +1252,12 @@ API.Utils.downloadsByAjax = async (tasks) => {
         for (let j = 0; j < list.length; j++) {
             const task = list[j];
 
-            // 切换到根目录
-            await API.Utils.siwtchToRoot();
-
             // 创建文件夹
-            let folderName = QZone.Common.Config.ZIP_NAME + '/' + task.dir;
-            if (!folderMapping.has(folderName)) {
-                let folderEntry = await API.Utils.createFolder(folderName);
-                folderMapping.set(folderName, folderEntry);
-            }
+            const folderName = FOLDER_ROOT + '/' + task.dir;
+            await API.Utils.createFolder(folderName);
 
-            let filepath = folderName + '/' + task.name;
-            down_tasks.push(API.Utils.writeFile(task.url, filepath).then(() => {
+            const filepath = folderName + '/' + task.name;
+            down_tasks.push(API.Utils.downloadToFile(task.url, filepath).then(() => {
                 task.setState('complete');
                 indicator.addSuccess(task);
             }).catch((error) => {
@@ -1233,16 +1277,33 @@ API.Utils.downloadsByAjax = async (tasks) => {
  * @param {BrowserTask} tasks 浏览器下载任务
  */
 API.Utils.downloadsByBrowser = async (tasks) => {
+    // 进度器
     let indicator = new StatusIndicator('Common_Browser');
     indicator.setTotal(tasks.length);
+
+    // 超时秒数
+    const timeout = Qzone_Config.Common.autoFileSuffixTimeOut * 1000;
+
     // 开始下载
     const _tasks = _.chunk(tasks, Qzone_Config.Common.downloadThread);
     for (let i = 0; i < _tasks.length; i++) {
         const list = _tasks[i];
         for (let j = 0; j < list.length; j++) {
             const task = list[j];
-            await API.Utils.downloadByBrowser(task);
-            indicator.addSuccess(1);
+            // 添加任务到下载器的时候，可能存在一直无返回的情况，问题暂未定位，先临时添加超时秒数逻辑
+            await API.Utils.timeoutPromise(API.Utils.downloadByBrowser(task), timeout || 15).then((downloadTask) => {
+                if (downloadTask.id > 0) {
+                    console.debug('添加到浏览器下载完成', task);
+                    indicator.addSuccess(task);
+                } else {
+                    console.error('添加到浏览器下载异常', task);
+                    indicator.addFailed(task);
+                }
+            }).catch((error) => {
+                console.error('添加到浏览器下载异常', error, task);
+                task.setState('interrupted');
+                indicator.addFailed(task);
+            })
         }
         // 等待1秒再继续添加
         await API.Utils.sleep(1000);
