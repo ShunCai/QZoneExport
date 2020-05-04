@@ -11,6 +11,10 @@ API.Friends.export = async () => {
         // 获取所有的QQ好友
         let friends = await API.Friends.getAllList();
 
+        // 根据分组名称（非分组ID）进行排序
+        friends = API.Utils.sort(friends, 'groupName');
+        console.info('排序后', friends, QZone.Friends.Data)
+
         // 根据导出类型导出数据
         await API.Friends.exportAllToFiles(friends);
 
@@ -38,7 +42,7 @@ API.Friends.getAllList = async () => {
 
         let friends = data.items || [];
 
-        QZone.Friends.total = friends.length;
+        QZone.Friends.total = friends.length || QZone.Friends.total || 0;
         indicator.setTotal(friends.length);
 
         QZone.Friends.Data = data.items;
@@ -109,6 +113,9 @@ API.Friends.exportAllToFiles = async (friends) => {
         case 'Excel':
             await API.Friends.exportToExcel(friends);
             break;
+        case 'HTML':
+            await API.Friends.exportToHtml(friends);
+            break;
         case 'MarkDown':
             await API.Friends.exportToMarkDown(friends);
             break;
@@ -126,8 +133,10 @@ API.Friends.exportAllToFiles = async (friends) => {
  * @param {Array} friends 好友列表
  */
 API.Friends.exportToExcel = async (friends) => {
-    let indicator = new StatusIndicator('Friends_Export');
-    indicator.setTotal(friends.length);
+    // 进度更新器
+    const indicator = new StatusIndicator('Friends_Export');
+    indicator.setIndex('Excel');
+
     // Excel数据
     let ws_data = [
         ["QQ号", "备注名称", "QQ昵称", "所在分组", "添加时间", "用户主页", "即时消息"]
@@ -142,9 +151,6 @@ API.Friends.exportToExcel = async (friends) => {
         ws_data.push(rowData);
     }
 
-    // 更新下载中数量
-    indicator.addDownload(friends);
-
     // 创建WorkBook
     let workbook = XLSX.utils.book_new();
 
@@ -154,17 +160,40 @@ API.Friends.exportToExcel = async (friends) => {
 
     // 写入XLSX到HTML5的FileSystem
     let xlsxArrayBuffer = API.Utils.toArrayBuffer(XLSX.write(workbook, { bookType: 'xlsx', bookSST: false, type: 'binary' }));
-    await API.Utils.writeExcel(xlsxArrayBuffer, QZone.Friends.ROOT + "/QQ好友.xlsx").then(fileEntry => {
-        indicator.addSuccess(friends);
+    await API.Utils.writeFile(xlsxArrayBuffer, QZone.Friends.ROOT + "/QQ好友.xlsx").then(fileEntry => {
         console.debug('导出QQ好友到Excel成功', friends, fileEntry);
     }).catch(error => {
         console.error('导出QQ好友到Excel失败', friends, error);
-        indicator.addFailed(friends);
     });
+    // 完成
     indicator.complete();
     return friends;
 }
 
+/**
+ * 导出QQ好友到HTML
+ * @param {Array} friends 好友列表
+ */
+API.Friends.exportToHtml = async (friends) => {
+    // 进度更新器
+    const indicator = new StatusIndicator('Friends_Export');
+    indicator.setIndex('HTML');
+
+    // 基于JSON生成JS
+    console.info('生成好友JSON开始', friends);
+    await API.Utils.createFolder(QZone.Common.ROOT + '/json');
+    const jsonFile = await API.Common.writeJsonToJs('dataList', friends, QZone.Common.ROOT + '/json/friends.js');
+    console.info('生成好友JSON结束', jsonFile, friends);
+
+    // 基于模板生成HTML
+    console.info('生成好友列表HTML开始', friends);
+    const listFile = await API.Common.writeHtmlofTpl('friends', null, QZone.Friends.ROOT + "/index.html");
+    console.info('生成好友列表HTML结束', listFile, friends);
+
+    // 更新完成信息
+    indicator.complete();
+    return friends;
+}
 
 
 /**
@@ -172,8 +201,9 @@ API.Friends.exportToExcel = async (friends) => {
  * @param {Array} friends 好友列表
  */
 API.Friends.exportToMarkDown = async (friends) => {
-    let indicator = new StatusIndicator('Friends_Export');
-    indicator.setTotal(friends.length);
+    // 进度更新器
+    const indicator = new StatusIndicator('Friends_Export');
+    indicator.setIndex('Markdown');
 
     let groupMap = new Map();
     for (const friend of friends) {
@@ -183,7 +213,7 @@ API.Friends.exportToMarkDown = async (friends) => {
         groupMap.set(groupName, groupItems);
     }
 
-    let contents = [];
+    const contents = [];
     for (const groupEntry of groupMap) {
         let groupName = groupEntry[0];
         let groupItems = groupEntry[1];
@@ -201,11 +231,10 @@ API.Friends.exportToMarkDown = async (friends) => {
     let content = contents.join('');
     await API.Utils.writeText(content, QZone.Friends.ROOT + '/QQ好友.md').then((fileEntry) => {
         console.info("导出QQ好友的MarkDown文件到FileSystem完成", fileEntry);
-        indicator.addSuccess(friends);
     }).catch((error) => {
         console.error("导出QQ好友的MarkDown文件到FileSystem异常", error);
-        indicator.addFailed(friends);
     });
+    // 完成
     indicator.complete();
     return friends;
 }
@@ -216,16 +245,18 @@ API.Friends.exportToMarkDown = async (friends) => {
  * @param {Array} friends 好友列表
  */
 API.Friends.exportToJson = async (friends) => {
-    let indicator = new StatusIndicator('Friends_Export');
-    indicator.setTotal(friends.length);
+    // 状态更新器
+    const indicator = new StatusIndicator('Friends_Export');
+    indicator.setIndex('JSON');
+
     let json = JSON.stringify(friends);
-    await API.Utils.writeText(json, QZone.Friends.ROOT + '/QQ好友.json').then((fileEntry) => {
+    await API.Utils.writeText(json, QZone.Friends.ROOT + '/friends.json').then((fileEntry) => {
         console.info("导出QQ好友的JSON文件到FileSystem完成", fileEntry);
-        indicator.addSuccess(friends);
     }).catch((error) => {
         console.error("导出QQ好友的JSON文件到FileSystem异常", error);
-        indicator.addFailed(friends);
     });
+
+    // 完成
     indicator.complete();
     return friends;
 }

@@ -13,6 +13,20 @@
 		window.location.hash = "#" + this.id;
 	});
 
+	const tips = (message) => {
+		$('#alert_tip').html(`
+			<div class="alert alert-success alert-dismissible fade show" role="alert">
+				{0}
+				<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+		`.format(message));
+		setTimeout(() => {
+			$('.alert').alert('close');
+		}, 1500);
+	}
+
 	// 监听下载工具选择事件
 	$('#common_download_type').change(function () {
 		let value = $(this).val();
@@ -39,7 +53,16 @@
 				$(file_suffix_dom).show();
 				$(suffix_timeout_dom).show();
 				$(download_thread_dom).show();
-				$('#common_download_type_help').html('仅在<span style="color:red">正版的安装版迅雷X的10.1.3以上版本</span>测试通过，破解版、便携版等未测试');
+				$('#common_download_type_help').html('仅在<span style="color:red">正版的安装版迅雷X（不禁用迅雷X基础服务）的10.1.3以上版本</span>测试通过，禁用服务或其他版本建议切换迅雷X（剪切板）');
+				break;
+			case 'Thunder_Link':
+				$(task_count_dom).hide();
+				$(task_sleep_dom).hide();
+				$(download_status_dom).hide();
+				$(file_suffix_dom).show();
+				$(suffix_timeout_dom).show();
+				$(download_thread_dom).show();
+				$('#common_download_type_help').html('仅支持迅雷X且打开剪切板监听，打开迅雷X，复制ZIP包中【<span style="color:red">迅雷下载链接.txt</span>】文本内容自动新建下载任务');
 				break;
 			case 'Browser':
 				$(task_count_dom).hide();
@@ -68,28 +91,16 @@
 	$('#photos_exportFormat').change(function () {
 		let value = $(this).val();
 		switch (value) {
-			case 'JSON':
-				// 显示相册评论模块
-				$('#photos_albums_comments_panel').show();
-				break;
-			default:
-				// 显示相册评论模块
+			case 'File':
+				// 隐藏相册评论模块
 				$('#photos_albums_comments_panel').hide();
-				break;
-		}
-	})
-
-	// 监听相片备份类型选择事件
-	$('#photos_image_exportType').change(function () {
-		let value = $(this).val();
-		switch (value) {
-			case 'JSON':
-				// 显示相册评论模块
-				$('#photos_images_comments_panel').show();
+				// 显示相片评论模块
+				$('#photos_images_comments_panel').hide();
 				break;
 			default:
-				// 显示相册评论模块
-				$('#photos_images_comments_panel').hide();
+				$('#photos_albums_comments_panel').show();
+				// 显示相片评论模块
+				$('#photos_images_comments_panel').show();
 				break;
 		}
 	})
@@ -118,6 +129,7 @@
 		$("#common_thunder_task_count").val(options.Common.thunderTaskNum);
 		$("#common_thunder_task_sleep").val(options.Common.thunderTaskSleep);
 		$("#common_download_thread").val(options.Common.downloadThread);
+		$('#common_user_link').prop("checked", options.Common.hasUserLink);
 
 		// 说说模块赋值
 		$("#messages_exportFormat").val(options.Messages.exportType);
@@ -166,7 +178,6 @@
 		$("#photos_albums_comments_cost_max").val(options.Photos.Comments.randomSeconds.max);
 		$("#photos_albums_comments_limit").val(options.Photos.Comments.pageSize);
 
-		$("#photos_image_exportType").val(options.Photos.Images.exportType).change();
 		$("#photos_images_cost_min").val(options.Photos.Images.randomSeconds.min);
 		$("#photos_images_cost_max").val(options.Photos.Images.randomSeconds.max);
 		$("#photos_images_limit").val(options.Photos.Images.pageSize);
@@ -220,6 +231,7 @@
 		Qzone_Config.Common.thunderTaskNum = $("#common_thunder_task_count").val() * 1;
 		Qzone_Config.Common.thunderTaskSleep = $("#common_thunder_task_sleep").val() * 1;
 		Qzone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
+		Qzone_Config.Common.hasUserLink = $('#common_user_link').prop("checked");
 
 		// 说说模块赋值
 		Qzone_Config.Messages.exportType = $("#messages_exportFormat").val();
@@ -268,7 +280,6 @@
 		Qzone_Config.Photos.Comments.randomSeconds.max = $("#photos_albums_comments_cost_max").val() * 1;
 		Qzone_Config.Photos.Comments.pageSize = $("#photos_albums_comments_limit").val() * 1;
 
-		Qzone_Config.Photos.Images.exportType = $("#photos_image_exportType").val();
 		Qzone_Config.Photos.Images.randomSeconds.min = $("#photos_images_cost_min").val() * 1;
 		Qzone_Config.Photos.Images.randomSeconds.max = $("#photos_images_cost_max").val() * 1;
 		Qzone_Config.Photos.Images.pageSize = $("#photos_images_limit").val() * 1;
@@ -308,6 +319,7 @@
 	// 保存按钮
 	$('#saveQzoneConfig').click(() => {
 		setOptions();
+		tips('保存成功，刷新空间页面后备份');
 	})
 
 	// 重置按钮
@@ -316,6 +328,8 @@
 		let data_config = $('#nav-tab>a.nav-item.nav-link.active').prop('data-config');
 		Qzone_Config[data_config] = Default_Config[data_config]
 		loadOptions(Qzone_Config);
+
+		tips('已重置默认值，<strong>确认无误</strong>后保存');
 	})
 
 	const readerTable = (tableId, columns, data, options) => {
@@ -348,9 +362,6 @@
 	chrome.storage.local.get(QZone, function (OLD_QZone) {
 		// 赋值全局变量
 		Object.assign(QZone, OLD_QZone);
-
-		// 设置目标信息
-		$("#qzone_title").text(QZone.Common.Target.title);
 
 
 		// 初始化说说表格

@@ -35,7 +35,7 @@ API.Diaries.getAllContents = async (items) => {
     for (let index = 0; index < items.length; index++) {
         let item = items[index];
         indicator.index = index + 1;
-        await API.Diaries.getInfo(item.blogid).then((data) => {
+        await API.Diaries.getInfo(item.blogid).then(async (data) => {
             // 添加成功提示
             indicator.addSuccess(data);
             let blogPage = jQuery(data);
@@ -54,21 +54,21 @@ API.Diaries.getAllContents = async (items) => {
             if (blogData != null) {
                 item = JSON.parse(blogData[1]).data;
             }
-            // 获得网页中的私密日记正文
-            // 获得网页中的日志正文
-            const $blogPage = blogPage.find("#blogDetailDiv:first");
-            $blogPage.find("img").each(function () {
-                const $img = $(this);
-                const orgsrc = $img.attr('orgsrc');
-                if (orgsrc) {
-                    $img.attr('src', orgsrc);
-                }
-                const src = $img.attr('src');
-                if (src && src.startsWith('//')) {
-                    $img.attr('src', 'http:' + src);
-                }
-            });
-            item.html = API.Utils.utf8ToBase64($blogPage.html());
+            const $detailBlog = blogPage.find("#blogDetailDiv:first");
+            // 添加原始HTML
+            item.html = API.Utils.utf8ToBase64($detailBlog.html());
+
+            // 处理图片信息
+            await API.Diaries.handerImages(item, $detailBlog.find("img"));
+
+            // 处理视频信息
+            await API.Diaries.handerMedias(item, $detailBlog.find("embed"));
+
+            // 更改自定义标题
+            item.custom_title = '《{0}》'.format(item.title);
+            // 添加自定义HTML
+            item.custom_html = API.Utils.utf8ToBase64($detailBlog.html());
+
             items[index] = item;
         }).catch((e) => {
             console.error("获取私密日记内容异常", item, e);
@@ -105,7 +105,7 @@ API.Diaries.getList = async (pageIndex, indicator) => {
         indicator.addDownload(Qzone_Config.Diaries.pageSize);
 
         // 更新状态-总数
-        QZone.Diaries.total = data.data.total_num || 0;
+        QZone.Diaries.total = data.data.total_num || QZone.Diaries.total || 0;
         indicator.setTotal(QZone.Diaries.total);
 
         let dataList = data.data.titlelist || [];
@@ -192,6 +192,9 @@ API.Diaries.exportAllListToFiles = async (items) => {
     // 获取用户配置
     let exportType = Qzone_Config.Diaries.exportType;
     switch (exportType) {
+        case 'HTML':
+            await API.Diaries.exportToHtml(items);
+            break;
         case 'MarkDown':
             await API.Diaries.exportToMarkdown(items);
             break;
@@ -203,6 +206,47 @@ API.Diaries.exportAllListToFiles = async (items) => {
             break;
     }
 }
+
+/**
+ * 导出私密日记到HTML文件
+ * @param {Array} items 日志列表
+ */
+API.Diaries.exportToHtml = async (items) => {
+    // 进度更新器
+    const indicator = new StatusIndicator('Diaries_Export_Other');
+    indicator.setIndex('HTML');
+
+    // 基于JSON生成JS
+    console.info('生成私密日记JSON开始', items);
+    await API.Utils.createFolder(QZone.Common.ROOT + '/json');
+    const jsonFile = await API.Common.writeJsonToJs('dataList', items, QZone.Common.ROOT + '/json/diaries.js');
+    console.info('生成私密日记JSON结束', jsonFile, items);
+
+
+    // 基于模板生成HTML
+    console.info('生成私密日记列表HTML开始', items);
+    const listFile = await API.Common.writeHtmlofTpl('diaries', undefined, QZone.Diaries.ROOT + "/index.html");
+    console.info('生成私密日记列表HTML结束', listFile, items);
+
+    // 生成私密日记详情HTML
+    console.info('生成私密日记详情HTML开始', items);
+    const infoFile = await API.Common.writeHtmlofTpl('diaryinfo', undefined, QZone.Diaries.ROOT + "/info.html");
+    console.info('生成私密日记详情HTML结束', infoFile, items);
+
+    // 每篇日记生成单独的HTML
+    for (let i = 0; i < items.length; i++) {
+        const blog = items[i];
+        let orderNum = API.Utils.prefixNumber(i + 1, items.length.toString().length);
+        console.info('生成单篇日记详情HTML开始', blog);
+        const blogFile = await API.Common.writeHtmlofTpl('diaryinfo_static', { blog: blog }, QZone.Diaries.ROOT + "/{0}_{1}.html".format(orderNum, API.Utils.filenameValidate(blog.title)));
+        console.info('生成单篇日记详情HTML结束', blogFile, blog);
+    }
+
+    // 更新完成信息
+    indicator.complete();
+    return items;
+}
+
 
 /**
  * 导出私密日记到MarkDown文件
@@ -221,7 +265,6 @@ API.Diaries.exportToMarkdown = async (items) => {
         let filename = API.Utils.filenameValidate(orderNum + "_" + date + "_【" + title + "】");
         // 文件夹路径
         let categoryFolder = QZone.Diaries.ROOT + "/" + item.category;
-        await API.Utils.siwtchToRoot();
         // 创建文件夹
         await API.Utils.createFolder(categoryFolder);
         // 私密日记文件路径
@@ -236,6 +279,7 @@ API.Diaries.exportToMarkdown = async (items) => {
     }
     // 更新完成信息
     indicator.complete();
+    return items;
 }
 
 /**
@@ -243,50 +287,116 @@ API.Diaries.exportToMarkdown = async (items) => {
  * @param {object} item 私密日记信息
  */
 API.Diaries.getItemMdContent = async (item) => {
+    let contents = [];
     // 拼接标题，日期，内容
-    let result = "# " + item.title + "\r\n\r\n";
-    let postTime = API.Utils.formatDate(item.pubtime);
-    result = result + "> " + postTime + "\r\n\r\n";
+    contents.push("# " + item.title);
+    contents.push("> " + API.Utils.formatDate(item.pubtime));
+    contents.push("\r\n");
+
     // 根据HTML获取MD内容
-    let markdown = QZone.Common.MD.turndown(API.Utils.base64ToUtf8(item.html));
-    result = result + markdown.replace(/\n/g, "\r\n") + "\r\n\r\n\r\n";
+    let markdown = QZone.Common.MD.turndown(API.Utils.base64ToUtf8(item.custom_html));
+    markdown = markdown + markdown.replace(/\n/g, "\r\n");
+    contents.push(markdown);
+    contents.push("\r\n");
 
     // 拼接评论
-    result = result + "> 评论(" + item.replynum + "):\r\n\r\n";
+    contents.push("> 评论(0):");
+    return contents.join('\r\n');
+}
 
-    // 文件备份类型
-    let downloadType = Qzone_Config.Common.downloadType;
-    // 是否为QQ空间外链
-    let isQzoneUrl = downloadType === 'QZone';
-    if (isQzoneUrl) {
-        return result;
+/**
+ * 处理日志的图片
+ * @param {object} item 日志
+ * @param {Array} images 图片元素列表
+ */
+API.Diaries.handerImages = async (item, images) => {
+    if (!images) {
+        return item;
     }
-    // 下载相对目录
-    let moudel_dir = '私密日记/图片';
-    // 转为本地图片
-    let imageLinkM = /!\[.*?\]\((.+?)\)/g;
-    let match;
-    let tmpResult = result;
-    while (match = imageLinkM.exec(tmpResult)) {
-        let orgUrl = match[1];
-        if (isQzoneUrl) {
-            // QQ空间外链时，需要转换相对协议的图片地址
-            let newUrl = API.Utils.toHttp(orgUrl);
-            result = result.split(orgUrl).join(newUrl);
-        } else {
-            let uid = QZone.Diaries.FILE_URLS.get(orgUrl);
-            if (!uid) {
-                uid = API.Utils.newSimpleUid(8, 16);
-                let suffix = await API.Utils.autoFileSuffix(orgUrl);
-                uid = uid + suffix;
-                // 添加下载任务
-                API.Utils.newDownloadTask(orgUrl, moudel_dir, uid, item);
-                QZone.Diaries.FILE_URLS.set(orgUrl, uid);
-            }
-            result = result.split(orgUrl).join("../图片/" + uid);
+    for (let i = 0; i < images.length; i++) {
+        const $img = $(images[i]);
+        // 处理相对协议
+        let url = $img.attr('orgsrc') || $img.attr('src');
+        url = API.Utils.toHttp(url);
+        $img.attr('src', url);
+
+        // 添加下载任务
+        if (API.Common.isQzoneUrl()) {
+            // QQ空间外链不处理
+            continue;
+        }
+        let uid = API.Utils.newSimpleUid(8, 16);
+        let suffix = await API.Utils.autoFileSuffix(url);
+        const custom_filename = uid + suffix;
+        // 添加下载任务
+        API.Utils.newDownloadTask(url, 'Diaries/Images', custom_filename, item);
+
+        let exportType = Qzone_Config.Diaries.exportType;
+        switch (exportType) {
+            case 'MarkDown':
+                $img.attr('src', '../images/' + custom_filename);
+                break;
+            default:
+                $img.attr('src', 'images/' + custom_filename);
+                break;
         }
     }
-    return result;
+    return item;
+}
+
+/**
+ * 处理视频信息
+ * @param {object} item 日志
+ * @param {Array} embeds 图片元素列表
+ */
+API.Diaries.handerMedias = async (item, embeds) => {
+    if (!embeds) {
+        // 无图片不处理
+        return item;
+    }
+    for (let i = 0; i < embeds.length; i++) {
+        const $embed = $(embeds[i]);
+        const data_type = $embed.attr('data-type');
+        let vid = $embed.attr('data-vid');
+        let iframe_url;
+        switch (data_type) {
+            case '1':
+                // 相册视频
+                // MP4地址 
+                const mp4_url = $embed.attr('data-mp4');
+                if (!mp4_url || !vid) {
+                    // 历史数据或特殊数据跳过不处理
+                    console.warn('历史数据或特殊数据跳过不处理', $embed);
+                    return;
+                }
+                // iframe 播放地址
+                iframe_url = 'https://h5.qzone.qq.com/video/index?vid=' + vid;
+                $embed.replaceWith('<iframe src="{0}" height="{1}" width="{2}" allowfullscreen="true"></iframe>'.format(iframe_url, $embed.attr('height'), $embed.attr('width')));
+                break;
+            case '51':
+                // 外部视频
+                if (!vid) {
+                    // 历史数据或特殊数据跳过不处理
+                    console.warn('历史数据或特殊数据跳过不处理', $embed);
+                    return;
+                }
+                iframe_url = 'https://v.qq.com/txp/iframe/player.html?autoplay=true&vid=' + vid;
+                $embed.replaceWith('<iframe src="{0}" height="{1}" width="{2}" allowfullscreen="true"></iframe>'.format(iframe_url, $embed.attr('height'), $embed.attr('width')));
+                break;
+            default:
+                // 其他的
+                // 默认取src值
+                const src_url = $embed.attr('src');
+                vid = API.Utils.toParams(src_url)['vid'];
+                if (vid) {
+                    // 取到VID，默认当外部视频处理
+                    iframe_url = 'https://v.qq.com/txp/iframe/player.html?autoplay=true&vid=' + vid;
+                    $embed.replaceWith('<iframe src="{0}" height="{1}" width="{2}" allowfullscreen="true"></iframe>'.format(iframe_url, $embed.attr('height'), $embed.attr('width')));
+                }
+                break;
+        }
+    }
+    return item;
 }
 
 /**
@@ -294,11 +404,10 @@ API.Diaries.getItemMdContent = async (item) => {
  * @param {Array} items 私密日记列表
  */
 API.Diaries.exportToJson = async (items) => {
-    let indicator = new StatusIndicator('Diaries_Export');
-    indicator.setTotal(items.length);
+    const indicator = new StatusIndicator('Diaries_Export_Other');
+    indicator.setIndex('JSON');
     let json = JSON.stringify(items);
-    await API.Utils.writeText(json, QZone.Diaries.ROOT + '/私密日记.json');
-    indicator.addSuccess(items);
+    await API.Utils.writeText(json, QZone.Diaries.ROOT + '/diaries.json');
     indicator.complete();
     return items;
 }

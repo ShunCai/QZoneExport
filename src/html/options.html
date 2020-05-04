@@ -4,6 +4,7 @@
 <head>
 	<link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 	<link href="../vendor/bootstrap/css/bootstrap-table.min.css" rel="stylesheet">
+	<link href="../css/options.css" rel="stylesheet">
 	<link rel="icon" href="../img/icon-128.png">
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<title>QQ空间导出助手-选项</title>
@@ -27,7 +28,6 @@
 					<a id="about-link" class="nav-link" href="about.html">关于</a>
 				</li>
 			</ul>
-			<span id="qzone_title" class="navbar-text" style="color: skyblue;"></span>
 		</div>
 	</nav>
 	<div class="col">
@@ -57,10 +57,9 @@
 									<label for="messages_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
 										<select id="messages_exportFormat" class="custom-select">
-											<option value="MarkDown" selected>MarkDown</option>
-											<!-- <option value="HTML">HTML</option> -->
+											<option value="HTML" selected>HTML</option>
+											<option value="MarkDown">MarkDown</option>
 											<option value="JSON">JSON</option>
-											<!-- <option value="RTF">RTF</option> -->
 										</select>
 									</div>
 								</div>
@@ -129,10 +128,9 @@
 									<label for="blogs_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
 										<select id="blogs_exportFormat" class="custom-select">
-											<option value="MarkDown" selected>MarkDown</option>
-											<!-- <option value="HTML">HTML</option> -->
+											<option value="HTML" selected>HTML</option>
+											<option value="MarkDown">MarkDown</option>
 											<option value="JSON">JSON</option>
-											<!-- <option value="RTF">RTF</option> -->
 										</select>
 									</div>
 								</div>
@@ -203,10 +201,9 @@
 									<label for="diaries_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
 										<select id="diaries_exportFormat" class="custom-select">
-											<option value="MarkDown" selected>MarkDown</option>
-											<!-- <option value="HTML">HTML</option> -->
+											<option value="HTML" selected>HTML</option>
+											<option value="MarkDown">MarkDown</option>
 											<option value="JSON">JSON</option>
-											<!-- <option value="RTF">RTF</option> -->
 										</select>
 									</div>
 								</div>
@@ -244,20 +241,22 @@
 						<div class="tab-pane fade" id="nav-photos" role="tabpanel" aria-labelledby="nav-photos-tab">
 							<br />
 							<form id="tb_photos">
-								<h5 style="color:cadetblue">相册选项：</h5>
+								<h5 style="color:cadetblue">公共选项：</h5>
 								<hr>
 								<div class="form-group row">
 									<label for="photos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
 										<select id="photos_exportFormat" class="custom-select">
-											<option value="Folder" selected>文件夹</option>
+											<option value="HTML" selected>HTML</option>
+											<option value="File">文件</option>
 											<option value="MarkDown">MarkDown</option>
-											<!-- <option value="HTML">HTML</option> -->
 											<option value="JSON">JSON</option>
 											<!-- <option value="RTF">RTF</option> -->
 										</select>
 									</div>
 								</div>
+								<h5 style="color:cadetblue">相册选项：</h5>
+								<hr>
 								<div class="form-group row">
 									<label class="col-sm-1 col-form-label">查询间隔：</label>
 									<div class="col-sm-1">
@@ -301,21 +300,8 @@
 										</div>
 									</div>
 								</div>
-								<br>
 								<h5 style="color:cadetblue">相片选项：</h5>
 								<hr>
-								<div class="form-group row">
-									<label for="photos_image_exportType" class="col-sm-1 col-form-label">备份类型：</label>
-									<div class="col-sm-2">
-										<select id="photos_image_exportType" class="custom-select">
-											<option value="File" selected>文件</option>
-											<!-- <option value="MarkDown">MarkDown</option> -->
-											<!-- <option value="HTML">HTML</option> -->
-											<option value="JSON">JSON</option>
-											<!-- <option value="RTF">RTF</option> -->
-										</select>
-									</div>
-								</div>
 								<div class="form-group row">
 									<label class="col-sm-1 col-form-label">查询间隔：</label>
 									<div class="col-sm-1">
@@ -353,22 +339,6 @@
 										</div>
 									</div>
 									<div class="form-group row">
-										<div class="col-sm-1">下载视频：</div>
-										<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="photos_images_download_video">
-											<label style="margin-left: 14px;" class="custom-control-label" for="photos_images_download_video" aria-describedby="photos_images_download_video_help"></label>
-											<small id="photos_images_download_video_help" class="text-muted">直接下载相册中的视频到相册中，若勾选，助手将自动获取相片详情，建议勾选后备份时取消备份【视频】模块</small>
-										</div>
-									</div>
-									<div class="form-group row">
-										<div class="col-sm-1">获取详情：</div>
-										<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="photos_images_is_detail">
-											<label style="margin-left: 14px;" class="custom-control-label" for="photos_images_is_detail" aria-describedby="photos_images_is_detail_help"></label>
-											<small id="photos_images_is_detail_help" class="text-muted">详情含相片关联的视频信息、说说信息、以及有权限的加密相册的相片实际地址，视频信息用于下载视频到相册中，相片实际地址用于第三方（如迅雷）下载，建议：备份个人不勾选，备份他人空间勾选，基于JSON迁移数据的开发者勾选</small>
-										</div>
-									</div>
-									<div class="form-group row">
 										<label class="col-sm-1 col-form-label">查询间隔：</label>
 										<div class="col-sm-1">
 											<input type="number" min="1" class="form-control" id="photos_images_comments_cost_min" placeholder="最小间隔">
@@ -394,12 +364,11 @@
 									<label for="videos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
 										<select id="videos_exportFormat" class="custom-select">
-											<option value="Link" selected>下载链接</option>
+											<option value="HTML" selected>HTML</option>
 											<option value="File">MP4文件</option>
-											<!-- <option value="MarkDown">MarkDown</option> -->
-											<!-- <option value="HTML">HTML</option> -->
+											<option value="MarkDown">MarkDown</option>
 											<option value="JSON">JSON</option>
-											<!-- <option value="RTF">RTF</option> -->
+											<option value="Link">下载链接</option>
 										</select>
 									</div>
 								</div>
@@ -428,10 +397,9 @@
 									<label for="boards_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
 										<select id="boards_exportFormat" class="custom-select">
-											<option value="MarkDown" selected>MarkDown</option>
-											<!-- <option value="HTML">HTML</option> -->
+											<option value="HTML" selected>HTML</option>
+											<option value="MarkDown">MarkDown</option>
 											<option value="JSON">JSON</option>
-											<!-- <option value="RTF">RTF</option> -->
 										</select>
 									</div>
 								</div>
@@ -460,9 +428,10 @@
 									<label for="friends_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
 										<select id="friends_exportFormat" class="custom-select">
-											<option value="Excel" selected>Excel</option>
-											<option value="MarkDown">MarkDown</option>
+											<option value="HTML" selected>HTML</option>
+											<option value="Excel">Excel</option>
 											<option value="JSON">JSON</option>
+											<option value="MarkDown">MarkDown</option>
 										</select>
 									</div>
 								</div>
@@ -483,10 +452,9 @@
 									<label for="favorites_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
 										<select id="favorites_exportFormat" class="custom-select">
-											<option value="MarkDown" selected>MarkDown</option>
-											<!-- <option value="HTML">HTML</option> -->
+											<option value="HTML" selected>HTML</option>
+											<option value="MarkDown">MarkDown</option>
 											<option value="JSON">JSON</option>
-											<!-- <option value="RTF">RTF</option> -->
 										</select>
 									</div>
 								</div>
@@ -534,8 +502,9 @@
 									<div class="col-sm-2">
 										<select id="common_download_type" class="custom-select" aria-describedby="common_download_type_help">
 											<option value="File" selected>助手内部</option>
-											<option value="Thunder">迅雷X</option>
-											<option value="Browser">浏览器</option>
+											<option value="Browser">浏览器（推荐）</option>
+											<option value="Thunder">迅雷X（自动唤起）</option>
+											<option value="Thunder_Link">迅雷X（下载链接）</option>
 											<option value="QZone">QQ空间外链</option>
 										</select>
 									</div>
@@ -550,7 +519,7 @@
 										</div>
 									</div>
 									<div>
-										<small id="common_file_suffix_help" class="text-muted">勾选将自动识别说说、日志、私密日记、留言板、收藏夹图片文件后缀名，仅适用下载方式为非QQ空间外链，备份时长将延长。</small>
+										<small id="common_file_suffix_help" class="text-muted">勾选将自动识别说说、日志、私密日记、留言板、收藏夹图片文件后缀名，将延长备份时间。</small>
 									</div>
 								</div>
 								<div class="form-group row" style="display: none;">
@@ -558,7 +527,7 @@
 									<div class="col-sm-2">
 										<input type="number" min="10" class="form-control" id="common_file_suffix_timeout" placeholder="类型识别超时秒数" aria-describedby="common_file_suffix_timeout_help">
 									</div>
-									<small id="common_file_suffix_timeout_help" class="text-muted" style="margin-top: 8px;">图片类型识别最大超时数，识别超该数值时，将取消识别类型，即图片文件无后缀名</small>
+									<small id="common_file_suffix_timeout_help" class="text-muted" style="margin-top: 8px;">图片类型识别最大超时秒数，识别超该数值时，将取消识别类型，即图片文件无后缀名</small>
 								</div>
 								<div class="form-group row" style="display: none;">
 									<label for="common_thunder_task_count" class="col-sm-1 col-form-label">迅雷最大任务：</label>
@@ -593,15 +562,28 @@
 										<small id="common_download_status_help" class="text-muted">勾选表示启用，禁用后，会影响整个浏览器下载文件时无状态栏提醒，适用于下载方式为浏览器</small>
 									</div>
 								</div>
+								<div class="form-group row">
+									<div class="col-sm-1">空间用户链接：</div>
+									<div class="col-sm-2">
+										<div class="custom-control custom-checkbox">
+											<input type="checkbox" class="custom-control-input" id="common_user_link">
+											<label class="custom-control-label" for="common_user_link" aria-describedby="common_user_link_help"></label>
+										</div>
+									</div>
+									<div>
+										<small id="common_user_link_help" class="text-muted">是否生成QQ空间用户链接用于跳转访问QQ空间，如评论者，仅适用备份类型为Markdown，HTML方式默认生成</small>
+									</div>
+								</div>
 							</form>
 						</div>
 					</div>
-					<button id="saveQzoneConfig" type="submit" class="btn btn-primary">应用</button>
+					<button id="saveQzoneConfig" type="submit" class="btn btn-primary">保存</button>
 					<button id="resetQzoneConfig" type="reset" class="btn btn-secondary">重置</button>
 				</div>
 			</div>
 		</div>
 	</div>
+	<div id="alert_tip"></div>
 	<script src="../vendor/thunder/thunder-link.js"></script>
 	<script src="../vendor/jquery/jquery-3.3.1.min.js"></script>
 	<script src="../vendor/popper/popper.min.js"></script>
@@ -611,7 +593,7 @@
 	<script src="../js/config.js"></script>
 	<script src="../js/utils.js"></script>
 	<script src="../js/api.js"></script>
-	<script src="../js/options.js"></script>	
+	<script src="../js/options.js"></script>
 </body>
 
 </html>

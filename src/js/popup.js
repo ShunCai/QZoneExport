@@ -61,7 +61,12 @@
                 $album_tips.show();
                 $album_tips.html('目标相册已用容量：{0}'.format(data.data.user.capacity));
                 if (data.data.user.diskused > 1000) {
-                    $album_tips.append('<br>建议使用【浏览器】或【迅雷】下载方式！');
+                    $album_tips.append('<br>备份相册，请使用第三方<a id="downloadType_album" href="#">【文件下载工具】</a>');
+
+                    // 打开公共配置
+                    $('#downloadType_album').click(() => {
+                        chrome.tabs.create({ url: "html/options.html#nav-common-tab" })
+                    })
                 }
             } else {
                 $album_tips.hide();
@@ -164,6 +169,7 @@
         checkDiaries();
     });
 
+    // 相册选择事件
     $("#Photos").change(function () {
         let isCheck = $(this).prop('checked');
         let $export_albums_div = $('#export_albums_div');
@@ -175,6 +181,25 @@
         initAlbumInfo();
     });
     $("#Photos").change();
+
+    // 视频选择事件
+    $("#Videos").change(function () {
+        const isCheck = $(this).prop('checked');
+        const $video_tips = $("#video_tips");
+        if (isCheck) {
+            $video_tips.show();
+            $video_tips.html('备份视频，请使用第三方<a id="downloadType_video" href="#">【文件下载工具】</a>');
+
+            // 打开公共配置
+            $('#downloadType_video').click(() => {
+                chrome.tabs.create({ url: "html/options.html#nav-common-tab" })
+            })
+
+        } else {
+            $video_tips.hide();
+        }
+    });
+    $("#Videos").change();
 
     // 绑定备份按钮事件
     $('#backup').click(() => {
@@ -207,4 +232,8 @@
         });
     });
 
+    // 打开选项页
+    $("#openOptions").click(() => {
+        chrome.runtime.openOptionsPage();
+    });
 })();
