@@ -45,6 +45,36 @@
     }
 
     // 获取相册列表
+    const initAlbumInfo = () => {
+        sendMessage({
+            from: 'popup',
+            subject: 'initAlbumInfo'
+        }, (data) => {
+            if (data.code < 0) {
+                $('#backup').attr('disabled', true);
+                return;
+            }
+            console.info('获取相册信息完成：', data);
+            const $album_tips = $("#album_tips");
+            const $photos = $("#Photos");
+            if ($photos.prop('checked')) {
+                $album_tips.show();
+                $album_tips.html('目标相册已用容量：{0}'.format(data.data.user.capacity));
+                if (data.data.user.diskused > 1000) {
+                    $album_tips.append('<br>备份相册，请使用第三方<a id="downloadType_album" href="#">【文件下载工具】</a>');
+
+                    // 打开公共配置
+                    $('#downloadType_album').click(() => {
+                        chrome.tabs.create({ url: "html/options.html#nav-common-tab" })
+                    })
+                }
+            } else {
+                $album_tips.hide();
+            }
+        });
+    }
+
+    // 获取相册列表
     const getAlbumList = () => {
         sendMessage({
             from: 'popup',
@@ -130,6 +160,8 @@
         checkDiaries();
         // 获取相册列表
         getAlbumList();
+        // 获取相册信息
+        initAlbumInfo();
     });
 
     // 私密日志独立密码提示
@@ -137,6 +169,7 @@
         checkDiaries();
     });
 
+    // 相册选择事件
     $("#Photos").change(function () {
         let isCheck = $(this).prop('checked');
         let $export_albums_div = $('#export_albums_div');
@@ -145,8 +178,28 @@
         } else {
             $export_albums_div.hide();
         }
+        initAlbumInfo();
     });
     $("#Photos").change();
+
+    // 视频选择事件
+    $("#Videos").change(function () {
+        const isCheck = $(this).prop('checked');
+        const $video_tips = $("#video_tips");
+        if (isCheck) {
+            $video_tips.show();
+            $video_tips.html('备份视频，请使用第三方<a id="downloadType_video" href="#">【文件下载工具】</a>');
+
+            // 打开公共配置
+            $('#downloadType_video').click(() => {
+                chrome.tabs.create({ url: "html/options.html#nav-common-tab" })
+            })
+
+        } else {
+            $video_tips.hide();
+        }
+    });
+    $("#Videos").change();
 
     // 绑定备份按钮事件
     $('#backup').click(() => {
@@ -179,4 +232,8 @@
         });
     });
 
+    // 打开选项页
+    $("#openOptions").click(() => {
+        chrome.runtime.openOptionsPage();
+    });
 })();

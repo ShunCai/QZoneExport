@@ -1,0 +1,46 @@
+/* 滚动条优化 */
+
+::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+
+::-webkit-scrollbar-track-piece {
+    background-color: transparent;
+}
+
+body::-webkit-scrollbar-track-piece {
+    background-color: white;
+}
+
+::-webkit-scrollbar-track-piece:no-button {}
+
+::-webkit-scrollbar-thumb {
+    background-color: #7D7D7D;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: #666;
+}
+
+table {
+    table-layout: fixed;
+}
+
+table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#alert_tip {
+    text-align: center;
+    top: 45%;
+    left: 40%;
+    position: fixed;
+}

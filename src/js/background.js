@@ -13,7 +13,7 @@ const Default_Config = {
         // 文件下载类型
         downloadType: 'File',
         // 自动识别文件后缀
-        isAutoFileSuffix: true,
+        isAutoFileSuffix: false,
         // 后缀识别超时秒数
         autoFileSuffixTimeOut: 30,
         // 迅雷任务数        
@@ -21,21 +21,23 @@ const Default_Config = {
         // 唤起迅雷间隔        
         thunderTaskSleep: 60,
         // 文件下载并发数        
-        downloadThread: 5,
+        downloadThread: 10,
         // 是否启用下载状态栏提醒
-        enabledShelf: true
+        enabledShelf: true,
+        // 生成内容是否包含其他空间用户链接
+        hasUserLink: true
     },
     // 说说模块
     Messages: {
-        exportType: "MarkDown",// 内容备份类型
+        exportType: "HTML",// 内容备份类型
         pageSize: 20,
         randomSeconds: {
             min: 1,
             max: 2
         },
-        isFull: false, //是否获取全文
+        isFull: true, //是否获取全文
         Comments: {
-            isFull: false, //是否全部评论
+            isFull: true, //是否全部评论
             pageSize: 20,
             randomSeconds: {
                 min: 1,
@@ -45,7 +47,7 @@ const Default_Config = {
     },
     // 日志模块
     Blogs: {
-        exportType: "MarkDown",// 内容备份类型
+        exportType: "HTML",// 内容备份类型
         pageSize: 50,
         randomSeconds: {
             min: 1,
@@ -58,7 +60,7 @@ const Default_Config = {
             }
         },
         Comments: {
-            isFull: false, //是否全部评论
+            isFull: true, //是否全部评论
             pageSize: 50,
             randomSeconds: {
                 min: 1,
@@ -68,7 +70,7 @@ const Default_Config = {
     },
     // 私密日记模块
     Diaries: {
-        exportType: "MarkDown",// 内容备份类型
+        exportType: "HTML",// 内容备份类型
         pageSize: 50,
         randomSeconds: {
             min: 1,
@@ -83,7 +85,7 @@ const Default_Config = {
     },
     // 相册模块
     Photos: {
-        exportType: "Folder",
+        exportType: "HTML",
         pageSize: 3000,
         randomSeconds: {
             min: 1,
@@ -98,7 +100,6 @@ const Default_Config = {
             }
         },
         Images: {
-            exportType: "File",
             pageSize: 90,
             exifType: "raw",
             randomSeconds: {
@@ -117,7 +118,7 @@ const Default_Config = {
     },
     // 视频模块
     Videos: {
-        exportType: "Link",
+        exportType: "HTML",
         randomSeconds: {
             min: 1,
             max: 2
@@ -126,7 +127,7 @@ const Default_Config = {
     },
     // 留言板模块
     Boards: {
-        exportType: "MarkDown",
+        exportType: "HTML",
         randomSeconds: {
             min: 1,
             max: 2
@@ -135,12 +136,12 @@ const Default_Config = {
     },
     // QQ好友模块
     Friends: {
-        exportType: "Excel",
+        exportType: "HTML",
         hasAddTime: true
     },
     // 收藏夹模块
     Favorites: {
-        exportType: "MarkDown",
+        exportType: "HTML",
         randomSeconds: {
             min: 1,
             max: 2
@@ -160,13 +161,8 @@ chrome.runtime.onInstalled.addListener(function () {
                     // 打开QQ空间显示pageAction
                     new chrome.declarativeContent.PageStateMatcher({
                         pageUrl: {
-                            urlMatches: 'http://user.qzone.qq.com/\d*'
-                        }
-                    }),
-                    // 打开QQ空间显示pageAction
-                    new chrome.declarativeContent.PageStateMatcher({
-                        pageUrl: {
-                            urlMatches: 'https://user.qzone.qq.com/\d*'
+                            urlMatches: 'https://user.qzone.qq.com/\d*',
+                            schemes: ['https']
                         }
                     })
                 ],
@@ -179,7 +175,7 @@ chrome.runtime.onInstalled.addListener(function () {
 
 let sendMessage = (data, callback) => {
     chrome.runtime.sendMessage(data, function (res) {
-        console.debug('Background sendMessage', res)
+        console.debug('Background sendMessage', res);
         callback(res);
     });
 }
@@ -191,15 +187,21 @@ let sendMessage = (data, callback) => {
  */
 const downloadByBrowser = function (options) {
     return new Promise(function (resolve, reject) {
-        try {
-            chrome.downloads.download(options, function (downloadId) {
-                BrowseDownloads.set(downloadId, options)
-                console.debug('添加到管理器完成，下载ID', downloadId);
-                resolve(downloadId);
-            });
-        } catch (error) {
-            reject(0);
-        }
+        chrome.downloads.download(options, function (downloadId) {
+            if (chrome.runtime.lastError) {
+                console.error(chrome.runtime.lastError.message, options);
+                // 返回失败标识
+                resolve(0);
+                return;
+            }
+            if (!downloadId) {
+                // 返回失败标识
+                resolve(0);
+            }
+            BrowseDownloads.set(downloadId, options)
+            console.debug('添加到管理器完成，下载ID', downloadId);
+            resolve(downloadId);
+        });
     });
 }
 
@@ -209,13 +211,15 @@ const downloadByBrowser = function (options) {
  */
 const getDownloadList = function (options) {
     return new Promise(function (resolve, reject) {
-        try {
-            chrome.downloads.search(options, function (data) {
-                resolve(data);
-            })
-        } catch (error) {
-            reject([]);
-        }
+        chrome.downloads.search(options, function (data) {
+            if (chrome.runtime.lastError) {
+                console.error(chrome.runtime.lastError.message, options);
+                // 返回失败标识
+                resolve([]);
+                return;
+            }
+            resolve(data);
+        })
     });
 }
 
@@ -225,13 +229,15 @@ const getDownloadList = function (options) {
  */
 const resumeDownload = function (downloadId) {
     return new Promise(function (resolve, reject) {
-        try {
-            chrome.downloads.resume(downloadId, function () {
-                resolve(downloadId);
-            })
-        } catch (error) {
-            reject(0);
-        }
+        chrome.downloads.resume(downloadId, function () {
+            if (chrome.runtime.lastError) {
+                console.error(chrome.runtime.lastError.message, downloadId);
+                // 返回失败标识
+                resolve(0);
+                return;
+            }
+            resolve(downloadId);
+        })
     });
 }
 
@@ -252,32 +258,24 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                     // 浏览器下载
                     downloadByBrowser(request.options).then((downloadId) => {
                         sendResponse(downloadId);
-                    }).catch(() => {
-                        sendResponse(0);
                     });
                     break;
                 case 'download_list':
-                    // 浏览器下载
+                    // 获取下载列表
                     getDownloadList(request.options).then((data) => {
                         sendResponse(data);
-                    }).catch(() => {
-                        sendResponse([]);
                     });
                     break;
                 case 'download_info':
-                    // 浏览器下载
+                    // 获取下载信息
                     getDownloadList(request.options).then((data) => {
                         sendResponse(data && data.length > 0 ? data[0] : undefined);
-                    }).catch(() => {
-                        sendResponse(undefined);
                     });
                     break;
                 case 'download_resume':
                     // 恢复下载
                     resumeDownload(request.downloadId).then((data) => {
                         sendResponse(data);
-                    }).catch(() => {
-                        sendResponse(0);
                     });
                     break;
                 case 'show_export_zip':
@@ -300,8 +298,14 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 /**
  * 下载管理器重命名监听器
  */
-chrome.downloads.onDeterminingFilename.addListener(function (item, suggest) {
-    console.debug("添加到下载管理器前：", item);
+chrome.downloads.onDeterminingFilename.addListener(function (item, __suggest) {
+    function suggest(filename, conflictAction) {
+        __suggest({
+            filename: filename,
+            conflictAction: conflictAction,
+            conflict_action: conflictAction
+        });
+    }
     let filename = item.filename;
     let downloadInfo = BrowseDownloads.get(item.id);
     if (downloadInfo) {
@@ -311,10 +315,7 @@ chrome.downloads.onDeterminingFilename.addListener(function (item, suggest) {
         // 备份文件
         QZoneDownloadId = item.id;
     }
-    suggest({
-        filename: filename
-    });
-    console.debug("添加到下载管理器后：", item);
+    suggest(filename, 'overwrite');
 });
 
 // 扩展安装时
@@ -326,19 +327,25 @@ chrome.runtime.onInstalled.addListener((details) => {
         case 'update':
             switch (previousVersion) {
                 case '1.0.0':
-                    // 上一个版本为1.0.0时，清楚上一个版本的配置项
+                    // 上一个版本为1.0.0时，重置配置项
                     chrome.storage.sync.set(Default_Config, function () {
                         console.info("重置默认配置成功", Default_Config);
                     });
                     break;
                 case '1.0.1':
-                    // 上一个版本为1.0.1时，清楚上一个版本的配置项
+                    // 上一个版本为1.0.1时，重置配置项
                     chrome.storage.sync.set(Default_Config, function () {
                         console.info("重置默认配置成功", Default_Config);
                     });
                     break;
                 case '1.0.2':
-                    // 上一个版本为1.0.2时，清楚上一个版本的配置项
+                    // 上一个版本为1.0.2时，重置配置项
+                    chrome.storage.sync.set(Default_Config, function () {
+                        console.info("重置默认配置成功", Default_Config);
+                    });
+                    break;
+                case '1.0.5':
+                    // 上一个版本为1.0.5时，重置配置项
                     chrome.storage.sync.set(Default_Config, function () {
                         console.info("重置默认配置成功", Default_Config);
                     });

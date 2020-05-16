@@ -13,6 +13,20 @@
 		window.location.hash = "#" + this.id;
 	});
 
+	const tips = (message) => {
+		$('#alert_tip').html(`
+			<div class="alert alert-success alert-dismissible fade show" role="alert">
+				{0}
+				<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+		`.format(message));
+		setTimeout(() => {
+			$('.alert').alert('close');
+		}, 1500);
+	}
+
 	// 监听下载工具选择事件
 	$('#common_download_type').change(function () {
 		let value = $(this).val();
@@ -39,7 +53,16 @@
 				$(file_suffix_dom).show();
 				$(suffix_timeout_dom).show();
 				$(download_thread_dom).show();
-				$('#common_download_type_help').html('仅在<span style="color:red">正版的安装版迅雷X的10.1.3以上版本</span>测试通过，破解版、便携版等未测试');
+				$('#common_download_type_help').html('仅在<span style="color:red">正版的安装版迅雷X（不禁用迅雷X基础服务）的10.1.3以上版本</span>测试通过，禁用服务或其他版本建议切换迅雷X（剪切板）');
+				break;
+			case 'Thunder_Link':
+				$(task_count_dom).hide();
+				$(task_sleep_dom).hide();
+				$(download_status_dom).hide();
+				$(file_suffix_dom).show();
+				$(suffix_timeout_dom).show();
+				$(download_thread_dom).show();
+				$('#common_download_type_help').html('仅支持迅雷X且打开剪切板监听，打开迅雷X，复制ZIP包中【<span style="color:red">迅雷下载链接.txt</span>】文本内容自动新建下载任务');
 				break;
 			case 'Browser':
 				$(task_count_dom).hide();
@@ -68,28 +91,16 @@
 	$('#photos_exportFormat').change(function () {
 		let value = $(this).val();
 		switch (value) {
-			case 'JSON':
-				// 显示相册评论模块
-				$('#photos_albums_comments_panel').show();
-				break;
-			default:
-				// 显示相册评论模块
+			case 'File':
+				// 隐藏相册评论模块
 				$('#photos_albums_comments_panel').hide();
-				break;
-		}
-	})
-
-	// 监听相片备份类型选择事件
-	$('#photos_image_exportType').change(function () {
-		let value = $(this).val();
-		switch (value) {
-			case 'JSON':
-				// 显示相册评论模块
-				$('#photos_images_comments_panel').show();
+				// 显示相片评论模块
+				$('#photos_images_comments_panel').hide();
 				break;
 			default:
-				// 显示相册评论模块
-				$('#photos_images_comments_panel').hide();
+				$('#photos_albums_comments_panel').show();
+				// 显示相片评论模块
+				$('#photos_images_comments_panel').show();
 				break;
 		}
 	})
@@ -118,6 +129,7 @@
 		$("#common_thunder_task_count").val(options.Common.thunderTaskNum);
 		$("#common_thunder_task_sleep").val(options.Common.thunderTaskSleep);
 		$("#common_download_thread").val(options.Common.downloadThread);
+		$('#common_user_link').prop("checked", options.Common.hasUserLink);
 
 		// 说说模块赋值
 		$("#messages_exportFormat").val(options.Messages.exportType);
@@ -166,7 +178,6 @@
 		$("#photos_albums_comments_cost_max").val(options.Photos.Comments.randomSeconds.max);
 		$("#photos_albums_comments_limit").val(options.Photos.Comments.pageSize);
 
-		$("#photos_image_exportType").val(options.Photos.Images.exportType).change();
 		$("#photos_images_cost_min").val(options.Photos.Images.randomSeconds.min);
 		$("#photos_images_cost_max").val(options.Photos.Images.randomSeconds.max);
 		$("#photos_images_limit").val(options.Photos.Images.pageSize);
@@ -220,6 +231,7 @@
 		Qzone_Config.Common.thunderTaskNum = $("#common_thunder_task_count").val() * 1;
 		Qzone_Config.Common.thunderTaskSleep = $("#common_thunder_task_sleep").val() * 1;
 		Qzone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
+		Qzone_Config.Common.hasUserLink = $('#common_user_link').prop("checked");
 
 		// 说说模块赋值
 		Qzone_Config.Messages.exportType = $("#messages_exportFormat").val();
@@ -268,7 +280,6 @@
 		Qzone_Config.Photos.Comments.randomSeconds.max = $("#photos_albums_comments_cost_max").val() * 1;
 		Qzone_Config.Photos.Comments.pageSize = $("#photos_albums_comments_limit").val() * 1;
 
-		Qzone_Config.Photos.Images.exportType = $("#photos_image_exportType").val();
 		Qzone_Config.Photos.Images.randomSeconds.min = $("#photos_images_cost_min").val() * 1;
 		Qzone_Config.Photos.Images.randomSeconds.max = $("#photos_images_cost_max").val() * 1;
 		Qzone_Config.Photos.Images.pageSize = $("#photos_images_limit").val() * 1;
@@ -308,6 +319,7 @@
 	// 保存按钮
 	$('#saveQzoneConfig').click(() => {
 		setOptions();
+		tips('保存成功，刷新空间页面后备份');
 	})
 
 	// 重置按钮
@@ -316,10 +328,12 @@
 		let data_config = $('#nav-tab>a.nav-item.nav-link.active').prop('data-config');
 		Qzone_Config[data_config] = Default_Config[data_config]
 		loadOptions(Qzone_Config);
+
+		tips('已重置默认值，<strong>确认无误</strong>后保存');
 	})
 
-	const readerTable = (tableId, columns, data) => {
-		$("#" + tableId).bootstrapTable('destroy').bootstrapTable({
+	const readerTable = (tableId, columns, data, options) => {
+		let tableOptions = {
 			undefinedText: '',
 			toggle: tableId,
 			locale: 'zh-CN',
@@ -334,121 +348,135 @@
 			paginationDetailHAlign: 'right',
 			theadClasses: 'thead-light',
 			showSearchButton: true,
-			// virtualScroll: true,
-			// showExport: false,
-			// exportDataType: 'all',
-			// exportTypes: ['json', 'xml', 'csv', 'txt', 'excel'],
 			toolbar: "#" + tableId + "-toolbar",
 			toolbarAlign: "left",
-			// filterControl: true,
 			columns: columns || [],
 			data: data || []
-		})
+		};
+		Object.assign(tableOptions, options);
+		$("#" + tableId).bootstrapTable('destroy').bootstrapTable(tableOptions);
 		$("#" + tableId).bootstrapTable('resetView')
 	}
 
 	// 读取数据
-	chrome.storage.local.get(QZone, function (QZone) {
-		// 设置目标信息
-		$("#qzone_title").text(QZone.Common.Target.title);
+	chrome.storage.local.get(QZone, function (OLD_QZone) {
+		// 赋值全局变量
+		Object.assign(QZone, OLD_QZone);
 
 
 		// 初始化说说表格
 		readerTable("messages-table", [{
 			checkbox: true,
-			clickToSelect: true
+			clickToSelect: true,
+			width: "50"
 		}, {
 			field: 'content',
 			title: '内容',
-			titleTooltip: '内容',
 			align: 'left',
-			visible: true,
+			width: "50",
+			widthUnit: "%",
 			formatter: (value, row, index, field) => {
-				return API.Utils.formatContent(value, "HTML");
+				const content = API.Utils.formatContent(value, "HTML") || '[无内容]';
+				const target = API.Messages.getUniKey(row.tid);
+				return '<a target="_brank" href="{0}" data-toggle="tooltip" data-placement="right" data-html="true" title="{1}" >{2}</a>'.format(target, content, content);
 			}
 		}, {
-			field: 'createTime',
-			title: '发布时间',
-			titleTooltip: '发布时间',
+			field: 'previews',
+			title: '多媒体',
 			align: 'center',
-			// filterControl: "datepicker",
-			// filterDatepickerOptions:{
-			// 	language:"zh-CN",
-			// 	autoclose:true, 
-			// 	clearBtn: true, 
-			// 	todayHighlight: true
-			// },
-			visible: true
+			width: "100",
+			formatter: (value, row, index, field) => {
+				return '预览';
+			}
+		}, {
+			field: 'custom_create_time',
+			title: '发布时间',
+			align: 'center',
+			width: "180"
 		}, {
 			field: 'rt_uin',
 			title: '类型',
-			titleTooltip: '类型',
 			align: 'center',
-			visible: true,
+			width: "100",
 			formatter: (value, row, index, field) => {
-				return row.rt_uin ? '转发' : '原创';
+				return row.rt_tid ? '转发' : '原创';
 			}
 		}, {
-			field: 'location.name',
+			field: 'lbs.idname',
 			title: '位置',
-			titleTooltip: '发布时间',
 			align: 'center',
-			visible: true
+			width: "150"
 		}], QZone.Messages && QZone.Messages.Data || []);
 
 		// 初始化日志表格
 		readerTable("blogs-table", [{
 			checkbox: true,
-			clickToSelect: true
+			clickToSelect: true,
+			width: "50"
 		}, {
 			field: 'title',
 			title: '标题',
-			titleTooltip: '标题',
 			align: 'left',
-			visible: true,
-			formatter: (value, row, index, field) => {
-				return '<a target="_brank" href="http://user.qzone.qq.com/{0}/blog/{1}" >{2}</a> '.format(QZone.Common.Target.uin, row.blogId, value);
+			width: "60",
+			widthUnit: "%",
+			formatter: (value, row) => {
+				return '<a target="_brank" href="http://user.qzone.qq.com/{0}/blog/{1}" >{2}</a> '.format(QZone.Common.Target.uin, row.blogid, value);
 			}
 		}, {
-			field: 'cate',
+			field: 'category',
 			title: '类别',
-			titleTooltip: '类别',
 			align: 'center',
-			visible: true
+			width: "150",
 		}, {
-			field: 'pubTime',
-			title: '发布时间',
-			titleTooltip: '发布时间',
+			field: 'rt_uin',
+			title: '类型',
 			align: 'center',
-			visible: true
+			width: "50",
+			formatter: (value, row, index, field) => {
+				return row.rt_uin ? '转发' : '原创';
+			}
+		}, {
+			field: 'pubtime',
+			title: '发布时间',
+			align: 'center',
+			width: "150",
+			formatter: (value) => {
+				return API.Utils.formatDate(value);
+			}
 		}], QZone.Blogs && QZone.Blogs.Data || []);
 
 		// 初始化私密日志表格
 		readerTable("diaries-table", [{
 			checkbox: true,
-			clickToSelect: true
+			clickToSelect: true,
+			width: "50"
 		}, {
 			field: 'title',
 			title: '标题',
-			titleTooltip: '标题',
 			align: 'left',
-			visible: true
+			width: "60",
+			widthUnit: "%",
+			formatter: (value, row, index, field) => {
+				return '<a target="_brank" href="https://user.qzone.qq.com/proxy/domain/b.qzone.qq.com/cgi-bin/privateblog/privateblog_output_data?uin={0}&blogid={1}" >{2}</a> '.format(QZone.Common.Target.uin, row.blogid, value);
+			}
 		}, {
-			field: 'pubTime',
+			field: 'pubtime',
 			title: '发布时间',
-			titleTooltip: '发布时间',
 			align: 'center',
-			visible: true
+			width: "150",
+			formatter: (value) => {
+				return API.Utils.formatDate(value);
+			}
 		}], QZone.Diaries && QZone.Diaries.Data || []);
 
 		// 初始化相册表格
 		readerTable("photos-table", [{
 			checkbox: true,
-			clickToSelect: true
+			clickToSelect: true,
+			width: "50",
 		}, {
 			field: 'name',
 			title: '名称',
-			titleTooltip: '名称',
 			align: 'left',
 			visible: true,
 			formatter: (value, row, index, field) => {
@@ -457,31 +485,24 @@
 		}, {
 			field: 'desc',
 			title: '描述',
-			titleTooltip: '描述',
 			align: 'left',
-			filterControl: "input",
 			visible: true
 		}, {
 			field: 'image',
 			title: '预览',
-			titleTooltip: '预览',
 			align: 'center',
-			filterControl: "input",
 			visible: true
 		}, {
 			field: 'total',
 			title: '数量',
-			titleTooltip: '数量',
 			align: 'center',
 			visible: true
 		}, {
 			field: 'classid',
 			title: '类别',
-			titleTooltip: '类别',
 			align: 'center',
 			visible: true,
-			filterControl: "select",
-			formatter: (value, row, index, field) => {
+			formatter: (value) => {
 				return QZone.Photos.Class[value] || "其他";
 			}
 		}], QZone.Photos && QZone.Photos.Album || []);
@@ -489,32 +510,30 @@
 		// 初始化视频表格
 		readerTable("videos-table", [{
 			checkbox: true,
-			clickToSelect: true
+			clickToSelect: true,
+			width: "50"
 		}, {
 			field: 'desc',
 			title: '描述',
-			titleTooltip: '描述',
 			align: 'left',
-			visible: true,
-			formatter: (value, row, index, field) => {
-				return API.Utils.formatContent(value, "HTML");
+			formatter: (value, row) => {
+				value = value || API.Utils.formatDate(row.uploadTime);
+				value = API.Utils.formatContent(value, "HTML");
+				const target = row.shuoshuoid ? API.Messages.getUniKey(row.shuoshuoid) : API.Messages.getVideoUrl(row);
+				return '<a target="_brank" href="{0}" data-toggle="tooltip" data-placement="right" data-html="true" title="{1}" >{2}</a>'.format(target, value, value);
 			}
 		}, {
 			field: 'uploadTime',
 			title: '上传时间',
-			titleTooltip: '上传时间',
 			align: 'left',
-			visible: true,
-			formatter: (value, row, index, field) => {
-				return new Date(value * 1000).format("yyyy-MM-dd hh:mm:ss");
+			formatter: (value) => {
+				return API.Utils.formatDate(value);
 			}
 		}, {
 			field: 'url',
 			title: '链接',
-			titleTooltip: '链接',
 			align: 'center',
-			visible: true,
-			formatter: (value, row, index, field) => {
+			formatter: (value) => {
 				return '<a target="_brank" href="{0}" >查看</a> '.format(value);
 			}
 		}], QZone.Videos && QZone.Videos.Data || []);
@@ -522,98 +541,95 @@
 		// 初始化留言板表格
 		readerTable("boards-table", [{
 			checkbox: true,
-			clickToSelect: true
+			clickToSelect: true,
+			width: "50"
 		}, {
 			field: 'nickname',
 			title: '发布人',
-			titleTooltip: '发布人',
 			align: 'center',
-			visible: true,
+			width: "200",
 			formatter: (value, row, index, field) => {
-				return API.Common.getUserLink(row.uin, value);
+				return API.Common.getUserLink(row.uin, API.Utils.formatContent(value, "HTML"));
 			}
 		}, {
 			field: 'htmlContent',
 			title: '内容',
-			titleTooltip: '内容',
 			align: 'left',
-			visible: true,
+			width: "60",
+			widthUnit: "%",
 			formatter: (value, row, index, field) => {
 				return API.Utils.formatContent(value, "HTML");
 			}
 		}, {
 			field: 'pubtime',
 			title: '发布时间',
-			titleTooltip: '发布时间',
 			align: 'center',
-			visible: true
+			width: "200"
 		}], QZone.Boards && QZone.Boards.Data || []);
 
 		// 初始化好友表格
 		readerTable("friends-table", [{
 			checkbox: true,
-			clickToSelect: true
+			clickToSelect: true,
+			width: "50"
 		}, {
 			field: 'uin',
 			title: 'QQ号',
-			titleTooltip: 'QQ号',
 			align: 'center',
-			visible: true,
-			formatter: (value, row, index, field) => {
+			formatter: (value) => {
 				return API.Common.getUserLink(value, value);
 			}
 		}, {
 			field: 'name',
 			title: '昵称',
-			titleTooltip: '昵称',
-			align: 'center',
-			visible: true
+			align: 'center'
 		}, {
 			field: 'remark',
 			title: '备注',
-			titleTooltip: '备注',
-			align: 'center',
-			visible: true
+			align: 'center'
 		}, {
 			field: 'groupName',
 			title: '所属分组',
-			titleTooltip: '所属分组',
-			align: 'center',
-			visible: true
+			align: 'center'
 		}, {
 			field: 'addFriendTime',
 			title: '相识时间',
-			titleTooltip: '相识时间',
-			align: 'center',
-			visible: true
+			align: 'center'
 		}], QZone.Friends && QZone.Friends.Data || []);
 
 		// 初始化收藏夹表格
 		readerTable("favorites-table", [{
 			checkbox: true,
-			clickToSelect: true
+			clickToSelect: true,
+			width: "50"
 		}, {
-			field: 'content',
+			field: 'custom_abstract',
 			title: '内容',
-			titleTooltip: '内容',
-			align: 'center',
-			width: '30%',
-			visible: true
+			align: 'left',
+			formatter: (value, row) => {
+				value = value || API.Favorites.getType(row.type);
+				return API.Utils.formatContent(value, "HTML");
+			},
+			detailFormatter: (index, row) => {
+				return "详情";
+			}
 		}, {
-			field: 'category',
+			field: 'type',
 			title: '类别',
-			titleTooltip: '类别',
 			align: 'center',
-			width: '30%',
-			visible: true
+			width: "100",
+			formatter: (value) => {
+				return API.Favorites.getType(value);
+			}
 		}, {
-			field: 'createTime',
+			field: 'custom_create_time',
 			title: '收藏时间',
-			titleTooltip: '收藏时间',
 			align: 'center',
-			width: '30%',
-			visible: true
-		}], QZone.Favorites && QZone.Favorites.Data || []);
+			width: "200"
+		}], QZone.Favorites && QZone.Favorites.Data || [], {
+			detailView: true,
+			detailViewByClick: true,
+		});
 
 	});
 })()

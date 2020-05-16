@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "QQ空间导出助手",
     "description": "QQ空间导出助手，用于导出备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友、收藏夹为文件，便于迁移与保存",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "icons": {
         "128": "img/icon-128.png"
     },
@@ -32,9 +32,8 @@
                 "vendor/FileSaver/FileSaver.min.js",
                 "vendor/ponyfill/ponyfill.min.js",
                 "vendor/blob/Blob.js",
-                "vendor/StreamSaver/StreamSaver.js",
-                "vendor/StreamSaver/zip-stream.js",
                 "vendor/sheetjs/xlsx.full.min.js",
+                "vendor/template/template.js",
                 "js/utils.js",
                 "js/config.js",
                 "js/api.js",
@@ -46,7 +45,8 @@
                 "js/modules/videos.js",
                 "js/modules/boards.js",
                 "js/modules/friends.js",
-                "js/modules/favorites.js"
+                "js/modules/favorites.js",
+                "js/modules/common.js"
             ],
             "css": [
                 "vendor/bootstrap/css/bootstrap.min.css",
@@ -65,9 +65,9 @@
     "web_accessible_resources": [
         "others/README.md",
         "html/indicator.html",
-        "css/export/github.css",
-        "css/export/sidebar.css",
-        "js/export/sidebar.js"
+        "export/*.*",
+        "templates/*.*",
+        "vendor/*.*"
     ],
     "permissions": [
         "activeTab",
@@ -77,7 +77,6 @@
         "unlimitedStorage",
         "downloads",
         "downloads.shelf",
-        "contextMenus",
         "declarativeContent",
         "<all_urls>"
     ]

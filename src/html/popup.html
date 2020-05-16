@@ -12,17 +12,20 @@
 
 <body>
     <div>
-        <h4>QQ空间导出助手</h4>
+        <h5>QQ空间导出助手</h5>
         <hr>
         <details>
             <summary>使用说明</summary>
             <div class="container">
                 <ul class="list-unstyled">
-                    <li>1.点击开始备份</li>
-                    <li>2.等待备份完成</li>
-                    <li>3.点击下载按钮</li>
-                    <li>4.等待下载完成</li>
-                    <li>5.选择文件保存位置</li>
+                    <li>1.根据自身情况【<a id="openOptions" href="#">配置</a>】助手</li>
+                    <li>2.点击开始备份开始收集数据</li>
+                    <li>3.等待数据收集完成</li>
+                    <li>4.点击【打包下载】按钮</li>
+                    <li>5.等待下载完成</li>
+                    <li>6.选择文件保存位置</li>
+                    <li>7.点击【查看备份】</li>
+                    <li>8.下载工具为浏览器或迅雷X的，请自行解压ZIP包与文件下载文件夹合并</li>
                 </ul>
             </div>
         </details>
@@ -64,7 +67,9 @@
             <label class="custom-control-label" for="Favorites">收藏夹</label>
         </div>
         <div class="container" style="margin-top: 10px">
-            <span id="tips" style="display: none;color: red;"></span>
+            <p id="tips" class="text-muted" style="display: none;"></p>
+            <p id="album_tips" class="text-muted" style="display: none;"></p>
+            <p id="video_tips" class="text-muted" style="display: none;"></p>
             <div id="export_albums_div" class="form-group row" style="display: none;">
                 <label for="export_albums" class="col-sm-1 col-form-label">相册列表：</label>
                 <div class="col-sm-2">
@@ -78,7 +83,6 @@
                 </div>
             </div>
         </div>
-        <br>
         <button id="backup" type="button" class="btn btn-primary">开始备份</button>
     </div>
     <script src="../js/utils.js"></script>
