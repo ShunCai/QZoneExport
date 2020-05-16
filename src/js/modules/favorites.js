@@ -11,6 +11,9 @@ API.Favorites.export = async () => {
         // 获取所有的收藏列表
         let dataList = await API.Favorites.getAllList();
 
+        // 添加多媒体下载任务
+        dataList = await API.Favorites.addMediaToTasks(dataList);
+
         // 根据导出类型导出数据
         await API.Favorites.exportAllToFiles(dataList);
 
@@ -42,7 +45,7 @@ API.Favorites.getPageList = async (pageIndex, indicator) => {
         console.debug("成功获取收藏列表，当前页：", pageIndex + 1, data);
 
         // 更新总数
-        QZone.Favorites.total = data.total_num || 0;
+        QZone.Favorites.total = data.total_num || QZone.Favorites.total || 0;
         indicator.setTotal(QZone.Favorites.total);
 
         // 转换数据
@@ -126,6 +129,9 @@ API.Favorites.exportAllToFiles = async (favorites) => {
     // 获取用户配置
     let exportType = Qzone_Config.Favorites.exportType;
     switch (exportType) {
+        case 'HTML':
+            await API.Favorites.exportToHtml(favorites);
+            break;
         case 'MarkDown':
             await API.Favorites.exportToMarkdown(favorites);
             break;
@@ -139,78 +145,114 @@ API.Favorites.exportAllToFiles = async (favorites) => {
 }
 
 /**
+ * 导出收藏夹到HTML文件
+ * @param {Array} favorites 数据
+ */
+API.Favorites.exportToHtml = async (favorites) => {
+    // 进度更新器
+    const indicator = new StatusIndicator('Favorites_Export_Other');
+    indicator.setIndex('HTML');
+
+    try {
+        // 说说数据根据年份分组
+        let yearMaps = API.Utils.groupedByTime(favorites, "create_time", 'year');
+        // 基于模板生成年份说说HTML
+        for (const [year, yearItems] of yearMaps) {
+            console.info('生成收藏夹年份HTML文件开始', year, yearItems);
+            // 基于模板生成所有说说HTML
+            let _dataMaps = new Map();
+            const monthMaps = API.Utils.groupedByTime(yearItems, "create_time", 'month');
+            _dataMaps.set(year, monthMaps);
+            let params = {
+                dataMaps: _dataMaps,
+                total: yearItems.length
+            }
+            let yearFile = await API.Common.writeHtmlofTpl('favorites', params, QZone.Favorites.ROOT + "/" + year + ".html");
+            console.info('生成收藏夹年份HTML文件结束', year, yearItems, yearFile);
+        }
+
+        console.info('生成汇总HTML文件开始', favorites);
+        // 基于模板生成汇总说说HTML
+        let params = {
+            dataMaps: API.Utils.groupedByTime(favorites, "create_time", 'all'),
+            total: favorites.length
+        }
+        let allFile = await API.Common.writeHtmlofTpl('favorites', params, QZone.Favorites.ROOT + "/index.html");
+        console.info('生成收藏夹汇总HTML文件结束', allFile, favorites);
+    } catch (error) {
+        console.error('导出收藏夹到HTML异常', error, favorites);
+    }
+    indicator.complete();
+    return favorites;
+}
+
+/**
  * 导出收藏到MD文件
  * @param {Array} favorites 收藏列表
  */
 API.Favorites.exportToMarkdown = async (favorites) => {
-    let newline = '\r\n\r\n';
+    // 进度更新器
+    const indicator = new StatusIndicator('Favorites_Export_Other');
+    indicator.setIndex('Markdown');
 
-    // 根据年份分组，每一年生成一个MD文件
-    const yearMap = API.Utils.groupedByTime(favorites, "create_time");
-    for (let year_entry of yearMap) {
-        // 年份
-        let year = year_entry[0];
-        // 月份Map
-        let monthMap = year_entry[1];
+    try {
+        // 汇总内容
+        const allYearContents = [];
+        // 根据年份分组，每一年生成一个MD文件
+        const yearMap = API.Utils.groupedByTime(favorites, "create_time");
+        for (const [year, month_maps] of yearMap) {
+            const yearContents = [];
+            yearContents.push("# " + year + "年");
 
-        let indicator = new StatusIndicator('Favorites_Export');
-        indicator.setIndex(year);
-
-        let contents = [];
-        contents.push("# " + year + "年");
-
-        let items = [];
-        for (let month_entry of monthMap) {
-            // 月份
-            let month = month_entry[0];
-            // 月份收藏列表
-            let month_items = month_entry[1];
-
-            contents.push("## " + month + "月 ");
-
-            contents.push("---");
-
-            await API.Favorites.addMediaToTasks(month_items);
-
-            for (const favorite of month_items) {
-                let content = API.Favorites.getMarkDownContent(favorite);
-                contents.push(content);
-                contents.push('---');
+            for (const [month, month_items] of month_maps) {
+                yearContents.push("## " + month + "月 ");
+                for (const favorite of month_items) {
+                    yearContents.push(API.Favorites.getMarkdown(favorite));
+                    yearContents.push('---');
+                }
             }
 
-            items = items.concat(month_items);
+            // 年份内容
+            const yearContent = yearContents.join('\r\n');
+
+            // 汇总年份内容
+            allYearContents.push(yearContent);
+
+            const yearFilePath = QZone.Favorites.ROOT + "/" + year + ".md";
+            await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
+                console.debug('备份收藏列表完成，当前年份=', year, fileEntry);
+            }).catch(error => {
+                console.error('备份收藏列表失败，当前年份=', year, error);
+            });
         }
 
-        // 更新年份的收藏总数
-        indicator.setTotal(items.length);
-
-        const yearFilePath = QZone.Favorites.ROOT + "/" + year + "年.md";
-        await API.Utils.writeText(contents.join(newline), yearFilePath).then(fileEntry => {
-            console.debug('备份收藏列表完成，当前年份=', year, items, fileEntry);
-            indicator.addSuccess(items);
-        }).catch(error => {
-            console.error('备份收藏列表失败，当前年份=', year, items, error);
-            indicator.addFailed(items);
-        });
-        indicator.complete();
+        // 生成汇总文件
+        await API.Utils.writeText(allYearContents.join('\r\n'), QZone.Favorites.ROOT + '/Favorites.md');
+    } catch (error) {
+        console.error('导出收藏夹到Markdown文件异常', error, videos);
     }
+
+    // 完成
+    indicator.complete();
+    return favorites;
 }
 
 /**
  * 获取单篇收藏的Markdown内容
  * @param {object} favorite 收藏
  */
-API.Favorites.getMarkDownContent = (favorite) => {
+API.Favorites.getMarkdown = (favorite) => {
     let contents = [];
     // 获取收藏的类型
     let displayType = API.Favorites.getType(favorite.type);
+    const owner = API.Favorites.getFavoriteOwner(favorite);
     switch (displayType) {
         case '日志':
             // 日志模板
             let blog_info = favorite.blog_info;
-            let blog_owner_name = API.Utils.formatContent(blog_info.owner_name, "MD");
+            let blog_owner_name = API.Common.formatContent(owner.name, "MD");
             contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 日志 [{2}]({https://user.qzone.qq.com/{3}/blog/{4}}) 【{5}】'.format(blog_owner_name, blog_info.owner_uin, favorite.title, blog_info.owner_uin, blog_info.id, favorite.custom_create_time));
-            contents.push('> {0}'.format(API.Utils.formatContent(favorite.custom_abstract, "MD")));
+            contents.push('> {0}'.format(API.Common.formatContent(favorite.custom_abstract, "MD")));
             break;
         case '说说':
             // 说说模板
@@ -219,19 +261,19 @@ API.Favorites.getMarkDownContent = (favorite) => {
             let isRt = shuoshuo_info.forward_flag === 1;
             // 长说说内容
             let content = shuoshuo_info.detail_shuoshuo_info.content || favorite.custom_abstract;
-            let shuoshuo_owner_name = API.Utils.formatContent(shuoshuo_info.owner_name, "MD");
+            let shuoshuo_owner_name = API.Common.formatContent(owner.name, "MD");
             contents.push('[{0}](https://user.qzone.qq.com/{1}) 说说 【{2}】'.format(shuoshuo_owner_name, shuoshuo_info.owner_uin, favorite.custom_create_time));
             if (isRt) {
                 //转发说说添加转发理由
-                contents.push('> {0}'.format(API.Utils.formatContent(shuoshuo_info.reason, "MD")));
+                contents.push('> {0}'.format(API.Common.formatContent(shuoshuo_info.reason, "MD")));
                 contents.push('\r\n');
             }
-            contents.push('> {0}'.format(API.Utils.formatContent(content, "MD")));
+            contents.push('> {0}'.format(API.Common.formatContent(content, "MD", isRt, false)));
             break;
         case '分享':
             // 分享模板（通用），暂时不区分分享的类型
             let share_info = favorite.share_info;
-            let share_owner_name = API.Utils.formatContent(share_info.owner_name, "MD");
+            let share_owner_name = API.Common.formatContent(owner.name, "MD");
             contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 分享 【{2}】'.format(share_owner_name, share_info.owner_uin, favorite.custom_create_time));
             // 分享类型
             let share_type = share_info.share_type;
@@ -239,17 +281,17 @@ API.Favorites.getMarkDownContent = (favorite) => {
             let share_reason = share_info.reason;
             if (share_reason) {
                 contents.push('\r\n');
-                contents.push('{0}'.format(API.Utils.formatContent(share_reason, "MD")));
+                contents.push('{0}'.format(API.Common.formatContent(share_reason, "MD")));
             }
             let target_url = share_info.share_url;
-            let share_title_content = API.Utils.formatContent(favorite.title, "MD");
+            let share_title_content = API.Common.formatContent(favorite.title, "MD");
             let share_title = API.Utils.getLink(target_url, share_title_content, "MD");
             switch (share_type) {
                 case 1:
                     // 日志
                     let blog_info = share_info.blog_info;
                     let blog_owner_uin = blog_info.owner_uin;
-                    let _blog_owner_name = API.Utils.formatContent(blog_info.owner_name, "MD");
+                    let _blog_owner_name = API.Common.formatContent(owner.name, "MD");
 
                     // 日志发布人链接
                     let blog_owner_url = API.Common.getUserLink(blog_owner_uin, _blog_owner_name, "MD");
@@ -264,7 +306,7 @@ API.Favorites.getMarkDownContent = (favorite) => {
                     // 相册
                     let album_info = share_info.album_info;
                     let album_owner_uin = album_info.owner_uin;
-                    let album_owner_name = API.Utils.formatContent(album_info.owner_name, "MD");
+                    let album_owner_name = API.Common.formatContent(owner.name, "MD");
 
                     // 相册创建人链接
                     let album_owner_url = API.Common.getUserLink(album_owner_uin, album_owner_name, "MD");
@@ -283,17 +325,17 @@ API.Favorites.getMarkDownContent = (favorite) => {
                     break;
                 case 5:
                     // 视频，目前只有一条数据
-                    target_url = favorite.custom_video[0].play_url;
+                    target_url = favorite.custom_videos[0].play_url;
                     share_title = API.Utils.getLink(target_url, share_title_content, "MD");
                     break;
                 case 18:
                     // 歌曲，目前只有一条数据
-                    target_url = favorite.custom_audio[0].play_url;
+                    target_url = favorite.custom_audios[0].play_url;
                     share_title = API.Utils.getLink(target_url, share_title_content, "MD");
                     break;
                 case 24:
                     // 设置背景音乐？类似歌曲，目前只有一条数据
-                    target_url = favorite.custom_audio[0].play_url;
+                    target_url = favorite.custom_audios[0].play_url;
                     share_title = API.Utils.getLink(target_url, share_title_content, "MD");
                     break;
                 default:
@@ -306,7 +348,7 @@ API.Favorites.getMarkDownContent = (favorite) => {
             contents.push('> {0}'.format(share_title));
             if (favorite.custom_abstract && favorite.custom_abstract.trim()) {
                 contents.push('\r\n');
-                contents.push('> {0}'.format(API.Utils.formatContent(favorite.custom_abstract, "MD")));
+                contents.push('> {0}'.format(API.Common.formatContent(favorite.custom_abstract, "MD")));
             }
             break;
         case '本地图片':
@@ -315,13 +357,12 @@ API.Favorites.getMarkDownContent = (favorite) => {
             break;
         case '照片':
             // 照片模板
-            let first_photo = favorite.album_info.owner_uin ? favorite.album_info : favorite.photo_list[0];
-            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 照片 【{2}】'.format(API.Utils.formatContent(first_photo.owner_name, "MD"), first_photo.owner_uin, favorite.custom_create_time));
+            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 照片 【{2}】'.format(API.Common.formatContent(owner.name, "MD"), owner.uin, favorite.custom_create_time));
             break;
         case '文字':
             // 文字模板，仅适用一般长度的文字，暂不支持获取文字的全文，没有找到全文的查看地址，暂时不处理
             contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 文字 【{2}】'.format(favorite.custom_name, favorite.custom_uin, favorite.custom_create_time));
-            contents.push('> {0}'.format(API.Utils.formatContent(favorite.custom_abstract, "MD")));
+            contents.push('> {0}'.format(API.Common.formatContent(favorite.custom_abstract, "MD")));
             break;
         case '网页':
             // 网页模板
@@ -338,7 +379,7 @@ API.Favorites.getMarkDownContent = (favorite) => {
             break;
     }
     // 添加多媒体内容
-    let mediat_content = API.Messages.formatMedia(favorite);
+    let mediat_content = API.Messages.formatMediaMarkdown(favorite);
     contents.push(mediat_content);
     return contents.join('\r\n');
 }
@@ -348,14 +389,14 @@ API.Favorites.getMarkDownContent = (favorite) => {
  * @param {Array} favorites 收藏列表
  */
 API.Favorites.exportToJson = async (favorites) => {
+    // 进度更新器
+    const indicator = new StatusIndicator('Favorites_Export_Other');
+    indicator.setIndex(year);
     // 收藏根据年份分组
     let yearDataMap = API.Utils.groupedByTime(favorites, "create_time");
     for (let yearEntry of yearDataMap) {
         let year = yearEntry[0];
         let monthDataMap = yearEntry[1];
-
-        let indicator = new StatusIndicator('Favorites_Export');
-        indicator.setIndex(year);
 
         let yearItems = [];
         for (let monthEntry of monthDataMap) {
@@ -363,33 +404,24 @@ API.Favorites.exportToJson = async (favorites) => {
             yearItems = yearItems.concat(items);
         }
 
-        // 更新年份的收藏总数
-        indicator.setTotal(yearItems.length);
-
-        // 更新下载中数据
-        indicator.addDownload(yearItems);
-
-        const yearFilePath = QZone.Favorites.ROOT + "/" + year + "年.json";
+        const yearFilePath = QZone.Favorites.ROOT + "/" + year + ".json";
         await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath).then(fileEntry => {
             console.debug('备份收藏列表完成，当前年份=', year, yearItems, fileEntry);
-            indicator.addSuccess(yearItems);
         }).catch(error => {
             console.error('备份收藏列表失败，当前年份=', year, yearItems, error);
-            indicator.addFailed(yearItems);
         });
     }
 
     let json = JSON.stringify(favorites);
-    await API.Utils.writeText(json, QZone.Favorites.ROOT + '/收藏.json').then(fileEntry => {
+    await API.Utils.writeText(json, QZone.Favorites.ROOT + '/favorites.json').then(fileEntry => {
         console.debug('备份收藏列表完成', favorites, fileEntry);
     }).catch(error => {
         console.error('备份收藏列表失败', favorites, error);
     });
+    // 完成
     indicator.complete();
     return favorites;
 }
-
-
 
 /**
  * 添加说说的附件下载任务
@@ -397,25 +429,22 @@ API.Favorites.exportToJson = async (favorites) => {
  */
 API.Favorites.addMediaToTasks = async (dataList) => {
     // 下载相对目录
-    let moudel_dir = '收藏夹/图片';
+    let module_dir = 'Favorites/Images';
 
     for (const item of dataList) {
         // 下载说说配图
         for (const image of item.custom_images) {
             let url = image.url;
-            await API.Utils.addDownloadTasks(image, url, moudel_dir, item, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(image, url, module_dir, item, QZone.Favorites.FILE_URLS);
         }
 
-        // 下载视频预览图
-        for (const video of item.custom_video) {
-            let url = video.preview_img;
-            await API.Utils.addDownloadTasks(video, url, moudel_dir, item, QZone.Messages.FILE_URLS);
-        }
+        // 下载视频预览图及视频
+        API.Videos.addDownloadTasks(item.custom_videos, module_dir, item, QZone.Favorites.FILE_URLS);
 
         // 下载音乐预览图
-        for (const audio of item.custom_audio) {
+        for (const audio of item.custom_audios) {
             let url = audio.preview_img;
-            await API.Utils.addDownloadTasks(audio, url, moudel_dir, item, QZone.Messages.FILE_URLS);
+            await API.Utils.addDownloadTasks(audio, url, module_dir, item, QZone.Favorites.FILE_URLS);
         }
     }
     return dataList;
