@@ -34,12 +34,9 @@
 		<div id="boards_html" class="container boards p-3">
 			<%/* 遍历年份 */%>
 			<%for (var yearMap of boardMaps) {%>
-			<!--  年份 -->
 				<span class="sidebar-h1" data-tag="h1" data-sidebar="<%:=yearMap[0]%>年"></span>
 				<%for (var monthMap of yearMap[1]) {%>
-				<!--  月份 -->
 					<span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=monthMap[0]%>月"></span>
-				<!--  月份数据 -->
 					<%for (let index = 0; index < monthMap[1].length; index++) {%>
 						<%const board = monthMap[1][index]%>
 						<%total = total -1%>
@@ -58,13 +55,12 @@
 													</a>
 													<span class="border-warning border rounded text-warning small p-1">#<%:=total + 1 %></span>
 													<br>
-													<span class="text-muted small"><%:=board.pubtime%></span>
+													<span class="text-muted small"><%:=API.Utils.formatDate(board.pubtime)%></span>
 												</a>
 											</div>
 											<div class="messageText ml-4 container m-2">
 												<%:=API.Common.formatContent(board.htmlContent,'HTML', false, true)%>
 											</div>
-											<!--  留言回复-->
 											<%if(board.replyList){%>
 												<div class="p-1 comments m-3">
 													<%for (var reply of board.replyList) {%>
@@ -78,7 +74,6 @@
 																		<a target="_blank" href="<%:=API.Common.getUserUrl(reply.uin)%>">
 																			<span class="text-info"><%:=API.Common.formatContent(reply.nick)%></span>
 																		</a>
-																		<!-- <span class="text-info">@<%:=API.Common.formatContent(board.nickname)%> </span> -->
 																		<br>
 																		<span class="text-muted small"><%:=API.Utils.formatDate(reply.time)%></span>
 																	</a>

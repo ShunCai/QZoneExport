@@ -138,6 +138,24 @@ class BrowserTask {
     }
 }
 
+
+
+/**
+ * 分页信息
+ */
+class PageInfo {
+
+    /**
+     * 
+     * @param {integer} index 页索引
+     * @param {integer} size 页条目大小
+     */
+    constructor(index, size) {
+        this.index = 0;
+        this.size = 0;
+    }
+}
+
 /**
  * 提示信息
  */
@@ -149,9 +167,33 @@ const MAX_MSG = {
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
+    Messages_Filter: [
+        '正在根据屏蔽词过滤说说列表',
+        '已屏蔽 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
     Messages_Full_Content: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的全文',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Messages_More_Images: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的更多图片',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Messages_Voices: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的语音信息',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
@@ -189,6 +231,7 @@ const MAX_MSG = {
     Blogs_Content: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇的日志内容',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
         '请稍后...'
@@ -221,6 +264,7 @@ const MAX_MSG = {
     Diaries_Content: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇的私密日记内容',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
         '请稍后...'
@@ -269,6 +313,7 @@ const MAX_MSG = {
     Friends_Time: [
         '正在获取好友添加时间',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
         '请稍后...'
     ],
@@ -318,20 +363,23 @@ const MAX_MSG = {
     Photos_Images_Info: [
         '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片详情',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 张',
         '已失败 <span style="color: red;">{downloadFailed}</span> 张',
         '总共 <span style="color: #1ca5fc;">{total}</span> 张',
         '请稍后...'
     ],
     Photos_Images_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 张相片的评论列表',
-        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 张',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 张',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 张',
         '请稍后...'
     ],
     Photos_Images_Mime: [
         '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片类型',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 张',
         '已失败 <span style="color: red;">{downloadFailed}</span> 张',
         '总共 <span style="color: #1ca5fc;">{total}</span> 张',
         '请稍后...'
@@ -410,6 +458,7 @@ class StatusIndicator {
         this.downloaded = 0
         this.downloading = 0
         this.downloadFailed = 0
+        this.skip = 0;
     }
 
     /**
@@ -449,14 +498,14 @@ class StatusIndicator {
 
     /**
      * 下载失败
+     * @param {Object} item 
      */
     addFailed(item) {
         let count = 1
         if (Array.isArray(item)) {
             count = item.length
-        }
-        if (item['isPage']) {
-            count = item['pageSize']
+        } else if (item instanceof PageInfo) {
+            count = item['size']
         }
         this.downloadFailed = this.downloadFailed + (count * 1)
         this.downloading = this.downloading - (count * 1)
@@ -470,9 +519,8 @@ class StatusIndicator {
         let count = 1
         if (Array.isArray(item)) {
             count = item.length
-        }
-        if (item['isPage']) {
-            count = item['pageSize']
+        } else if (item instanceof PageInfo) {
+            count = item['size']
         }
         this.downloadFailed = count;
         this.downloading = 0
@@ -538,6 +586,30 @@ class StatusIndicator {
         this.nextTip = tip
         this.print()
     }
+
+    /**
+     * 添加跳过条目数
+     * @param {Object} item 
+     */
+    addSkip(item) {
+        let count = 1
+        if (Array.isArray(item)) {
+            count = item.length
+        }
+        this.skip = this.skip + count
+        this.print()
+    }
+
+    /**
+     * 设置跳过条目数
+     */
+    setSkip(count) {
+        if (Array.isArray(count)) {
+            count = item.length
+        }
+        this.skip = count
+        this.print()
+    }
 }
 
 
@@ -568,42 +640,42 @@ const OperatorType = {
     /**
      * 获取所有说说列表
      */
-    MESSAGES_LIST: 'MESSAGES_LIST',
+    Messages: 'Messages',
 
     /**
      * 获取日志所有列表
      */
-    BLOG_LIST: 'BLOG_LIST',
+    Blogs: 'Blogs',
 
     /**
      * 获取私密日记所有列表
      */
-    DIARY_LIST: 'DIARY_LIST',
+    Diaries: 'Diaries',
 
     /**
     * 获取相册照片
     */
-    PHOTO_LIST: 'PHOTO_LIST',
+    Photos: 'Photos',
 
     /**
     * 获取视频列表
     */
-    VIDEO_LIST: 'VIDEO_LIST',
+    Videos: 'Videos',
 
     /**
     * 获取留言板列表
     */
-    BOARD_LIST: 'BOARD_LIST',
+    Boards: 'Boards',
 
     /**
     * 获取QQ好友列表
     */
-    FRIEND_LIST: 'FRIEND_LIST',
+    Friends: 'Friends',
 
     /**
     * 获取收藏列表
     */
-    FAVORITE_LIST: 'FAVORITE_LIST',
+    Favorites: 'Favorites',
 
     /**
      * 下载文件
@@ -637,66 +709,71 @@ class QZoneOperator {
             case OperatorType.SHOW:
                 // 显示模态对话框
                 await this.showProcess();
+                // 初始化FS文件夹
                 await this.initModelFolder();
                 this.next(OperatorType.INIT_USER_INFO);
                 break;
             case OperatorType.INIT_USER_INFO:
+                // 重置QQ空间备份数据
+                API.Common.resetQzoneItems();
                 // 初始化用户信息
                 await API.Common.initUserInfo();
-                this.next(OperatorType.MESSAGES_LIST);
+                // 初始化上次备份信息
+                await API.Common.initBackedUpItems();
+                this.next(OperatorType.Messages);
                 break;
-            case OperatorType.MESSAGES_LIST:
+            case OperatorType.Messages:
                 // 获取说说列表
-                if (this.isExport(moduleType)) {
+                if (API.Common.isExport(moduleType)) {
                     await API.Messages.export();
                 }
-                this.next(OperatorType.BLOG_LIST);
+                this.next(OperatorType.Blogs);
                 break;
-            case OperatorType.BLOG_LIST:
+            case OperatorType.Blogs:
                 // 获取日志列表
-                if (this.isExport(moduleType)) {
+                if (API.Common.isExport(moduleType)) {
                     await API.Blogs.export();
                 }
-                this.next(OperatorType.DIARY_LIST);
+                this.next(OperatorType.Diaries);
                 break;
-            case OperatorType.DIARY_LIST:
+            case OperatorType.Diaries:
                 // 获取私密日记列表
-                if (this.isExport(moduleType)) {
+                if (API.Common.isExport(moduleType)) {
                     await API.Diaries.export();
                 }
-                this.next(OperatorType.BOARD_LIST);
+                this.next(OperatorType.Boards);
                 break;
-            case OperatorType.BOARD_LIST:
+            case OperatorType.Boards:
                 // 获取留言列表
-                if (this.isExport(moduleType)) {
+                if (API.Common.isExport(moduleType)) {
                     await API.Boards.export();
                 }
-                this.next(OperatorType.FRIEND_LIST);
+                this.next(OperatorType.Friends);
                 break;
-            case OperatorType.FRIEND_LIST:
+            case OperatorType.Friends:
                 // 获取QQ好友列表
-                if (this.isExport(moduleType)) {
+                if (API.Common.isExport(moduleType)) {
                     await API.Friends.export();
                 }
-                this.next(OperatorType.FAVORITE_LIST);
+                this.next(OperatorType.Favorites);
                 break;
-            case OperatorType.FAVORITE_LIST:
+            case OperatorType.Favorites:
                 // 获取收藏列表
-                if (this.isExport(moduleType)) {
+                if (API.Common.isExport(moduleType)) {
                     await API.Favorites.export();
                 }
-                this.next(OperatorType.PHOTO_LIST);
+                this.next(OperatorType.Photos);
                 break;
-            case OperatorType.PHOTO_LIST:
+            case OperatorType.Photos:
                 // 获取相册列表
-                if (this.isExport(moduleType)) {
+                if (API.Common.isExport(moduleType)) {
                     await API.Photos.export();
                 }
-                this.next(OperatorType.VIDEO_LIST);
+                this.next(OperatorType.Videos);
                 break;
-            case OperatorType.VIDEO_LIST:
+            case OperatorType.Videos:
                 // 获取视频列表
-                if (this.isExport(moduleType)) {
+                if (API.Common.isExport(moduleType)) {
                     await API.Videos.export();
                 }
                 this.next(OperatorType.USER_INFO);
@@ -708,11 +785,7 @@ class QZoneOperator {
                 break;
             case OperatorType.FILE_LIST:
                 // 保存数据
-                chrome.storage.local.set(QZone, function () {
-                    console.info("保存数据完成", QZone);
-                });
-                // 显示下载管理
-                // $("#fileList").show();
+                await API.Common.saveBackupItems();
                 // 下载文件
                 await API.Utils.downloadAllFiles();
                 this.next(OperatorType.ZIP);
@@ -737,15 +810,6 @@ class QZoneOperator {
     }
 
     /**
-     * 当前模块是否需要导出
-     * @param {string} moduleType 当前模块
-     */
-    isExport(moduleType) {
-        return QZone.Common.ExportType[moduleType];
-    }
-
-
-    /**
      * 初始化
      */
     init() {
@@ -764,15 +828,15 @@ class QZoneOperator {
 
         // 读取配置项
         chrome.storage.sync.get(Default_Config, function (item) {
-            Qzone_Config = item;
+            QZone_Config = item;
         })
 
         // 初始化文件夹
         QZone.Common.Filer.init({ persistent: false, size: 10 * 1024 * 1024 * 1024 }, function (fs) {
             QZone.Common.Filer.ls(FOLDER_ROOT, function (entries) {
-                console.debug('当前子目录：', entries);
+                console.info('当前子目录：', entries);
                 QZone.Common.Filer.rm(FOLDER_ROOT, function () {
-                    console.debug('清除历史数据成功！');
+                    console.info('清除历史数据成功！');
                 });
             });
         })
@@ -838,7 +902,7 @@ class QZoneOperator {
         const $thunderDownloadBtn = $("#thunderDownload");
 
         // 下载方式
-        const downloadType = Qzone_Config.Common.downloadType;
+        const downloadType = QZone_Config.Common.downloadType;
         switch (downloadType) {
             case 'Browser':
                 // 下载方式为浏览器下载时隐藏【浏览器下载】按钮
@@ -980,7 +1044,7 @@ class QZoneOperator {
                     break;
                 case 'Thunder':
                     // 下载方式为迅雷下载时
-                    const newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, Qzone_Config.Common.downloadThread, tasks);
+                    const newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, QZone_Config.Common.downloadThread, tasks);
                     await API.Common.invokeThunder(newThunderInfo);
                     break;
                 default:
@@ -991,7 +1055,7 @@ class QZoneOperator {
         // 【迅雷下载】点击事件
         $("#thunderDownload").click(async function () {
             let tasks = $('#table').bootstrapTable('getSelections');
-            let newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, Qzone_Config.Common.downloadThread);
+            let newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, QZone_Config.Common.downloadThread);
             for (const task of tasks) {
                 newThunderInfo.tasks.push(new ThunderTask(task.dir, task.name, API.Utils.toHttp(task.url)));
                 task.setState('complete');
@@ -1119,16 +1183,16 @@ const browserTasks = new Array();
 
     // 消息监听
     chrome.runtime.onConnect.addListener(function (port) {
-        console.debug("消息发送者：", port);
+        console.info("消息发送者：", port);
         switch (port.name) {
             case 'popup':
                 port.onMessage.addListener(function (request) {
                     switch (request.subject) {
                         case 'startBackup':
                             QZone.Common.ExportType = request.exportType;
-                            // 清空相册信息
-                            QZone.Photos.Album.Data = [];
-                            QZone.Photos.Album.Data = QZone.Photos.Album.Data.concat(request.albums || []);
+                            // 清空之前选择的相册
+                            QZone.Photos.Album.Select = [];
+                            QZone.Photos.Album.Select = request.albums || [];
                             // 显示进度窗口
                             operator.next(OperatorType.SHOW);
                             port.postMessage(QZone.Common.ExportType);
@@ -1144,10 +1208,6 @@ const browserTasks = new Array();
                                 port.postMessage(API.Utils.toJson(data, /^_Callback\(/));
                             });
                             break;
-                        case 'initModules':
-                            // 获取上次勾选的模块
-                            port.postMessage(QZone.Common.ExportType);
-                            break;
                         case 'initAlbumInfo':
                             // 获取相册信息
                             API.Photos.getAlbums(0).then((data) => {
@@ -1161,9 +1221,13 @@ const browserTasks = new Array();
                             break;
                         case 'getAlbumList':
                             // 获取相册列表
-                            API.Photos.getAllAlbumList().then((data) => {
-                                port.postMessage(data);
-                            });
+                            if (_.isEmpty(QZone.Photos.Album.Data)) {
+                                API.Photos.getAllAlbumList().then((data) => {
+                                    port.postMessage(data);
+                                });
+                            } else {
+                                port.postMessage(QZone.Photos.Album.Data);
+                            }
                             break;
                         default:
                             break;
@@ -1252,7 +1316,7 @@ API.Utils.newDownloadTask = (url, folder, name, source, makeOrg) => {
  * 下载文件
  */
 API.Utils.downloadAllFiles = async () => {
-    let downloadType = Qzone_Config.Common.downloadType;
+    let downloadType = QZone_Config.Common.downloadType;
     if (downloadType === 'QZone') {
         // 使用QQ空间外链时，不需要下载文件
         return;
@@ -1286,7 +1350,7 @@ API.Utils.downloadAllFiles = async () => {
  */
 API.Utils.getDownloadTasks = () => {
     // 下载方式
-    let downloadType = Qzone_Config.Common.downloadType;
+    let downloadType = QZone_Config.Common.downloadType;
     let tasks = [];
     switch (downloadType) {
         case 'File':
@@ -1312,7 +1376,7 @@ API.Utils.getDownloadTasks = () => {
  */
 API.Utils.getFailedTasks = () => {
     // 下载方式
-    let downloadType = Qzone_Config.Common.downloadType;
+    let downloadType = QZone_Config.Common.downloadType;
     let tasks = [];
     switch (downloadType) {
         case 'File':

@@ -17,6 +17,9 @@ API.Boards.export = async () => {
         // 根据导出类型导出数据
         await API.Boards.exportAllToFiles(dataList);
 
+        // 设置备份时间
+        API.Common.setBackupInfo(QZone_Config.Boards);
+
     } catch (error) {
         console.error('留言导出异常', error);
     }
@@ -29,20 +32,17 @@ API.Boards.export = async () => {
  * @param {StatusIndicator} indicator 状态更新器
  */
 API.Boards.getPageList = async (pageIndex, indicator) => {
-    console.debug("开始获取留言列表，当前页：", pageIndex + 1);
 
     // 状态更新器当前页
     indicator.setIndex(pageIndex + 1);
 
     // 更新获取中提示
-    indicator.addDownload(Qzone_Config.Boards.pageSize);
+    indicator.addDownload(QZone_Config.Boards.pageSize);
 
     return await API.Boards.getBoards(pageIndex).then(data => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
         data = data.data || {};
-
-        console.debug("成功获取留言列表，当前页：", pageIndex + 1, data);
 
         // 更新总数
         QZone.Boards.total = data.total || QZone.Boards.total || 0;
@@ -61,63 +61,55 @@ API.Boards.getPageList = async (pageIndex, indicator) => {
  * 获取所有留言列表
  */
 API.Boards.getAllList = async () => {
-    // 重置数据
-    QZone.Boards.Data = [];
 
     // 进度更新器
-    let indicator = new StatusIndicator('Boards');
+    const indicator = new StatusIndicator('Boards');
 
     // 开始
     indicator.print();
 
-    let CONFIG = Qzone_Config.Boards;
+    // 配置项
+    const CONFIG = QZone_Config.Boards;
 
-    let nextPage = async function (pageIndex, indicator) {
+    const nextPage = async function (pageIndex, indicator) {
+
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
+
         return await API.Boards.getPageList(pageIndex, indicator).then(async (dataList) => {
-            // 添加到全局变量
-            QZone.Boards.Data = QZone.Boards.Data.concat(dataList);
 
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Boards.total, QZone.Boards.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
+            // 设置比较信息
+            dataList = API.Common.setCompareFiledInfo(dataList, 'pubtime', 'pubtime');
+
+            // 合并数据
+            QZone.Boards.Data = API.Utils.unionItems(QZone.Boards.Data, dataList);
+            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+                return QZone.Boards.Data;
             }
-            return QZone.Boards.Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Boards.total, QZone.Boards.Data, arguments.callee, nextPageIndex, indicator);
         }).catch(async (e) => {
             console.error("获取留言列表异常，当前页：", pageIndex + 1, e);
-            indicator.addFailed({
-                pageIndex: pageIndex,
-                pageSize: CONFIG.pageSize,
-                isPage: true
-            });
+            indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Boards.total, QZone.Boards.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
-            }
-            return QZone.Boards.Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Boards.total, QZone.Boards.Data, arguments.callee, nextPageIndex, indicator);
         });
     }
 
-    let dataList = await nextPage(0, indicator);
+    await nextPage(0, indicator);
+
+    // 合并、过滤数据
+    QZone.Boards.Data = API.Common.unionBackedUpItems(CONFIG, QZone.Boards.OLD_Data, QZone.Boards.Data);
+
+    // 发表时间倒序
+    QZone.Boards.Data = API.Utils.sort(QZone.Boards.Data, CONFIG.PreBackup.field, true);
 
     // 完成
     indicator.complete();
 
-    return dataList;
+    return QZone.Boards.Data;
 }
 
 /**
@@ -129,11 +121,17 @@ API.Boards.handerData = async (boards) => {
         return [];
     }
     // 进度更新器
-    let indicator = new StatusIndicator('Boards_Images_Mime');
+    const indicator = new StatusIndicator('Boards_Images_Mime');
 
     // 处理留言数据
     for (let i = 0; i < boards.length; i++) {
         const board = boards[i];
+
+        if (!API.Common.isNewItem(board)) {
+            // 已备份数据跳过不处理
+            continue;
+        }
+
         board.uin = board.uin || 0;
         board.nickname = board.nickname || '神秘者';
         board.htmlContent = board.htmlContent || '';
@@ -181,6 +179,8 @@ API.Boards.handerData = async (boards) => {
         // 替换无协议图片地址
         board.htmlContent = $boardDom.html();
     }
+
+    // 完成
     indicator.complete();
     return boards;
 }
@@ -192,7 +192,7 @@ API.Boards.handerData = async (boards) => {
  */
 API.Boards.exportAllToFiles = async (boards) => {
     // 获取用户配置
-    let exportType = Qzone_Config.Boards.exportType;
+    let exportType = QZone_Config.Boards.exportType;
     switch (exportType) {
         case 'HTML':
             await API.Boards.exportToHtml(boards);
@@ -295,7 +295,7 @@ API.Boards.exportToMarkdown = async (boards) => {
 
             const yearFilePath = QZone.Boards.ROOT + "/" + year + ".md";
             await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
-                console.debug('备份留言列表完成，当前年份=', year, fileEntry);
+                console.info('备份留言列表完成，当前年份=', year, fileEntry);
             }).catch(error => {
                 console.error('备份留言列表失败，当前年份=', year, error);
             });
@@ -376,7 +376,7 @@ API.Boards.exportToJson = async (boards) => {
         }
         const yearFilePath = QZone.Boards.ROOT + "/" + year + ".json";
         await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath).then(fileEntry => {
-            console.debug('备份留言列表完成，当前年份=', year, yearItems, fileEntry);
+            console.info('备份留言列表完成，当前年份=', year, yearItems, fileEntry);
         }).catch(error => {
             console.error('备份留言列表失败，当前年份=', year, yearItems, error);
         });
@@ -384,7 +384,7 @@ API.Boards.exportToJson = async (boards) => {
 
     let json = JSON.stringify(boards);
     await API.Utils.writeText(json, QZone.Boards.ROOT + '/boards.json').then(fileEntry => {
-        console.debug('备份留言列表完成', boards, fileEntry);
+        console.info('备份留言列表完成', boards, fileEntry);
     }).catch(error => {
         console.error('备份留言列表失败', boards, error);
     });

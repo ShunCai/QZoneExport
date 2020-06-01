@@ -200,6 +200,17 @@ body {
     left: 115px;
 }
 
+.message-video {
+    background: url(../images/video-play.png) no-repeat;
+    height: 64px;
+    width: 64px;
+    opacity: .5;
+    cursor: pointer;
+    position: absolute;
+    top: 38%;
+    left: 15%;
+}
+
 /*markdown_box*/
 
 .html_header {

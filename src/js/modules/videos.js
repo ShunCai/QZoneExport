@@ -19,6 +19,9 @@ API.Videos.export = async () => {
         // 根据导出类型导出数据
         await API.Videos.exportAllToFiles(videos);
 
+        // 设置备份时间
+        API.Common.setBackupInfo(QZone_Config.Videos);
+
     } catch (error) {
         console.error('视频导出异常', error);
     }
@@ -31,20 +34,17 @@ API.Videos.export = async () => {
  * @param {StatusIndicator} indicator 状态更新器
  */
 API.Videos.getPageList = async (pageIndex, indicator) => {
-    console.debug("获取视频列表开始，当前页：", pageIndex + 1);
 
     // 状态更新器当前页
     indicator.setIndex(pageIndex + 1);
 
     // 更新获取中提示
-    indicator.addDownload(Qzone_Config.Videos.pageSize);
+    indicator.addDownload(QZone_Config.Videos.pageSize);
 
     return await API.Videos.getVideos(pageIndex).then(data => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^shine0_Callback\(/);
         data = data.data || {};
-
-        console.debug("获取视频列表结束，当前页：", pageIndex + 1, data);
 
         // 更新总数
         QZone.Videos.total = data.total || QZone.Videos.total || 0;
@@ -64,58 +64,44 @@ API.Videos.getPageList = async (pageIndex, indicator) => {
  * 获取所有视频列表
  */
 API.Videos.getAllList = async () => {
-    // 重置数据
-    QZone.Videos.Data = [];
-
     // 进度更新器
-    let indicator = new StatusIndicator('Videos');
+    const indicator = new StatusIndicator('Videos');
 
     // 开始
     indicator.print();
 
-    let CONFIG = Qzone_Config.Videos;
+    // 视频配置项
+    const CONFIG = QZone_Config.Videos;
 
-    let nextPage = async function (pageIndex, indicator) {
+    const nextPage = async function (pageIndex, indicator) {
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
+
         return await API.Videos.getPageList(pageIndex, indicator).then(async (dataList) => {
-            // 添加到全局变量
-            QZone.Videos.Data = QZone.Videos.Data.concat(dataList);
-
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Videos.total, QZone.Videos.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
+            // 合并数据
+            QZone.Videos.Data = API.Utils.unionItems(QZone.Videos.Data, dataList);
+            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+                return QZone.Videos.Data;
             }
-            return QZone.Videos.Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Videos.total, QZone.Videos.Data, arguments.callee, nextPageIndex, indicator);
         }).catch(async (e) => {
             console.error("获取视频列表异常，当前页：", pageIndex + 1, e);
-            indicator.addFailed({
-                pageIndex: pageIndex,
-                pageSize: CONFIG.pageSize,
-                isPage: true
-            });
+            indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Videos.total, QZone.Videos.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
-            }
-            return QZone.Videos.Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Videos.total, QZone.Videos.Data, arguments.callee, nextPageIndex, indicator);
         });
     }
 
     await nextPage(0, indicator);
+
+    // 合并、过滤数据
+    QZone.Videos.Data = API.Common.unionBackedUpItems(CONFIG, QZone.Videos.OLD_Data, QZone.Videos.Data);
+
+    // 发表时间倒序
+    QZone.Videos.Data = API.Utils.sort(QZone.Videos.Data, CONFIG.PreBackup.field, true);
 
     // 完成
     indicator.complete();
@@ -141,6 +127,12 @@ API.Videos.addDownloadTasks = (videos, module_dir, source, FILE_URLS) => {
     const isOther = module_dir ? true : false;
     FILE_URLS = FILE_URLS || QZone.Videos.FILE_URLS;
     for (const video of videos) {
+
+        if (!isOther && !API.Common.isNewItem(video)) {
+            // 已备份数据跳过不处理
+            continue;
+        }
+
         // 添加视频预览图下载任务
         video.custom_pre_url = video.pre || video.url1 || video.preview_img;
         // 预览图直接写死后缀
@@ -154,9 +146,9 @@ API.Videos.addDownloadTasks = (videos, module_dir, source, FILE_URLS) => {
         }
 
         // 添加视频下载任务(视频/相片/收藏/说说)
-        video.custom_url = video.url || video.video_url || (video.video_id ? video.url3 : undefined);
-        if (!video.custom_url || video.custom_url.indexOf('.swf') > -1) {
-            // Flash链接跳过不处理
+        video.custom_url = video.url || video.video_url || video.url3;
+        if (!video.custom_url || API.Videos.isExternalVideo(video)) {
+            // 外部视频跳过不下载
             continue;
         }
         let filename = FILE_URLS.get(video.custom_url);
@@ -180,7 +172,7 @@ API.Videos.addDownloadTasks = (videos, module_dir, source, FILE_URLS) => {
  */
 API.Videos.exportAllToFiles = async (videos) => {
     // 获取用户配置
-    let exportType = Qzone_Config.Videos.exportType;
+    let exportType = QZone_Config.Videos.exportType;
     switch (exportType) {
         case 'HTML':
             await API.Videos.exportToHtml(videos);
@@ -279,7 +271,7 @@ API.Videos.exportToMarkdown = async (videos) => {
             // 生成年份文件
             const yearFilePath = QZone.Videos.ROOT + "/" + year + '.md';
             await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
-                console.debug('备份视频列表完成，当前年份=', year, fileEntry);
+                console.info('备份视频列表完成，当前年份=', year, fileEntry);
             }).catch(error => {
                 console.error('备份视频列表失败，当前年份=', year, error);
             });
@@ -368,4 +360,77 @@ API.Videos.exportToJson = async (videos) => {
     // 完成
     indicator.complete();
     return videos;
+}
+
+/**
+ * 获取腾讯视频的播放地址
+ * @param {string} vid 视频ID
+ */
+API.Videos.getTencentVideoUrl = (vid) => {
+    let params = {
+        "origin": "https://user.qzone.qq.com",
+        "vid": vid,
+        "autoplay": true,
+        "volume": 1,
+        "disableplugin": "IframeBottomOpenClientBar",
+        "additionplugin": "IframeUiSearch",
+        "platId": "qzone_feed",
+        "show1080p": true,
+        "isDebugIframe": false
+    }
+    return API.Utils.toUrl('https://v.qq.com/txp/iframe/player.html', params);
+}
+
+/**
+ * 获取视频连接
+ * @param {object} 视频信息
+ */
+API.Videos.getVideoUrl = (video) => {
+    // URL3个人相册视频？
+    let url = video.url3 || video.url;
+    if (video.source_type == "share") {
+        // 分享视频连接？
+        url = video.rt_url;
+    }
+    if (API.Videos.isTencentVideo(video)) {
+        // 腾讯视频
+        url = API.Videos.getTencentVideoUrl(video.video_id);
+    }
+    // 其他第三方视频
+    return url;
+}
+
+/**
+ * 是否腾讯视频（判断不严谨，先临时判断）
+ * @param {object} 视频信息
+ */
+API.Videos.isTencentVideo = (video) => {
+    let url2 = video.url2 || '';
+    let url3 = video.url3 || '';
+    if (!url2 || url3.indexOf('.mp4') > -1) {
+        // 如果URL都没有值，或者地址含有.mp4，肯定是空间视频？
+        return false;
+    }
+    if (url3.indexOf('tencentvideo') > -1) {
+        // 该判断不严谨，但是不知道怎么判断的好
+        return true;
+    }
+    return false;
+}
+
+/**
+ * 是否外部视频（判断不严谨，先临时判断）
+ * @param {object} 视频信息
+ */
+API.Videos.isExternalVideo = (video) => {
+    let url3 = video.url3 || '';
+    const isTencentTV = API.Videos.isTencentVideo(video);
+    if (isTencentTV) {
+        return true;
+    }
+    if (url3.indexOf('.swf') > -1) {
+        // Flash地址肯定是外部视频？
+        return true;
+    }
+    return false;
 }

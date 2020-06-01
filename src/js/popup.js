@@ -127,26 +127,6 @@
         $("#Favorites").attr("disabled", !isOwner);
     }
 
-    // 获取上次勾选的导出模块
-    const initModules = () => {
-        sendMessage({
-            from: 'popup',
-            subject: 'initModules'
-        }, (data) => {
-            for (const value in data) {
-                if (!data.hasOwnProperty(value)) {
-                    continue;
-                }
-                const checked = data[value] || true;
-                let $exportType = $("input[value='" + value + "']");
-                let hasDom = $exportType && $exportType[0];
-                if (hasDom && $exportType[0].disabled === false) {
-                    $exportType[0].checked = checked;
-                }
-            }
-        });
-    }
-
     // 获取当前登录QQ或备份QQ
     sendMessage({
         from: 'popup',
@@ -154,8 +134,6 @@
     }, (data) => {
         // 显示备份用户
         initOwnerOp(data);
-        // 获取上次勾选的导出模块
-        initModules();
         // 检测私密日记密码
         checkDiaries();
         // 获取相册列表

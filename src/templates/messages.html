@@ -5,7 +5,7 @@
 	<link rel="icon" href="https://qzonestyle.gtimg.cn/aoi/img/logo/favicon.ico"> 
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<title>QQ空间备份-说说</title>
-	<link href="https://netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 	<link rel="stylesheet" type="text/css" href="../common/css/common.css">
 	<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.0/dist/jquery.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
@@ -52,11 +52,11 @@
 									<details>
 										<summary>查看全文</summary>
 										<div class="container">
-											<%:=API.Common.formatContent(message.custom_content)%>
+											<%:=API.Common.formatContent(message, "HTML", false, false)%>
 										</div>
 									</details>
 								<%}else{%>
-									<p class="card-text content"><%:=API.Common.formatContent(message.custom_content)%></p>
+									<p class="card-text content"><%:=API.Common.formatContent(message, "HTML", false, false)%></p>
 								<%}%>
 								<%/* 语音内容 */%>
 								<%if(message.custom_voices){%>
@@ -75,41 +75,57 @@
 										<details class="float-left ml-3" >
 											<summary>查看全文</summary>
 											<div class="container">
-												<%:=API.Common.formatContent(message.rt_con.content)%>
+												<%:=API.Common.formatContent(message, "HTML", true, false)%>
 											</div>
 										</details>
 									<%}else{%>
-										<p class="card-text content"><%:=API.Common.formatContent(message.rt_con.content)%></p>
+										<p class="card-text content"><%:=API.Common.formatContent(message, "HTML", true, false)%></p>
 									<%}%>
 								<%}%>
 								<%/* 多媒体内容 */%>
 								<div class="medias row p-3">
 									<%/* 视频内容（一般为单视频） */%>
 									<%for(let video of message.custom_videos){%>
-										<a class="medias-item border">
-											<video controls poster="<%:=video.url1%>" height="100%" width="100%">
-												<source src="<%:=(video.custom_filepath || video.custom_url || video.url3)%>" type="video/mp4">
-											</video>
-										</a>
+										<%if (API.Videos.isExternalVideo(video)) {%>
+											<a class="medias-item border" href="<%:=API.Videos.getVideoUrl(video)%>" target="_blank">
+												<span class="message-video"></span>
+												<img class="lazyload w-100 h-100" src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>">
+											</a>
+										<%}else{%>
+											<%/* 空间视频 */%>
+											<a class="medias-item border">
+												<video controls poster="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" height="100%" width="100%">
+													<source src="<%:=(video.custom_filepath || video.custom_url || video.url3)%>" type="video/mp4">
+												</video>
+											</a>
+										<%}%>
 									<%}%>
-									<%/*  图片内容(含视频，一般为分享视频) */%>
+									<%/*  图片内容(含视频，即同时存在图片与视频) */%>
 									<%for(let image of message.custom_images){%>
-										<a class="medias-item border">
-											<%if(image.is_video && image.video_info){%>
-												<%/* 空间视频、腾讯官方视频、第三方视频 */%>
-												<!-- <embed src="/i/helloworld.swf" type="application/x-shockwave-flash" /> -->
-												<%/* 空间视频 */%>
-												<!-- <embed src="/i/helloworld.swf" type="application/x-shockwave-flash" /> -->
-												<img class="lazyload" src="<%:=image.url1%>">
+										<%if(image.is_video && image.video_info){%>
+											<%if (API.Videos.isExternalVideo(image.video_info)) {%>
+												<a class="medias-item border" href="<%:=API.Videos.getVideoUrl(image.video_info)%>" target="_blank">
+													<span class="message-video"></span>
+													<img class="lazyload w-100 h-100" src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>">
+												</a>
 											<%}else{%>
-												<img class="lazyload" src="<%:=(image.custom_filepath || image.custom_url)%>">
+												<%/* 空间视频 */%>
+												<a class="medias-item border">
+													<video controls poster="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" height="100%" width="100%">
+														<source src="<%:=(image.video_info.custom_filepath || image.video_info.custom_url || image.video_info.url3)%>" type="video/mp4">
+													</video>
+												</a>
 											<%}%>
-										</a>
+										<%}else{%>
+											<a class="medias-item border">
+												<img class="lazyload w-100 h-100" src="<%:=(image.custom_filepath || image.custom_url)%>">
+											</a>
+										<%}%>
 									<%}%>
 									<%/* 动画表情内容（目前只支持一个） */%>
 									<%for(let image of message.custom_magics){%>
 										<a class="medias-item border">
-											<img class="lazyload" src='<%:=(image.custom_filepath || image.custom_url)%>'>
+											<img class="lazyload w-100 h-100" src='<%:=(image.custom_filepath || image.custom_url)%>'>
 										</a>
 										<hr>
 									<%}%>

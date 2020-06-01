@@ -13,6 +13,9 @@ API.Messages.export = async () => {
         // 获取所有的说说数据
         let items = await API.Messages.getAllList();
 
+        // 过滤指定屏蔽词说说
+        items = API.Messages.filterKeyWords(items);
+
         // 获取所有说说的全文
         items = await API.Messages.getAllFullContent(items);
 
@@ -30,6 +33,10 @@ API.Messages.export = async () => {
 
         // 根据导出类型导出数据    
         await API.Messages.exportAllListToFiles(items);
+
+        // 设置备份时间
+        API.Common.setBackupInfo(QZone_Config.Messages);
+
     } catch (error) {
         console.error('说说导出异常', error);
     }
@@ -41,17 +48,14 @@ API.Messages.export = async () => {
  * @param {StatusIndicator} indicator 状态更新器
  */
 API.Messages.getList = async (pageIndex, indicator) => {
-    console.debug("获取说说列表开始，当前页：", pageIndex + 1);
     // 状态更新器当前页
     indicator.index = pageIndex + 1;
     return await API.Messages.getMessages(pageIndex).then(async (data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_preloadCallback\(/);
 
-        console.debug("获取说说列表结束，当前页：", pageIndex + 1, data);
-
         // 更新状态-下载中的数量
-        indicator.addDownload(Qzone_Config.Messages.pageSize);
+        indicator.addDownload(QZone_Config.Messages.pageSize);
 
         // 返回的总数包括无权限的说说的条目数，这里返回为空时表示无权限获取其他的数据
         if (data.msglist == null || data.msglist.length == 0) {
@@ -79,59 +83,47 @@ API.Messages.getList = async (pageIndex, indicator) => {
  */
 API.Messages.getAllList = async () => {
 
-    // 重置数据
-    QZone.Messages.Data = [];
-    QZone.Messages.Images = [];
-
     // 说说状态更新器
-    let indicator = new StatusIndicator('Messages');
+    const indicator = new StatusIndicator('Messages');
 
-    let nextPage = async function (pageIndex, indicator) {
+    // 说说配置项
+    const CONFIG = QZone_Config.Messages;
+
+    const nextPage = async function (pageIndex, indicator) {
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
+
         return await API.Messages.getList(pageIndex, indicator).then(async (dataList) => {
-            // 添加到全局变量
-            QZone.Messages.Data = QZone.Messages.Data.concat(dataList);
-
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, Qzone_Config.Messages.pageSize, QZone.Messages.total, QZone.Messages.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = Qzone_Config.Messages.randomSeconds.min;
-                let max = Qzone_Config.Messages.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
+            // 合并数据
+            QZone.Messages.Data = API.Utils.unionItems(QZone.Messages.Data, dataList);
+            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+                return QZone.Messages.Data;
             }
-            return QZone.Messages.Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Messages.total, QZone.Messages.Data, arguments.callee, nextPageIndex, indicator);
         }).catch(async (e) => {
-            console.error("获取说说列表异常，当前页：", pageIndex + 1, e);
-            indicator.addFailed({
-                pageIndex: pageIndex,
-                pageSize: Qzone_Config.Messages.pageSize,
-                isPage: true
-            });
+            console.error("获取说说列表异常，当前页：", nextPageIndex, e);
+            indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, Qzone_Config.Messages.pageSize, QZone.Messages.total, QZone.Messages.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = Qzone_Config.Messages.randomSeconds.min;
-                let max = Qzone_Config.Messages.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
-            }
-            return QZone.Messages.Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Messages.total, QZone.Messages.Data, arguments.callee, nextPageIndex, indicator);
         });
     }
 
+    // 获取第一页
     await nextPage(0, indicator);
+
+    // 合并、过滤数据
+    QZone.Messages.Data = API.Common.unionBackedUpItems(CONFIG, QZone.Messages.OLD_Data, QZone.Messages.Data);
+
+    // 发表时间倒序
+    QZone.Messages.Data = API.Utils.sort(QZone.Messages.Data, CONFIG.PreBackup.field, true);
 
     // 完成
     indicator.complete();
 
-    return QZone.Messages.Data
+    return QZone.Messages.Data;
 }
 
 /**
@@ -139,7 +131,7 @@ API.Messages.getAllList = async () => {
  * @param {Array} items 说说列表
  */
 API.Messages.getAllFullContent = async (items) => {
-    if (!Qzone_Config.Messages.isFull) {
+    if (!QZone_Config.Messages.isFull) {
         // 不获取全文内容时，跳过不处理
         return items;
     }
@@ -147,7 +139,7 @@ API.Messages.getAllFullContent = async (items) => {
     // 状态更新器
     let indicator = new StatusIndicator('Messages_Full_Content');
 
-    let more_items = API.Messages.getMoreItems(items)
+    let more_items = API.Messages.getMoreItems(items);
 
     // 更新总数
     indicator.setTotal(more_items.length);
@@ -156,7 +148,13 @@ API.Messages.getAllFullContent = async (items) => {
         const item = more_items[i];
 
         // 更新状态-当前位置
-        indicator.index = i + 1
+        indicator.setIndex(i + 1);
+
+        if (!API.Common.isNewItem(item)) {
+            // 已备份数据跳过不处理
+            indicator.addSkip(item);
+            continue;
+        }
 
         // 更新状态-下载中的数量
         indicator.addDownload(1);
@@ -192,9 +190,7 @@ API.Messages.getAllFullContent = async (items) => {
  * @param {integer} pageIndex 页数索引
  */
 API.Messages.getItemCommentList = async (item, pageIndex) => {
-    console.debug("开始获取说说评论列表，当前页：", pageIndex + 1, item);
     return await API.Messages.getComments(item.tid, pageIndex).then(async (data) => {
-        console.debug("获取说说评论列表完成，当前页：", pageIndex + 1, item);
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_preloadCallback\(/);
 
@@ -236,67 +232,43 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
 API.Messages.getItemAllCommentList = async (item, indicator) => {
     if (!(item.commenttotal > item.custom_comments.length)) {
         // 当前列表比评论总数小的时候才需要获取全部评论，否则则跳过
-        // console.debug('当前说说不需要获取全部评论列表', item);
         return item.custom_comments;
     }
     // 情况原有的评论列表
     item.custom_comments = [];
 
     // 说说评论配置
-    let CONFIG = Qzone_Config.Messages.Comments;
+    const CONFIG = QZone_Config.Messages.Comments;
 
     // 更新总数
-    let total = API.Utils.getCommentCount(item);
+    const total = API.Utils.getCommentCount(item);
     indicator.setTotal(total);
 
-    let nextPage = async function (item, pageIndex) {
-        return await API.Messages.getItemCommentList(item, pageIndex).then(async (dataList) => {
+    const nextPage = async function (item, pageIndex) {
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
 
+        return await API.Messages.getItemCommentList(item, pageIndex).then(async (dataList) => {
             // 更新成功条目数
             indicator.addSuccess(dataList.length);
 
             // 合并评论列表
             item.custom_comments = item.custom_comments.concat(dataList || []);
 
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, total, item.custom_comments);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(item, pageIndex + 1);
-            }
-            return item.custom_comments;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.custom_comments, arguments.callee, item, nextPageIndex);
         }).catch(async (e) => {
             console.error("获取说说评论列表异常，当前页：", pageIndex + 1, item, e);
-            indicator.addFailed({
-                pageIndex: pageIndex,
-                pageSize: CONFIG.pageSize,
-                isPage: true
-            });
+
+            indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
+
             // 当前页失败后，跳过继续请求下一页
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Messages.total, QZone.Messages.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(item, pageIndex + 1);
-            }
-            return item.custom_comments;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.custom_comments, arguments.callee, item, nextPageIndex);
         });
     }
 
     await nextPage(item, 0);
-
-    // 完成
-    indicator.complete();
 
     return item.custom_comments
 }
@@ -306,21 +278,30 @@ API.Messages.getItemAllCommentList = async (item, indicator) => {
  * @param {string} item 说说
  */
 API.Messages.getItemsAllCommentList = async (items) => {
-    if (!Qzone_Config.Messages.Comments.isFull) {
+    if (!QZone_Config.Messages.Comments.isFull) {
         // 不获取全部评论时，跳过
         return items;
     }
 
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
+
+        if (!API.Common.isNewItem(item)) {
+            // 已备份数据跳过不处理
+            continue;
+        }
+
         // 单条说说状态更新器
         let indicator = new StatusIndicator('Messages_Comments');
 
         // 更新当前位置
-        indicator.index = i + 1;
+        indicator.setIndex(i + 1);
 
         // 获取说说的全部评论
         await API.Messages.getItemAllCommentList(item, indicator);
+
+        // 完成
+        indicator.complete();
     }
     return items;
 }
@@ -330,7 +311,7 @@ API.Messages.getItemsAllCommentList = async (items) => {
  */
 API.Messages.exportAllListToFiles = async (items) => {
     // 获取用户配置
-    let exportType = Qzone_Config.Messages.exportType;
+    let exportType = QZone_Config.Messages.exportType;
     switch (exportType) {
         case 'HTML':
             await API.Messages.exportToHtml(items);
@@ -421,16 +402,21 @@ API.Messages.exportToMarkdown = async (items) => {
             // 生成年份文件
             const yearFilePath = QZone.Messages.ROOT + "/" + year + ".md";
             await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
-                console.debug('备份说说列表到Markdown完成，当前年份=', year, fileEntry);
+                console.info('备份说说列表到Markdown完成，当前年份=', year, fileEntry);
             }).catch(error => {
                 console.error('备份说说列表到Markdown异常，当前年份=', year, error);
             });
         }
 
         // 生成汇总文件
-        await API.Utils.writeText(allYearContents.join('\r\n'), QZone.Messages.ROOT + '/Messages.md');
+        await API.Utils.writeText(allYearContents.join('\r\n'), QZone.Messages.ROOT + '/Messages.md').then((fileEntry) => {
+            console.info('生成汇总说说Markdown文件完成', items, fileEntry);
+        }).catch((e) => {
+            console.error("生成汇总说说Markdown文件异常", items, e)
+        });
+
     } catch (error) {
-        console.error('导出视频到Markdown文件异常', error, videos);
+        console.error('导出说说到Markdown文件异常', error, items);
     }
     // 完成
     indicator.complete();
@@ -442,26 +428,32 @@ API.Messages.exportToMarkdown = async (items) => {
  * @param {Array} items 数据
  */
 API.Messages.exportToJson = async (items) => {
-    // 说说数据根据年份分组
-    const yearDataMap = API.Utils.groupedByTime(items, "custom_create_time");
+    // 进度功能性期
     const indicator = new StatusIndicator('Messages_Export_Other');
     indicator.setIndex('JSON');
-    for (let yearEntry of yearDataMap) {
-        let year = yearEntry[0];
-        let monthDataMap = yearEntry[1];
-        console.debug('正在生成年份JSON文件', year);
-        let yearItems = [];
-        for (let monthEntry of monthDataMap) {
-            let items = monthEntry[1];
-            yearItems = yearItems.concat(items);
-        }
+
+    // 生成年份JSON
+    // 说说数据根据年份分组
+    const yearDataMap = API.Utils.groupedByTime(items, "custom_create_time", "year");
+    for (const [year, yearItems] of yearDataMap) {
+        console.info('正在生成年份说说JSON文件', year);
         const yearFilePath = QZone.Messages.ROOT + "/" + year + ".json";
-        let fileEntry = await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath);
-        console.debug('生成年份JSON文件完成', year, fileEntry);
+        await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath).then((fileEntry) => {
+            console.info('生成年份说说JSON文件完成', year, fileEntry);
+        }).catch((e) => {
+            console.error("生成年份说说JSON文件异常", yearItems, e)
+        });
     }
 
-    let json = JSON.stringify(items);
-    await API.Utils.writeText(json, QZone.Messages.ROOT + '/messages.json');
+    // 生成汇总JSON
+    const json = JSON.stringify(items);
+    await API.Utils.writeText(json, QZone.Messages.ROOT + '/messages.json').then((fileEntry) => {
+        console.info('生成汇总说说JSON文件完成', items, fileEntry);
+    }).catch((e) => {
+        console.error("生成汇总说说JSON文件异常", items, e)
+    });
+
+    // 完成
     indicator.complete();
     return items;
 }
@@ -572,11 +564,30 @@ API.Messages.addMediaToTasks = async (dataList) => {
     let module_dir = 'Messages/Images';
 
     for (const item of dataList) {
+
+        if (!API.Common.isNewItem(item)) {
+            // 已备份数据跳过不处理
+            continue;
+        }
+
         // 下载说说配图
         for (const image of item.custom_images) {
-            let url = image.url2 || image.url1;
-            await API.Utils.addDownloadTasks(image, url, module_dir, item, QZone.Messages.FILE_URLS);
-            indicator.addSuccess(1);
+            // 说说同时包含图片与视频，需要单独处理视频
+            if (image.is_video && image.video_info) {
+                // 视频
+                const video = image.video_info;
+                if (API.Videos.isExternalVideo(video)) {
+                    // 外部视频（腾讯视频、第三方视频）不做处理
+                    continue;
+                }
+                // 添加视频下载任务
+                API.Videos.addDownloadTasks([video], module_dir, item, QZone.Messages.FILE_URLS);
+            } else {
+                // 普通图片
+                let url = image.url2 || image.url1;
+                await API.Utils.addDownloadTasks(image, url, module_dir, item, QZone.Messages.FILE_URLS);
+            }
+            indicator.addSuccess(image);
         }
 
         // 下载视频预览图及视频
@@ -638,10 +649,28 @@ API.Messages.getAllImages = async (items) => {
     if (!items) {
         return items;
     }
-    for (const item of items) {
+
+    // 状态更新器
+    const indicator = new StatusIndicator('Messages_More_Images');
+    indicator.setTotal(items.length);
+
+    for (let index = 0; index < items.length; index++) {
+        const item = items[index];
+
+        // 当前处理位置
+        indicator.setIndex(index + 1);
+
+        if (!API.Common.isNewItem(item)) {
+            // 已备份数据跳过不处理
+            indicator.addSkip(item);
+            continue;
+        }
+
         const images = item.custom_images;
         // 如果图片总数大于图片实际数，则获取更多图片
         if (item.imagetotal <= images.length) {
+            // 已备份数据跳过不处理
+            indicator.addSkip(item);
             continue;
         }
         await API.Messages.getImageInfos(item.tid).then((data) => {
@@ -665,10 +694,17 @@ API.Messages.getAllImages = async (items) => {
                     });
                 }
             }
+            // 已处理
+            indicator.addSuccess(item);
         }).catch((error) => {
+            // 已失败
+            indicator.addFailed(item);
             console.error('获取说说更多图片异常', item, error);
         });
     }
+
+    // 完成
+    indicator.complete();
     return items;
 }
 
@@ -680,7 +716,23 @@ API.Messages.getAllVoices = async (items) => {
     if (!items) {
         return items;
     }
-    for (const item of items) {
+
+    // 状态更新器
+    const indicator = new StatusIndicator('Messages_Voices');
+    indicator.setTotal(items.length);
+
+    for (let index = 0; index < items.length; index++) {
+        const item = items[index];
+
+        // 当前处理位置
+        indicator.setIndex(index + 1);
+
+        if (!API.Common.isNewItem(item)) {
+            // 已备份数据跳过不处理
+            indicator.addSkip(item);
+            continue;
+        }
+
         const voices = item.custom_voices;
         for (const voice of voices) {
             await API.Messages.getVoiceInfo(voice).then((voiceInfo) => {
@@ -690,6 +742,120 @@ API.Messages.getAllVoices = async (items) => {
                 console.error('获取说说语音失败', item, error);
             });
         }
+
+        // 已处理
+        indicator.addSuccess(item);
     }
+    // 完成
+    indicator.complete();
+    return items;
+}
+
+/**
+ * 处理数据
+ * @param items 需要转换的数据
+ */
+API.Messages.convert = (items) => {
+    items = items || [];
+    for (const item of items) {
+        // 内容
+        item.custom_content = item.content;
+        item.conlist = item.conlist || [];
+
+        // 评论
+        item.commenttotal = API.Utils.getCommentCount(item);
+        item.custom_comments = item.commentlist || [];
+
+        // 配图
+        item.imagetotal = item.pictotal || 0;
+        item.custom_images = item.pic || [];
+
+        // 语音
+        item.voicetotal = item.voicetotal || 0;
+        item.custom_voices = item.voice || [];
+
+        // 音乐
+        item.audiototal = item.audiototal || 0;
+        item.custom_audios = item.audio || [];
+
+        // 特殊动漫表情
+        item.magictotal = item.magictotal || 0;
+        item.custom_magics = item.magic || [];
+        // 处理表情
+        for (const magic of item.custom_magics) {
+            if (magic.url1.match(/{"\$type":"magicEmoticon","id":(\d+)}/)) {
+                magic.custom_url = 'http://qzonestyle.gtimg.cn/qzone/em/120/mb{0}.jpg'.format(magic.url1.match(/{"\$type":"magicEmoticon","id":(\d+)}/)[1]);
+            }
+        }
+
+        // 视频
+        item.videototal = item.videototal || 0;
+        item.custom_videos = item.video || [];
+        for (const video of item.custom_videos) {
+            // 处理异常数据的视频URL
+            video.video_id = video.video_id || '';
+            video.video_id = video.video_id.replace("http://v.qq.com/", "");
+        }
+
+        // 投票
+
+        // 位置
+        item.lbs = item.lbs || {};
+
+        // 创建时间
+        item.custom_create_time = API.Utils.formatDate(item.created_time);
+    }
+    return items;
+}
+
+/**
+ * 说说内容是否包含指定屏蔽词
+ * @param {string} content 说说内容
+ */
+API.Messages.isMatchFilterKey = (content) => {
+    let isMatch = false;
+    for (const keyWord of QZone_Config.Messages.FilterKeyWords) {
+        const keyWords = keyWord.split('&&');
+        let matchCount = 0;
+        for (const key of keyWords) {
+            const regex = new RegExp(key, 'ig');
+            if (content.match(regex)) {
+                matchCount++;
+            }
+        }
+        if (matchCount === keyWords.length) {
+            isMatch = true;
+            break;
+        }
+    }
+    return isMatch;
+}
+
+/**
+ * 过滤含屏蔽词的说说
+ * @param {Array} items 说说列表
+ */
+API.Messages.filterKeyWords = (items) => {
+    if (!QZone_Config.Messages.isFilterKeyword || QZone_Config.Messages.FilterKeyWords.length === 0) {
+        return items;
+    }
+
+    // 状态更新器
+    const indicator = new StatusIndicator('Messages_Filter');
+    indicator.setTotal(items.length);
+
+    for (let i = items.length - 1; i >= 0; i--) {
+        let item = items[i];
+        const isMatch = API.Messages.isMatchFilterKey(item.custom_content);
+        if (isMatch) {
+            // 包含屏蔽词，移除
+            items.splice(i, 1);
+            indicator.addSuccess(item);
+            continue;
+        }
+        indicator.addSkip(item);
+    }
+    // 完成
+    indicator.complete();
     return items;
 }

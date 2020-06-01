@@ -17,6 +17,9 @@ API.Favorites.export = async () => {
         // 根据导出类型导出数据
         await API.Favorites.exportAllToFiles(dataList);
 
+        // 设置备份时间
+        API.Common.setBackupInfo(QZone_Config.Favorites);
+
     } catch (error) {
         console.error('收藏导出异常', error);
     }
@@ -29,20 +32,17 @@ API.Favorites.export = async () => {
  * @param {StatusIndicator} indicator 状态更新器
  */
 API.Favorites.getPageList = async (pageIndex, indicator) => {
-    console.debug("开始获取收藏列表，当前页：", pageIndex + 1);
 
     // 状态更新器当前页
     indicator.setIndex(pageIndex + 1);
 
     // 更新获取中提示
-    indicator.addDownload(Qzone_Config.Favorites.pageSize);
+    indicator.addDownload(QZone_Config.Favorites.pageSize);
 
     return await API.Favorites.getFavorites(pageIndex).then(data => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
         data = data.data;
-
-        console.debug("成功获取收藏列表，当前页：", pageIndex + 1, data);
 
         // 更新总数
         QZone.Favorites.total = data.total_num || QZone.Favorites.total || 0;
@@ -62,63 +62,50 @@ API.Favorites.getPageList = async (pageIndex, indicator) => {
  * 获取所有收藏列表
  */
 API.Favorites.getAllList = async () => {
-    // 重置数据
-    QZone.Favorites.Data = [];
 
     // 进度更新器
-    let indicator = new StatusIndicator('Favorites');
+    const indicator = new StatusIndicator('Favorites');
 
     // 开始
     indicator.print();
 
-    let CONFIG = Qzone_Config.Favorites;
+    const CONFIG = QZone_Config.Favorites;
 
-    let nextPage = async function (pageIndex, indicator) {
+    const nextPage = async function (pageIndex, indicator) {
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
+
         return await API.Favorites.getPageList(pageIndex, indicator).then(async (dataList) => {
-            // 添加到全局变量
-            QZone.Favorites.Data = QZone.Favorites.Data.concat(dataList);
 
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Favorites.total, QZone.Favorites.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
+            // 合并数据
+            QZone.Favorites.Data = API.Utils.unionItems(QZone.Favorites.Data, dataList);
+            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+                return QZone.Favorites.Data;
             }
-            return QZone.Favorites.Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Favorites.total, QZone.Favorites.Data, arguments.callee, nextPageIndex, indicator);
         }).catch(async (e) => {
             console.error("获取收藏列表异常，当前页：", pageIndex + 1, e);
-            indicator.addFailed({
-                pageIndex: pageIndex,
-                pageSize: CONFIG.pageSize,
-                isPage: true
-            });
+            indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Favorites.total, QZone.Favorites.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
-            }
-            return QZone.Favorites.Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Favorites.total, QZone.Favorites.Data, arguments.callee, nextPageIndex, indicator);
         });
     }
 
-    let dataList = await nextPage(0, indicator);
+    await nextPage(0, indicator);
+
+    // 合并、过滤数据
+    QZone.Favorites.Data = API.Common.unionBackedUpItems(CONFIG, QZone.Favorites.OLD_Data, QZone.Favorites.Data);
+
+    // 发表时间倒序
+    QZone.Favorites.Data = API.Utils.sort(QZone.Favorites.Data, CONFIG.PreBackup.field, true);
 
     // 完成
     indicator.complete();
 
-    return dataList;
+    return QZone.Favorites.Data;
 }
 
 /**
@@ -127,7 +114,7 @@ API.Favorites.getAllList = async () => {
  */
 API.Favorites.exportAllToFiles = async (favorites) => {
     // 获取用户配置
-    let exportType = Qzone_Config.Favorites.exportType;
+    let exportType = QZone_Config.Favorites.exportType;
     switch (exportType) {
         case 'HTML':
             await API.Favorites.exportToHtml(favorites);
@@ -220,7 +207,7 @@ API.Favorites.exportToMarkdown = async (favorites) => {
 
             const yearFilePath = QZone.Favorites.ROOT + "/" + year + ".md";
             await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
-                console.debug('备份收藏列表完成，当前年份=', year, fileEntry);
+                console.info('备份收藏列表完成，当前年份=', year, fileEntry);
             }).catch(error => {
                 console.error('备份收藏列表失败，当前年份=', year, error);
             });
@@ -406,7 +393,7 @@ API.Favorites.exportToJson = async (favorites) => {
 
         const yearFilePath = QZone.Favorites.ROOT + "/" + year + ".json";
         await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath).then(fileEntry => {
-            console.debug('备份收藏列表完成，当前年份=', year, yearItems, fileEntry);
+            console.info('备份收藏列表完成，当前年份=', year, yearItems, fileEntry);
         }).catch(error => {
             console.error('备份收藏列表失败，当前年份=', year, yearItems, error);
         });
@@ -414,7 +401,7 @@ API.Favorites.exportToJson = async (favorites) => {
 
     let json = JSON.stringify(favorites);
     await API.Utils.writeText(json, QZone.Favorites.ROOT + '/favorites.json').then(fileEntry => {
-        console.debug('备份收藏列表完成', favorites, fileEntry);
+        console.info('备份收藏列表完成', favorites, fileEntry);
     }).catch(error => {
         console.error('备份收藏列表失败', favorites, error);
     });
@@ -424,7 +411,7 @@ API.Favorites.exportToJson = async (favorites) => {
 }
 
 /**
- * 添加说说的附件下载任务
+ * 添加多媒体下载任务
  * @param {Array} dataList
  */
 API.Favorites.addMediaToTasks = async (dataList) => {
@@ -432,6 +419,12 @@ API.Favorites.addMediaToTasks = async (dataList) => {
     let module_dir = 'Favorites/Images';
 
     for (const item of dataList) {
+
+        if (!API.Common.isNewItem(item)) {
+            // 已备份数据跳过不处理
+            continue;
+        }
+
         // 下载说说配图
         for (const image of item.custom_images) {
             let url = image.url;

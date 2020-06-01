@@ -2,55 +2,65 @@
 <html lang="zh">
 
 <head>
-	<link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-	<link href="../vendor/bootstrap/css/bootstrap-table.min.css" rel="stylesheet">
-	<link href="../css/options.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+	<link rel="stylesheet" href="../vendor/bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" href="../vendor/bootstrap/css/bootstrap-table.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/css/tempusdominus-bootstrap-4.min.css" integrity="sha256-XPTBwC3SBoWHSmKasAk01c08M6sIA5gF5+sRxqak2Qs=" crossorigin="anonymous" />
+	<link rel="stylesheet" href="../css/options.css">
 	<link rel="icon" href="../img/icon-128.png">
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<title>QQ空间导出助手-选项</title>
+	<script type="text/javascript" src="../vendor/thunder/thunder-link.js"></script>
+	<script type="text/javascript" src="../vendor/jquery/jquery-3.3.1.min.js"></script>
+	<script type="text/javascript" src="../vendor/popper/popper.min.js"></script>
+	<script type="text/javascript" src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../vendor/bootstrap/js/bootstrap-table.min.js"></script>
+	<script type="text/javascript" src="../vendor/bootstrap/js/bootstrap-table-zh-CN.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js" integrity="sha256-5oApc/wMda1ntIEK4qoWJ4YItnV4fBHMwywunj8gPqc=" crossorigin="anonymous"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js" integrity="sha256-4HOrwHz9ACPZBxAav7mYYlbeMiAL0h6+lZ36cLNpR+E=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/js/tempusdominus-bootstrap-4.min.js" integrity="sha256-z0oKYg6xiLq3yJGsp/LsY9XykbweQlHl42jHv2XTBz4=" crossorigin="anonymous"></script>
 </head>
 
 <body>
-	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-		<a class="navbar-brand" href="#">QQ空间导出助手</a>
-		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-			<span class="navbar-toggler-icon"></span>
-		</button>
-		<div class="collapse navbar-collapse" id="navbarSupportedContent">
-			<ul class="navbar-nav mr-auto">
-				<!-- <li class="nav-item">
-					<a class="nav-link" href="home.html">个人中心</a>
-				</li> -->
-				<li class="nav-item active">
-					<a id="setting-link" class="nav-link" href="options.html">设置<span class="sr-only">(current)</span></a>
-				</li>
-				<li class="nav-item">
-					<a id="about-link" class="nav-link" href="about.html">关于</a>
-				</li>
-			</ul>
-		</div>
-	</nav>
-	<div class="col">
+	<header>
+		<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+			<a class="navbar-brand" href="#">QQ空间导出助手</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<ul class="navbar-nav mr-auto">
+					<li class="nav-item active">
+						<a id="setting-link" class="nav-link" href="options.html">设置<span class="sr-only">(current)</span></a>
+					</li>
+					<li class="nav-item">
+						<a id="about-link" class="nav-link" href="about.html">关于</a>
+					</li>
+				</ul>
+			</div>
+		</nav>
+	</header>
+	<main role="main" style="position: relative;top: 56px;">
 		<div class="tab-content" id="v-pills-tabContent">
 			<div class="tab-pane fade show active" id="v-pills-settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
 				<div class="container-fluid">
 					<nav>
 						<div class="nav nav-tabs" id="nav-tab" role="tablist">
-							<a class="nav-item nav-link active" id="nav-messages-tab" data-config="Messages" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="false">说说</a>
-							<a class="nav-item nav-link" id="nav-blogs-tab" data-config="Blogs" data-toggle="tab" href="#nav-blogs" role="tab" aria-controls="nav-blogs" aria-selected="false">日志</a>
-							<a class="nav-item nav-link" id="nav-diaries-tab" data-config="Diaries" data-toggle="tab" href="#nav-diaries" role="tab" aria-controls="nav-diaries" aria-selected="false">私密日记</a>
-							<a class="nav-item nav-link" id="nav-photos-tab" data-config="Photos" data-toggle="tab" href="#nav-photos" role="tab" aria-controls="nav-photos" aria-selected="false">相册</a>
-							<a class="nav-item nav-link" id="nav-videos-tab" data-config="Videos" data-toggle="tab" href="#nav-videos" role="tab" aria-controls="nav-videos" aria-selected="false">视频</a>
-							<a class="nav-item nav-link" id="nav-boards-tab" data-config="Boards" data-toggle="tab" href="#nav-boards" role="tab" aria-controls="nav-boards" aria-selected="false">留言板</a>
-							<a class="nav-item nav-link" id="nav-friends-tab" data-config="Friends" data-toggle="tab" href="#nav-friends" role="tab" aria-controls="nav-friends" aria-selected="false">好友</a>
-							<a class="nav-item nav-link" id="nav-favorites-tab" data-config="Favorites" data-toggle="tab" href="#nav-favorites" role="tab" aria-controls="nav-favorites" aria-selected="false">收藏夹</a>
-							<a class="nav-item nav-link " id="nav-common-tab" data-config="Messages" data-toggle="tab" href="#nav-common" role="tab" aria-controls="nav-common" aria-selected="false">公共</a>
+							<a class="nav-item nav-link active" id="nav-messages-tab" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="false">说说</a>
+							<a class="nav-item nav-link" id="nav-blogs-tab" data-toggle="tab" href="#nav-blogs" role="tab" aria-controls="nav-blogs" aria-selected="false">日志</a>
+							<a class="nav-item nav-link" id="nav-diaries-tab" data-toggle="tab" href="#nav-diaries" role="tab" aria-controls="nav-diaries" aria-selected="false">私密日记</a>
+							<a class="nav-item nav-link" id="nav-photos-tab" data-toggle="tab" href="#nav-photos" role="tab" aria-controls="nav-photos" aria-selected="false">相册</a>
+							<a class="nav-item nav-link" id="nav-videos-tab" data-toggle="tab" href="#nav-videos" role="tab" aria-controls="nav-videos" aria-selected="false">视频</a>
+							<a class="nav-item nav-link" id="nav-boards-tab" data-toggle="tab" href="#nav-boards" role="tab" aria-controls="nav-boards" aria-selected="false">留言板</a>
+							<a class="nav-item nav-link" id="nav-friends-tab" data-toggle="tab" href="#nav-friends" role="tab" aria-controls="nav-friends" aria-selected="false">好友</a>
+							<a class="nav-item nav-link" id="nav-favorites-tab" data-toggle="tab" href="#nav-favorites" role="tab" aria-controls="nav-favorites" aria-selected="false">收藏夹</a>
+							<a class="nav-item nav-link " id="nav-common-tab" data-toggle="tab" href="#nav-common" role="tab" aria-controls="nav-common" aria-selected="false">公共</a>
 						</div>
 					</nav>
 					<div class="tab-content" id="nav-tabContent">
 						<div class="tab-pane fade show active" id="nav-messages" role="tabpanel" aria-labelledby="nav-messages-tab">
 							<br />
-							<form id="tb_messages">
+							<form id="tb_messages" data-module="Messages">
 								<h5 style="color:cadetblue">公共选项：</h5>
 								<hr>
 								<div class="form-group row">
@@ -62,6 +72,33 @@
 											<option value="JSON">JSON</option>
 										</select>
 									</div>
+									<small class="text-muted mt-2">HTML可直接用浏览器打开查看，MD用Markdown编辑器打开，JSON适用于开发者数据迁移</small>
+								</div>
+								<div class="form-group row">
+									<label for="messages_increment_type" class="col-sm-1 col-form-label">增量备份：</label>
+									<div class="col-sm-2">
+										<select id="messages_increment_type" class="custom-select increment_type" data-module="Messages" data-time="#messages_increment_time" data-time-row="#messages_increment_time_row">
+											<option value="Full" selected>全量</option>
+											<option value="LastTime">上次备份</option>
+											<option value="Custom">自定义</option>
+										</select>
+									</div>
+									<div>
+										<button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Messages">重置</button>
+									</div>
+									<small class="text-muted ml-2"><span class="text-danger">内容信息全量备份</span>，如HTML、Markdown、JSON的；<span class="text-danger">文件增量备份</span>，即说说的配图、语音、视频、表情<br><span class="text-danger">增量维度：</span>说说的发表时间，修改/删除说说、新增/删除评论、新增/删除评论回复均不识别！</small>
+								</div>
+								<div class="form-group row" id="messages_increment_time_row">
+									<label for="messages_increment_time_display" class="col-sm-1 col-form-label">增量时间：</label>
+									<div class="col-sm-2">
+										<div class="input-group date increment_time" id="messages_increment_time_display" data-target-input="nearest">
+											<input type="text" id="messages_increment_time" class="form-control datetimepicker-input" data-target="#messages_increment_time_display" />
+											<div class="input-group-append" data-target="#messages_increment_time_display" data-toggle="datetimepicker">
+												<div class="input-group-text"><i class="fa fa-calendar"></i></div>
+											</div>
+										</div>
+									</div>
+									<small class="text-muted mt-2">备份<span class="text-danger">发表时间大于</span>该时间的说说的文件，<span class="text-danger">请保留上次备份文件内容</span></small>
 								</div>
 								<br>
 								<h5 style="color:cadetblue">说说选项：</h5>
@@ -71,23 +108,94 @@
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="messages_list_cost_min" placeholder="最小间隔">
 									</div>
-									<span>-</span>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="messages_list_cost_max" placeholder="最大间隔">
 									</div>
+									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<label for="messages_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="20" max="40" class="form-control" id="messages_list_limit" placeholder="查询每页条数">
 									</div>
+									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<div class="col-sm-1">全文说说：</div>
-									<div class="custom-control custom-checkbox">
+									<div class="col-sm-2 custom-control custom-checkbox">
 										<input type="checkbox" class="custom-control-input" id="messages_full">
 										<label style="margin-left: 14px;" class="custom-control-label" for="messages_full" aria-describedby="messages_full_help"></label>
-										<small id="messages_full_help" class="text-muted">默认不获取全文，勾选获取全文，适用长说说</small>
+									</div>
+									<small class="text-muted">默认不获取全文，勾选获取全文，适用长说说</small>
+								</div>
+								<div class="form-group row">
+									<div class="col-sm-1">屏蔽开关：</div>
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" class="custom-control-input" id="message_is_filter">
+										<label style="margin-left: 14px;" class="custom-control-label" for="message_is_filter" aria-describedby="message_is_filter_help"></label>
+									</div>
+									<small id="message_is_filter_help" class="text-muted">默认关闭，勾选开启屏蔽词过滤说说条目</small>
+								</div>
+								<div class="form-group row managerKeywordsDiv">
+									<div class="col-sm-1" style="line-height: 35px;">屏蔽管理：</div>
+									<div class="col-sm-2">
+										<button id="managerKeywords" type="button" class="btn btn-outline-primary" data-toggle="tooltip" title="管理屏蔽词" data-module="Messages">添加</button>
+									</div>
+									<small class="text-muted">
+										过滤含有指定屏蔽词的说说条目，适用于广告类说说，<span class="text-danger">请谨慎使用，避免屏蔽正常说说。</span>
+									</small>
+									<!-- Modal -->
+									<div class="modal fade" id="managerKeywordsModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="managerKeywordsLabel" aria-hidden="true">
+										<div class="modal-dialog modal-lg modal-dialog-centered">
+											<div class="modal-content">
+												<div class="modal-header">
+													<h5 class="modal-title" id="managerKeywordsLabel">屏蔽词管理</h5>
+													<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+														<span aria-hidden="true">&times;</span>
+													</button>
+												</div>
+												<div class="modal-body">
+													<div class="form-group">
+														<label for="filterKeywords">批量添加：</label>
+														<button type="button" class="btn btn-outline-secondary" id="defaultFilterKeyword">默认配置</button>
+														<small id="emailHelp" class="form-text text-muted">清空输入框可查看使用说明</small>
+														<textarea class="form-control mt-2" id="filterKeywords" rows="10" placeholder="使用说明：
+一行表示一个屏蔽词，可使用多个屏蔽词，即用&&拼接组合，表示同时成立才屏蔽说说
+多个屏蔽词判断条件为或者，即多个屏蔽词，只要包含其中一个，即屏蔽说说
+-----------------------------------------------------------------------------------------------------------------
+说说内容：本助手开源免费，使用简单，广受好评，赶紧安装助手备份QQ空间内容吧~
+-----------------------------------------------------------------------------------------------------------------
+注意：&&符号为助手屏蔽词关键符号，表示单行的&&前后文字同时存在
+-----------------------------------------------------------------------------------------------------------------
+屏蔽词：
+不好评
+不免费&&好评
+免费&&好评
+开源&&好评
+-----------------------------------------------------------------------------------------------------------------
+屏蔽结果：屏蔽
+屏蔽逻辑：
+1、说说内容不存在【不好评】，不屏蔽；
+2、说说内容不同时存在【不免费】与【好评】，只是存在【好评】，不屏蔽；
+3、说说内容同时存在【免费】与【好评】，屏蔽；
+4、说说内容同时存在【开源】与【好评】，但由于第三项已匹配屏蔽，不做处理；"></textarea>
+													</div>
+													<div class="form-group row">
+														<label class="col-sm-2 col-form-label">单个添加：</label>
+														<div class="col-sm-5">
+															<input type="text" class="form-control" id="filterKeyword" placeholder="屏蔽词">
+														</div>
+														<div class="col-sm-2">
+															<button type="button" class="btn btn-outline-primary" id="addFilterKeyword">添加</button>
+														</div>
+													</div>
+												</div>
+												<div class="modal-footer">
+													<button type="button" class="btn btn-primary" data-dismiss="modal">确定</button>
+													<button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+												</div>
+											</div>
+										</div>
 									</div>
 								</div>
 								<br>
@@ -98,30 +206,35 @@
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="messages_comments_min" placeholder="最小间隔">
 									</div>
-									<span>-</span>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="messages_comments_max" placeholder="最大间隔">
 									</div>
+									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<label for="messages_comments_limit" class="col-sm-1 col-form-label">每页条数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="10" max="20" class="form-control" id="messages_comments_limit" placeholder="查询每页条数">
 									</div>
+									<small class="text-muted mt-2">请求每页评论的条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<div class="col-sm-1">所有评论：</div>
-									<div class="custom-control custom-checkbox">
-										<input type="checkbox" class="custom-control-input" id="messages_download_full_comments">
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" name="QZone_Config.Messages.Comments.isFull" class="custom-control-input" id="messages_download_full_comments">
 										<label style="margin-left: 14px;" class="custom-control-label" for="messages_download_full_comments" aria-describedby="messages_comments_help"></label>
-										<small id="messages_comments_help" class="text-muted">默认下载前10条评论，勾选下载全部</small>
 									</div>
+									<small class="text-muted">默认下载前10条评论，勾选下载全部</small>
+								</div>
+								<div class="text-center">
+									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
+									<button type="button" class="btn btn-secondary reset" data-toggle="tooltip" title="重置当前配置模块设置项">重置</button>
 								</div>
 							</form>
 						</div>
 						<div class="tab-pane fade" id="nav-blogs" role="tabpanel" aria-labelledby="nav-blogs-tab">
 							<br />
-							<form id="tb_blogs">
+							<form id="tb_blogs" data-module="Blogs">
 								<h5 style="color:cadetblue">公共选项：</h5>
 								<hr>
 								<div class="form-group row">
@@ -133,6 +246,33 @@
 											<option value="JSON">JSON</option>
 										</select>
 									</div>
+									<small class="text-muted mt-2">HTML可直接用浏览器打开查看，MD用Markdown编辑器打开，JSON适用于开发者数据迁移</small>
+								</div>
+								<div class="form-group row">
+									<label for="blogs_increment_type" class="col-sm-1 col-form-label">增量备份：</label>
+									<div class="col-sm-2">
+										<select id="blogs_increment_type" class="custom-select increment_type" data-module="Blogs" data-time="#blogs_increment_time" data-time-row="#blogs_increment_time_row">
+											<option value="Full" selected>全量</option>
+											<option value="LastTime">上次备份</option>
+											<option value="Custom">自定义</option>
+										</select>
+									</div>
+									<div>
+										<button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Blogs">重置</button>
+									</div>
+									<small class="text-muted ml-2"><span class="text-danger">内容信息全量备份</span>，如HTML、Markdown、JSON的；<span class="text-danger">文件增量备份</span>，即日志的配图、表情<br><span class="text-danger">增量维度：</span>日志的发表时间，修改/删除日志、新增/删除评论、新增/删除评论回复均不识别！</small>
+								</div>
+								<div class="form-group row" id="blogs_increment_time_row">
+									<label for="blogs_increment_time_display" class="col-sm-1 col-form-label">增量时间：</label>
+									<div class="col-sm-2">
+										<div class="input-group date increment_time" id="blogs_increment_time_display" data-target-input="nearest">
+											<input type="text" id="blogs_increment_time" class="form-control datetimepicker-input" data-target="#blogs_increment_time_display" />
+											<div class="input-group-append" data-target="#blogs_increment_time_display" data-toggle="datetimepicker">
+												<div class="input-group-text"><i class="fa fa-calendar"></i></div>
+											</div>
+										</div>
+									</div>
+									<small class="text-muted mt-2">备份<span class="text-danger">发表时间大于</span>该时间的日志的文件，<span class="text-danger">请保留上次备份文件内容</span></small>
 								</div>
 								<br>
 								<h5 style="color:cadetblue">日志选项：</h5>
@@ -142,26 +282,27 @@
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="blogs_list_cost_min" placeholder="最小间隔">
 									</div>
-									<span>-</span>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="blogs_list_cost_max" placeholder="最大间隔">
 									</div>
+									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<label for="blogs_list_limit" class="col-sm-1 col-form-label">列表每页条数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="15" max="100" class="form-control" id="blogs_list_limit" placeholder="查询每页条数">
 									</div>
+									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<label class="col-sm-1 col-form-label">内容查询间隔：</label>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="blogs_info_cost_min" placeholder="最小间隔">
 									</div>
-									<span>-</span>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="blogs_info_cost_max" placeholder="最大间隔">
 									</div>
+									<small class="text-muted mt-2">日志全文请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<br>
 								<h5 style="color:cadetblue">评论选项：</h5>
@@ -171,30 +312,35 @@
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="blogs_comments_min" placeholder="最小间隔">
 									</div>
-									<span>-</span>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="blogs_comments_max" placeholder="最大间隔">
 									</div>
+									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<label for="blogs_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="15" max="50" class="form-control" id="blogs_comments_limit" placeholder="查询每页条数">
 									</div>
+									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<div class="col-sm-1">所有评论：</div>
-									<div class="custom-control custom-checkbox">
+									<div class="col-sm-2 custom-control custom-checkbox">
 										<input type="checkbox" class="custom-control-input" id="blogs_download_full_comments">
 										<label style="margin-left: 14px;" class="custom-control-label" for="blogs_download_full_comments" aria-describedby="blogs_comments_help"></label>
-										<small id="blogs_comments_help" class="text-muted">默认下载前50条评论，勾选下载全部</small>
 									</div>
+									<small id="blogs_comments_help" class="text-muted">默认下载前50条评论，勾选下载全部</small>
+								</div>
+								<div class="text-center">
+									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
+									<button type="button" class="btn btn-secondary reset" data-toggle="tooltip" title="重置当前配置模块设置项">重置</button>
 								</div>
 							</form>
 						</div>
 						<div class="tab-pane fade" id="nav-diaries" role="tabpanel" aria-labelledby="nav-diaries-tab">
 							<br />
-							<form id="tb_diaries">
+							<form id="tb_diaries" data-module="Diaries">
 								<h5 style="color:cadetblue">公共选项：</h5>
 								<hr>
 								<div class="form-group row">
@@ -206,6 +352,33 @@
 											<option value="JSON">JSON</option>
 										</select>
 									</div>
+									<small class="text-muted mt-2">HTML可直接用浏览器打开查看，MD用Markdown编辑器打开，JSON适用于开发者数据迁移</small>
+								</div>
+								<div class="form-group row">
+									<label for="diaries_increment_type" class="col-sm-1 col-form-label">增量备份：</label>
+									<div class="col-sm-2">
+										<select id="diaries_increment_type" class="custom-select increment_type" data-module="Diaries" data-time="#diaries_increment_time" data-time-row="#diaries_increment_time_row">
+											<option value="Full" selected>全量</option>
+											<option value="LastTime">上次备份</option>
+											<option value="Custom">自定义</option>
+										</select>
+									</div>
+									<div>
+										<button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Diaries">重置</button>
+									</div>
+									<small class="text-muted ml-2"><span class="text-danger">内容信息全量备份</span>，如HTML、Markdown、JSON的；<span class="text-danger">文件增量备份</span>，即日记的配图、表情<br><span class="text-danger">增量维度：</span>日记的发表时间，修改/删除日记均不识别！</small>
+								</div>
+								<div class="form-group row" id="diaries_increment_time_row">
+									<label for="diaries_increment_time_display" class="col-sm-1 col-form-label">增量时间：</label>
+									<div class="col-sm-2">
+										<div class="input-group date increment_time" id="diaries_increment_time_display" data-target-input="nearest">
+											<input type="text" id="diaries_increment_time" class="form-control datetimepicker-input" data-target="#diaries_increment_time_display" />
+											<div class="input-group-append" data-target="#diaries_increment_time_display" data-toggle="datetimepicker">
+												<div class="input-group-text"><i class="fa fa-calendar"></i></div>
+											</div>
+										</div>
+									</div>
+									<small class="text-muted mt-2">备份<span class="text-danger">发表时间大于</span>该时间的日记的文件，<span class="text-danger">请保留上次备份文件内容</span></small>
 								</div>
 								<br>
 								<h5 style="color:cadetblue">日记选项：</h5>
@@ -215,32 +388,37 @@
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="diaries_list_cost_min" placeholder="最小间隔">
 									</div>
-									<span>-</span>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="diaries_list_cost_max" placeholder="最大间隔">
 									</div>
+									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<label for="diaries_list_limit" class="col-sm-1 col-form-label">列表每页条数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="15" max="100" class="form-control" id="diaries_list_limit" placeholder="查询每页条数">
 									</div>
+									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<label class="col-sm-1 col-form-label">内容查询间隔：</label>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="diaries_info_cost_min" placeholder="最小间隔">
 									</div>
-									<span>-</span>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="diaries_info_cost_max" placeholder="最大间隔">
 									</div>
+									<small class="text-muted mt-2">日记全文请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<div class="text-center">
+									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
+									<button type="button" class="btn btn-secondary reset" data-toggle="tooltip" title="重置当前配置模块设置项">重置</button>
 								</div>
 							</form>
 						</div>
 						<div class="tab-pane fade" id="nav-photos" role="tabpanel" aria-labelledby="nav-photos-tab">
 							<br />
-							<form id="tb_photos">
+							<form id="tb_photos" data-module="Photos">
 								<h5 style="color:cadetblue">公共选项：</h5>
 								<hr>
 								<div class="form-group row">
@@ -251,9 +429,35 @@
 											<option value="File">文件</option>
 											<option value="MarkDown">MarkDown</option>
 											<option value="JSON">JSON</option>
-											<!-- <option value="RTF">RTF</option> -->
 										</select>
 									</div>
+									<small class="text-muted mt-2">HTML可直接用浏览器打开查看，MD用Markdown编辑器打开，JSON适用于开发者数据迁移</small>
+								</div>
+								<div class="form-group row">
+									<label for="photos_increment_type" class="col-sm-1 col-form-label">增量备份：</label>
+									<div class="col-sm-2">
+										<select id="photos_increment_type" class="custom-select increment_type" data-module="Photos" data-time="#photos_increment_time" data-time-row="#photos_increment_time_row">
+											<option value="Full" selected>全量</option>
+											<option value="LastTime">上次备份</option>
+											<option value="Custom">自定义</option>
+										</select>
+									</div>
+									<div>
+										<button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Photos">重置</button>
+									</div>
+									<small class="text-muted ml-2"><span class="text-danger">内容信息全量备份</span>，如HTML、Markdown、JSON的；<span class="text-danger">文件增量备份</span>，即相册的相片文件，<span class="text-danger">增量维度：</span>相册全量备份，相册的相片上传时间增量备份<br>即相册不变时，增量识别相片上传时间，相册新增时，直接备份整个相册所有相片。<span class="text-danger">修改信息、删除相册/相片、相册/相片新增删除评论、回复的均不识别</span></small>
+								</div>
+								<div class="form-group row" id="photos_increment_time_row">
+									<label for="photos_increment_time_display" class="col-sm-1 col-form-label">增量时间：</label>
+									<div class="col-sm-2">
+										<div class="input-group date increment_time" id="photos_increment_time_display" data-target-input="nearest">
+											<input type="text" id="photos_increment_time" class="form-control datetimepicker-input" data-target="#photos_increment_time_display" />
+											<div class="input-group-append" data-target="#photos_increment_time_display" data-toggle="datetimepicker">
+												<div class="input-group-text"><i class="fa fa-calendar"></i></div>
+											</div>
+										</div>
+									</div>
+									<small class="text-muted mt-2">备份<span class="text-danger">创建时间大于</span>该时间的相册，<span class="text-danger">请保留上次备份文件内容</span></small>
 								</div>
 								<h5 style="color:cadetblue">相册选项：</h5>
 								<hr>
@@ -262,63 +466,49 @@
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="photos_list_cost_min" placeholder="最小间隔">
 									</div>
-									<span>-</span>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="photos_list_cost_max" placeholder="最大间隔">
 									</div>
+									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<label for="photos_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 									<div class="col-sm-2">
-										<input type="number" min="10" max="90" class="form-control" id="photos_list_limit" placeholder="查询每页条数">
+										<input type="number" min="10" max="3000" class="form-control" id="photos_list_limit" placeholder="查询每页条数">
 									</div>
+									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div id="photos_albums_comments_panel" style="display: none;">
 									<hr>
 									<div class="form-group row">
 										<div class="col-sm-1">获取评论：</div>
-										<div class="custom-control custom-checkbox">
+										<div class="col-sm-2 custom-control custom-checkbox">
 											<input type="checkbox" class="custom-control-input" id="photos_albums_comments_has">
 											<label style="margin-left: 14px;" class="custom-control-label" for="photos_albums_comments_has" aria-describedby="photos_albums_comments_has_help"></label>
-											<small id="photos_albums_comments_has_help" class="text-muted">默认不获取，勾选获取评论</small>
 										</div>
+										<small id="photos_albums_comments_has_help" class="text-muted">默认不获取，勾选获取评论</small>
 									</div>
 									<div class="form-group row">
 										<label class="col-sm-1 col-form-label">查询间隔：</label>
 										<div class="col-sm-1">
 											<input type="number" min="1" class="form-control" id="photos_albums_comments_cost_min" placeholder="最小间隔">
 										</div>
-										<span>-</span>
 										<div class="col-sm-1">
 											<input type="number" min="1" class="form-control" id="photos_albums_comments_cost_max" placeholder="最大间隔">
 										</div>
+										<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 									</div>
 									<div class="form-group row">
 										<label for="photos_albums_comment_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
-											<input type="number" min="10" max="90" class="form-control" id="photos_albums_comments_limit" placeholder="查询每页条数">
+											<input type="number" min="10" max="100" class="form-control" id="photos_albums_comments_limit" placeholder="查询每页条数">
 										</div>
+										<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 									</div>
 								</div>
 								<h5 style="color:cadetblue">相片选项：</h5>
 								<hr>
-								<div class="form-group row">
-									<label class="col-sm-1 col-form-label">查询间隔：</label>
-									<div class="col-sm-1">
-										<input type="number" min="1" class="form-control" id="photos_images_cost_min" placeholder="最小间隔">
-									</div>
-									<span>-</span>
-									<div class="col-sm-1">
-										<input type="number" min="1" class="form-control" id="photos_images_cost_max" placeholder="最大间隔">
-									</div>
-								</div>
-								<div class="form-group row">
-									<label for="photos_images_limit" class="col-sm-1 col-form-label">每页条数：</label>
-									<div class="col-sm-2">
-										<input type="number" min="10" max="90" class="form-control" id="photos_images_limit" placeholder="查询每页条数">
-									</div>
-								</div>
-								<div class="form-group row" style="display: none;">
+								<div class="form-group row" id="photos_exifType_panel">
 									<label for="photos_exifType" class="col-sm-1 col-form-label">清晰度：</label>
 									<div class="col-sm-2">
 										<select id="photos_exifType" class="custom-select">
@@ -327,39 +517,62 @@
 											<option value="normal">一般</option>
 										</select>
 									</div>
+									<small class="text-muted mt-2">备份相片的清晰度、默认原图，(<span class="text-danger">第三方下载</span>)含Exif信息，原图不存在取高清，高清不存在取一般，建议保持默认即可</small>
+								</div>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="photos_images_cost_min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="photos_images_cost_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<div class="form-group row">
+									<label for="photos_images_limit" class="col-sm-1 col-form-label">每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="10" max="90" class="form-control" id="photos_images_limit" placeholder="查询每页条数">
+									</div>
+									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div id="photos_images_comments_panel" style="display: none;">
 									<hr>
 									<div class="form-group row">
 										<div class="col-sm-1">获取评论：</div>
-										<div class="custom-control custom-checkbox">
+										<div class="col-sm-2 custom-control custom-checkbox">
 											<input type="checkbox" class="custom-control-input" id="photos_images_comments_has">
 											<label style="margin-left: 14px;" class="custom-control-label" for="photos_images_comments_has" aria-describedby="photos_images_comments_has_help"></label>
-											<small id="photos_images_comments_has_help" class="text-muted">默认不获取，勾选获取评论</small>
 										</div>
+										<small id="photos_images_comments_has_help" class="text-muted">默认不获取，勾选获取评论</small>
 									</div>
 									<div class="form-group row">
 										<label class="col-sm-1 col-form-label">查询间隔：</label>
 										<div class="col-sm-1">
 											<input type="number" min="1" class="form-control" id="photos_images_comments_cost_min" placeholder="最小间隔">
 										</div>
-										<span>-</span>
 										<div class="col-sm-1">
 											<input type="number" min="1" class="form-control" id="photos_images_comments_cost_max" placeholder="最大间隔">
 										</div>
+										<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 									</div>
 									<div class="form-group row">
 										<label for="photos_images_comment_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
-											<input type="number" min="10" max="90" class="form-control" id="photos_images_comments_limit" placeholder="查询每页条数">
+											<input type="number" min="10" max="100" class="form-control" id="photos_images_comments_limit" placeholder="查询每页条数">
 										</div>
+										<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 									</div>
+								</div>
+								<div class="text-center">
+									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
+									<button type="button" class="btn btn-secondary reset" data-toggle="tooltip" title="重置当前配置模块设置项">重置</button>
 								</div>
 							</form>
 						</div>
 						<div class="tab-pane fade" id="nav-videos" role="tabpanel" aria-labelledby="nav-videos-tab">
 							<br />
-							<form id="tb_videos">
+							<form id="tb_videos" data-module="Videos">
 								<div class="form-group row">
 									<label for="videos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
@@ -371,28 +584,60 @@
 											<option value="Link">下载链接</option>
 										</select>
 									</div>
+									<small class="text-muted mt-2">HTML可直接用浏览器打开查看，MD用Markdown编辑器打开，JSON适用于开发者数据迁移，Link下载链接可用于第三方下载</small>
+								</div>
+								<div class="form-group row">
+									<label for="videos_increment_type" class="col-sm-1 col-form-label">增量备份：</label>
+									<div class="col-sm-2">
+										<select id="videos_increment_type" class="custom-select increment_type" data-module="Videos" data-time="#videos_increment_time" data-time-row="#videos_increment_time_row">
+											<option value="Full" selected>全量</option>
+											<option value="LastTime">上次备份</option>
+											<option value="Custom">自定义</option>
+										</select>
+									</div>
+									<div>
+										<button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Videos">重置</button>
+									</div>
+									<small class="text-muted ml-2"><span class="text-danger">内容信息全量备份</span>，如HTML、Markdown、JSON的；<span class="text-danger">文件增量备份</span>，即视频文件<br><span class="text-danger">增量维度：</span>视频的发表时间，修改/删除视频、新增/删除评论(回复)均不识别！</small>
+								</div>
+								<div class="form-group row" id="videos_increment_time_row">
+									<label for="videos_increment_time_display" class="col-sm-1 col-form-label">增量时间：</label>
+									<div class="col-sm-2">
+										<div class="input-group date increment_time" id="videos_increment_time_display" data-target-input="nearest">
+											<input type="text" id="videos_increment_time" class="form-control datetimepicker-input" data-target="#videos_increment_time_display" />
+											<div class="input-group-append" data-target="#videos_increment_time_display" data-toggle="datetimepicker">
+												<div class="input-group-text"><i class="fa fa-calendar"></i></div>
+											</div>
+										</div>
+									</div>
+									<small class="text-muted mt-2">备份<span class="text-danger">发表时间大于</span>该时间的视频的文件，<span class="text-danger">请保留上次备份文件内容</span></small>
 								</div>
 								<div class="form-group row">
 									<label class="col-sm-1 col-form-label">查询间隔：</label>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="videos_list_cost_min" placeholder="最小间隔">
 									</div>
-									<span>-</span>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="videos_list_cost_max" placeholder="最大间隔">
 									</div>
+									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<label for="videos_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="10" max="20" class="form-control" id="videos_list_limit" placeholder="查询每页条数">
 									</div>
+									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<div class="text-center">
+									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
+									<button type="button" class="btn btn-secondary reset" data-toggle="tooltip" title="重置当前配置模块设置项">重置</button>
 								</div>
 							</form>
 						</div>
 						<div class="tab-pane fade" id="nav-boards" role="tabpanel" aria-labelledby="nav-boards-tab">
 							<br />
-							<form id="tb_boards">
+							<form id="tb_boards" data-module="Boards">
 								<div class="form-group row">
 									<label for="boards_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
@@ -402,28 +647,60 @@
 											<option value="JSON">JSON</option>
 										</select>
 									</div>
+									<small class="text-muted mt-2">HTML可直接用浏览器打开查看，MD用Markdown编辑器打开，JSON适用于开发者数据迁移</small>
+								</div>
+								<div class="form-group row">
+									<label for="boards_increment_type" class="col-sm-1 col-form-label">增量备份：</label>
+									<div class="col-sm-2">
+										<select id="boards_increment_type" class="custom-select increment_type" data-module="Boards" data-time="#boards_increment_time" data-time-row="#boards_increment_time_row">
+											<option value="Full" selected>全量</option>
+											<option value="LastTime">上次备份</option>
+											<option value="Custom">自定义</option>
+										</select>
+									</div>
+									<div>
+										<button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Boards">重置</button>
+									</div>
+									<small class="text-muted ml-2"><span class="text-danger">内容信息全量备份</span>，如HTML、Markdown、JSON的；<span class="text-danger">文件增量备份</span>，即留言配图、表情<br><span class="text-danger">增量维度：</span>留言的发表时间，删除留言、新增/删除回复均不识别！</small>
+								</div>
+								<div class="form-group row" id="boards_increment_time_row">
+									<label for="boards_increment_time_display" class="col-sm-1 col-form-label">增量时间：</label>
+									<div class="col-sm-2">
+										<div class="input-group date increment_time" id="boards_increment_time_display" data-target-input="nearest">
+											<input type="text" id="boards_increment_time" class="form-control datetimepicker-input" data-target="#boards_increment_time_display" />
+											<div class="input-group-append" data-target="#boards_increment_time_display" data-toggle="datetimepicker">
+												<div class="input-group-text"><i class="fa fa-calendar"></i></div>
+											</div>
+										</div>
+									</div>
+									<small class="text-muted mt-2">备份<span class="text-danger">发表时间大于</span>该时间的留言的文件，<span class="text-danger">请保留上次备份文件内容</span></small>
 								</div>
 								<div class="form-group row">
 									<label class="col-sm-1 col-form-label">查询间隔：</label>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="boards_list_cost_min" placeholder="最小间隔">
 									</div>
-									<span>-</span>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="boards_list_cost_max" placeholder="最大间隔">
 									</div>
+									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<label for="boards_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="10" max="20" class="form-control" id="boards_list_limit" placeholder="查询每页条数">
 									</div>
+									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<div class="text-center">
+									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
+									<button type="button" class="btn btn-secondary reset" data-toggle="tooltip" title="重置当前配置模块设置项">重置</button>
 								</div>
 							</form>
 						</div>
 						<div class="tab-pane fade" id="nav-friends" role="tabpanel" aria-labelledby="nav-friends-tab">
 							<br />
-							<form id="tb_friends">
+							<form id="tb_friends" data-module="Friends">
 								<div class="form-group row">
 									<label for="friends_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
@@ -434,20 +711,33 @@
 											<option value="MarkDown">MarkDown</option>
 										</select>
 									</div>
+									<small class="text-muted mt-2">HTML可直接用浏览器打开查看，MD用Markdown编辑器打开，Excel用WPS或Office打开，JSON适用于开发者数据迁移</small>
 								</div>
 								<div class="form-group row">
 									<div class="col-sm-1">添加时间：</div>
-									<div class="custom-control custom-checkbox">
+									<div class="col-sm-2 custom-control custom-checkbox">
 										<input type="checkbox" class="custom-control-input" id="friends_has_add_time">
 										<label style="margin-left: 14px;" class="custom-control-label" for="friends_has_add_time" aria-describedby="friends_has_add_time_help"></label>
-										<small id="friends_has_add_time_help" class="text-muted">默认不获取好友添加时间，勾选则获取，时间仅供参考</small>
 									</div>
+									<small id="friends_has_add_time_help" class="text-muted">默认不获取好友添加时间，勾选则获取，时间来源QQ空间，时间仅供参考</small>
+								</div>
+								<div class="form-group row">
+									<div class="col-sm-1">增量备份：</div>
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" class="custom-control-input" id="friends_is_increment">
+										<label style="margin-left: 14px;" class="custom-control-label" for="friends_is_increment" aria-describedby="friends_is_increment_help"></label>
+									</div>
+									<small id="friends_is_increment_help" class="text-muted">勾选增量备份QQ好友的<span class="text-danger">添加时间</span>，如若不勾选获取好友添加时间，无需勾选增量；<span class="text-danger">增量维度</span>：QQ号</small>
+								</div>
+								<div class="text-center">
+									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
+									<button type="button" class="btn btn-secondary reset" data-toggle="tooltip" title="重置当前配置模块设置项">重置</button>
 								</div>
 							</form>
 						</div>
 						<div class="tab-pane fade" id="nav-favorites" role="tabpanel" aria-labelledby="nav-favorites-tab">
 							<br />
-							<form id="tb_favorites">
+							<form id="tb_favorites" data-module="Favorites">
 								<div class="form-group row">
 									<label for="favorites_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
@@ -457,28 +747,60 @@
 											<option value="JSON">JSON</option>
 										</select>
 									</div>
+									<small class="text-muted mt-2">HTML可直接用浏览器打开查看，MD用Markdown编辑器打开，JSON适用于开发者数据迁移</small>
+								</div>
+								<div class="form-group row">
+									<label for="favorites_increment_type" class="col-sm-1 col-form-label">增量备份：</label>
+									<div class="col-sm-2">
+										<select id="favorites_increment_type" class="custom-select increment_type" data-module="Favorites" data-time="#favorites_increment_time" data-time-row="#favorites_increment_time_row">
+											<option value="Full" selected>全量</option>
+											<option value="LastTime">上次备份</option>
+											<option value="Custom">自定义</option>
+										</select>
+									</div>
+									<div>
+										<button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Favorites">重置</button>
+									</div>
+									<small class="text-muted ml-2"><span class="text-danger">内容信息全量备份</span>，如HTML、Markdown、JSON的；<span class="text-danger">文件增量备份</span>，即收藏配图、表情<br><span class="text-danger">增量维度：</span>收藏的收藏时间，删除收藏不识别</small>
+								</div>
+								<div class="form-group row" id="favorites_increment_time_row">
+									<label for="favorites_increment_time_display" class="col-sm-1 col-form-label">增量时间：</label>
+									<div class="col-sm-2">
+										<div class="input-group date increment_time" id="favorites_increment_time_display" data-target-input="nearest">
+											<input type="text" id="favorites_increment_time" class="form-control datetimepicker-input" data-target="#favorites_increment_time_display" />
+											<div class="input-group-append" data-target="#favorites_increment_time_display" data-toggle="datetimepicker">
+												<div class="input-group-text"><i class="fa fa-calendar"></i></div>
+											</div>
+										</div>
+									</div>
+									<small class="text-muted mt-2">备份<span class="text-danger">发表时间大于</span>该时间的收藏的文件，<span class="text-danger">请保留上次备份文件内容</span></small>
 								</div>
 								<div class="form-group row">
 									<label class="col-sm-1 col-form-label">查询间隔：</label>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="favorites_list_cost_min" placeholder="最小间隔">
 									</div>
-									<span>-</span>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="favorites_list_cost_max" placeholder="最大间隔">
 									</div>
+									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="form-group row">
 									<label for="favorites_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="20" max="40" class="form-control" id="favorites_list_limit" placeholder="查询每页条数">
 									</div>
+									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<div class="text-center">
+									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
+									<button type="button" class="btn btn-secondary reset" data-toggle="tooltip" title="重置当前配置模块设置项">重置</button>
 								</div>
 							</form>
 						</div>
 						<div class="tab-pane fade" id="nav-common" role="tabpanel" aria-labelledby="nav-common-tab">
 							<br />
-							<form id="tb_common">
+							<form id="tb_common" data-module="Common">
 								<h5 style="color:cadetblue">数据采集：</h5>
 								<hr>
 								<div class="form-group row">
@@ -486,14 +808,14 @@
 									<div class="col-sm-2">
 										<input type="number" class="form-control" id="common_list_retry_count" placeholder="列表重试次数" aria-describedby="common_list_retry_count_help">
 									</div>
-									<small id="common_list_retry_count_help" class="text-muted" style="margin-top: 8px;">获取QQ空间数据超时、服务器异常时的重试次数，达到指定次数后数据采集失败，值为0时代表不重试。</small>
+									<small id="common_list_retry_count_help" class="text-muted mt-2">获取QQ空间数据超时、服务器异常时的重试次数，达到指定次数后数据采集失败，值为0时代表不重试。</small>
 								</div>
 								<div class="form-group row">
 									<label for="common_list_retry_sleep" class="col-sm-1 col-form-label">列表重试间隔：</label>
 									<div class="col-sm-2">
 										<input type="number" min="1" class="form-control" id="common_list_retry_sleep" placeholder="列表重试间隔" aria-describedby="common_list_retry_sleep_help">
 									</div>
-									<small id="common_list_retry_sleep_help" class="text-muted" style="margin-top: 8px;">每次重试时的间隔时间</small>
+									<small id="common_list_retry_sleep_help" class="text-muted mt-2">每次重试时的间隔时间</small>
 								</div>
 								<h5 style="color:cadetblue">文件下载：</h5>
 								<hr>
@@ -505,10 +827,10 @@
 											<option value="Browser">浏览器（推荐）</option>
 											<option value="Thunder">迅雷X（自动唤起）</option>
 											<option value="Thunder_Link">迅雷X（下载链接）</option>
-											<option value="QZone">QQ空间外链</option>
+											<option value="QZone">QQ空间外链（不推荐）</option>
 										</select>
 									</div>
-									<small id="common_download_type_help" class="text-muted" style="margin-top: 8px;">助手内部目前暂不支持数据容量大于2G的，2G内建议使用助手内部下载，超2G的建议使用其他方式下载</small>
+									<small id="common_download_type_help" class="text-muted mt-2">助手内部目前暂不支持数据容量大于2G的，2G内建议使用助手内部下载，超2G的建议使用其他方式下载</small>
 								</div>
 								<div class="form-group row" style="display: none;">
 									<div class="col-sm-1">图片类型识别：</div>
@@ -527,28 +849,28 @@
 									<div class="col-sm-2">
 										<input type="number" min="10" class="form-control" id="common_file_suffix_timeout" placeholder="类型识别超时秒数" aria-describedby="common_file_suffix_timeout_help">
 									</div>
-									<small id="common_file_suffix_timeout_help" class="text-muted" style="margin-top: 8px;">图片类型识别最大超时秒数，识别超该数值时，将取消识别类型，即图片文件无后缀名</small>
+									<small id="common_file_suffix_timeout_help" class="text-muted mt-2">图片类型识别最大超时秒数，识别超该数值时，将取消识别类型，即图片文件无后缀名</small>
 								</div>
 								<div class="form-group row" style="display: none;">
 									<label for="common_thunder_task_count" class="col-sm-1 col-form-label">迅雷最大任务：</label>
 									<div class="col-sm-2">
 										<input type="number" min="1000" class="form-control" id="common_thunder_task_count" placeholder="迅雷任务数" aria-describedby="common_thunder_task_count_help">
 									</div>
-									<small id="common_thunder_task_count_help" class="text-muted" style="margin-top: 8px;">迅雷的最大任务数，当值为5000，照片数量为10000时，则唤起2次迅雷，每次5000个任务，不宜太大，太大将无法唤起迅雷。</small>
+									<small id="common_thunder_task_count_help" class="text-muted mt-2">迅雷的最大任务数，当值为5000，照片数量为10000时，则唤起2次迅雷，每次5000个任务，不宜太大，太大将无法唤起迅雷。</small>
 								</div>
 								<div class="form-group row" style="display: none;">
 									<label for="common_thunder_task_sleep" class="col-sm-1 col-form-label">迅雷唤起间隔：</label>
 									<div class="col-sm-2">
 										<input type="number" class="form-control" id="common_thunder_task_sleep" placeholder="迅雷唤起间隔" aria-describedby="common_thunder_task_sleep_help">
 									</div>
-									<small id="common_thunder_task_sleep_help" class="text-muted" style="margin-top: 8px;">每次唤醒迅雷的间隔秒数，唤起迅雷下载时，迅雷会有任务确认弹窗，请在间隔时间内确认任务，否则无法进行下一次的唤醒！</small>
+									<small id="common_thunder_task_sleep_help" class="text-muted mt-2">每次唤醒迅雷的间隔秒数，唤起迅雷下载时，迅雷会有任务确认弹窗，请在间隔时间内确认任务，否则无法进行下一次的唤醒！</small>
 								</div>
 								<div class="form-group row" style="display: none;">
 									<label for="common_download_thread" class="col-sm-1 col-form-label" aria-describedby="ccommon_download_thread_help">下载并发数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="5" max="15" class="form-control" id="common_download_thread" placeholder="下载并发量">
 									</div>
-									<small id="ccommon_download_thread_help" class="text-muted" style="margin-top: 8px;">下载方式为非QQ空间外链的同时下载数</small>
+									<small id="ccommon_download_thread_help" class="text-muted mt-2">下载方式为非QQ空间外链的同时下载数</small>
 								</div>
 								<div class="form-group row" style="display: none;">
 									<div class="col-sm-1">启用状态栏：</div>
@@ -574,22 +896,30 @@
 										<small id="common_user_link_help" class="text-muted">是否生成QQ空间用户链接用于跳转访问QQ空间，如评论者，仅适用备份类型为Markdown，HTML方式默认生成</small>
 									</div>
 								</div>
+								<div class="text-center">
+									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
+									<button type="button" class="btn btn-secondary reset" data-toggle="tooltip" title="重置当前配置模块设置项">重置</button>
+								</div>
 							</form>
 						</div>
 					</div>
-					<button id="saveQzoneConfig" type="submit" class="btn btn-primary">保存</button>
-					<button id="resetQzoneConfig" type="reset" class="btn btn-secondary">重置</button>
 				</div>
 			</div>
 		</div>
+	</main>
+	<div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000" style="position: absolute; bottom: 10px; right: 20px;">
+		<div class="toast-header">
+			<img width="20px" height="20px" src="../img/icon-128.png" class="rounded mr-2" alt="...">
+			<strong class="mr-auto">提示</strong>
+			<small>刚刚</small>
+			<button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+		<div class="toast-body">
+
+		</div>
 	</div>
-	<div id="alert_tip"></div>
-	<script src="../vendor/thunder/thunder-link.js"></script>
-	<script src="../vendor/jquery/jquery-3.3.1.min.js"></script>
-	<script src="../vendor/popper/popper.min.js"></script>
-	<script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
-	<script src="../vendor/bootstrap/js/bootstrap-table.min.js"></script>
-	<script src="../vendor/bootstrap/js/bootstrap-table-zh-CN.min.js"></script>
 	<script src="../js/config.js"></script>
 	<script src="../js/utils.js"></script>
 	<script src="../js/api.js"></script>

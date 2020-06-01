@@ -37,10 +37,3 @@ table td {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-
-#alert_tip {
-    text-align: center;
-    top: 45%;
-    left: 40%;
-    position: fixed;
-}

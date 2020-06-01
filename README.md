@@ -56,21 +56,21 @@
     - 空间数据少：【文件下载工具】使用助手内部，其他保持默认
 
 ## 预览
-- 首页
+#### 首页
 [![QQ空间备份-首页](https://s1.ax1x.com/2020/05/16/YcZPpT.png)](https://imgchr.com/i/YcZPpT)
-- 说说
+#### 说说
 [![QQ空间备份-说说](https://s1.ax1x.com/2020/05/16/YcVx7n.png)](https://imgchr.com/i/YcVx7n)
-- 日志
+#### 日志
 [![QQ空间备份-日志详情](https://s1.ax1x.com/2020/05/16/YcZ9hV.png)](https://imgchr.com/i/YcZ9hV)
-- 相册列表
+#### 相册列表
 [![QQ空间备份-相册](https://s1.ax1x.com/2020/05/16/YcZkX4.png)](https://imgchr.com/i/YcZkX4)
-- 相片列表
+#### 相片列表
 [![QQ空间备份-相片列表](https://s1.ax1x.com/2020/05/16/YcZi1U.png)](https://imgchr.com/i/YcZi1U)
-- 相片详情
+#### 相片详情
 [![QQ空间备份-相片详情](https://s1.ax1x.com/2020/05/16/YcZFcF.png)](https://imgchr.com/i/YcZFcF)
-- 留言板
+#### 留言板
 [![QQ空间备份-留言板](https://s1.ax1x.com/2020/05/16/YcZSkq.png)](https://imgchr.com/i/YcZSkq)
-- 收藏夹
+#### 收藏夹
 [![QQ空间备份-收藏夹](https://s1.ax1x.com/2020/05/16/YcZpt0.png)](https://imgchr.com/i/YcZpt0)
 
 ## 常见问题    
@@ -101,7 +101,7 @@
 - 是否支持导出他人空间数据
     - 支持，但是无法导出私密日记、QQ好友、收藏夹等无权限访问的数据。
     - 导出他人数据时，建议告知他人，且勿用于非法用途，否则后果自负。
-    - **不支持导出无权限数据**
+    - **不支持导出无权限访问的他人空间以及有权限访问但无权限查看的数据**
 
 
 - 下载后，备份的ZIP在哪
@@ -155,7 +155,6 @@
 - 本助手仅使用Cookie获取QQ空间数据，不传输任何数据到后台服务器，仅保存到浏览器客户端
 
 ## TO-DO
-- [ ] 支持增量备份
 - [ ] 说说HTML支持查看大图
 - [ ] 相册HTML支持显示评论
 - [ ] 视频HTML支持显示评论

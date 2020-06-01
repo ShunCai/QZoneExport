@@ -88,7 +88,7 @@ const QZone_URLS = {
     LIKE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/users.qzone.qq.com/cgi-bin/likes/get_like_list_app'
 };
 
-var API = {
+const API = {
     Utils: {},  // 工具类
     Common: {}, // 公共模块
     Blogs: {},  // 日志模块
@@ -196,7 +196,7 @@ API.Utils = {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', url, true);
             // 超时设置
-            xhr.timeout = (Qzone_Config.Common.autoFileSuffixTimeOut || 15) * 1000;
+            xhr.timeout = (QZone_Config.Common.autoFileSuffixTimeOut || 15) * 1000;
             xhr.onreadystatechange = function () {
                 if (2 == xhr.readyState) {
                     let contentType = xhr.getResponseHeader('content-type') || xhr.getResponseHeader('Content-Type') || '';
@@ -263,7 +263,7 @@ API.Utils = {
      */
     async autoFileSuffix(url) {
         let suffix = API.Utils.getFileSuffixByUrl(url);
-        if (!Qzone_Config.Common.isAutoFileSuffix) {
+        if (!QZone_Config.Common.isAutoFileSuffix) {
             return suffix;
         }
         // 转换HTTPS
@@ -278,7 +278,7 @@ API.Utils = {
      */
     writeText(content, filepath) {
         return new Promise(function (resolve, reject) {
-            QZone.Common.Filer.write(filepath, { data: content, type: "text/plain", append: true }, (fileEntry) => {
+            QZone.Common.Filer.write(filepath, { data: content, type: "text/plain", append: false }, (fileEntry) => {
                 resolve(fileEntry);
             }, (error) => {
                 reject(error);
@@ -428,8 +428,8 @@ API.Utils = {
                 data: params,
                 // async: false,
                 // cache: false,
-                retries: Qzone_Config.Common.listRetryCount,// 重试次数
-                retryInterval: Qzone_Config.Common.listRetrySleep * 1000,// 每次重试间隔秒数
+                retries: QZone_Config.Common.listRetryCount,// 重试次数
+                retryInterval: QZone_Config.Common.listRetrySleep * 1000,// 每次重试间隔秒数
                 success: function (result) {
                     resolve(result);
                 },
@@ -570,6 +570,9 @@ API.Utils = {
             if (url.indexOf("qq.com") > 0) {
                 skey = API.Utils.getCookie("skey") || API.Utils.getCookie("rv2");
             }
+        }
+        if (!skey) {
+            return undefined;
         }
         var hash = 5381;
         for (var i = 0, len = skey.length; i < len; ++i) {
@@ -883,11 +886,9 @@ API.Utils = {
         }
         Notification.requestPermission().then(function (permission) {
             if (permission === 'denied') {
-                console.debug('用户拒绝通知');
                 return;
             }
             if (permission === 'granted') {
-                console.debug('用户允许通知');
                 var notice_ = new Notification(title, {
                     body: message,
                     icon: API.Common.getUserLogoUrl(QZone.Common.Target.uin || API.Utils.initUin().Target.uin),
@@ -981,13 +982,6 @@ API.Utils = {
     },
 
     /**
-     * 是否获取结束
-     */
-    hasNextPage(pageIndex, pageSize, total, list) {
-        return list.length < total && pageIndex * pageSize < total;
-    },
-
-    /**
      * 替换URL
      * @param {string} url URL
      */
@@ -1057,7 +1051,6 @@ API.Utils = {
                     resolve(task);
                     return;
                 }
-                console.debug('添加到下载器完成', id);
                 task.setId(id);
                 resolve(task);
             })
@@ -1084,7 +1077,6 @@ API.Utils = {
                     resolve([]);
                     return;
                 }
-                console.debug('获取下载器列表完成', data);
                 resolve(data);
             })
         });
@@ -1105,7 +1097,6 @@ API.Utils = {
                     resolve(0);
                     return;
                 }
-                console.debug('恢复下载完成', data);
                 resolve(data);
             })
         });
@@ -1193,11 +1184,29 @@ API.Utils = {
             return items;
         }
         const compare = function (obj1, obj2) {
-            var val1 = obj1[filed] || '';
-            var val2 = obj2[filed] || '';
-            return desc ? -val1.localeCompare(val2) : val1.localeCompare(val2);
+            let val1 = obj1[filed];
+            let val2 = obj2[filed];
+            if (typeof val1 === 'string' && typeof val2 === 'string') {
+                return desc ? -val1.localeCompare(val2) : val1.localeCompare(val2);
+            }
+            if (val1 === val2) {
+                return 0;
+            }
+            let isMax = val1 > val2 ? 1 : -1;
+            return desc ? -isMax : isMax;
         }
         return items.sort(compare);
+    },
+
+    /**
+     * 合并数组
+     * @param {Array} items_a 数组A
+     * @param {Array} items_b 数组B
+     */
+    unionItems(items_a, items_b) {
+        items_a = items_a || [];
+        items_b = items_b || [];
+        return items_a.concat(items_b);
     }
 };
 
@@ -1304,7 +1313,7 @@ API.Common = {
      * @param {string} type 类型
      */
     getUserLink(uin, nickName, type, isConfig) {
-        if (isConfig && !Qzone_Config.Common.hasUserLink) {
+        if (isConfig && !QZone_Config.Common.hasUserLink) {
             return nickName;
         }
         return API.Utils.getLink(this.getUserUrl(uin), nickName, type);
@@ -1326,7 +1335,7 @@ API.Common = {
      */
     isDownloadType(type) {
         // 文件备份类型
-        let downloadType = Qzone_Config.Common.downloadType;
+        let downloadType = QZone_Config.Common.downloadType;
         // 是否为QQ空间外链
         return downloadType === type;
     },
@@ -1424,9 +1433,13 @@ API.Blogs = {
             "cateName": "",
             "cateHex": "",
             "statYear": new Date().getFullYear(),
+            // 理论上可以用startTime来做增量
+            // 但是目前先按其它类型导出的套路做增量判断吧
+            // "startTime": 0,
+            // "endTime": Math.floor(Date.now() / 1000),
             "reqInfo": "7",
-            "pos": page * Qzone_Config.Blogs.pageSize,
-            "num": Qzone_Config.Blogs.pageSize,
+            "pos": page * QZone_Config.Blogs.pageSize,
+            "num": QZone_Config.Blogs.pageSize,
             "sortType": "0",
             "source": "0",
             "rand": Math.random(),
@@ -1473,9 +1486,9 @@ API.Blogs = {
     getComments(blogid, page) {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
-            "num": Qzone_Config.Blogs.Comments.pageSize,
+            "num": QZone_Config.Blogs.Comments.pageSize,
             "topicId": (QZone.Common.Target.uin || API.Utils.initUin().Target.uin) + "_" + blogid,
-            "start": page * Qzone_Config.Blogs.Comments.pageSize,
+            "start": page * QZone_Config.Blogs.Comments.pageSize,
             "r": Math.random(),
             "iNotice": 0,
             "inCharset": "utf-8",
@@ -1504,8 +1517,8 @@ API.Diaries = {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
             "vuin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
-            "pos": page * Qzone_Config.Diaries.pageSize,
-            "numperpage": Qzone_Config.Diaries.pageSize,
+            "pos": page * QZone_Config.Diaries.pageSize,
+            "numperpage": QZone_Config.Diaries.pageSize,
             "pwd2sig": "",
             "r": Math.random(),
             "fupdate": "1",
@@ -1634,8 +1647,8 @@ API.Messages = {
             "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
             "ftype": 0,
             "sort": 0,
-            "pos": page * Qzone_Config.Messages.pageSize,
-            "num": Qzone_Config.Messages.pageSize,
+            "pos": page * QZone_Config.Messages.pageSize,
+            "num": QZone_Config.Messages.pageSize,
             "replynum": 100,
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "callback": "_preloadCallback",
@@ -1645,66 +1658,6 @@ API.Messages = {
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         };
         return API.Utils.get(QZone_URLS.MESSAGES_LIST_URL, params);
-    },
-
-
-    /**
-     * 转换数据
-     * @param pageIndex 需要转换的数据
-     * @param items 需要转换的数据
-     * @param onprocess 获取评论进度回调函数
-     */
-    convert(items) {
-        items = items || [];
-        for (const item of items) {
-            // 内容
-            item.custom_content = item.content;
-            item.conlist = item.conlist || [];
-
-            // 评论
-            item.commenttotal = API.Utils.getCommentCount(item);
-            item.custom_comments = item.commentlist || [];
-
-            // 配图
-            item.imagetotal = item.pictotal || 0;
-            item.custom_images = item.pic || [];
-
-            // 语音
-            item.voicetotal = item.voicetotal || 0;
-            item.custom_voices = item.voice || [];
-
-            // 音乐
-            item.audiototal = item.audiototal || 0;
-            item.custom_audios = item.audio || [];
-
-            // 特殊动漫表情
-            item.magictotal = item.magictotal || 0;
-            item.custom_magics = item.magic || [];
-            // 处理表情
-            for (const magic of item.custom_magics) {
-                if (magic.url1.match(/{"\$type":"magicEmoticon","id":(\d+)}/)) {
-                    magic.custom_url = 'http://qzonestyle.gtimg.cn/qzone/em/120/mb{0}.jpg'.format(magic.url1.match(/{"\$type":"magicEmoticon","id":(\d+)}/)[1]);
-                }
-            }
-
-            // 视频
-            item.videototal = item.videototal || 0;
-            item.custom_videos = item.video || [];
-            for (const video of item.custom_videos) {
-                // 处理异常数据的视频URL
-                video.video_id = video.video_id || '';
-                video.video_id = video.video_id.replace("http://v.qq.com/", "");
-            }
-
-            // 投票
-
-            // 位置
-            item.lbs = item.lbs || {};
-
-            // 创建时间
-            item.custom_create_time = API.Utils.formatDate(item.created_time);
-        }
-        return items;
     },
 
     /**
@@ -1780,8 +1733,8 @@ API.Messages = {
             "t1_source": "undefined",
             "ftype": 0,
             "sort": 0,
-            "pos": page * Qzone_Config.Messages.Comments.pageSize,
-            "num": Qzone_Config.Messages.Comments.pageSize,
+            "pos": page * QZone_Config.Messages.Comments.pageSize,
+            "num": QZone_Config.Messages.Comments.pageSize,
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "callback": "_preloadCallback",
             "code_version": 1,
@@ -1802,19 +1755,6 @@ API.Messages = {
     },
 
     /**
-     * 转换说说多媒体内容（HTML）
-     * @param {Object} item 说说
-     */
-    formatMediaHTML(item) {
-        // 转换视频
-        // 转换图片
-        // 转换特殊表情
-        // 转换音乐
-        // 转换附件（已废弃）
-        // 转换投票（无新入口）
-    },
-
-    /**
      * 获取语音内容（HTML）
      * @param {Object} item 说说
      */
@@ -1829,51 +1769,34 @@ API.Messages = {
     },
 
     /**
-     * 获取视频内容（HTML）
-     * @param {Object} item 说说
+     * 获取图片MD内容
+     * @param {Array} images 图片列表
      */
-    getVideoThumbHTML(item) {
-
-    },
-
-    /**
-     * 获取图片内容（HTML）
-     * @param {Object} item 说说
-     */
-    getPhotoThumbHTML(item) {
-
-    },
-
-    /**
-     * 获取音乐内容（HTML）
-     * @param {Object} item 说说
-     */
-    getMusicThumbHTML(item) {
-
-    },
-
-    /**
-     * 获取特殊表情内容（HTML）
-     * @param {Object} item 说说
-     */
-    getMagicHTML(item) {
-
-    },
-
-    /**
-     * 获取投票内容（HTML）
-     * @param {Object} item 说说
-     */
-    getVoteHTML(item) {
-
-    },
-
-    /**
-     * 获取附件内容（HTML）
-     * @param {Object} item 说说
-     */
-    getAttachHTML(item) {
-
+    getImagesMarkdown(images, width, height) {
+        const result = [];
+        width = width || '';
+        height = height || '';
+        for (const image of images) {
+            if (image.is_video && image.video_info) {
+                // 视频
+                const video = image.video_info;
+                const target_url = API.Videos.getVideoUrl(video);
+                const filepath = API.Common.isQzoneUrl() ? video.custom_pre_url : video.custom_pre_filepath;
+                if (API.Videos.isExternalVideo(video)) {
+                    // 外部视频，只显示图片，点击跳转
+                    result.push('<a href="{0}" target="_blank"><img src="{1}" {2} {3} align="center" /></a>'.format(target_url, filepath, width, height));
+                } else {
+                    // 空间视频
+                    const url = video.custom_filepath || video.custom_url;
+                    result.push('<video src="{0}" {1} {2} controls="controls" ></video>'.format(url, width, height));
+                }
+            } else {
+                // 普通图片
+                const url = API.Common.isQzoneUrl() ? image.custom_url : image.custom_filepath;
+                result.push('<img src="{0}" {1} {2} align="center" />'.format(url, width, height));
+            }
+        }
+        return result.join('\r\n');
     },
 
     /**
@@ -1887,128 +1810,76 @@ API.Messages = {
         if (images.length > 0) {
             // 说说配图
             if (images.length == 1) {
-                result.push('\r\n\r\n')
                 // 数量等于1的，不限制图片宽高
-                result.push('<div>\n');
-                for (let index = 0; index < images.length; index++) {
-                    const image = images[index];
-                    let url = API.Common.isQzoneUrl() ? image.custom_url : image.custom_filepath
-                    result.push('<img src="{0}" align="center" />\n'.format(url));
-                }
-                result.push('</div>\n');
-                result.push('\r\n\r\n');
+                result.push('<div>');
+                result.push(this.getImagesMarkdown(images, 'width="600px"'));
+                result.push('</div>');
             } else if (2 <= images.length && images.length <= 3) {
-                result.push('\r\n\r\n')
                 // 数量小于3的，一行存放所有照片
-                result.push('<div>\n');
-                for (let index = 0; index < images.length; index++) {
-                    const image = images[index];
-                    let url = API.Common.isQzoneUrl() ? image.custom_url : image.custom_filepath
-                    result.push('<img src="{0}" width="200px" align="center" />\n'.format(url));
-                }
-                result.push('</div>\n');
-                result.push('\r\n\r\n');
+                result.push('<div>');
+                result.push(this.getImagesMarkdown(images, 'width="200px"'));
+                result.push('</div>');
             } else if (images.length == 4) {
                 // 数量为4的，两行，每行两张照片
-                result.push('\r\n\r\n')
+                result.push('\r\n');
                 let _images = _.chunk(images, 2);
                 for (let i = 0; i < _images.length; i++) {
                     const _image_list = _images[i];
-                    result.push('<div>\n');
-                    for (let j = 0; j < _image_list.length; j++) {
-                        const _temp = _image_list[j];
-                        let url = API.Common.isQzoneUrl() ? _temp.custom_url : _temp.custom_filepath
-                        result.push('<img src="{0}" width="200px" height="200px" align="center" />\n'.format(url));
-                    }
-                    result.push('</div>\n');
+                    result.push('<div>');
+                    result.push(this.getImagesMarkdown(_image_list, 'width="200px"', 'height="200px"'));
+                    result.push('</div>');
                 }
-                result.push('\r\n\r\n');
+                result.push('\r\n');
             } else if (5 <= images.length && images.length <= 6) {
                 // 数量为5和6的，两行，每行2到3张照片
-                result.push('\r\n\r\n')
+                result.push('\r\n');
                 let _images = _.chunk(images, 3);
                 for (let i = 0; i < _images.length; i++) {
                     const _image_list = _images[i];
-                    result.push('<div>\n');
-                    for (let j = 0; j < _image_list.length; j++) {
-                        const _temp = _image_list[j];
-                        let url = API.Common.isQzoneUrl() ? _temp.custom_url : _temp.custom_filepath
-                        result.push('<img src="{0}" width="200px" height="200px" align="center" />\n'.format(url));
-                    }
-                    result.push('</div>\n');
+                    result.push('<div>');
+                    result.push(this.getImagesMarkdown(_image_list, 'width="200px"', 'height="200px"'));
+                    result.push('</div>');
                 }
-                result.push('\r\n\r\n');
+                result.push('\r\n');
             } else if (images.length >= 7) {
-                // 数量为7,8,9的，三行，每行2到3张照片
-                result.push('\r\n\r\n')
+                // 数量为7,8,9以及更多的，每行2到3张照片
+                result.push('\r\n');
                 let _images = _.chunk(images, 3);
                 for (let i = 0; i < _images.length; i++) {
                     const _image_list = _images[i];
-                    result.push('<div>\n');
-                    for (let j = 0; j < _image_list.length; j++) {
-                        const _temp = _image_list[j];
-                        let url = API.Common.isQzoneUrl() ? _temp.custom_url : _temp.custom_filepath
-                        result.push('<img src="{0}" width="200px" height="200px" align="center" />\n'.format(url));
-                    }
-                    result.push('</div>\n');
+                    result.push('<div>');
+                    result.push(this.getImagesMarkdown(_image_list, 'width="200px"', 'height="200px"'));
+                    result.push('</div>');
                 }
-                result.push('\r\n\r\n');
+                result.push('\r\n');
             }
         }
-        if (videos.length > 0) {
-            // 视频
-            for (let index = 0; index < videos.length; index++) {
-                const video = videos[index];
-                let url = API.Messages.getVideoUrl(video);
-                let filepath = API.Common.isQzoneUrl() ? video.custom_pre_url : video.custom_pre_filepath
-                result.push('\r\n\r\n');
-                result.push('[![点击查看视频]({0})]({1})\n'.format(filepath, url));
-                result.push('\r\n\r\n');
+        // 视频（这里一般为单视频，多视频的逻辑会走上面图片逻辑）
+        for (const video of videos) {
+            result.push('\r\n');
+            const target_url = API.Videos.getVideoUrl(video);
+            const filepath = API.Common.isQzoneUrl() ? video.custom_pre_url : video.custom_pre_filepath;
+            if (API.Videos.isExternalVideo(video)) {
+                // 外部视频，只显示图片，点击跳转
+                result.push('<a href="{0}" target="_blank"><img src="{1}" width="600px" height="400px" align="center" /></a>'.format(target_url, filepath));
+            } else {
+                // 空间视频
+                const url = video.custom_filepath || video.custom_url;
+                result.push('<video src="{0}" width="600px" height="400px" controls="controls" ></video>'.format(url));
             }
+            result.push('\r\n');
         }
-        if (audios.length > 0) {
-            // 歌曲
-            for (let index = 0; index < audios.length; index++) {
-                const audio = audios[index];
-                result.push('\r\n\r\n');
-                if (API.Common.isQzoneUrl()) {
-                    result.push('[![{0}-{1}]({2})]({3})\n'.format(audio.albumname, audio.singername, audio.custom_url, audio.playurl));
-                } else {
-                    result.push('[![{0}-{1}]({2})]({3})\n'.format(audio.albumname, audio.singername, audio.custom_filepath, audio.playurl));
-                }
-                result.push('\r\n\r\n');
+        // 歌曲
+        for (const audio of audios) {
+            result.push('\r\n');
+            if (API.Common.isQzoneUrl()) {
+                result.push('[![{0}-{1}]({2})]({3})\n'.format(audio.albumname, audio.singername, audio.custom_url, audio.playurl));
+            } else {
+                result.push('[![{0}-{1}]({2})]({3})\n'.format(audio.albumname, audio.singername, audio.custom_filepath, audio.playurl));
             }
+            result.push('\r\n');
         }
-        return result.join('');
-    },
-
-    /**
-     * 获取视频连接
-     * @param {object} 视频信息
-     */
-    getVideoUrl(video) {
-        // URL3个人相册视频？
-        let url = video.url3 || video.url;
-        if (video.source_type == "share") {
-            // 分享视频连接？
-            url = video.rt_url;
-        }
-        // 腾讯视频或第三方视频？
-        if (video.url2) {
-            let params = {
-                "origin": "https://user.qzone.qq.com",
-                "vid": video.video_id,
-                "autoplay": true,
-                "volume": 1,
-                "disableplugin": "UiSpeed,UiDefinition,IframeBottomOpenClientBar",
-                "additionplugin": "IframeUiSearch",
-                "platId": "qzone_feed",
-                "show1080p": false,
-                "isDebugIframe": false
-            }
-            url = API.Utils.toUrl('https://v.qq.com/txp/iframe/player.html', params);
-        }
-        return url;
+        return result.join('\r\n');
     },
 
     /**
@@ -2036,10 +1907,10 @@ API.Boards = {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
             "hostUin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
-            "start": page * Qzone_Config.Boards.pageSize,
+            "start": page * QZone_Config.Boards.pageSize,
             "s": Math.random(),
             "format": "jsonp",
-            "num": Qzone_Config.Boards.pageSize,
+            "num": QZone_Config.Boards.pageSize,
             "inCharset": "utf-8",
             "outCharset": "utf-8",
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
@@ -2174,8 +2045,8 @@ API.Photos = {
             "idcNum": QZone.Common.Target.route || this.getRoute(),
             "mode": 2, // 视图：普通视图
             "sortOrder": 2, // 排序类型：自定义排序
-            "pageStart": page * Qzone_Config.Photos.pageSize,
-            "pageNum": Qzone_Config.Photos.pageSize,
+            "pageStart": page * QZone_Config.Photos.pageSize,
+            "pageNum": QZone_Config.Photos.pageSize,
             // "needSave": 1, // 保存视图
             "callbackFun": "shine0",
             "_": Date.now()
@@ -2193,8 +2064,8 @@ API.Photos = {
             "need_private_comment": 1,
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
             "hostUin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
-            "start": page * Qzone_Config.Photos.Comments.pageSize,
-            "num": Qzone_Config.Photos.Comments.pageSize,
+            "start": page * QZone_Config.Photos.Comments.pageSize,
+            "num": QZone_Config.Photos.Comments.pageSize,
             "order": 1, //倒序
             "topicId": albumId,
             "format": "json",
@@ -2227,8 +2098,8 @@ API.Photos = {
             "topicId": topicId,
             "noTopic": 0,
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
-            "pageStart": page * Qzone_Config.Photos.Images.pageSize,
-            "pageNum": Qzone_Config.Photos.Images.pageSize,
+            "pageStart": page * QZone_Config.Photos.Images.pageSize,
+            "pageNum": QZone_Config.Photos.Images.pageSize,
             "skipCmtCount": 0,
             "singleurl": 1,
             "batchId": "",
@@ -2293,8 +2164,8 @@ API.Photos = {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
             "hostUin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
-            "start": page * Qzone_Config.Photos.Images.Comments.pageSize,
-            "num": Qzone_Config.Photos.Images.Comments.pageSize,
+            "start": page * QZone_Config.Photos.Images.Comments.pageSize,
+            "num": QZone_Config.Photos.Images.Comments.pageSize,
             "order": 1, // 倒序
             "topicId": albumId + '_' + picKey,
             "format": "jsonp",
@@ -2448,8 +2319,8 @@ API.Videos = {
             "hostUin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
             "appid": 4,
             "getMethod": 2,
-            "start": page * Qzone_Config.Videos.pageSize,
-            "count": Qzone_Config.Videos.pageSize,
+            "start": page * QZone_Config.Videos.pageSize,
+            "count": QZone_Config.Videos.pageSize,
             "need_old": 0,
             "getUserInfo": 0,
             "inCharset": "utf-8",
@@ -2666,9 +2537,9 @@ API.Favorites = {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
             "type": 0,//全部\
-            "start": page * Qzone_Config.Favorites.pageSize,
-            "start": page * Qzone_Config.Favorites.pageSize,
-            "num": Qzone_Config.Favorites.pageSize,
+            "start": page * QZone_Config.Favorites.pageSize,
+            "start": page * QZone_Config.Favorites.pageSize,
+            "num": QZone_Config.Favorites.pageSize,
             "inCharset": "utf-8",
             "outCharset": "utf-8",
             "need_nick": 1,
