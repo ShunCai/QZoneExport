@@ -44,7 +44,7 @@
 				<div id="lightgallery" class="row">
 					<script id="photos_tpl" type="text/html">
 						<%/* 遍历相片 */%>
-						<%for (var photo of photos) {%>
+						<%for (const photo of photos) {%>
 							<div class="col-md-2 mb-2">
 								<div class="card thumbnail mb-2 shadow-sm">
 									<%if(photo.is_video){%>
@@ -58,6 +58,20 @@
 										<div class="card-body">
 											<span class="card-title"><%:=(photo.name || photo.uploadTime)%></span>
 										</div>
+										<span class="pic-num-wrap">
+											<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="uniKey" data-target="<%:=photo.uniKey%>" style="
+																				position: absolute;
+																				top: 25px;
+																				left: 10px;
+																				font-size: 20px;
+																			"><%:=photo.likes ? photo.likes.length : 0%></span>
+											<span class="text-light fa fa-comments-o cursor viewcomments" title="查看评论" data-field="uniKey" data-target="<%:=photo.uniKey%>" style="
+																				position: absolute;
+																				top: 25px;
+																				left: 50px;
+																				font-size: 20px;
+																			"><%:=photo.comments ? photo.comments.length : 0%></span>
+										</span>
 									<%}else{%>
 										<a class="lightbox" href="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, 'Photos_HTML')%>" title="<%:=photo.name%>">
 											<img class="card-img card-img-top" height="225px" src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, 'Photos_HTML')%>">
@@ -65,6 +79,20 @@
 										<div class="card-body">
 											<span class="card-title"><%:=(photo.name || photo.uploadTime)%></span>
 										</div>
+										<span class="pic-num-wrap">
+											<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="uniKey" data-target="<%:=photo.uniKey%>" style="
+																				position: absolute;
+																				top: 25px;
+																				left: 10px;
+																				font-size: 20px;
+																			"><%:=photo.likes ? photo.likes.length : 0%></span>
+											<span class="text-light fa fa-comments-o cursor viewcomments" title="查看评论" data-field="uniKey" data-target="<%:=photo.uniKey%>" style="
+																				position: absolute;
+																				top: 25px;
+																				left: 50px;
+																				font-size: 20px;
+																			"><%:=photo.comments ? photo.comments.length : 0%></span>
+										</span>
 									<%}%>
 								</div>
 							</div>

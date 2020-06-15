@@ -100,7 +100,6 @@
 									</div>
 									<small class="text-muted mt-2">备份<span class="text-danger">发表时间大于</span>该时间的说说的文件，<span class="text-danger">请保留上次备份文件内容</span></small>
 								</div>
-								<br>
 								<h5 style="color:cadetblue">说说选项：</h5>
 								<hr>
 								<div class="form-group row">
@@ -198,10 +197,17 @@
 										</div>
 									</div>
 								</div>
-								<br>
 								<h5 style="color:cadetblue">评论选项：</h5>
 								<hr>
 								<div class="form-group row">
+									<div class="col-sm-1">所有评论：</div>
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" name="QZone_Config.Messages.Comments.isFull" class="custom-control-input" id="messages_download_full_comments" data-hidden="true" data-target-link="messages_comment_link">
+										<label style="margin-left: 14px;" class="custom-control-label" for="messages_download_full_comments" aria-describedby="messages_comments_help"></label>
+									</div>
+									<small class="text-muted">默认下载前10条评论，勾选下载全部，只获取说说本身评论，不获取说说配图评论</small>
+								</div>
+								<div class="form-group row" data-link="messages_comment_link">
 									<label class="col-sm-1 col-form-label">查询间隔：</label>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="messages_comments_min" placeholder="最小间隔">
@@ -211,20 +217,32 @@
 									</div>
 									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
-								<div class="form-group row">
+								<div class="form-group row" data-link="messages_comment_link">
 									<label for="messages_comments_limit" class="col-sm-1 col-form-label">每页条数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="10" max="20" class="form-control" id="messages_comments_limit" placeholder="查询每页条数">
 									</div>
 									<small class="text-muted mt-2">请求每页评论的条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
+								<h5 style="color:cadetblue">其他选项：</h5>
+								<hr>
 								<div class="form-group row">
-									<div class="col-sm-1">所有评论：</div>
+									<div class="col-sm-1">获取赞：</div>
 									<div class="col-sm-2 custom-control custom-checkbox">
-										<input type="checkbox" name="QZone_Config.Messages.Comments.isFull" class="custom-control-input" id="messages_download_full_comments">
-										<label style="margin-left: 14px;" class="custom-control-label" for="messages_download_full_comments" aria-describedby="messages_comments_help"></label>
+										<input type="checkbox" name="QZone_Config.Messages.Like.isGet" class="custom-control-input" id="messages_has_like" data-hidden="true" data-target-link="messages_like_link">
+										<label style="margin-left: 14px;" class="custom-control-label" for="messages_has_like" aria-describedby="messages_like_help"></label>
 									</div>
-									<small class="text-muted">默认下载前10条评论，勾选下载全部</small>
+									<small class="text-muted">默认不获取赞，勾选获取，只获取说说本身赞，不获取说说配图赞，仅在备份类型为HTML、JSON时备份赞</small>
+								</div>
+								<div class="form-group row" data-link="messages_like_link">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="messages_like_min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="messages_like_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="text-center">
 									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
@@ -308,6 +326,14 @@
 								<h5 style="color:cadetblue">评论选项：</h5>
 								<hr>
 								<div class="form-group row">
+									<div class="col-sm-1">所有评论：</div>
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" class="custom-control-input" id="blogs_download_full_comments" data-hidden="true" data-target-link="blogs_comment_link">
+										<label style="margin-left: 14px;" class="custom-control-label" for="blogs_download_full_comments" aria-describedby="blogs_comments_help"></label>
+									</div>
+									<small id="blogs_comments_help" class="text-muted">默认下载前50条评论，勾选下载全部</small>
+								</div>
+								<div class="form-group row" data-link="blogs_comment_link">
 									<label class="col-sm-1 col-form-label">查询间隔：</label>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="blogs_comments_min" placeholder="最小间隔">
@@ -317,20 +343,32 @@
 									</div>
 									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
-								<div class="form-group row">
+								<div class="form-group row" data-link="blogs_comment_link">
 									<label for="blogs_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="15" max="50" class="form-control" id="blogs_comments_limit" placeholder="查询每页条数">
 									</div>
 									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
+								<h5 style="color:cadetblue">其他选项：</h5>
+								<hr>
 								<div class="form-group row">
-									<div class="col-sm-1">所有评论：</div>
+									<div class="col-sm-1">获取赞：</div>
 									<div class="col-sm-2 custom-control custom-checkbox">
-										<input type="checkbox" class="custom-control-input" id="blogs_download_full_comments">
-										<label style="margin-left: 14px;" class="custom-control-label" for="blogs_download_full_comments" aria-describedby="blogs_comments_help"></label>
+										<input type="checkbox" name="QZone_Config.Blogs.Like.isGet" class="custom-control-input" id="blogs_has_like" data-hidden="true" data-target-link="blogs_like_link">
+										<label style="margin-left: 14px;" class="custom-control-label" for="blogs_has_like" aria-describedby="blogs_like_help"></label>
 									</div>
-									<small id="blogs_comments_help" class="text-muted">默认下载前50条评论，勾选下载全部</small>
+									<small class="text-muted">默认不获取赞，勾选获取，仅在备份类型为HTML、JSON时备份赞</small>
+								</div>
+								<div class="form-group row" data-link="blogs_like_link">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="blogs_like_min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="blogs_like_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="text-center">
 									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
@@ -483,12 +521,12 @@
 									<div class="form-group row">
 										<div class="col-sm-1">获取评论：</div>
 										<div class="col-sm-2 custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="photos_albums_comments_has">
+											<input type="checkbox" class="custom-control-input" id="photos_albums_comments_has" data-hidden="true" data-target-link="albums_comment_link">
 											<label style="margin-left: 14px;" class="custom-control-label" for="photos_albums_comments_has" aria-describedby="photos_albums_comments_has_help"></label>
 										</div>
 										<small id="photos_albums_comments_has_help" class="text-muted">默认不获取，勾选获取评论</small>
 									</div>
-									<div class="form-group row">
+									<div class="form-group row" data-link="albums_comment_link">
 										<label class="col-sm-1 col-form-label">查询间隔：</label>
 										<div class="col-sm-1">
 											<input type="number" min="1" class="form-control" id="photos_albums_comments_cost_min" placeholder="最小间隔">
@@ -498,7 +536,7 @@
 										</div>
 										<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 									</div>
-									<div class="form-group row">
+									<div class="form-group row" data-link="albums_comment_link">
 										<label for="photos_albums_comment_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="10" max="100" class="form-control" id="photos_albums_comments_limit" placeholder="查询每页条数">
@@ -541,12 +579,12 @@
 									<div class="form-group row">
 										<div class="col-sm-1">获取评论：</div>
 										<div class="col-sm-2 custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="photos_images_comments_has">
+											<input type="checkbox" class="custom-control-input" id="photos_images_comments_has" data-hidden="true" data-target-link="photos_comment_link">
 											<label style="margin-left: 14px;" class="custom-control-label" for="photos_images_comments_has" aria-describedby="photos_images_comments_has_help"></label>
 										</div>
 										<small id="photos_images_comments_has_help" class="text-muted">默认不获取，勾选获取评论</small>
 									</div>
-									<div class="form-group row">
+									<div class="form-group row" data-link="photos_comment_link">
 										<label class="col-sm-1 col-form-label">查询间隔：</label>
 										<div class="col-sm-1">
 											<input type="number" min="1" class="form-control" id="photos_images_comments_cost_min" placeholder="最小间隔">
@@ -556,13 +594,33 @@
 										</div>
 										<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 									</div>
-									<div class="form-group row">
+									<div class="form-group row" data-link="photos_comment_link">
 										<label for="photos_images_comment_limit" class="col-sm-1 col-form-label">每页条数：</label>
 										<div class="col-sm-2">
 											<input type="number" min="10" max="100" class="form-control" id="photos_images_comments_limit" placeholder="查询每页条数">
 										</div>
 										<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 									</div>
+								</div>
+								<h5 style="color:cadetblue">其他选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<div class="col-sm-1">获取赞：</div>
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" name="QZone_Config.Photos.Like.isGet" class="custom-control-input" id="photos_has_like" data-hidden="true" data-target-link="photos_like_link">
+										<label style="margin-left: 14px;" class="custom-control-label" for="photos_has_like" aria-describedby="photos_like_help"></label>
+									</div>
+									<small class="text-muted">默认不获取赞，勾选获取，仅在备份类型为HTML、JSON时备份赞</small>
+								</div>
+								<div class="form-group row" data-link="photos_like_link">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="photos_like_min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="photos_like_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="text-center">
 									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
@@ -573,6 +631,8 @@
 						<div class="tab-pane fade" id="nav-videos" role="tabpanel" aria-labelledby="nav-videos-tab">
 							<br />
 							<form id="tb_videos" data-module="Videos">
+								<h5 style="color:cadetblue">公共选项：</h5>
+								<hr>
 								<div class="form-group row">
 									<label for="videos_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
 									<div class="col-sm-2">
@@ -612,6 +672,8 @@
 									</div>
 									<small class="text-muted mt-2">备份<span class="text-danger">发表时间大于</span>该时间的视频的文件，<span class="text-danger">请保留上次备份文件内容</span></small>
 								</div>
+								<h5 style="color:cadetblue">视频选项：</h5>
+								<hr>
 								<div class="form-group row">
 									<label class="col-sm-1 col-form-label">查询间隔：</label>
 									<div class="col-sm-1">
@@ -628,6 +690,53 @@
 										<input type="number" min="10" max="20" class="form-control" id="videos_list_limit" placeholder="查询每页条数">
 									</div>
 									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<h5 style="color:cadetblue">评论选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<div class="col-sm-1">获取评论：</div>
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" name="QZone_Config.Videos.Comments.isGet" class="custom-control-input" id="videos_has_comments" data-hidden="true" data-target-link="video_comment_link">
+										<label style="margin-left: 14px;" class="custom-control-label" for="videos_has_comments" aria-describedby="videos_comments_help"></label>
+									</div>
+									<small class="text-muted">默认不获取评论，勾选获取</small>
+								</div>
+								<div class="form-group row" data-link="video_comment_link">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="videos_comments_min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="videos_comments_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<div class="form-group row" data-link="video_comment_link">
+									<label for="videos_comments_limit" class="col-sm-1 col-form-label">每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="10" max="40" class="form-control" id="videos_comments_limit" placeholder="查询每页条数">
+									</div>
+									<small class="text-muted mt-2">请求每页评论的条目数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<h5 style="color:cadetblue">其他选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<div class="col-sm-1">获取赞：</div>
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" name="QZone_Config.Videos.Like.isGet" class="custom-control-input" id="videos_has_like" data-hidden="true" data-target-link="videos_like_link">
+										<label style="margin-left: 14px;" class="custom-control-label" for="videos_has_like" aria-describedby="videos_like_help"></label>
+									</div>
+									<small class="text-muted">默认不获取赞，勾选获取，仅支持备份关联说说的视频，且仅在备份类型为HTML、JSON时备份赞</small>
+								</div>
+								<div class="form-group row" data-link="videos_like_link">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="videos_like_min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="videos_like_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
 								<div class="text-center">
 									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>

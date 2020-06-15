@@ -28,6 +28,9 @@ API.Messages.export = async () => {
         // 获取所有的说说评论
         items = await API.Messages.getItemsAllCommentList(items);
 
+        // 获取说说赞记录
+        await API.Messages.getAllLikeList(items);
+
         // 添加说说多媒体下载任务
         items = await API.Messages.addMediaToTasks(items);
 
@@ -335,7 +338,15 @@ API.Messages.exportAllListToFiles = async (items) => {
 API.Messages.exportToHtml = async (messages) => {
     const indicator = new StatusIndicator('Messages_Export_Other');
     indicator.setIndex('HTML');
+
     try {
+
+        // 基于JSON生成JS
+        console.info('生成说说JSON开始', messages);
+        await API.Utils.createFolder(QZone.Common.ROOT + '/json');
+        const jsonFile = await API.Common.writeJsonToJs('dataList', messages, QZone.Common.ROOT + '/json/messages.js');
+        console.info('生成说说JSON结束', jsonFile, messages);
+
         // 说说数据根据年份分组
         let yearMaps = API.Utils.groupedByTime(messages, "custom_create_time", 'year');
         // 基于模板生成年份说说HTML
@@ -361,9 +372,11 @@ API.Messages.exportToHtml = async (messages) => {
         }
         let allFile = await API.Common.writeHtmlofTpl('messages', params, QZone.Messages.ROOT + "/index.html");
         console.info('生成说说汇总HTML文件结束', allFile, messages);
+
     } catch (error) {
         console.error('导出说说到HTML异常', error, messages);
     }
+    // 完成
     indicator.complete();
     return messages;
 }
@@ -804,6 +817,9 @@ API.Messages.convert = (items) => {
 
         // 创建时间
         item.custom_create_time = API.Utils.formatDate(item.created_time);
+
+        // 添加点赞Key
+        item.uniKey = API.Messages.getUniKey(item.tid);
     }
     return items;
 }
@@ -857,5 +873,60 @@ API.Messages.filterKeyWords = (items) => {
     }
     // 完成
     indicator.complete();
+    return items;
+}
+
+/**
+ * 获取说说赞记录
+ * @param {Array} items 说说列表
+ */
+API.Messages.getAllLikeList = async (items) => {
+    if (!API.Common.isGetLike(QZone_Config.Messages)) {
+        // 不获取赞
+        return items;
+    }
+    // 进度更新器
+    const indicator = new StatusIndicator('Messages_Like');
+    indicator.setTotal(items.length);
+
+    // 同时请求数
+    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+
+    // 获取点赞列表
+    let count = 0;
+    for (let i = 0; i < _items.length; i++) {
+        const list = _items[i];
+
+        let tasks = [];
+        for (let j = 0; j < list.length; j++) {
+
+            const item = list[j];
+            item.likes = item.likes || [];
+
+            if (!API.Common.isNewItem(item)) {
+                // 已备份数据跳过不处理
+                indicator.addSkip(item);
+                continue;
+            }
+            indicator.setIndex(++count);
+            tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Messages).then((likes) => {
+                console.info('获取说说点赞完成', likes);
+                // 获取完成
+                indicator.addSuccess(item);
+            }).catch((e) => {
+                console.error("获取说说点赞异常：", item, e);
+                indicator.addFailed();
+            }));
+
+        }
+
+        await Promise.all(tasks);
+        // 每一批次完成后暂停半秒
+        await API.Utils.sleep(500);
+    }
+
+    // 完成
+    indicator.complete();
+
     return items;
 }

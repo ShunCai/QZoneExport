@@ -11,7 +11,14 @@ API.Videos.export = async () => {
         // 获取所有的视频列表
         let videos = await API.Videos.getAllList();
 
-        // 获取所有视频的评论列表 TODO
+        // 获取所有视频的详情，TODO，待确认，
+        // 理论上不需要获取，如若涉及权限、点赞是否需要获取？
+
+        // 获取所有视频的评论列表
+        videos = await API.Videos.getAllComments(videos);
+
+        // 获取视频赞记录
+        await API.Videos.getAllLikeList(videos);
 
         // 添加视频下载任务
         API.Videos.addDownloadTasks(videos);
@@ -51,6 +58,10 @@ API.Videos.getPageList = async (pageIndex, indicator) => {
         indicator.setTotal(QZone.Videos.total);
 
         let dataList = data.Videos || [];
+
+        for (const item of dataList) {
+            item.uniKey = item.shuoshuoid ? API.Messages.getUniKey(item.shuoshuoid) : item.vid;
+        }
 
         //  更新获取成功数据
         indicator.addSuccess(dataList);
@@ -107,6 +118,90 @@ API.Videos.getAllList = async () => {
     indicator.complete();
 
     return QZone.Videos.Data;
+}
+
+/**
+ * 获取视频的所有评论
+ * @param {Array} videos 视频列表
+ */
+API.Videos.getAllComments = async (videos) => {
+    // 视频评论配置
+    const CONFIG = QZone_Config.Videos.Comments;
+
+    // 是否获取视频评论
+    if (!CONFIG.isGet || API.Videos.isFile()) {
+        return videos;
+    }
+
+    for (let index = 0; index < videos.length; index++) {
+
+        const video = videos[index];
+
+        if (!API.Common.isNewItem(video)) {
+            // 已备份数据跳过不处理
+            continue;
+        }
+
+        // 获取评论
+        video.cmtTotal = 0;
+        video.comments = [];
+
+        if (!video.shuoshuoid) {
+            // 说说ID为空时跳过不获取 TODO 待定
+            continue;
+        }
+
+        // 进度更新器
+        const indicator = new StatusIndicator('Videos_Comments');
+
+        // 当前位置
+        indicator.setIndex(index + 1);
+
+        const nextPage = async function (video, pageIndex, indicator) {
+            // 下一页索引
+            const nextPageIndex = pageIndex + 1;
+
+            // TODO，待确认是否存在shuoshuoid为空的情况，相册或视频直接上传？
+            return await API.Videos.getComments(video.shuoshuoid, pageIndex).then(async (data) => {
+
+                // 去掉函数，保留json
+                data = API.Utils.toJson(data, /^_Callback\(/);
+                data = data.data;
+                data.comments = data.comments || [];
+
+                // 添加评论数到视频
+                video.cmtTotal = data.total || video.cmtTotal || 0;
+                indicator.setTotal(video.cmtTotal);
+
+                // 合并数据
+                video.comments = API.Utils.unionItems(video.comments, data.comments);
+                indicator.addSuccess(data.comments);
+
+                if (API.Common.isPreBackupPos(data.comments, CONFIG)) {
+                    // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+                    return video.comments;
+                }
+
+                // 递归获取下一页
+                return await API.Common.callNextPage(nextPageIndex, CONFIG, video.cmtTotal, video.comments, arguments.callee, video, nextPageIndex, indicator);
+
+            }).catch(async (e) => {
+                console.error("获取视频评论列表异常：", pageIndex + 1, video, e);
+                indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
+                // 当前页失败后，跳过继续请求下一页
+                // 递归获取下一页
+                return await API.Common.callNextPage(nextPageIndex, CONFIG, video.cmtTotal, video.comments, arguments.callee, video, nextPageIndex, indicator);
+            });
+        }
+
+        // 获取第一页评论
+        await nextPage(video, 0, indicator);
+
+        // 完成
+        indicator.complete();
+    }
+
+    return videos;
 }
 
 
@@ -305,10 +400,55 @@ API.Videos.getMarkdowns = (videos) => {
         contents.push('\r\n');
 
         // 视频
-        contents.push('<video src="{0}" controls="controls" ></video>'.format(video.custom_filename || video.custom_url));
+        contents.push('<video src="{0}" controls="controls" ></video>'.format(video.custom_filename || video.custom_url || video.url));
         contents.push('\r\n');
 
-        // 视频评论（TODO待定）
+        // 视频评论 TODO 私密评论处理
+        video.comments = video.comments || [];
+        contents.push('> 评论({0})'.format(video.cmtTotal));
+        contents.push('\r\n');
+
+        for (const comment of video.comments) {
+            // 评论人
+            const poster_name = API.Common.formatContent(comment.poster.name, 'MD');
+            const poster_display = API.Common.getUserLink(comment.poster.id, poster_name, "MD");
+
+            // 评论内容
+            let content = API.Common.formatContent(comment.content, 'MD');
+            contents.push("* {0}：{1}".format(poster_display, content));
+
+            // 评论包含图片
+            if (comment.pictotal > 0) {
+                let comment_images = comment.pic || [];
+                for (const image of comment_images) {
+                    let custom_url = image.o_url || image.hd_url || image.b_url || image.s_url || image.url;
+                    custom_url = API.Common.isQzoneUrl() ? (image.custom_url || custom_url) : '../' + image.custom_filepath;
+                    // 添加评论图片
+                    contents.push(API.Utils.getImagesMarkdown(custom_url));
+                }
+            }
+            // 评论的回复
+            let replies = comment.replies || [];
+            for (const repItem of replies) {
+
+                // 回复人
+                let repName = API.Common.formatContent(repItem.poster.name, 'MD');
+                const rep_poster_display = API.Common.getUserLink(comment.poster.id, repName, "MD");
+
+                // 回复内容
+                let content = API.Common.formatContent(repItem.content, 'MD');
+                contents.push("\t* {0}：{1}".format(rep_poster_display, content));
+
+                const repImgs = repItem.pic || [];
+                for (const repImg of repImgs) {
+                    // 回复包含图片
+                    let custom_url = repImg.o_url || repImg.hd_url || repImg.b_url || repImg.s_url || repImg.url;
+                    custom_url = API.Common.isQzoneUrl() ? (repImg.custom_url || custom_url) : '../' + repImg.custom_filepath;
+                    // 添加回复评论图片
+                    contents.push(API.Utils.getImagesMarkdown(custom_url));
+                }
+            }
+        }
 
         // 分割线
         contents.push('---');
@@ -433,4 +573,76 @@ API.Videos.isExternalVideo = (video) => {
         return true;
     }
     return false;
+}
+
+/**
+ * 导出类型是否文件
+ */
+API.Videos.isFile = () => {
+    return QZone_Config.Videos.exportType == 'File' || QZone_Config.Videos.exportType == 'Link'
+}
+
+/**
+ * 获取视频赞记录
+ * @param {Array} items 日志列表
+ */
+API.Videos.getAllLikeList = async (items) => {
+    if (!API.Common.isGetLike(QZone_Config.Videos)) {
+        // 不获取赞
+        return items;
+    }
+    // 进度更新器
+    const indicator = new StatusIndicator('Videos_Like');
+    indicator.setTotal(items.length);
+
+    // 同时请求数
+    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+
+    // 获取点赞列表
+    let count = 0;
+    for (let i = 0; i < _items.length; i++) {
+        const list = _items[i];
+
+        let tasks = [];
+        for (let j = 0; j < list.length; j++) {
+
+            const item = list[j];
+            item.likes = item.likes || [];
+
+            if (!item.shuoshuoid) {
+                // 说说ID为空时跳过不获取 TODO 待定
+                indicator.addSkip(item);
+                continue;
+            }
+
+            item.uniKey = API.Messages.getUniKey(item.shuoshuoid);
+
+            if (!API.Common.isNewItem(item)) {
+                // 已备份数据跳过不处理
+                indicator.addSkip(item);
+                continue;
+            }
+
+
+            indicator.setIndex(++count);
+            tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Videos).then((likes) => {
+                console.info('获取视频点赞完成', likes);
+                // 获取完成
+                indicator.addSuccess(item);
+            }).catch((e) => {
+                console.error("获取视频点赞异常：", item, e);
+                indicator.addFailed();
+            }));
+
+        }
+
+        await Promise.all(tasks);
+        // 每一批次完成后暂停半秒
+        await API.Utils.sleep(500);
+    }
+
+    // 完成
+    indicator.complete();
+
+    return items;
 }

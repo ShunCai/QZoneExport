@@ -16,6 +16,9 @@ API.Photos.export = async () => {
         // 获取相册的评论列表
         albumList = await API.Photos.getAllAlbumsComments(albumList);
 
+        // 获取相册赞记录
+        await API.Photos.getAlbumsLikeList(albumList);
+
         // 获取所有相册的相片列表
         let imagesMapping = await API.Photos.getAllAlbumImageList(albumList);
         console.info('获取所有相册的所有相片列表完成', imagesMapping);
@@ -28,6 +31,12 @@ API.Photos.export = async () => {
         let images = API.Photos.toImages(imagesMapping);
         images = await API.Photos.getAllImagesComments(images);
         console.info('获取所有相册的所有相片的评论列表完成', images);
+
+        // 添加点赞Key
+        API.Photos.addPhotoUniKey(images);
+
+        // 获取相片赞记录
+        await API.Photos.getPhotosLikeList(images);
 
         // 添加相片下载任务
         await API.Photos.addAlbumsDownloadTasks(albumList);
@@ -194,7 +203,7 @@ API.Photos.getAllAlbumList = async () => {
 
             // 合并数据
             QZone.Photos.Album.Data = API.Utils.unionItems(QZone.Photos.Album.Data, dataList);
-            
+
             if (API.Common.isPreBackupPos(dataList, CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return QZone.Photos.Album.Data;
@@ -395,7 +404,7 @@ API.Photos.getAlbumAllComments = async (item, indicator) => {
         });
     }
 
-    await nextPage(item, 0);
+    await nextPage(item, 0, indicator);
 
     return item.comments;
 }
@@ -478,7 +487,7 @@ API.Photos.getImageAllComments = async (item, indicator) => {
         });
     }
 
-    await nextPage(item, 0);
+    await nextPage(item, 0, indicator);
 
     return item.comments;
 }
@@ -492,10 +501,13 @@ API.Photos.getAllImagesComments = async (items) => {
     if (!QZone_Config.Photos.Images.Comments.isGet || API.Photos.isFile()) {
         return items;
     }
+    // 相片评论进度更新器
+    const indicator = new StatusIndicator('Photos_Images_Comments');
     for (let index = 0; index < items.length; index++) {
-        // 相片评论进度更新器
-        const indicator = new StatusIndicator('Photos_Images_Comments');
         const item = items[index];
+        // 更新总数
+        indicator.setTotal(item.cmtTotal || 0);
+        indicator.setIndex(index + 1);
         if (item.cmtTotal === 0) {
             // 没评论时，跳过
             indicator.addSkip(item);
@@ -506,13 +518,10 @@ API.Photos.getAllImagesComments = async (items) => {
             indicator.addSkip(item);
             continue;
         }
-        // 更新总数
-        indicator.setTotal(item.cmtTotal);
-        indicator.setIndex(index + 1);
         await API.Photos.getImageAllComments(item, indicator);
-        // 完成
-        indicator.complete();
     }
+    // 完成
+    indicator.complete();
     return items;
 }
 
@@ -1111,7 +1120,7 @@ API.Photos.isNewAlbum = (albumId) => {
     if (!album) {
         return true;
     }
-    return false;
+    return API.Common.isNewItem(album);
 }
 
 /**
@@ -1126,7 +1135,7 @@ API.Photos.isNewItem = (albumId, photo) => {
         return true;
     }
     // 已备份相册，可以直接判断，其实也不严谨，先不处理
-    // 存在一种场景有问题（如1号只备份A相册，2号A相册上传了相片，3号只备份B相册，这石IncrementTime已刷成3号，此时备份A相册将无法备份2号上传的相片）
+    // 存在一种场景有问题（如1号只备份A相册，2号A相册上传了相片，3号只备份B相册，这时IncrementTime已刷成3号，此时备份A相册将无法备份2号上传的相片）
     return API.Common.isNewItem(photo);
 }
 
@@ -1157,5 +1166,131 @@ API.Photos.initAlbums = async () => {
         }
         albumIds.push(album.id);
     }
+    for (const item of albumList) {
+        // 添加点赞Key
+        item.uniKey = API.Photos.getUniKey(item.id);
+    }
     return albumList;
+}
+
+/**
+ * 获取相册赞记录
+ * @param {Array} items 相册列表
+ */
+API.Photos.getAlbumsLikeList = async (items) => {
+    if (!API.Common.isGetLike(QZone_Config.Photos)) {
+        // 不获取赞
+        return items;
+    }
+    // 进度更新器
+    const indicator = new StatusIndicator('Photos_Albums_Like');
+    indicator.setTotal(items.length);
+
+    // 同时请求数
+    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+
+    // 获取点赞列表
+    let count = 0;
+    for (let i = 0; i < _items.length; i++) {
+        const list = _items[i];
+
+        let tasks = [];
+        for (let j = 0; j < list.length; j++) {
+
+            const item = list[j];
+            item.likes = item.likes || [];
+
+            if (!API.Photos.isNewAlbum(item.id)) {
+                // 已备份数据跳过不处理
+                indicator.addSkip(item);
+                continue;
+            }
+
+            indicator.setIndex(++count);
+            tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Photos).then((likes) => {
+                console.info('获取相册点赞完成', likes);
+                // 获取完成
+                indicator.addSuccess(item);
+            }).catch((e) => {
+                console.error("获取相册点赞异常：", item, e);
+                indicator.addFailed();
+            }));
+
+        }
+
+        await Promise.all(tasks);
+        // 每一批次完成后暂停半秒
+        await API.Utils.sleep(500);
+    }
+
+    // 完成
+    indicator.complete();
+
+    return items;
+}
+
+/**
+ * 获取相片赞记录
+ * @param {Array} items 相片列表
+ */
+API.Photos.getPhotosLikeList = async (items) => {
+    if (!API.Common.isGetLike(QZone_Config.Photos)) {
+        // 不获取赞
+        return items;
+    }
+    // 进度更新器
+    const indicator = new StatusIndicator('Photos_Images_Like');
+    indicator.setTotal(items.length);
+
+    // 同时请求数
+    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+
+    // 获取点赞列表
+    let count = 0;
+    for (let i = 0; i < _items.length; i++) {
+        const list = _items[i];
+
+        let tasks = [];
+        for (let j = 0; j < list.length; j++) {
+
+            const item = list[j];
+            item.likes = item.likes || [];
+
+            if (!API.Photos.isNewItem(item.albumId, item)) {
+                // 已备份数据跳过不处理
+                indicator.addSkip(item);
+                continue;
+            }
+
+            indicator.setIndex(++count);
+            tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Photos).then((likes) => {
+                console.info('获取相片点赞完成', likes);
+                // 获取完成
+                indicator.addSuccess(item);
+            }).catch((e) => {
+                console.error("获取相片点赞异常：", item, e);
+                indicator.addFailed();
+            }));
+
+        }
+
+        await Promise.all(tasks);
+        // 每一批次完成后暂停半秒
+        await API.Utils.sleep(500);
+    }
+
+    // 完成
+    indicator.complete();
+
+    return items;
+}
+
+/**
+ * 转换数据
+ */
+API.Photos.addPhotoUniKey = (photos) => {
+    for (const photo of photos) {
+        // 添加点赞Key
+        photo.uniKey = API.Photos.getPhotoUniKey(photo);
+    }
 }

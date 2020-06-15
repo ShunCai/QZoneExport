@@ -85,7 +85,14 @@ const Default_Config = {
             '眼霜',
             '免费领取',
             '0元抢购'
-        ]
+        ],
+        Like: {
+            isGet: false, //是否获取赞
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        }
     },
     // 日志模块
     Blogs: {
@@ -117,6 +124,13 @@ const Default_Config = {
             exportType: undefined, // 备份类型
             field: "pubtime",// 比较字段
             time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+        },
+        Like: {
+            isGet: false, //是否获取赞
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
         }
     },
     // 私密日记模块
@@ -183,6 +197,13 @@ const Default_Config = {
             exportType: undefined, // 备份类型
             field: "uploadTime",// 比较字段
             time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+        },
+        Like: {
+            isGet: false, //是否获取赞
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
         }
     },
     // 视频模块
@@ -193,6 +214,14 @@ const Default_Config = {
             max: 2
         },
         pageSize: 20,
+        Comments: {
+            isGet: false, // 是否获取评论，默认不获取
+            pageSize: 20,
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        },
         IncrementType: "Full",// 增量备份类型
         IncrementTime: "2005-06-06 00:00:00",// 增量时间
         PreBackup: {
@@ -201,6 +230,13 @@ const Default_Config = {
             exportType: undefined, // 备份类型
             field: "uploadTime",// 比较字段
             time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+        },
+        Like: {
+            isGet: false, //是否获取赞
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
         }
     },
     // 留言板模块
@@ -280,6 +316,9 @@ const ExportFiles = [
         original: 'export/js/common.js',
         target: FOLDER_ROOT + 'Common/js/common.js'
     }, {
+        original: 'export/js/messages.js',
+        target: FOLDER_ROOT + 'Common/js/messages.js'
+    }, {
         original: 'export/js/blogs.js',
         target: FOLDER_ROOT + 'Common/js/blogs.js'
     }, {
@@ -297,9 +336,15 @@ const ExportFiles = [
     }, {
         original: 'export/js/photos.js',
         target: FOLDER_ROOT + 'Common/js/photos.js'
+    },{
+        original: 'export/js/albums.js',
+        target: FOLDER_ROOT + 'Common/js/albums.js'
     }, {
         original: 'export/js/videos.js',
         target: FOLDER_ROOT + 'Common/js/videos.js'
+    }, {
+        original: 'export/js/favorites.js',
+        target: FOLDER_ROOT + 'Common/js/favorites.js'
     }
 ]
 

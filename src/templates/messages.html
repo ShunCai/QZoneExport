@@ -7,11 +7,19 @@
 	<title>QQ空间备份-说说</title>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.14/dist/css/lightgallery.min.css" integrity="sha256-8rfHbJr+ju3Oc099jFJMR1xAPu8CTPHU8uP5J3X/VAY=" crossorigin="anonymous">
 	<link rel="stylesheet" type="text/css" href="../common/css/common.css">
 	<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.0/dist/jquery.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.14/dist/js/lightgallery-all.min.js" integrity="sha256-0q70xbZ3GMwdiseCj/wfChJhq/3wzpNdgZinlSxSw14=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/jquery-mousewheel@3.1.13/jquery.mousewheel.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/lazyload@2.0.0-rc.2/lazyload.js"></script>
+	<script type="text/javascript" src="../common/json/messages.js"></script>
+	<script type="text/javascript" src="../common/js/template.js"></script>
+	<script type="text/javascript" src="../common/js/common.js"></script>
 	<script type="text/javascript" src="../common/js/sidebar.js"></script>
+	<script type="text/javascript" src="../common/js/messages.js"></script>
 </head>
 
 <body>
@@ -56,7 +64,7 @@
 										</div>
 									</details>
 								<%}else{%>
-									<p class="card-text content"><%:=API.Common.formatContent(message, "HTML", false, false)%></p>
+									<pre class="card-text content"><%:=API.Common.formatContent(message, "HTML", false, false)%></pre>
 								<%}%>
 								<%/* 语音内容 */%>
 								<%if(message.custom_voices){%>
@@ -79,24 +87,26 @@
 											</div>
 										</details>
 									<%}else{%>
-										<p class="card-text content"><%:=API.Common.formatContent(message, "HTML", true, false)%></p>
+										<pre class="card-text content"><%:=API.Common.formatContent(message, "HTML", true, false)%></pre>
 									<%}%>
 								<%}%>
 								<%/* 多媒体内容 */%>
-								<div class="medias row p-3">
+								<div class="medias row p-3 lightgallery">
 									<%/* 视频内容（一般为单视频） */%>
 									<%for(let video of message.custom_videos){%>
 										<%if (API.Videos.isExternalVideo(video)) {%>
 											<a class="medias-item border" href="<%:=API.Videos.getVideoUrl(video)%>" target="_blank">
-												<span class="message-video"></span>
-												<img class="lazyload w-100 h-100" src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>">
+												<!-- <span class="message-video"></span> -->
+												<img class="lazyload w-100 h-100" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>">
 											</a>
 										<%}else{%>
 											<%/* 空间视频 */%>
-											<a class="medias-item border">
-												<video controls poster="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" height="100%" width="100%">
-													<source src="<%:=(video.custom_filepath || video.custom_url || video.url3)%>" type="video/mp4">
-												</video>
+											<a class="medias-item border message-lightbox" data-poster="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" data-html="#<%:=video.video_id || video.vid || video.pic_id%>">
+												<!-- <span class="message-video"></span> -->
+												<div style="display:none;" id="<%:=video.video_id || video.vid || video.pic_id%>">
+													<video class="lg-video-object lg-html5" src="<%:=(video.custom_filepath || video.custom_url || video.url3)%>" controls="controls"></video>
+												</div>
+												<img class="lazyload w-100 h-100" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" />
 											</a>
 										<%}%>
 									<%}%>
@@ -105,40 +115,41 @@
 										<%if(image.is_video && image.video_info){%>
 											<%if (API.Videos.isExternalVideo(image.video_info)) {%>
 												<a class="medias-item border" href="<%:=API.Videos.getVideoUrl(image.video_info)%>" target="_blank">
-													<span class="message-video"></span>
-													<img class="lazyload w-100 h-100" src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>">
+													<!-- <span class="message-video"></span> -->
+													<img class="lazyload w-100 h-100" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>">
 												</a>
 											<%}else{%>
 												<%/* 空间视频 */%>
-												<a class="medias-item border">
-													<video controls poster="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" height="100%" width="100%">
-														<source src="<%:=(image.video_info.custom_filepath || image.video_info.custom_url || image.video_info.url3)%>" type="video/mp4">
-													</video>
+												<a class="medias-item border message-lightbox" data-poster="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" data-html="#<%:=image.video_info.video_id || image.video_info.vid || image.pic_id%>">
+													<!-- <span class="message-video"></span> -->
+													<div style="display:none;" id="<%:=image.video_info.video_id || image.video_info.vid || image.pic_id%>">
+														<video class="lg-video-object lg-html5" src="<%:=(image.video_info.custom_filepath || image.video_info.custom_url || image.video_info.url3)%>" controls="controls"></video>
+													</div>
+													<img class="lazyload w-100 h-100" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" />
 												</a>
 											<%}%>
 										<%}else{%>
-											<a class="medias-item border">
-												<img class="lazyload w-100 h-100" src="<%:=(image.custom_filepath || image.custom_url)%>">
+											<a class="medias-item border message-lightbox" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
+												<img class="lazyload w-100 h-100" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
 											</a>
 										<%}%>
 									<%}%>
 									<%/* 动画表情内容（目前只支持一个） */%>
 									<%for(let image of message.custom_magics){%>
-										<a class="medias-item border">
-											<img class="lazyload w-100 h-100" src='<%:=(image.custom_filepath || image.custom_url)%>'>
+										<a class="medias-item border message-lightbox" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
+											<img class="lazyload w-100 h-100" data-src='<%:=(image.custom_filepath || image.custom_url)%>'>
 										</a>
 										<hr>
 									<%}%>
 								</div>
 								<%/* 音乐内容（目前已无法正常播放，直接显示专辑图片与歌曲信息） */%>
 								<%if(message.audiototal > 0 && message.custom_audios){%>
-									<hr>
 									<div class="medias row p-3">
 										<ul class="list-unstyled w-100">
 											<%for(let music of message.custom_audios){%>
 												<li class="border">
-													<a class="medias-item text-center" href="<%:=music.playurl%>">
-														<img class="lazyload border" src="<%:=(music.custom_filepath || music.image)%>">
+													<a class="medias-item text-center" data-src="<%:=(music.custom_filepath || music.image)%>" href="<%:=music.playurl%>">
+														<img class="lazyload border" data-src="<%:=(music.custom_filepath || music.image)%>">
 														<span><%:=music.name%></span>
 													</a>
 												</li>
@@ -154,7 +165,7 @@
 										<div class="p-1 border-top comments mt-3">
 											<div class="container comment  m-1 p-0">
 												<a class="me-a avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(comment.uin)%>">
-													<img class="lazyload w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(comment.uin)%>" >
+													<img class="lazyload w-100 h-100 border rounded-circle" data-src="<%:=API.Common.getUserLogoUrl(comment.uin)%>" >
 												</a>
 												<div class="ml-4">
 													<%/* 评论 */%>
@@ -186,7 +197,7 @@
 															<div class="comments m-1">
 																<div class="container comment  m-3 p-0">
 																	<a class="me-a avatar p-0 m-0 " target="_blank" href="<%:=API.Common.getUserUrl(reply.uin)%>">
-																		<img class="lazyload w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(reply.uin)%>">
+																		<img class="lazyload w-100 h-100 border rounded-circle" data-src="<%:=API.Common.getUserLogoUrl(reply.uin)%>">
 																	</a>
 																	<div class=" ml-4  ">
 																		<div class="container ml-4">
@@ -240,7 +251,8 @@
 							</ul>
 							<div class="card-footer text-muted">
 								<%:=API.Common.formatContent(message.custom_create_time)%>
-								<span class="border-primary border rounded text-primary small p-1 float-right">#<%:=total + 1 %></span>
+								<span class="border-primary border rounded text-primary small p-1 float-right" title="当前楼层">#<%:=total + 1 %></span>
+								<span class="border-primary border rounded text-primary p-1 float-right fa fa-thumbs-up mr-2 cursor viewlikes" title="查看点赞" data-field="tid" data-target="<%:=message.tid%>"><%:=message.likeTotal || 0 %></span>
 							</div>
 						</div>
 					<%}%>

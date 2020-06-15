@@ -19,6 +19,9 @@ API.Blogs.export = async () => {
         // 获取所有的日志评论
         items = await API.Blogs.getItemsAllCommentList(items);
 
+        // 获取日志赞记录
+        await API.Blogs.getAllLikeList(items);
+
         // 根据导出类型导出数据    
         await API.Blogs.exportAllListToFiles(items);
 
@@ -85,6 +88,8 @@ API.Blogs.getAllContents = async (items) => {
             item.custom_title = '《{0}》'.format(item.title);
             // 添加自定义HTML
             item.custom_html = API.Utils.utf8ToBase64($detailBlog.html());
+            // 添加点赞Key
+            item.uniKey = API.Blogs.getUniKey(item.blogid || item.blogId);
 
             items[index] = item;
         }).catch((e) => {
@@ -574,4 +579,61 @@ API.Blogs.sort = (items) => {
         }
     }
     return items.sort(compare);
+}
+
+/**
+ * 获取日志赞记录
+ * @param {Array} items 日志列表
+ */
+API.Blogs.getAllLikeList = async (items) => {
+
+    if (!API.Common.isGetLike(QZone_Config.Blogs)) {
+        // 不获取赞
+        return items;
+    }
+
+    // 进度更新器
+    const indicator = new StatusIndicator('Blogs_Like');
+    indicator.setTotal(items.length);
+
+    // 同时请求数
+    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+
+    // 获取点赞列表
+    let count = 0;
+    for (let i = 0; i < _items.length; i++) {
+        const list = _items[i];
+
+        let tasks = [];
+        for (let j = 0; j < list.length; j++) {
+
+            const item = list[j];
+            item.likes = item.likes || [];
+
+            if (!API.Common.isNewItem(item)) {
+                // 已备份数据跳过不处理
+                indicator.addSkip(item);
+                continue;
+            }
+            indicator.setIndex(++count);
+            tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Blogs).then((likes) => {
+                console.info('获取日志点赞完成', likes);
+                // 获取完成
+                indicator.addSuccess(item);
+            }).catch((e) => {
+                console.error("获取日志点赞异常：", item, e);
+                indicator.addFailed();
+            }));
+
+        }
+
+        await Promise.all(tasks);
+        // 每一批次完成后暂停半秒
+        await API.Utils.sleep(500);
+    }
+
+    // 完成
+    indicator.complete();
+
+    return items;
 }

@@ -84,7 +84,7 @@ String.prototype.replaceAll = function (search, target) {
 Array.prototype.getIndex = function (val, field) {
     if (field) {
         return this.findIndex((obj) => {
-            if (obj[field] === val) {
+            if (obj[field] == val) {
                 return obj;
             }
         })
@@ -499,6 +499,9 @@ API.Common = {
      * @param {string} sourceType 来源类型
      */
     getMediaPath(url, filepath, sourceType) {
+        if (!filepath) {
+            return url;
+        }
         let res = filepath || url;
         switch (sourceType) {
             case 'Messages_HTML':
@@ -514,6 +517,94 @@ API.Common = {
                 break;
         }
         return res;
+    },
+
+    /**
+     * 显示赞列表窗口
+     * @param {Object} dom DOM元素
+     * @param {Array} dataList 列表
+     */
+    showLikeWin(dom, dataList) {
+        const targetId = $(dom).attr('data-target');
+        if (!targetId) {
+            return;
+        }
+        // 获取指定数据
+        const itemIndex = dataList.getIndex(targetId, $(dom).attr('data-field'));
+        if (itemIndex == -1) {
+            return;
+        }
+        const item = dataList[itemIndex];
+
+        // 渲染列表
+        const like_html = template(TPL.LIKE_LIST, {
+            items: item.likes || []
+        });
+
+        // 渲染模式窗口
+        const modal_html = template(TPL.MODAL_WIN, {
+            id: 'like_win',
+            size: '',
+            title: '赞列表',
+            body: like_html
+        });
+
+        // 存在元素直接移除重新创建
+        const $like_win = $('#like_win');
+        if ($like_win) {
+            $like_win.modal('hide');
+            $like_win.remove();
+        }
+
+        // 添加HTML到页面
+        $('body').append(modal_html);
+
+        // 显示窗口
+        $('#like_win').modal('show');
+    },
+
+    /**
+     * 显示评论列表窗口
+     * @param {Object} dom DOM元素
+     * @param {Array} dataList 列表
+     */
+    showCommentsWin(dom, dataList) {
+        const targetId = $(dom).attr('data-target');
+        if (!targetId) {
+            return;
+        }
+        // 获取指定数据
+        const itemIndex = dataList.getIndex(targetId, $(dom).attr('data-field'));
+        if (itemIndex == -1) {
+            return;
+        }
+        const item = dataList[itemIndex];
+
+        // 渲染列表
+        const comments_html = template(TPL.ALBUMS_COMMENTS, {
+            comments: item.comments || []
+        });
+
+        // 渲染模式窗口
+        const modal_html = template(TPL.MODAL_WIN, {
+            id: 'comments_win',
+            title: '评论列表',
+            size: 'modal-lg',
+            body: comments_html
+        });
+
+        // 存在元素直接移除重新创建
+        const $comments_win = $('#comments_win');
+        if ($comments_win) {
+            $comments_win.modal('hide');
+            $comments_win.remove();
+        }
+
+        // 添加HTML到页面
+        $('body').append(modal_html);
+
+        // 显示窗口
+        $('#comments_win').modal('show');
     }
 }
 
@@ -548,4 +639,137 @@ API.Blogs = {
         }
         return a;
     }
+}
+
+/**
+ * 模板常量
+ */
+const TPL = {
+    /**
+     * 模式窗口
+     */
+    MODAL_WIN: `
+        <div id="<%:=id%>" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog <%:=size%> modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-center"><%:=title%></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <%:=body%>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `,
+    /**
+     * 点赞列表
+     */
+    LIKE_LIST: `
+        <div class="list-group">
+            <%if(items.length === 0 ){%>
+                <p>没人点赞，好伤心哦^_^</p>
+            <%}%>
+            <%for (const item of items) {%>
+                <a href="<%:=API.Common.getUserUrl(item.fuin)%>" target="_blank" class="list-group-item list-group-item-action border rounded">
+                    <div class="d-flex flex-row bd-highlight">
+                        <div class="bd-highlight">
+                            <img class="rounded-circle" src="<%:=API.Common.getUserLogoUrl(item.fuin)%>" alt="" style="height: 50px;width: 50px;">
+                        </div>
+                        <div class="flex-fill bd-highlight align-self-center ml-3">
+                            <%:=item.nick%>
+                        </div>
+                        <div class="bd-highlight align-self-center ml-3">
+                            <small>
+                                <%if(item.gender){%>
+                                    <span><%:=item.gender%></span>
+                                <%}%>
+                                <%if(item.constellation){%>
+                                    <span><%:=item.constellation%></span>
+                                <%}%>
+                                <%if(item.addr){%>
+                                    <span><%:=item.addr%></span>
+                                <%}%>
+                            </small>
+                        </div>
+                    </div>
+                </a>
+            <%}%>
+        </div>
+    `,
+    /**
+     * 相册评论模板
+     */
+    ALBUMS_COMMENTS: `
+        <%if(comments.length === 0 ){%>
+            <p>没人评论，好伤心哦^_^</p>
+        <%}%>
+        <%for(const comment of comments){%>
+            <div class="border-bottom comments mt-3">
+                <div class="container comment">
+                    <a class="me-a avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(comment.poster.id)%>">
+                        <img class="lazyload w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(comment.poster.id)%>" >
+                    </a>
+                    <div class="ml-5">
+                        <div class="container">
+                            <a class="author">
+                                <a target="_blank" href="<%:=API.Common.getUserUrl(comment.poster.id)%>">
+                                    <span><%:=API.Common.formatContent(comment.poster.name)%></span>
+                                </a>
+                                <%if(comment.private){%>
+                                    <span class="text-info"> 私密评论 </span>
+                                <%}%>
+                                <br>
+                                <span class="text-muted small"><%:=API.Utils.formatDate(comment.postTime)%></span>
+                            </a>
+                        </div>
+                        <div class="messageText container">
+                            <p><%:=API.Common.formatContent(comment.content)%></p>
+                            <%if(comment.pic){%>
+                                <%for(let image of comment.pic){%>
+                                    <img src="<%:=(image.custom_filepath || image.custom_url || image.o_url || image.hd_url || image.b_url || image.s_url || image.url)%>" class="comment-img img-thumbnail">
+                                <%}%>
+                            <%}%>
+                        </div>
+                        <%if(comment.replies){%>
+                            <%for(const reply of comment.replies){%>
+                                <div class="comments">
+                                    <div class="container comment p-0">
+                                        <a class="me-a avatar p-0 m-0 " target="_blank" href="<%:=API.Common.getUserUrl(reply.poster.id)%>">
+                                            <img class="lazyload w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(reply.poster.id)%>">
+                                        </a>
+                                        <div class="ml-5">
+                                            <div class="container">
+                                                <a class="author">
+                                                    <a target="_blank" href="<%:=API.Common.getUserUrl(reply.poster.id)%>">
+                                                        <span class="text-info"><%:=API.Common.formatContent(reply.poster.name)%></span>
+                                                    </a>
+                                                    <%if(reply.private){%>
+                                                        <span class="text-info"> 私密回复 </span>
+                                                    <%}%>
+                                                    <br>
+                                                    <span class="text-muted small"><%:=API.Utils.formatDate(reply.postTime)%></span>
+                                                </a>
+                                            </div>
+                                            <div class="messageText container">
+                                                <p><%:=API.Common.formatContent(reply.content)%></p>
+                                                <%if(reply.pic){%>
+                                                    <%for(let image of reply.pic){%>
+                                                        <img src="<%:=(image.custom_filepath || image.custom_url || image.o_url || image.hd_url || image.b_url || image.s_url || image.url)%>" class="comment-img img-thumbnail">
+                                                    <%}%>
+                                                <%}%>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <%}%>
+                        <%}%>
+                    </div>
+                </div>
+            </div>
+        <%}%>
+    `
 }

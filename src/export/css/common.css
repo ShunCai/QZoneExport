@@ -177,6 +177,10 @@ body {
     overflow: hidden;
 }
 
+.medias-item:nth-last-child(1):first-child{
+    flex: 0 0 50%;
+}
+
 .medias-item:first-child:nth-last-child(4)~.medias-item:nth-child(2) {
     margin-right: 33%;
 }
@@ -531,4 +535,13 @@ body {
 .comment-img{
     height: 100px !important;
     width: 100px!important;
+}
+
+.cursor {
+    cursor: pointer;
+}
+
+pre {
+    font: inherit !important;
+    white-space: pre-wrap;
 }

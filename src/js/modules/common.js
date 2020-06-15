@@ -288,6 +288,9 @@ API.Common.addDownloadTask = (url, content) => {
  * @param {string} sourceType 来源类型
  */
 API.Common.getMediaPath = (url, filepath, sourceType) => {
+    if (!filepath) {
+        return url;
+    }
     let res = filepath || url;
     switch (sourceType) {
         case 'Messages_HTML':
@@ -836,4 +839,49 @@ API.Common.setCompareFiledInfo = (items, sourceFiled, targetFiled) => {
         item[targetFiled] = Math.floor(new Date(item[sourceFiled]).getTime() / 1000);
     }
     return items;
+}
+
+/**
+ * 是否需要获取赞
+ * @param {Object} CONFIG 模块配置项
+ */
+API.Common.isGetLike = (CONFIG) => {
+    return CONFIG.Like.isGet && (CONFIG.exportType === 'HTML' || CONFIG.exportType == 'JSON')
+}
+
+/**
+ * 获取模块点赞记录
+ * @param {Object} item 对象
+ */
+API.Common.getModulesLikeList = async (item, moduleConfig) => {
+    let nextUin = 0;
+    item.likes = item.likes || [];
+    if (!moduleConfig.Like.isGet) {
+        return item.likes;
+    }
+    let hasNext = true;
+    while (hasNext) {
+        await API.Common.getLikeList(item.uniKey, nextUin).then(async (data) => {
+            data = API.Utils.toJson(data, /^_Callback\(/);
+            data = data.data || {};
+            data.like_uin_info = data.like_uin_info || [];
+            if (_.isEmpty(data.like_uin_info)) {
+                hasNext = false;
+            } else {
+                item.likes = _.concat(item.likes, data.like_uin_info);
+                nextUin = _.last(item.likes)['fuin'];
+
+                // 请求一页成功后等待一秒再请求下一页
+                const min = moduleConfig.Like.randomSeconds.min;
+                const max = moduleConfig.Like.randomSeconds.max;
+                const seconds = API.Utils.randomSeconds(min, max);
+                await API.Utils.sleep(seconds * 1000);
+            }
+        }).catch((e) => {
+            hasNext = false;
+            console.error("获取点赞数据异常", item, e);
+        });
+    }
+    item.likeTotal = item.likes.length;
+    return item.likes;
 }

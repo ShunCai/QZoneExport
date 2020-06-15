@@ -75,6 +75,12 @@ const QZone_URLS = {
     /** 视频列表URL */
     VIDEO_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/video_get_data',
 
+    /** 视频详情URL */
+    VIDEO_INFO_URL: 'https://h5.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/video_get_data',
+
+    /** 视频评论URL */
+    VIDEO_COMMENTS_URL: 'https://user.qzone.qq.com/proxy/domain/taotao.qzone.qq.com/cgi-bin/emotion_cgi_getcmtreply_v6',
+
     /** 我的收藏 */
     FAVORITE_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/fav.qzone.qq.com/cgi-bin/get_fav_list',
 
@@ -917,7 +923,9 @@ API.Utils = {
      */
     toJson(json, jsonpKey) {
         json = json.replace(jsonpKey, "");
+        json = json.replace(/\);\s+$/, "");
         json = json.replace(/\);$/, "");
+        json = json.replace(/\)\s+$/, "");
         json = json.replace(/\)$/, "");
         return JSON.parse(json);
     },
@@ -1284,7 +1292,7 @@ API.Common = {
             "unikey": unikey,
             "begin_uin": begin_uin || 0,
             "query_count": 60,
-            "if_first_page": begin_uin === 1 ? 1 : 0,//标识是否为首次请求 第一次请求为1，以后为0
+            "if_first_page": begin_uin === 0 ? 1 : 0,//标识是否为首次请求 第一次请求为1，以后为0
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         }
@@ -1995,7 +2003,15 @@ API.Photos = {
      * @param {string} albumId 相册ID
      */
     getUniKey(albumId) {
-        return 'http://user.qzone.qq.com/{0}/mood/{1}'.format(QZone.Common.Target.uin, albumId);
+        return 'http://user.qzone.qq.com/{0}/photo/{1}'.format(QZone.Common.Target.uin, albumId);
+    },
+
+    /**
+     * 获取相片UniKey，用于获取点赞数据
+     * @param {Object} photo 相片
+     */
+    getPhotoUniKey(photo) {
+        return 'http://user.qzone.qq.com/{0}/photo/{1}/{2}^||^http://user.qzone.qq.com/{3}/batchphoto/{4}/{5}^||^1'.format(QZone.Common.Target.uin, photo.albumId, photo.lloc || photo.sloc, QZone.Common.Target.uin, photo.albumId, photo.batchId);
     },
 
     /**
@@ -2331,6 +2347,67 @@ API.Videos = {
             "_": Date.now()
         }
         return API.Utils.get(QZone_URLS.VIDEO_LIST_URL, params);
+    },
+
+    /**
+     * 获取视频详情
+     * @param {string} tid 说说ID
+     * @param {string} vid 视频ID
+     */
+    getVideoInfo(tid, vid) {
+        const params = {
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "callback": "viewer_Callback",
+            "t": String(Math.random().toFixed(16)).slice(-9).replace(/^0/, '9'),
+            "topicId": tid,
+            "picKey": vid,
+            "shootTime": "",
+            "cmtOrder": 1,
+            "fupdate": 1,
+            "plat": "qzone",
+            "source": "qzone",
+            "cmtNum": 10,
+            "likeNum": 5,
+            "inCharset": "utf-8",
+            "outCharset": "utf-8",
+            "callbackFun": "viewer",
+            "offset": 0,
+            "number": 1,
+            "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
+            "hostUin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "appid": 311,
+            "isFirst": 1,
+            "need_private_comment": 1,
+            "getMethod": 3,
+            "_": Date.now()
+        }
+        return API.Utils.get(QZone_URLS.VIDEO_INFO_URL, params);
+    },
+
+    /**
+     * 获取视频评论列表
+     * @param {string} tid 说说ID
+     * @param {integer} page 当前页
+     */
+    getComments(tid, page) {
+        const params = {
+            "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
+            "hostUin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "start": page * QZone_Config.Videos.Comments.pageSize,
+            "num": QZone_Config.Videos.Comments.pageSize,
+            "order": 0,
+            "topicId": QZone.Common.Target.uin + "_" + tid,
+            "format": "jsonp",
+            "inCharset": "utf-8",
+            "outCharset": "utf-8",
+            "ref": "qzone",
+            "need_private_comment": 1,
+            "code_version": 1,
+            "out_charset": "UTF-8",
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        return API.Utils.get(QZone_URLS.VIDEO_COMMENTS_URL, params);
     },
 
     /**

@@ -43,19 +43,33 @@
 				<div id="lightgallery" class="row">
 					<script id="videos_tpl" type="text/html">
 						<%/* 遍历视频 */%>
-						<%for (var video of videos) {%>
+						<%for (const video of videos) {%>
 							<div class="col-md-2 mb-2">
 								<div class="card thumbnail mb-2 shadow-sm">
 									<div style="display:none;" id="<%:=video.vid%>">
-										<video class="lg-video-object lg-html5" src="<%:=(video.custom_filepath || video.custom_url)%>" controls="controls" ></video>
+										<video class="lg-video-object lg-html5" src="<%:=(video.custom_filepath || video.custom_url || video.url)%>" controls="controls" ></video>
 									</div>
-									<a class="lightbox" data-poster="<%:=API.Common.getMediaPath(video.custom_pre_url, video.custom_pre_filepath)%>" title="<%:=API.Common.formatContent(video.desc)%>" data-html="#<%:=video.vid%>">
+									<a class="lightbox" data-poster="<%:=API.Common.getMediaPath(video.pre || video.custom_pre_url, video.custom_pre_filepath)%>" title="<%:=API.Common.formatContent(video.desc)%>" data-html="#<%:=video.vid%>">
 										<span class="photo-video"></span>
-										<img src="<%:=API.Common.getMediaPath(video.custom_pre_url, video.custom_pre_filepath)%>" />
+										<img src="<%:=API.Common.getMediaPath(video.pre || video.custom_pre_url, video.custom_pre_filepath)%>" />
 									</a>
 									<div class="card-body">
 										<h5 class="card-title"><%:=video.desc ? API.Common.formatContent(video.desc) : API.Utils.formatDate(video.uploadTime)%></h5>
 									</div>
+									<span class="pic-num-wrap">
+										<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="uniKey" data-target="<%:=video.uniKey%>" style="
+																			position: absolute;
+																			top: 25px;
+																			left: 10px;
+																			font-size: 20px;
+																		"><%:=video.likes ? video.likes.length : 0%></span>
+										<span class="text-light fa fa-comments-o cursor viewcomments" title="查看评论" data-field="uniKey" data-target="<%:=video.uniKey%>" style="
+																			position: absolute;
+																			top: 25px;
+																			left: 50px;
+																			font-size: 20px;
+																		"><%:=video.comments ? video.comments.length : 0%></span>
+									</span>
 								</div>
 							</div>
 						<%}%>
