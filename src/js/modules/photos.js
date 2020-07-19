@@ -1264,7 +1264,7 @@ API.Photos.getPhotosLikeList = async (items) => {
 
             indicator.setIndex(++count);
             tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Photos).then((likes) => {
-                console.info('获取相片点赞完成', likes);
+                console.debug('获取相片点赞完成', likes);
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {

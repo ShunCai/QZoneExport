@@ -184,57 +184,100 @@
 	// 监听下载工具选择事件
 	$('#common_download_type').change(function () {
 		let value = $(this).val();
-		let task_count_dom = $('#common_thunder_task_count')[0].parentNode.parentNode;
-		let task_sleep_dom = $('#common_thunder_task_sleep')[0].parentNode.parentNode;
-		let download_status_dom = $('#common_download_status')[0].parentNode.parentNode.parentNode;
-		let file_suffix_dom = $('#common_file_suffix')[0].parentNode.parentNode.parentNode;
-		let suffix_timeout_dom = $('#common_file_suffix_timeout')[0].parentNode.parentNode;
-		let download_thread_dom = $('#common_download_thread')[0].parentNode.parentNode;
+		const $task_count_row = $('#common_thunder_task_count_row');
+		const $task_sleep_row = $('#common_thunder_task_sleep_row');
+		const $download_status_row = $('#common_download_status_row');
+		const $file_suffix_row = $('#common_file_suffix_row');
+		const $suffix_timeout_row = $('#common_file_suffix_timeout_row');
+		const $download_thread_row = $('#common_download_thread_row');
+		// Aria2
+		const $common_aria2_rpc_row = $('#common_aria2_rpc_row');
+		const $common_aria2_token_row = $('#common_aria2_token_row');
+
+		// 提示信息
+		const $download_type_help = $('#common_download_type_help');
 		switch (value) {
 			case 'File':
-				$(task_count_dom).hide();
-				$(task_sleep_dom).hide();
-				$(download_status_dom).hide();
-				$(file_suffix_dom).show();
-				$(suffix_timeout_dom).show();
-				$(download_thread_dom).show();
-				$('#common_download_type_help').html('助手内部目前<span style="color:red">暂不支持数据容量大于2G的备份</span>，2G内建议使用助手内部下载，超2G的建议使用其他方式下载');
+				$task_count_row.hide();
+				$task_sleep_row.hide();
+				$download_status_row.hide();
+				// 隐藏Aria2配置
+				$common_aria2_rpc_row.hide();
+				$common_aria2_token_row.hide();
+
+				$file_suffix_row.show();
+				$suffix_timeout_row.show();
+				$download_thread_row.show();
+
+				$download_type_help.html('助手内部目前<span style="color:red">暂不支持数据容量大于2G的备份</span>，2G内建议使用助手内部下载，超2G的建议使用其他方式下载');
+				break;
+			case 'Aria2':
+				// 其他选项隐藏
+				$task_count_row.hide();
+				$task_sleep_row.hide();
+				$download_status_row.hide();
+				$download_thread_row.hide();
+				$file_suffix_row.hide();
+				$suffix_timeout_row.hide();
+
+				// 显示Aria2配置
+				$common_aria2_rpc_row.show();
+				$common_aria2_token_row.show();
+				$download_type_help.html('不了解Aria2请忽略该项，仅在<span style="color:red">Aria2的1.35.0以上版本</span>测试通过，请确保Aria2服务处于<span style="color:red">启动中</span>，并<span style="color:red">启用RPC服务</span>，目前仅支持<span style="color:red">HTTP协议</span>！');
 				break;
 			case 'Thunder':
-				$(task_count_dom).show();
-				$(task_sleep_dom).show();
-				$(download_status_dom).hide();
-				$(file_suffix_dom).show();
-				$(suffix_timeout_dom).show();
-				$(download_thread_dom).show();
-				$('#common_download_type_help').html('仅在<span style="color:red">正版的安装版迅雷X（不禁用迅雷X基础服务）的10.1.3以上版本</span>测试通过，禁用服务或其他版本建议切换迅雷X（剪切板）');
+				$download_status_row.hide();
+				// 隐藏Aria2配置
+				$common_aria2_rpc_row.hide();
+				$common_aria2_token_row.hide();
+
+				$task_count_row.show();
+				$task_sleep_row.show();
+				$file_suffix_row.show();
+				$suffix_timeout_row.show();
+				$download_thread_row.show();
+
+				$download_type_help.html('仅在<span style="color:red">正版的安装版迅雷X（不禁用迅雷X基础服务）的10.1.3以上版本</span>测试通过，禁用服务或其他版本建议切换迅雷X（剪切板）');
 				break;
 			case 'Thunder_Link':
-				$(task_count_dom).hide();
-				$(task_sleep_dom).hide();
-				$(download_status_dom).hide();
-				$(file_suffix_dom).show();
-				$(suffix_timeout_dom).show();
-				$(download_thread_dom).show();
-				$('#common_download_type_help').html('仅支持迅雷X且打开剪切板监听，打开迅雷X，复制ZIP包中【<span style="color:red">迅雷下载链接.txt</span>】文本内容自动新建下载任务');
+				$task_count_row.hide();
+				$task_sleep_row.hide();
+				$download_status_row.hide();
+
+				// 隐藏Aria2配置
+				$common_aria2_rpc_row.hide();
+				$common_aria2_token_row.hide();
+
+				$file_suffix_row.show();
+				$suffix_timeout_row.show();
+				$download_thread_row.show();
+
+				$download_type_help.html('仅支持迅雷X且打开剪切板监听，打开迅雷X，复制ZIP包中【<span style="color:red">迅雷下载链接.txt</span>】文本内容自动新建下载任务');
 				break;
 			case 'Browser':
-				$(task_count_dom).hide();
-				$(task_sleep_dom).hide();
-				$(download_status_dom).show();
-				$(file_suffix_dom).show();
-				$(suffix_timeout_dom).show();
-				$(download_thread_dom).show();
-				$('#common_download_type_help').html('使用浏览器下载，请确保已关闭浏览器设置中的<span style="color:red">【下载前询问每个文件的保存位置】</span>选项，否则浏览器将会一直弹窗提示保存文件');
+				$task_count_row.hide();
+				$task_sleep_row.hide();
+
+				$download_status_row.show();
+				$file_suffix_row.show();
+				$suffix_timeout_row.show();
+				$download_thread_row.show();
+
+				$download_type_help.html('使用浏览器下载，请确保已关闭浏览器设置中的<span style="color:red">【下载前询问每个文件的保存位置】</span>选项，否则浏览器将会一直弹窗提示保存文件');
 				break;
 			case 'QZone':
-				$(task_count_dom).hide();
-				$(task_sleep_dom).hide();
-				$(download_status_dom).hide();
-				$(file_suffix_dom).hide();
-				$(suffix_timeout_dom).hide();
-				$(download_thread_dom).hide();
-				$('#common_download_type_help').text('QQ空间外链仅适用于备份类型为非文件类型的，例如日志、说说等，文件类型的，例如相片、视频，将默认使用助手内部下载');
+				$task_count_row.hide();
+				$task_sleep_row.hide();
+				$download_status_row.hide();
+				$file_suffix_row.hide();
+				$suffix_timeout_row.hide();
+				$download_thread_row.hide();
+
+				// 隐藏Aria2配置
+				$common_aria2_rpc_row.hide();
+				$common_aria2_token_row.hide();
+
+				$download_type_help.text('QQ空间外链仅适用于备份类型为非文件类型的，例如日志、说说等，文件类型的，例如相片、视频，将默认使用助手内部下载');
 				break;
 			default:
 				break;
@@ -294,6 +337,8 @@
 		$("#common_thunder_task_count").val(options.Common.thunderTaskNum);
 		$("#common_thunder_task_sleep").val(options.Common.thunderTaskSleep);
 		$("#common_download_thread").val(options.Common.downloadThread);
+		$("#common_aria2_rpc").val(options.Common.Aria2.rpc);
+		$("#common_aria2_token").val(options.Common.Aria2.token || '');
 		$('#common_user_link').prop("checked", options.Common.hasUserLink);
 
 		// 说说模块赋值
@@ -430,6 +475,9 @@
 		QZone_Config.Common.thunderTaskNum = $("#common_thunder_task_count").val() * 1;
 		QZone_Config.Common.thunderTaskSleep = $("#common_thunder_task_sleep").val() * 1;
 		QZone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
+		QZone_Config.Common.Aria2.rpc = $("#common_aria2_rpc").val();
+		QZone_Config.Common.Aria2.token = $("#common_aria2_token").val();
+
 		QZone_Config.Common.hasUserLink = $('#common_user_link').prop("checked");
 
 		// 说说模块赋值
@@ -894,5 +942,46 @@
 			return;
 		}
 		$targetLink.hide();
+	})
+
+	// Aria2连接测试
+	$('#aria2_test').click(function () {
+		const $testBtn = $(this);
+		$testBtn.text('正在连接');
+		$testBtn.attr('disabled', true);
+		const rpc = $('#common_aria2_rpc').val();
+		let token = $('#common_aria2_token').val();
+		token = "token:" + token
+		const params = {
+			"jsonrpc": "2.0",
+			"method": "aria2.getVersion",
+			"id": Date.now(),
+			"params": [token]
+		}
+		$.ajax({
+			url: rpc,
+			type: 'POST',
+			data: JSON.stringify(params),
+			contentType: "application/json;charset=utf-8",
+			success: function (result) {
+				tips('<span class="text-info">Aria2连接成功</span>！');
+				$testBtn.text('连接成功');
+				$testBtn.attr('disabled', false);
+			},
+			error: function (xhr, status, error) {
+				if (xhr.responseJSON) {
+					if (xhr.responseJSON.error.code === 1 || xhr.responseJSON.error.message === "Unauthorized") {
+						$testBtn.text('认证失败');
+						tips('<span style="color:red">Aria2认证失败</span>，请检查令牌是否正确！');
+					} else {
+						$testBtn.text('连接错误');
+					}
+				} else {
+					$testBtn.text('连接错误');
+					tips('<span style="color:red">Aria2连接错误</span>，请确认Aria2配置或Aria2服务是否正常！');
+				}
+				$testBtn.attr('disabled', false);
+			}
+		});
 	})
 })()

@@ -477,6 +477,13 @@ const MAX_MSG = {
         '添加超时或失败 <span style="color: red;">{downloadFailed}</span> ',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
+    ],
+    Common_Aria2: [
+        '正在添加下载任务到Aria2',
+        '已添加 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '添加超时或失败 <span style="color: red;">{downloadFailed}</span> ',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
     ]
 }
 
@@ -952,6 +959,10 @@ class QZoneOperator {
                 // 修改继续重试按钮文本为【继续重试】
                 $againDownloadBtn.text('继续重试');
                 break;
+            case 'Aria2':
+                // 修改继续重试按钮文本为【Aria2下载】
+                $againDownloadBtn.text('Aria2下载');
+                break;
             case 'Thunder':
                 // 下载方式为迅雷下载时隐藏【迅雷下载】按钮
                 $thunderDownloadBtn.hide();
@@ -1069,7 +1080,7 @@ class QZoneOperator {
             switch (downloadType) {
                 case 'File':
                     // 下载方式为助手下载时
-                    await API.Common.downloadsByAjax(tasks)
+                    await API.Common.downloadsByAjax(tasks);
                     // 重新压缩
                     operator.next(OperatorType.ZIP);
                     break;
@@ -1083,6 +1094,10 @@ class QZoneOperator {
                         }
                         await API.Utils.resumeDownload(task.id);
                     }
+                    break;
+                case 'Aria2':
+                    // 下载方式为Aria2时
+                    await API.Common.downloadByAria2(tasks);
                     break;
                 case 'Thunder':
                     // 下载方式为迅雷下载时
@@ -1335,7 +1350,7 @@ API.Utils.newDownloadTask = (url, folder, name, source, makeOrg) => {
     url = makeOrg ? url : API.Utils.makeDownloadUrl(url, true);
 
     // 添加Ajax请求下载任务
-    const ajax_down = new DownloadTask(folder, name, API.Utils.toHttps(url), source);
+    const ajax_down = new DownloadTask(folder, name, API.Common.isFile() ? API.Utils.toHttps(url) : url, source);
     // 添加浏览器下载任务
     const browser_down = new BrowserTask(url, QZone.Common.Config.ZIP_NAME, folder, name, source);
     // 添加迅雷下载任务
@@ -1371,6 +1386,9 @@ API.Utils.downloadAllFiles = async () => {
         case 'File':
             await API.Common.downloadsByAjax(downloadTasks);
             break;
+        case 'Aria2':
+            await API.Common.downloadByAria2(downloadTasks);
+            break;
         case 'Thunder':
             await API.Common.invokeThunder(thunderInfo);
             break;
@@ -1400,6 +1418,9 @@ API.Utils.getDownloadTasks = () => {
             break;
         case 'Browser':
             tasks = browserTasks;
+            break;
+        case 'Aria2':
+            tasks = downloadTasks;
             break;
         case 'Thunder':
             tasks = thunderInfo.tasks;

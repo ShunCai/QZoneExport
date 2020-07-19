@@ -11,6 +11,10 @@ const Default_Config = {
         listRetrySleep: 1,
         // 文件下载类型
         downloadType: 'File',
+        Aria2: {
+            rpc: 'http://localhost:6800/jsonrpc',
+            token: undefined
+        },
         // 自动识别文件后缀
         isAutoFileSuffix: false,
         // 后缀识别超时秒数
@@ -336,7 +340,7 @@ const ExportFiles = [
     }, {
         original: 'export/js/photos.js',
         target: FOLDER_ROOT + 'Common/js/photos.js'
-    },{
+    }, {
         original: 'export/js/albums.js',
         target: FOLDER_ROOT + 'Common/js/albums.js'
     }, {

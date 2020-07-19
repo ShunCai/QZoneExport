@@ -2,10 +2,10 @@
 <html lang="zh">
 
 <head>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 	<link rel="stylesheet" href="../vendor/bootstrap/css/bootstrap.min.css">
 	<link rel="stylesheet" href="../vendor/bootstrap/css/bootstrap-table.min.css">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/css/tempusdominus-bootstrap-4.min.css" integrity="sha256-XPTBwC3SBoWHSmKasAk01c08M6sIA5gF5+sRxqak2Qs=" crossorigin="anonymous" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.1.2/build/css/tempusdominus-bootstrap-4.min.css" integrity="sha256-vi00YWza8MRCSI5GdsFLptAZIULny5MPn62PxEf/ZTY=" crossorigin="anonymous">
 	<link rel="stylesheet" href="../css/options.css">
 	<link rel="icon" href="../img/icon-128.png">
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -16,9 +16,9 @@
 	<script type="text/javascript" src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="../vendor/bootstrap/js/bootstrap-table.min.js"></script>
 	<script type="text/javascript" src="../vendor/bootstrap/js/bootstrap-table-zh-CN.min.js"></script>
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js" integrity="sha256-5oApc/wMda1ntIEK4qoWJ4YItnV4fBHMwywunj8gPqc=" crossorigin="anonymous"></script>
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment-with-locales.min.js" integrity="sha256-4HOrwHz9ACPZBxAav7mYYlbeMiAL0h6+lZ36cLNpR+E=" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.1.2/js/tempusdominus-bootstrap-4.min.js" integrity="sha256-z0oKYg6xiLq3yJGsp/LsY9XykbweQlHl42jHv2XTBz4=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/min/moment.min.js" integrity="sha256-ZsWP0vT+akWmvEMkNYgZrPHKU9Ke8nYBPC3dqONp1mY=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/min/moment-with-locales.min.js" integrity="sha256-wdiCkHJlqyoIJxG49WbDO0D3/EnppQp6GVOGQA6PBkA=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.1.2/build/js/tempusdominus-bootstrap-4.min.js" integrity="sha256-z0oKYg6xiLq3yJGsp/LsY9XykbweQlHl42jHv2XTBz4=" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -934,6 +934,7 @@
 										<select id="common_download_type" class="custom-select" aria-describedby="common_download_type_help">
 											<option value="File" selected>助手内部</option>
 											<option value="Browser">浏览器（推荐）</option>
+											<option value="Aria2">Aria2</option>
 											<option value="Thunder">迅雷X（自动唤起）</option>
 											<option value="Thunder_Link">迅雷X（下载链接）</option>
 											<option value="QZone">QQ空间外链（不推荐）</option>
@@ -941,7 +942,8 @@
 									</div>
 									<small id="common_download_type_help" class="text-muted mt-2">助手内部目前暂不支持数据容量大于2G的，2G内建议使用助手内部下载，超2G的建议使用其他方式下载</small>
 								</div>
-								<div class="form-group row" style="display: none;">
+								<!-- 下载工具通用配置 -->
+								<div id="common_file_suffix_row" class="form-group row" style="display: none;">
 									<div class="col-sm-1">图片类型识别：</div>
 									<div class="col-sm-2">
 										<div class="custom-control custom-checkbox">
@@ -953,35 +955,38 @@
 										<small id="common_file_suffix_help" class="text-muted">勾选将自动识别说说、日志、私密日记、留言板、收藏夹图片文件后缀名，将延长备份时间。</small>
 									</div>
 								</div>
-								<div class="form-group row" style="display: none;">
+								<div id="common_file_suffix_timeout_row" class="form-group row" style="display: none;">
 									<label for="common_file_suffix_timeout" class="col-sm-1 col-form-label">类型识别超时：</label>
 									<div class="col-sm-2">
 										<input type="number" min="10" class="form-control" id="common_file_suffix_timeout" placeholder="类型识别超时秒数" aria-describedby="common_file_suffix_timeout_help">
 									</div>
 									<small id="common_file_suffix_timeout_help" class="text-muted mt-2">图片类型识别最大超时秒数，识别超该数值时，将取消识别类型，即图片文件无后缀名</small>
 								</div>
-								<div class="form-group row" style="display: none;">
+								<!-- 迅雷下载相关配置 -->
+								<div id="common_thunder_task_count_row" class="form-group row" style="display: none;">
 									<label for="common_thunder_task_count" class="col-sm-1 col-form-label">迅雷最大任务：</label>
 									<div class="col-sm-2">
 										<input type="number" min="1000" class="form-control" id="common_thunder_task_count" placeholder="迅雷任务数" aria-describedby="common_thunder_task_count_help">
 									</div>
 									<small id="common_thunder_task_count_help" class="text-muted mt-2">迅雷的最大任务数，当值为5000，照片数量为10000时，则唤起2次迅雷，每次5000个任务，不宜太大，太大将无法唤起迅雷。</small>
 								</div>
-								<div class="form-group row" style="display: none;">
+								<div id="common_thunder_task_sleep_row" class="form-group row" style="display: none;">
 									<label for="common_thunder_task_sleep" class="col-sm-1 col-form-label">迅雷唤起间隔：</label>
 									<div class="col-sm-2">
 										<input type="number" class="form-control" id="common_thunder_task_sleep" placeholder="迅雷唤起间隔" aria-describedby="common_thunder_task_sleep_help">
 									</div>
 									<small id="common_thunder_task_sleep_help" class="text-muted mt-2">每次唤醒迅雷的间隔秒数，唤起迅雷下载时，迅雷会有任务确认弹窗，请在间隔时间内确认任务，否则无法进行下一次的唤醒！</small>
 								</div>
-								<div class="form-group row" style="display: none;">
-									<label for="common_download_thread" class="col-sm-1 col-form-label" aria-describedby="ccommon_download_thread_help">下载并发数：</label>
+								<!-- 迅雷、Ajax下载并发数 -->
+								<div id="common_download_thread_row" class="form-group row" style="display: none;">
+									<label for="common_download_thread" class="col-sm-1 col-form-label" aria-describedby="common_download_thread_help">下载并发数：</label>
 									<div class="col-sm-2">
 										<input type="number" min="5" max="15" class="form-control" id="common_download_thread" placeholder="下载并发量">
 									</div>
-									<small id="ccommon_download_thread_help" class="text-muted mt-2">下载方式为非QQ空间外链的同时下载数</small>
+									<small id="common_download_thread_help" class="text-muted mt-2">下载方式为非QQ空间外链的同时下载数</small>
 								</div>
-								<div class="form-group row" style="display: none;">
+								<!-- 浏览器下载相关配置 -->
+								<div id="common_download_status_row" class="form-group row" style="display: none;">
 									<div class="col-sm-1">启用状态栏：</div>
 									<div class="col-sm-2">
 										<div class="custom-control custom-checkbox">
@@ -993,6 +998,25 @@
 										<small id="common_download_status_help" class="text-muted">勾选表示启用，禁用后，会影响整个浏览器下载文件时无状态栏提醒，适用于下载方式为浏览器</small>
 									</div>
 								</div>
+								<!-- Aria2下载相关配置 -->
+								<div id="common_aria2_rpc_row" class="form-group row" style="display: none;">
+									<label for="common_aria2_rpc" class="col-sm-1 col-form-label">Aria2 RPC地址：</label>
+									<div class="col-sm-2">
+										<input type="text" id="common_aria2_rpc" class="form-control" aria-describedby="common_aria2_rpc_help">
+									</div>
+									<div>
+										<button id="aria2_test" type="button" class="btn btn-outline-info" data-module="Common">测试</button>
+									</div>
+									<small id="common_aria2_rpc_help" class="text-muted mt-2">RPC地址，目前仅支持HTTP协议，请启用HTTP协议的RPC服务！</small>
+								</div>
+								<div id="common_aria2_token_row" class="form-group row" style="display: none;">
+									<label for="common_aria2_token" class="col-sm-1 col-form-label">Aria2 认证令牌：</label>
+									<div class="col-sm-2">
+										<input type="text" class="form-control" id="common_aria2_token" aria-describedby="common_aria2_token_help">
+									</div>
+									<small id="common_aria2_token_help" class="text-muted mt-2">连接RPC服务的Secret令牌，不开启授权认证的无需填写此项！</small>
+								</div>
+								<!-- 其他配置 -->
 								<div class="form-group row">
 									<div class="col-sm-1">空间用户链接：</div>
 									<div class="col-sm-2">

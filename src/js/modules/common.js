@@ -367,9 +367,11 @@ API.Common.downloadsByBrowser = async (tasks) => {
             // 添加任务到下载器的时候，可能存在一直无返回的情况，问题暂未定位，先临时添加超时秒数逻辑
             await API.Utils.timeoutPromise(API.Utils.downloadByBrowser(task), timeout || 15).then((downloadTask) => {
                 if (downloadTask.id > 0) {
+                    task.setState('complete');
                     indicator.addSuccess(task);
                 } else {
                     console.error('添加到浏览器下载异常', task);
+                    task.setState('interrupted');
                     indicator.addFailed(task);
                 }
             }).catch((error) => {
@@ -382,6 +384,41 @@ API.Common.downloadsByBrowser = async (tasks) => {
         await API.Utils.sleep(1000);
     }
     indicator.complete();
+    return true;
+}
+
+/**
+ * 通过Aria2下载文件
+ * @param {Array} tasks
+ */
+API.Common.downloadByAria2 = async (tasks) => {
+    // 进度更新器
+    const indicator = new StatusIndicator('Common_Aria2');
+    indicator.setTotal(tasks.length);
+
+    // 添加任务
+    for (const task of tasks) {
+        await API.Utils.downloadByAria2(task).then((result) => {
+            if (result.error) {
+                console.error('添加到Aria2异常', result, task);
+                task.setState('interrupted');
+                indicator.addFailed(task);
+            } else {
+                console.debug('添加到Aria2完成', result);
+                task.setState('complete');
+                // 添加成功
+                indicator.addSuccess(task);
+            }
+        }).catch((error) => {
+            console.error('添加到Aria2异常', error, task);
+            task.setState('interrupted');
+            indicator.addFailed(task);
+        })
+    }
+
+    // 完成
+    indicator.complete();
+
     return true;
 }
 

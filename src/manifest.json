@@ -61,7 +61,7 @@
         "default_popup": "html/popup.html"
     },
     "options_page": "html/options.html",
-    "content_security_policy": "script-src 'self' 'unsafe-eval' https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/ https://cdnjs.cloudflare.com/; frame-src 'self' https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/ https://cdnjs.cloudflare.com/; object-src 'self'",
+    "content_security_policy": "script-src 'self' 'unsafe-eval' https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/ https://cdn.jsdelivr.net/; frame-src 'self' https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/ https://cdn.jsdelivr.net/; object-src 'self'",
     "web_accessible_resources": [
         "others/README.md",
         "html/indicator.html",

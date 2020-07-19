@@ -458,6 +458,28 @@ API.Utils = {
     },
 
     /**
+     * POST 请求
+     * @param {string} url 请求URL
+     * @param {object} data 请求数据
+     */
+    post(url, data) {
+        return new Promise(function (resolve, reject) {
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: data,
+                contentType: "application/json;charset=utf-8",
+                success: function (result) {
+                    resolve(result);
+                },
+                error: function (xhr, status, error) {
+                    reject(error);
+                }
+            });
+        });
+    },
+
+    /**
      * 获取URL参数值
      * @param {string} name 
      */
@@ -1066,6 +1088,31 @@ API.Utils = {
     },
 
     /**
+     * Aria2下载
+     * @param {DownloadTask} task
+     */
+    downloadByAria2(task) {
+        const Aria2Setting = QZone_Config.Common.Aria2;
+        let token = "token:" + Aria2Setting.token;
+        const data = {
+            "jsonrpc": "2.0",
+            "method": "aria2.addUri",
+            "id": Date.now(),
+            "params": [
+                token,
+                [
+                    task.url
+                ],
+                {
+                    "out": QZone.Common.Config.ZIP_NAME + '/' + task.dir + "/" + task.name
+                }
+            ]
+        }
+        // 添加下载任务到Aria2
+        return API.Utils.post(Aria2Setting.rpc, JSON.stringify(data));
+    },
+
+    /**
      * 获取浏览器下载管理器的列表
      * @param {string} state
      */
@@ -1288,7 +1335,7 @@ API.Common = {
      */
     getLikeList(unikey, begin_uin) {
         let params = {
-            "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
             "unikey": unikey,
             "begin_uin": begin_uin || 0,
             "query_count": 60,
@@ -1360,6 +1407,27 @@ API.Common = {
      */
     isThunder() {
         return this.isDownloadType('Thunder');
+    },
+
+    /**
+     * 下载工具是否为Aria2
+     */
+    isAria2() {
+        return this.isDownloadType('Aria2');
+    },
+
+    /**
+     * 下载工具是否为助手内部
+     */
+    isFile() {
+        return this.isDownloadType('File');
+    },
+
+    /**
+     * 下载工具是否为浏览器
+     */
+    isBrowser() {
+        return this.isDownloadType('File');
     },
 
     /**
