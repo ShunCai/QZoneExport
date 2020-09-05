@@ -49,7 +49,7 @@ API.Favorites.getPageList = async (pageIndex, indicator) => {
         indicator.setTotal(QZone.Favorites.total);
 
         // 转换数据
-        let dataList = API.Favorites.convert(data.fav_list);
+        let dataList = API.Favorites.convert(data.fav_list || []);
 
         //  更新获取成功数据
         indicator.addSuccess(dataList);
