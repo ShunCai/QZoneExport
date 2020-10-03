@@ -17,9 +17,16 @@ API.Common.initUserInfo = async () => {
         // 用户信息
         userInfo = Object.assign(QZone.Common.Target, userInfo);
 
-        // 更换用户图片
-        userInfo.avatar = API.Common.getUserLogoUrl(userInfo.uin);
+        // 添加目标头像下载任务
+        API.Utils.newDownloadTask(API.Common.getUserLogoUrl(userInfo.uin), 'Common/images', userInfo.uin + ".jfif", userInfo);
 
+        if(QZone.Common.Target.uin !== QZone.Common.Owner.uin){
+            // 如果是备份他人空间，再添加自身的图片头像下载
+            API.Utils.newDownloadTask(API.Common.getUserLogoUrl(QZone.Common.Owner.uin), 'Common/images', QZone.Common.Owner.uin + ".jfif", QZone.Common.Owner);
+        }
+
+        // 更换用户图片
+        userInfo.avatar = API.Common.getUserLogoLocalUrl(userInfo.uin);
     } catch (error) {
         console.error('初始化用户信息异常', error);
     }
@@ -884,6 +891,14 @@ API.Common.setCompareFiledInfo = (items, sourceFiled, targetFiled) => {
  */
 API.Common.isGetLike = (CONFIG) => {
     return CONFIG.Like.isGet && (CONFIG.exportType === 'HTML' || CONFIG.exportType == 'JSON')
+}
+
+/**
+ * 是否需要获取最近访问
+ * @param {Object} CONFIG 模块配置项
+ */
+API.Common.isGetVisitor = (CONFIG) => {
+    return CONFIG.Visitor.isGet && (CONFIG.exportType === 'HTML' || CONFIG.exportType == 'JSON')
 }
 
 /**
