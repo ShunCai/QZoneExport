@@ -1,3 +1,6 @@
+// PDF组件兼容大小写
+//window.jsPDF = window.jspdf.jsPDF;
+
 /**
  * Ajax下载任务
  */
@@ -217,6 +220,13 @@ const MAX_MSG = {
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
+    Messages_Visitor: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的最近访问',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
     Messages_Export: [
         '正在导出说说',
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
@@ -252,6 +262,13 @@ const MAX_MSG = {
     ],
     Blogs_Like: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日志的点赞列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+        '请稍后...'
+    ],
+    Blogs_Visitor: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日志的最近访问',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
@@ -369,6 +386,13 @@ const MAX_MSG = {
     ],
     Photos_Albums_Like: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 个相册的点赞列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Photos_Albums_Visitor: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 个相册的最近访问',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',

@@ -240,6 +240,57 @@ API.Utils = {
      */
     base64ToUtf8(str) {
         return decodeURIComponent(escape(atob(str)));
+    },
+
+    /**
+     * 根据年月份分组数据
+     * @param {array} data 数据集合
+     * @param {object} timeField 时间字段名
+     * @param {string} type 分组类型 all/year/month
+     */
+    groupedByTime(data, timeField, type) {
+        data = data || [];
+        let resMaps = new Map();
+        for (const item of data) {
+            let time = item[timeField];
+            if (Array.isArray(timeField) && !time) {
+                for (const field of timeField) {
+                    time = item[field];
+                    if (time) {
+                        break;
+                    }
+                }
+            }
+            let date = null;
+            if (typeof (time) === 'string') {
+                date = new Date(time);
+            } else {
+                date = new Date(time * 1000);
+            }
+            if (!date) {
+                date = new Date('1970-01-01');
+            }
+            switch (type) {
+                case 'year':
+                    let year_items = resMaps.get(date.getFullYear()) || [];
+                    year_items.push(item);
+                    resMaps.set(date.getFullYear(), year_items);
+                    break;
+                case 'month':
+                    let month_items = resMaps.get(date.getMonth() + 1) || [];
+                    month_items.push(item);
+                    resMaps.set(date.getMonth() + 1, month_items);
+                    break;
+                default:
+                    let all_month_maps = resMaps.get(date.getFullYear()) || new Map();
+                    let all_month_items = all_month_maps.get(date.getMonth() + 1) || [];
+                    all_month_items.push(item);
+                    all_month_maps.set(date.getMonth() + 1, all_month_items);
+                    resMaps.set(date.getFullYear(), all_month_maps);
+                    break;
+            }
+        }
+        return resMaps;
     }
 
 }
@@ -545,7 +596,7 @@ API.Common = {
         const modal_html = template(TPL.MODAL_WIN, {
             id: 'like_win',
             size: '',
-            title: '赞列表',
+            title: '点赞列表',
             body: like_html
         });
 
@@ -561,6 +612,50 @@ API.Common = {
 
         // 显示窗口
         $('#like_win').modal('show');
+    },
+
+    /**
+     * 显示最近访问窗口
+     * @param {Object} dom DOM元素
+     * @param {Array} dataList 列表
+     */
+    showVisitorsWin(dom, dataList) {
+        const targetId = $(dom).attr('data-target');
+        if (!targetId) {
+            return;
+        }
+        // 获取指定数据
+        const itemIndex = dataList.getIndex(targetId, $(dom).attr('data-field'));
+        if (itemIndex == -1) {
+            return;
+        }
+        const item = dataList[itemIndex];
+
+        // 渲染列表
+        const like_html = template(TPL.VISITOR_LIST, {
+            items: item.custom_visitor && item.custom_visitor.list || []
+        });
+
+        // 渲染模式窗口
+        const modal_html = template(TPL.MODAL_WIN, {
+            id: 'visitors_win',
+            size: '',
+            title: '最近访问',
+            body: like_html
+        });
+
+        // 存在元素直接移除重新创建
+        const $like_win = $('#visitors_win');
+        if ($like_win) {
+            $like_win.modal('hide');
+            $like_win.remove();
+        }
+
+        // 添加HTML到页面
+        $('body').append(modal_html);
+
+        // 显示窗口
+        $('#visitors_win').modal('show');
     },
 
     /**
@@ -642,6 +737,22 @@ API.Blogs = {
 }
 
 /**
+ * 说说模块API
+ */
+API.Messages = {
+    /**
+     * 获取地图超链接
+     * @param {object} ibs 坐标信息
+     */
+    getMapUrl(ibs) {
+        if (!ibs) {
+            return '#';
+        }
+        return 'https://apis.map.qq.com/uri/v1/marker?marker=coord:{pos_y},{pos_x};title:{idname};addr:{name}'.format(ibs);
+    }
+}
+
+/**
  * 模板常量
  */
 const TPL = {
@@ -665,6 +776,7 @@ const TPL = {
             </div>
         </div>
     `,
+
     /**
      * 点赞列表
      */
@@ -680,7 +792,7 @@ const TPL = {
                             <img class="rounded-circle" src="<%:=API.Common.getUserLogoUrl(item.fuin)%>" alt="" style="height: 50px;width: 50px;">
                         </div>
                         <div class="flex-fill bd-highlight align-self-center ml-3">
-                            <%:=item.nick%>
+                            <%:=API.Common.formatContent(item.nick)%>
                         </div>
                         <div class="bd-highlight align-self-center ml-3">
                             <small>
@@ -700,6 +812,35 @@ const TPL = {
             <%}%>
         </div>
     `,
+    
+    /**
+     * 最近访问
+     */
+    VISITOR_LIST: `
+        <div class="list-group">
+            <%if(items.length === 0 ){%>
+                <p>没人查看，好伤心哦^_^</p>
+            <%}%>
+            <%for (const item of items) {%>
+                <a href="<%:=API.Common.getUserUrl(item.uin)%>" target="_blank" class="list-group-item list-group-item-action border rounded">
+                    <div class="d-flex flex-row bd-highlight">
+                        <div class="bd-highlight">
+                            <img class="rounded-circle" src="<%:=API.Common.getUserLogoUrl(item.uin)%>" alt="" style="height: 50px;width: 50px;">
+                        </div>
+                        <div class="flex-fill bd-highlight align-self-center ml-3">
+                            <%:=API.Common.formatContent(item.name)%>
+                        </div>
+                        <div class="bd-highlight align-self-center ml-3">
+                            <small>
+                                <span><%:=API.Utils.formatDate(item.time)%></span>
+                            </small>
+                        </div>
+                    </div>
+                </a>
+            <%}%>
+        </div>
+    `,
+
     /**
      * 相册评论模板
      */

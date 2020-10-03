@@ -227,12 +227,12 @@
 								<h5 style="color:cadetblue">其他选项：</h5>
 								<hr>
 								<div class="form-group row">
-									<div class="col-sm-1">获取赞：</div>
+									<div class="col-sm-1">点赞列表：</div>
 									<div class="col-sm-2 custom-control custom-checkbox">
 										<input type="checkbox" name="QZone_Config.Messages.Like.isGet" class="custom-control-input" id="messages_has_like" data-hidden="true" data-target-link="messages_like_link">
 										<label style="margin-left: 14px;" class="custom-control-label" for="messages_has_like" aria-describedby="messages_like_help"></label>
 									</div>
-									<small class="text-muted">默认不获取赞，勾选获取，只获取说说本身赞，不获取说说配图赞，仅在备份类型为HTML、JSON时备份赞</small>
+									<small class="text-muted">默认不获取赞，勾选获取，只获取说说本身赞，不获取说说配图的赞，仅在备份类型为HTML、JSON时备份赞</small>
 								</div>
 								<div class="form-group row" data-link="messages_like_link">
 									<label class="col-sm-1 col-form-label">查询间隔：</label>
@@ -241,6 +241,25 @@
 									</div>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="messages_like_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<hr>
+								<div class="form-group row">
+									<div class="col-sm-1">最近访问：</div>
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" name="QZone_Config.Messages.Visitor.isGet" class="custom-control-input" id="messages_has_visitor" data-hidden="true" data-target-link="messages_visitor_link">
+										<label style="margin-left: 14px;" class="custom-control-label" for="messages_has_visitor" aria-describedby="messages_visitor_help"></label>
+									</div>
+									<small class="text-muted">默认不获取最近访问，勾选获取，理论上仅支持获取最近1000条访问记录（开通黄钻情况下），仅在备份类型为HTML、JSON时备份赞</small>
+								</div>
+								<div class="form-group row" data-link="messages_visitor_link">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="messages_visitor_min" name="QZone_Config.Messages.Visitor.randomSeconds.min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="messages_visitor_max" name="QZone_Config.Messages.Visitor.randomSeconds.max" placeholder="最大间隔">
 									</div>
 									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
@@ -260,6 +279,7 @@
 									<div class="col-sm-2">
 										<select id="blogs_exportFormat" class="custom-select">
 											<option value="HTML" selected>HTML</option>
+											<!-- <option value="PDF">PDF</option> -->
 											<option value="MarkDown">MarkDown</option>
 											<option value="JSON">JSON</option>
 										</select>
@@ -353,7 +373,7 @@
 								<h5 style="color:cadetblue">其他选项：</h5>
 								<hr>
 								<div class="form-group row">
-									<div class="col-sm-1">获取赞：</div>
+									<div class="col-sm-1">点赞列表：</div>
 									<div class="col-sm-2 custom-control custom-checkbox">
 										<input type="checkbox" name="QZone_Config.Blogs.Like.isGet" class="custom-control-input" id="blogs_has_like" data-hidden="true" data-target-link="blogs_like_link">
 										<label style="margin-left: 14px;" class="custom-control-label" for="blogs_has_like" aria-describedby="blogs_like_help"></label>
@@ -367,6 +387,25 @@
 									</div>
 									<div class="col-sm-1">
 										<input type="number" min="1" class="form-control" id="blogs_like_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<hr>
+								<div class="form-group row">
+									<div class="col-sm-1">最近访问：</div>
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" name="QZone_Config.Blogs.Visitor.isGet" class="custom-control-input" id="blogs_has_visitor" data-hidden="true" data-target-link="blogs_visitor_link">
+										<label style="margin-left: 14px;" class="custom-control-label" for="blogs_has_visitor" aria-describedby="blogs_visitor_help"></label>
+									</div>
+									<small class="text-muted">默认不获取最近访问，勾选获取，理论上仅支持获取最近1000条访问记录（开通黄钻情况下），仅在备份类型为HTML、JSON时备份赞</small>
+								</div>
+								<div class="form-group row" data-link="blogs_visitor_link">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="blogs_visitor_min" name="QZone_Config.Blogs.Visitor.randomSeconds.min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="blogs_visitor_max" name="QZone_Config.Blogs.Visitor.randomSeconds.max" placeholder="最大间隔">
 									</div>
 									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
 								</div>
@@ -543,6 +582,25 @@
 										</div>
 										<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
 									</div>
+									<hr>
+									<div class="form-group row">
+										<div class="col-sm-1">最近访问：</div>
+										<div class="col-sm-2 custom-control custom-checkbox">
+											<input type="checkbox" name="QZone_Config.Photos.Visitor.isGet" class="custom-control-input" id="albums_has_visitor" data-hidden="true" data-target-link="albums_visitor_link">
+											<label style="margin-left: 14px;" class="custom-control-label" for="albums_has_visitor" aria-describedby="albums_visitor_help"></label>
+										</div>
+										<small class="text-muted">默认不获取最近访问，勾选获取，理论上仅支持获取最近1000条访问记录（开通黄钻情况下），仅在备份类型为HTML、JSON时备份赞</small>
+									</div>
+									<div class="form-group row" data-link="albums_visitor_link">
+										<label class="col-sm-1 col-form-label">查询间隔：</label>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control" id="albums_visitor_min" name="QZone_Config.Photos.Visitor.randomSeconds.min" placeholder="最小间隔">
+										</div>
+										<div class="col-sm-1">
+											<input type="number" min="1" class="form-control" id="albums_visitor_max" name="QZone_Config.Photos.Visitor.randomSeconds.max" placeholder="最大间隔">
+										</div>
+										<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+									</div>
 								</div>
 								<h5 style="color:cadetblue">相片选项：</h5>
 								<hr>
@@ -605,7 +663,7 @@
 								<h5 style="color:cadetblue">其他选项：</h5>
 								<hr>
 								<div class="form-group row">
-									<div class="col-sm-1">获取赞：</div>
+									<div class="col-sm-1">点赞列表：</div>
 									<div class="col-sm-2 custom-control custom-checkbox">
 										<input type="checkbox" name="QZone_Config.Photos.Like.isGet" class="custom-control-input" id="photos_has_like" data-hidden="true" data-target-link="photos_like_link">
 										<label style="margin-left: 14px;" class="custom-control-label" for="photos_has_like" aria-describedby="photos_like_help"></label>
@@ -721,7 +779,7 @@
 								<h5 style="color:cadetblue">其他选项：</h5>
 								<hr>
 								<div class="form-group row">
-									<div class="col-sm-1">获取赞：</div>
+									<div class="col-sm-1">点赞列表：</div>
 									<div class="col-sm-2 custom-control custom-checkbox">
 										<input type="checkbox" name="QZone_Config.Videos.Like.isGet" class="custom-control-input" id="videos_has_like" data-hidden="true" data-target-link="videos_like_link">
 										<label style="margin-left: 14px;" class="custom-control-label" for="videos_has_like" aria-describedby="videos_like_help"></label>
