@@ -45,7 +45,8 @@
 			<div id="comments_html">
 				<h5 class="mt-3">评论
 					<span class="badge badge-primary badge-pill"><%:=blog.comments.length%></span>
-					<span class="border-primary border rounded text-primary p-1 float-right fa fa-thumbs-up mr-2 cursor"><%:=blog.likeTotal || 0 %></span>
+					<span class="text-primary p-1 float-right fa fa-thumbs-up mr-2 cursor" title="查看点赞" data-field="blogid" data-target="<%:=blog.blogid%>"><%:=blog.likeTotal || 0 %></span>
+					<span class="text-primary p-1 float-right fa fa-eye mr-2 cursor" title="最近访问" data-field="blogid" data-target="<%:=blog.blogid%>"><%:=blog.custom_visitor && blog.custom_visitor.viewCount || 0 %></span>
 				</h5>
 				<%/* 评论 */%>
 				<%/* 遍历评论 */%>

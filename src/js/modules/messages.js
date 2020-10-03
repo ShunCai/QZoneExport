@@ -31,6 +31,9 @@ API.Messages.export = async () => {
         // 获取说说赞记录
         await API.Messages.getAllLikeList(items);
 
+        // 获取最近访问
+        await API.Messages.getAllVisitorList(items);
+
         // 添加说说多媒体下载任务
         items = await API.Messages.addMediaToTasks(items);
 
@@ -910,12 +913,107 @@ API.Messages.getAllLikeList = async (items) => {
             }
             indicator.setIndex(++count);
             tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Messages).then((likes) => {
-                console.info('获取说说点赞完成', likes);
+                console.debug('获取说说点赞完成', likes);
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {
                 console.error("获取说说点赞异常：", item, e);
-                indicator.addFailed();
+                indicator.addFailed(item);
+            }));
+
+        }
+
+        await Promise.all(tasks);
+        // 每一批次完成后暂停半秒
+        await API.Utils.sleep(500);
+    }
+
+    // 完成
+    indicator.complete();
+
+    return items;
+},
+
+/**
+ * 获取单条说说的全部最近访问
+ * @param {object} item 说说
+ */
+API.Messages.getItemAllVisitorsList = async (item) => {
+    // 清空原有的最近访问信息
+    item.custom_visitor = {
+        viewCount : 0,
+        totalNum: 0,
+        list: []
+    };
+
+    // 说说最近访问配置
+    const CONFIG = QZone_Config.Messages.Visitor;
+
+    const nextPage = async function (item, pageIndex) {
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
+
+        return await API.Messages.getVisitors(item.tid, pageIndex).then(async (data) => {
+            data = API.Utils.toJson(data, /^_Callback\(/).data;
+
+            // 合并
+            item.custom_visitor.viewCount = data.viewCount || 0;
+            item.custom_visitor.totalNum = data.totalNum || 0;
+            item.custom_visitor.list = item.custom_visitor.list.concat(data.list || []);
+
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.custom_visitor.totalNum, item.custom_visitor.list, arguments.callee, item, nextPageIndex);
+        }).catch(async (e) => {
+            console.error("获取说说最近访问列表异常，当前页：", pageIndex + 1, item, e);
+
+            // 当前页失败后，跳过继续请求下一页
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.custom_visitor.totalNum, item.custom_visitor.list, arguments.callee, item, nextPageIndex);
+        });
+    }
+
+    await nextPage(item, 0);
+
+    return item.custom_visitor;
+}
+
+/**
+ * 获取说说最近访问
+ * @param {Array} items 说说列表
+ */
+API.Messages.getAllVisitorList = async (items) => {
+    if (!API.Common.isGetVisitor(QZone_Config.Messages)) {
+        // 不获取最近访问
+        return items;
+    }
+    // 进度更新器
+    const indicator = new StatusIndicator('Messages_Visitor');
+    indicator.setTotal(items.length);
+
+    // 同时请求数
+    const _items = _.chunk(items, 5);
+
+    // 获取最近访问
+    let count = 0;
+    for (let i = 0; i < _items.length; i++) {
+        const list = _items[i];
+
+        let tasks = [];
+        for (let j = 0; j < list.length; j++) {
+            const item = list[j];
+            if (!API.Common.isNewItem(item)) {
+                // 已备份数据跳过不处理
+                indicator.addSkip(item);
+                continue;
+            }
+            indicator.setIndex(++count);
+            tasks.push(API.Messages.getItemAllVisitorsList(item).then((visitor) => {
+                console.debug('获取说说最近访问完成', visitor);
+                // 获取完成
+                indicator.addSuccess(item);
+            }).catch((e) => {
+                console.error("获取说说最近访问异常：", item, e);
+                indicator.addFailed(item);
             }));
 
         }

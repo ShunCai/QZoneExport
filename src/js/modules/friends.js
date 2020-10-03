@@ -94,20 +94,28 @@ API.Friends.getFriendsTime = async (data, friends) => {
             indicator.addSkip(friend);
             continue;
         }
-        let addFriendTime = await API.Friends.getFriendshipTime(friend.uin).then((time_data) => {
+        await API.Friends.getFriendshipTime(friend.uin).then((time_data) => {
             time_data = API.Utils.toJson(time_data, /^_Callback\(/);
             time_data = time_data.data;
+
+            // 添加时间
             let addTime = time_data.addFriendTime || 0;
             addTime = addTime == 0 ? "老朋友啦" : API.Utils.formatDate(addTime);
+            friend.addFriendTime = addTime;
+
+            // 亲密度
+            friend.intimacyScore = time_data.intimacyScore || 0;
+
+            // 共同信息(共同好友，共同群组)
+            friend.common = time_data.common || {};
+
             // 成功
             indicator.addSuccess(friend);
-            return addTime;
         }).catch((e) => {
             // 失败
             indicator.addFailed(friend);
             console.error("获取好友添加时间异常", friend, e);
         })
-        friend.addFriendTime = addFriendTime;
     }
     // 完成
     indicator.complete();

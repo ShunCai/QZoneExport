@@ -96,6 +96,14 @@ const Default_Config = {
                 min: 1,
                 max: 2
             }
+        },
+        Visitor: {
+            isGet: false, //是否获取最近访问
+            pageSize: 24,
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
         }
     },
     // 日志模块
@@ -131,6 +139,14 @@ const Default_Config = {
         },
         Like: {
             isGet: false, //是否获取赞
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        },
+        Visitor: {
+            isGet: false, //是否获取最近访问
+            pageSize: 24,
             randomSeconds: {
                 min: 1,
                 max: 2
@@ -204,6 +220,14 @@ const Default_Config = {
         },
         Like: {
             isGet: false, //是否获取赞
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        },
+        Visitor: {
+            isGet: false, //是否获取最近访问
+            pageSize: 24,
             randomSeconds: {
                 min: 1,
                 max: 2

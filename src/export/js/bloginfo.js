@@ -25,4 +25,9 @@ $(function () {
         API.Common.showLikeWin(this, dataList);
     });
 
+    // 最近访问
+    $('.viewVisitors').on('click', function () {
+        API.Common.showVisitorsWin(this, dataList);
+    });
+
 });

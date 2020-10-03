@@ -47,46 +47,30 @@
 				</div>
 				<div class="data-info">
 					<div class="list-group list-group-horizontal" style="margin-bottom:200px;">
-						<%if(user.messages > 0){%>
-							<a href="messages/index.html" class="list-group-item list-group-item-action">
-								说说<span class="badge badge-primary badge-pill"><%:=user.messages%></span>
-							</a>
-						<%}%>
-						<%if(user.blogs > 0){%>
-							<a href="blogs/index.html" class="list-group-item list-group-item-action">
-								日志<span class="badge badge-primary badge-pill"><%:=user.blogs%></span>
-							</a>
-						<%}%>
-						<%if(user.diaries > 0){%>
-							<a href="diaries/index.html" class="list-group-item list-group-item-action">
-								私密日记<span class="badge badge-primary badge-pill"><%:=user.diaries%></span>
-							</a>
-						<%}%>
-						<%if(user.photos > 0){%>
-							<a href="albums/index.html" class="list-group-item list-group-item-action">
-								相册<span class="badge badge-primary badge-pill"><%:=user.photos%></span>
-							</a>
-						<%}%>
-						<%if(user.videos > 0){%>
-							<a href="videos/index.html" class="list-group-item list-group-item-action">
-								视频<span class="badge badge-primary badge-pill"><%:=user.videos%></span>
-							</a>
-						<%}%>
-						<%if(user.boards > 0){%>
-							<a href="boards/index.html" class="list-group-item list-group-item-action">
-								留言板<span class="badge badge-primary badge-pill"><%:=user.boards%></span>
-							</a>
-						<%}%>
-						<%if(user.favorites > 0){%>
-							<a href="favorites/index.html" class="list-group-item list-group-item-action">
-								收藏夹<span class="badge badge-primary badge-pill"><%:=user.favorites%></span>
-							</a>
-						<%}%>
-						<%if(user.friends > 0){%>
-							<a href="friends/index.html" class="list-group-item list-group-item-action">
-								好友<span class="badge badge-primary badge-pill"><%:=user.friends%></span>
-							</a>
-						<%}%>
+						<a href="messages/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.messages >0 %>;">
+							说说<span class="badge badge-primary badge-pill"><%:=user.messages || 0%></span>
+						</a>
+						<a href="blogs/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.blogs >0 %>;">
+							日志<span class="badge badge-primary badge-pill"><%:=user.blogs || 0%></span>
+						</a>
+						<a href="diaries/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.diaries >0 %>;">
+							私密日记<span class="badge badge-primary badge-pill"><%:=user.diaries || 0%></span>
+						</a>
+						<a href="albums/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.photos >0 %>;">
+							相册<span class="badge badge-primary badge-pill"><%:=user.photos || 0%></span>
+						</a>
+						<a href="videos/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.videos >0 %>;">
+							视频<span class="badge badge-primary badge-pill"><%:=user.videos || 0%></span>
+						</a>
+						<a href="boards/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.boards >0 %>;">
+							留言板<span class="badge badge-primary badge-pill"><%:=user.boards || 0%></span>
+						</a>
+						<a href="favorites/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.favorites >0 %>;">
+							收藏夹<span class="badge badge-primary badge-pill"><%:=user.favorites || 0%></span>
+						</a>
+						<a href="friends/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.friends >0 %>;">
+							好友<span class="badge badge-primary badge-pill"><%:=user.friends || 0%></span>
+						</a>
 					</div>
 				</div>
 			</div>
