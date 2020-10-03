@@ -1,4 +1,7 @@
 const initSidebar = function () {
+    // 清空目录
+    $("#BlogAnchor").remove();
+    // 重新生成
     const haders = $("body").find("h1,h2,h3,h4,h5,h6,.h1,.h2,.h3,.h4,.h5,.h6,.sidebar-h1,.sidebar-h2,.sidebar-h3,.sidebar-h4,.sidebar-h5,.sidebar-h6");
     if (haders.length == 0) {
         return;
@@ -25,8 +28,8 @@ const initSidebar = function () {
         }
     }
 
-    $("body").prepend('<div class="BlogAnchor">' +
-        '<div class="AnchorContent" id="AnchorContent"> </div>' +
+    $("body").prepend('<div id="BlogAnchor" class="BlogAnchor">' +
+        '<div id="AnchorContent" class="AnchorContent"> </div>' +
         '</div>');
 
 

@@ -93,57 +93,63 @@
 								<%/* 多媒体内容 */%>
 								<div class="medias row p-3 lightgallery">
 									<%/* 视频内容（一般为单视频） */%>
-									<%for(let video of message.custom_videos){%>
-										<%if (API.Videos.isExternalVideo(video)) {%>
-											<a class="medias-item border" href="<%:=API.Videos.getVideoUrl(video)%>" target="_blank">
-												<!-- <span class="message-video"></span> -->
-												<img class="lazyload w-100 h-100" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>">
-											</a>
-										<%}else{%>
-											<%/* 空间视频 */%>
-											<a class="medias-item border message-lightbox" data-poster="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" data-html="#<%:=video.video_id || video.vid || video.pic_id%>">
-												<!-- <span class="message-video"></span> -->
-												<div style="display:none;" id="<%:=video.video_id || video.vid || video.pic_id%>">
-													<video class="lg-video-object lg-html5" src="<%:=(video.custom_filepath || video.custom_url || video.url3)%>" controls="controls"></video>
-												</div>
-												<img class="lazyload w-100 h-100" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" />
-											</a>
-										<%}%>
-									<%}%>
-									<%/*  图片内容(含视频，即同时存在图片与视频) */%>
-									<%for(let image of message.custom_images){%>
-										<%if(image.is_video && image.video_info){%>
-											<%if (API.Videos.isExternalVideo(image.video_info)) {%>
-												<a class="medias-item border" href="<%:=API.Videos.getVideoUrl(image.video_info)%>" target="_blank">
+									<%if(message.custom_videos){%>
+										<%for(let video of message.custom_videos){%>
+											<%if (API.Videos.isExternalVideo(video)) {%>
+												<a class="medias-item border" href="<%:=API.Videos.getVideoUrl(video)%>" target="_blank">
 													<!-- <span class="message-video"></span> -->
-													<img class="lazyload w-100 h-100" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>">
+													<img class="lazyload w-100 h-100" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>">
 												</a>
 											<%}else{%>
 												<%/* 空间视频 */%>
-												<a class="medias-item border message-lightbox" data-poster="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" data-html="#<%:=image.video_info.video_id || image.video_info.vid || image.pic_id%>">
+												<a class="medias-item border message-lightbox" data-poster="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" data-html="#<%:=video.video_id || video.vid || video.pic_id%>">
 													<!-- <span class="message-video"></span> -->
-													<div style="display:none;" id="<%:=image.video_info.video_id || image.video_info.vid || image.pic_id%>">
-														<video class="lg-video-object lg-html5" src="<%:=(image.video_info.custom_filepath || image.video_info.custom_url || image.video_info.url3)%>" controls="controls"></video>
+													<div style="display:none;" id="<%:=video.video_id || video.vid || video.pic_id%>">
+														<video class="lg-video-object lg-html5" src="<%:=(video.custom_filepath || video.custom_url || video.url3)%>" controls="controls"></video>
 													</div>
-													<img class="lazyload w-100 h-100" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" />
+													<img class="lazyload w-100 h-100" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" />
 												</a>
 											<%}%>
-										<%}else{%>
-											<a class="medias-item border message-lightbox" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
-												<img class="lazyload w-100 h-100" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
-											</a>
+										<%}%>
+									<%}%>
+									<%/*  图片内容(含视频，即同时存在图片与视频) */%>
+									<%if(message.custom_images){%>
+										<%for(let image of message.custom_images){%>
+											<%if(image.is_video && image.video_info){%>
+												<%if (API.Videos.isExternalVideo(image.video_info)) {%>
+													<a class="medias-item border" href="<%:=API.Videos.getVideoUrl(image.video_info)%>" target="_blank">
+														<!-- <span class="message-video"></span> -->
+														<img class="lazyload w-100 h-100" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>">
+													</a>
+												<%}else{%>
+													<%/* 空间视频 */%>
+													<a class="medias-item border message-lightbox" data-poster="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" data-html="#<%:=image.video_info.video_id || image.video_info.vid || image.pic_id%>">
+														<!-- <span class="message-video"></span> -->
+														<div style="display:none;" id="<%:=image.video_info.video_id || image.video_info.vid || image.pic_id%>">
+															<video class="lg-video-object lg-html5" src="<%:=(image.video_info.custom_filepath || image.video_info.custom_url || image.video_info.url3)%>" controls="controls"></video>
+														</div>
+														<img class="lazyload w-100 h-100" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" />
+													</a>
+												<%}%>
+											<%}else{%>
+												<a class="medias-item border message-lightbox" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
+													<img class="lazyload w-100 h-100" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
+												</a>
+											<%}%>
 										<%}%>
 									<%}%>
 									<%/* 动画表情内容（目前只支持一个） */%>
-									<%for(let image of message.custom_magics){%>
-										<a class="medias-item border message-lightbox" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
-											<img class="lazyload w-100 h-100" data-src='<%:=(image.custom_filepath || image.custom_url)%>'>
-										</a>
-										<hr>
+									<%if(message.custom_images){%>
+										<%for(let image of message.custom_magics){%>
+											<a class="medias-item border message-lightbox" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
+												<img class="lazyload w-100 h-100" data-src='<%:=(image.custom_filepath || image.custom_url)%>'>
+											</a>
+											<hr>
+										<%}%>
 									<%}%>
 								</div>
 								<%/* 音乐内容（目前已无法正常播放，直接显示专辑图片与歌曲信息） */%>
-								<%if(message.audiototal > 0 && message.custom_audios){%>
+								<%if(message.custom_audios && message.audiototal > 0){%>
 									<div class="medias row p-3">
 										<ul class="list-unstyled w-100">
 											<%for(let music of message.custom_audios){%>
@@ -252,7 +258,8 @@
 							<div class="card-footer text-muted">
 								<%:=API.Common.formatContent(message.custom_create_time)%>
 								<span class="border-primary border rounded text-primary small p-1 float-right" title="当前楼层">#<%:=total + 1 %></span>
-								<span class="border-primary border rounded text-primary p-1 float-right fa fa-thumbs-up mr-2 cursor viewlikes" title="查看点赞" data-field="tid" data-target="<%:=message.tid%>"><%:=message.likeTotal || 0 %></span>
+								<span class="text-primary p-1 float-right fa fa-thumbs-up mr-2 cursor viewlikes" title="点赞列表" data-field="tid" data-target="<%:=message.tid%>"><%:=message.likeTotal || 0 %></span>
+								<span class="text-primary p-1 float-right fa fa-eye mr-2 cursor viewVisitors" title="最近访问" data-field="tid" data-target="<%:=message.tid%>"><%:=message.custom_visitor.viewCount || 0 %></span>
 							</div>
 						</div>
 					<%}%>
