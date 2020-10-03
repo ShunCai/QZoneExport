@@ -631,7 +631,7 @@ API.Videos.getAllLikeList = async (items) => {
                 indicator.addSuccess(item);
             }).catch((e) => {
                 console.error("获取视频点赞异常：", item, e);
-                indicator.addFailed();
+                indicator.addFailed(item);
             }));
 
         }

@@ -7,7 +7,7 @@ const QZone_URLS = {
     USER_COUNT_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/main_page_cgi",
 
     /** 个人信息 */
-    USER_INFO_URL: "https://h5.qzone.qq.com/proxy/domain/base.qzone.qq.com/cgi-bin/user/cgi_userinfo_get_all",
+    USER_INFO_URL: "https://user.qzone.qq.com/proxy/domain/base.qzone.qq.com/cgi-bin/user/cgi_userinfo_get_all",
 
     /** 说说列表URL */
     MESSAGES_LIST_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6",
@@ -16,16 +16,19 @@ const QZone_URLS = {
     MESSAGES_DETAIL_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msgdetail_v6",
 
     /** 说说配图URL */
-    MESSAGES_IMAGES_URL: "https://h5.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_get_pics_v6",
+    MESSAGES_IMAGES_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_get_pics_v6",
 
     /** 说说评论列表URL */
     MESSAGES_COMMONTS_URL: "https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msgdetail_v6",
 
     /** 语音详情URL */
-    MESSAGES_VOICE_INFO_URL: "https://h5.qzone.qq.com/proxy/domain/snsapp.qzone.qq.com/cgi-bin/sound/GetVoice",
+    MESSAGES_VOICE_INFO_URL: "https://user.qzone.qq.com/proxy/domain/snsapp.qzone.qq.com/cgi-bin/sound/GetVoice",
 
     /** 日志列表URL */
     BLOGS_LIST_URL: "https://user.qzone.qq.com/proxy/domain/b.qzone.qq.com/cgi-bin/blognew/get_abs",
+
+    /** 日志阅读数URL */
+    BLOGS_READ_COUNT_URL: "https://user.qzone.qq.com/proxy/domain/b.qzone.qq.com/cgi-bin/blognew/get_count",
 
     /** 日志评论列表URL */
     BLOGS_COMMENTS_URL: "https://user.qzone.qq.com/proxy/domain/b.qzone.qq.com/cgi-bin/blognew/get_comment_list",
@@ -49,19 +52,19 @@ const QZone_URLS = {
     ALBUM_COMMENTS_URL: 'https://user.qzone.qq.com/proxy/domain/app.photo.qzone.qq.com/cgi-bin/app/cgi_pcomment_xml_v2',
 
     /** 相片列表URL */
-    IMAGES_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo',
+    IMAGES_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_list_photo',
 
     /** 相片详情URL */
-    IMAGES_INFO_URL: 'https://h5.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_floatview_photo_list_v2',
+    IMAGES_INFO_URL: 'https://user.qzone.qq.com/proxy/domain/photo.qzone.qq.com/fcgi-bin/cgi_floatview_photo_list_v2',
 
     /** 相片评论列表 */
     IMAGES_COMMENTS_URL: 'https://user.qzone.qq.com/proxy/domain/app.photo.qzone.qq.com/cgi-bin/app/cgi_pcomment_xml_v2',
 
     /** 好友列表URL */
-    FRIENDS_LIST_URL: "https://h5.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/tfriend/friend_show_qqfriends.cgi",
+    FRIENDS_LIST_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/tfriend/friend_show_qqfriends.cgi",
 
     /** 好友资料 */
-    QZONE_USER_INFO_URL: "https://h5.qzone.qq.com/proxy/domain/base.qzone.qq.com/cgi-bin/user/cgi_userinfo_get_all",
+    QZONE_USER_INFO_URL: "https://user.qzone.qq.com/proxy/domain/base.qzone.qq.com/cgi-bin/user/cgi_userinfo_get_all",
 
     /** 好友添加时间 */
     USER_ADD_TIME_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/friendship/cgi_friendship",
@@ -73,16 +76,16 @@ const QZone_URLS = {
     BOARD_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/m.qzone.qq.com/cgi-bin/new/get_msgb',
 
     /** 视频列表URL */
-    VIDEO_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/video_get_data',
+    VIDEO_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/video_get_data',
 
     /** 视频详情URL */
-    VIDEO_INFO_URL: 'https://h5.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/video_get_data',
+    VIDEO_INFO_URL: 'https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/video_get_data',
 
     /** 视频评论URL */
     VIDEO_COMMENTS_URL: 'https://user.qzone.qq.com/proxy/domain/taotao.qzone.qq.com/cgi-bin/emotion_cgi_getcmtreply_v6',
 
     /** 我的收藏 */
-    FAVORITE_LIST_URL: 'https://h5.qzone.qq.com/proxy/domain/fav.qzone.qq.com/cgi-bin/get_fav_list',
+    FAVORITE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/fav.qzone.qq.com/cgi-bin/get_fav_list',
 
     /** 点赞数目 */
     LIKE_COUNT_URL: 'https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/user/qz_opcnt2',
@@ -91,7 +94,23 @@ const QZone_URLS = {
     LIKE_COUNT_URL_88: 'https://rsh.qzone.qq.com/cgi-bin/user/qz_opcnt2_sh',
 
     /** 点赞列表 */
-    LIKE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/users.qzone.qq.com/cgi-bin/likes/get_like_list_app'
+    LIKE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/users.qzone.qq.com/cgi-bin/likes/get_like_list_app',
+
+    /** 浏览数 */
+    VISITOR_COUNT_URL_88: 'https://rsh.qzone.qq.com/cgi-bin/user/qz_opcnt2_sh',
+
+    /** 说说、日志浏览记录列表 */
+    VISITOR_SINGLE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/g.qzone.qq.com/cgi-bin/friendshow/cgi_get_visitor_single',
+
+    /** 相册浏览记录列表 */
+    VISITOR_SIMPLE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/g.qzone.qq.com/cgi-bin/friendshow/cgi_get_visitor_simple',
+
+    /** 空间访问记录 */
+    VISITOR_MORE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/g.qzone.qq.com/cgi-bin/friendshow/cgi_get_visitor_more',
+
+    /** 特别关心列表（含被关心个数） */
+    SPECIAL_CARE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/tfriend/specialcare_get.cgi'
+
 };
 
 const API = {
@@ -1093,7 +1112,7 @@ API.Utils = {
      */
     downloadByAria2(task) {
         const Aria2Setting = QZone_Config.Common.Aria2;
-        let token = "token:" + Aria2Setting.token;
+        const token = "token:" + Aria2Setting.token;
         const data = {
             "jsonrpc": "2.0",
             "method": "aria2.addUri",
@@ -1347,6 +1366,21 @@ API.Common = {
     },
 
     /**
+     * 获取特别关心列表
+     */
+    getSpecialCare() {
+        let params = {
+            "uin": QZone.Common.Owner.uin,
+            "do": 3,
+            "fupdate": 1,
+            "rd": Math.random(),
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        return API.Utils.get(QZone_URLS.SPECIAL_CARE_LIST_URL, params);
+    },
+
+    /**
      * 获取用户空间地址
      */
     getUserUrl(uin) {
@@ -1431,15 +1465,25 @@ API.Common = {
     },
 
     /**
-     * 获取用户空间的头像地址
+     * 获取用户空间的头像在线地址
      */
     getUserLogoUrl(uin) {
-        return "http://qlogo{host}.store.qq.com/qzone/{uin}/{uin}/{size}".format({
+        return "https://qlogo{host}.store.qq.com/qzone/{uin}/{uin}/{size}".format({
             host: uin % 4 || 1,
             uin: uin,
             size: 100
         });
     },
+
+    /**
+     * 获取用户空间的本地地址
+     */
+    getUserLogoLocalUrl(uin) {
+        // 头像默认PNG格式
+        return "Common/images/{uin}.jfif".format({
+            uin: uin
+        });
+    }
 }
 
 /**
@@ -1528,6 +1572,28 @@ API.Blogs = {
     },
 
     /**
+     * 获取日志阅读数
+     *
+     * @param {string} uin QQ号
+     * @param {integer} page 第几页
+     */
+    getReadCount(blogIds) {
+        const params = {
+            "type": 1,
+            "uinList": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "idList": blogIds.join('_'),
+            "r": Math.random(),
+            "iNotice": 0,
+            "inCharset": "utf-8",
+            "outCharset": "utf-8",
+            "format": "json",
+            "ref": "qzone",
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk()
+        };
+        return API.Utils.get(QZone_URLS.BLOGS_READ_COUNT_URL, params);
+    },
+
+    /**
      * 获取日志详情
      *
      * @param {integer} blogid 日志ID
@@ -1575,6 +1641,25 @@ API.Blogs = {
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         };
         return API.Utils.get(QZone_URLS.BLOGS_COMMENTS_URL, params);
+    },
+
+    /**
+     * 获取最近访问列表
+     * @param {string} targeId 目标ID
+     * @param {integer} targeId 当前页索引
+     */
+    getVisitors(targeId, pageIndex) {
+        const params = {
+            "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "appid": 2,//311：说说，2：日志
+            "param": targeId,
+            "beginNum": QZone_Config.Blogs.Visitor.pageSize * pageIndex + 1,
+            "num": QZone_Config.Blogs.Visitor.pageSize,
+            "needFriend": 1,// TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
     }
 
 };
@@ -1842,6 +1927,25 @@ API.Messages = {
             contents.push('<audio controls src="{0}"></audio>'.format(voice.custom_filepath || voice.custom_url))
         }
         return contents.join('\r\n');
+    },
+
+    /**
+     * 获取最近访问列表
+     * @param {string} targeId 目标ID
+     * @param {integer} targeId 当前页索引
+     */
+    getVisitors(targeId, pageIndex) {
+        let params = {
+            "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "appid": 311,//311：说说，2：日志
+            "param": targeId,
+            "beginNum": QZone_Config.Messages.Visitor.pageSize * pageIndex + 1,
+            "num": QZone_Config.Messages.Visitor.pageSize,
+            "needFriend": 1,// TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
     },
 
     /**
@@ -2268,6 +2372,43 @@ API.Photos = {
     },
 
     /**
+     * 获取最近访问列表
+     * @param {string} targeId 目标ID
+     * @param {integer} targeId 当前页索引
+     */
+    getVisitors(targeId, pageIndex) {
+        const params = {
+            "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "appid": 4,//4:相册
+            "param": "2;"+targeId,
+            "beginNum": QZone_Config.Blogs.Visitor.pageSize * pageIndex + 1,
+            "num": QZone_Config.Blogs.Visitor.pageSize,
+            "needFriend": 1,// TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
+    },
+
+    /**
+     * 获取最近访问列表
+     * @param {string} targeId 目标ID
+     * @param {integer} targeId 当前页索引
+     */
+    getVisitors_2(targeId) {
+        let params = {
+            "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "mask": 2,
+            "mod": 2,
+            "contentid": targeId,
+            "fupdate": 1,
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        return API.Utils.get(QZone_URLS.VISITOR_SIMPLE_LIST_URL, params);
+    },
+
+    /**
      * 获取相片外链(无权限也可以访问)
      */
     getExternalUrl(oldurl) {
@@ -2580,6 +2721,9 @@ API.Favorites = {
      * 转换数据
      */
     convert(data) {
+        if (!data) {
+            return data;
+        }
         for (var i = 0; i < data.length; i++) {
             let temp = data[i];
             temp.custom_create_time = API.Utils.formatDate(temp.create_time);

@@ -19,6 +19,9 @@ API.Photos.export = async () => {
         // 获取相册赞记录
         await API.Photos.getAlbumsLikeList(albumList);
 
+        // 获取相册最近访问
+        await API.Photos.getAllVisitorList(albumList);
+
         // 获取所有相册的相片列表
         let imagesMapping = await API.Photos.getAllAlbumImageList(albumList);
         console.info('获取所有相册的所有相片列表完成', imagesMapping);
@@ -1213,7 +1216,7 @@ API.Photos.getAlbumsLikeList = async (items) => {
                 indicator.addSuccess(item);
             }).catch((e) => {
                 console.error("获取相册点赞异常：", item, e);
-                indicator.addFailed();
+                indicator.addFailed(item);
             }));
 
         }
@@ -1269,7 +1272,7 @@ API.Photos.getPhotosLikeList = async (items) => {
                 indicator.addSuccess(item);
             }).catch((e) => {
                 console.error("获取相片点赞异常：", item, e);
-                indicator.addFailed();
+                indicator.addFailed(item);
             }));
 
         }
@@ -1293,4 +1296,99 @@ API.Photos.addPhotoUniKey = (photos) => {
         // 添加点赞Key
         photo.uniKey = API.Photos.getPhotoUniKey(photo);
     }
+}
+
+/**
+ * 获取单条全部最近访问
+ * @param {object} item 说说
+ */
+API.Photos.getItemAllVisitorsList = async (item) => {
+    // 清空原有的最近访问信息
+    item.custom_visitor = {
+        viewCount : 0,
+        totalNum: 0,
+        list: []
+    };
+
+    // 最近访问配置
+    const CONFIG = QZone_Config.Photos.Visitor;
+
+    const nextPage = async function (item, pageIndex) {
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
+
+        return await API.Photos.getVisitors(item.id, pageIndex).then(async (data) => {
+            data = API.Utils.toJson(data, /^_Callback\(/).data;
+
+            // 合并
+            item.custom_visitor.viewCount = data.viewCount || 0;
+            item.custom_visitor.totalNum = data.totalNum || 0;
+            item.custom_visitor.list = item.custom_visitor.list.concat(data.list || []);
+
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.custom_visitor.totalNum, item.custom_visitor.list, arguments.callee, item, nextPageIndex);
+        }).catch(async (e) => {
+            console.error("获取说说最近访问列表异常，当前页：", pageIndex + 1, item, e);
+
+            // 当前页失败后，跳过继续请求下一页
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.custom_visitor.totalNum, item.custom_visitor.list, arguments.callee, item, nextPageIndex);
+        });
+    }
+
+    await nextPage(item, 0);
+
+    return item.custom_visitor;
+}
+
+/**
+ * 获取最近访问
+ * @param {Array} items 说说列表
+ */
+API.Photos.getAllVisitorList = async (items) => {
+    if (!API.Common.isGetVisitor(QZone_Config.Photos)) {
+        // 不获取最近访问
+        return items;
+    }
+    // 进度更新器
+    const indicator = new StatusIndicator('Photos_Albums_Visitor');
+    indicator.setTotal(items.length);
+
+    // 同时请求数
+    const _items = _.chunk(items, 5);
+
+    // 获取最近访问
+    let count = 0;
+    for (let i = 0; i < _items.length; i++) {
+        const list = _items[i];
+
+        let tasks = [];
+        for (let j = 0; j < list.length; j++) {
+            const item = list[j];
+            if (!API.Photos.isNewAlbum(item.id)) {
+                // 已备份数据跳过不处理
+                indicator.addSkip(item);
+                continue;
+            }
+            indicator.setIndex(++count);
+            tasks.push(API.Photos.getItemAllVisitorsList(item).then((visitor) => {
+                console.debug('获取相册最近访问完成', visitor);
+                // 获取完成
+                indicator.addSuccess(item);
+            }).catch((e) => {
+                console.error("获取相册最近访问异常：", item, e);
+                indicator.addFailed(item);
+            }));
+
+        }
+
+        await Promise.all(tasks);
+        // 每一批次完成后暂停半秒
+        await API.Utils.sleep(500);
+    }
+
+    // 完成
+    indicator.complete();
+
+    return items;
 }
