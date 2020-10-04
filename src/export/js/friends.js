@@ -5,11 +5,18 @@ $(function () {
         clickToSelect: true,
         width: "50"
     }, {
+        field: 'avatar',
+        title: '头像',
+        align: 'center',
+        formatter: (value, row) => {
+            return API.Utils.getImageHTML(API.Common.getMediaPath(value, row.custom_avatar, "Friends_HTML"));
+        }
+    }, {
         field: 'uin',
         title: 'QQ号',
         align: 'center',
         sortable: true,
-        formatter: (value) => {
+        formatter: (value, row) => {
             return API.Common.getUserLink(value, value);
         }
     }, {

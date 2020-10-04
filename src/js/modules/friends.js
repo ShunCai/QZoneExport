@@ -11,6 +11,9 @@ API.Friends.export = async () => {
         // 获取所有的QQ好友
         let friends = await API.Friends.getAllList();
 
+        // 添加QQ好友的头像下载
+        API.Common.downloadUserAvatars(friends);
+
         // 根据分组名称（非分组ID）进行排序
         friends = API.Utils.sort(friends, 'groupName');
         console.info('排序后', friends, QZone.Friends.Data)
@@ -88,9 +91,16 @@ API.Friends.getFriendsTime = async (data, friends) => {
     }
     // 遍历
     for (const friend of friends) {
+        // 设置默认值
         friend.groupName = groupMap.get(friend.groupid) || "默认分组";
-        if (friend.uin === QZone.Common.Owner.uin || !API.Friends.isNewItem(friend)) {
+        const isMe = friend.uin === QZone.Common.Owner.uin;
+        if (isMe || !API.Friends.isNewItem(friend)) {
             // 好友号为自己号或非新好友，跳过
+            if (isMe) {
+                friend.addFriendTime = "自己啦";
+                friend.intimacyScore = "这要看您多爱护自己啦";
+                friend.common = {};
+            }
             indicator.addSkip(friend);
             continue;
         }
@@ -170,7 +180,7 @@ API.Friends.exportToExcel = async (friends) => {
 
     // Excel数据
     let ws_data = [
-        ["QQ号", "备注名称", "QQ昵称", "所在分组", "添加时间", "用户主页", "即时消息"]
+        ["QQ号", "备注名称", "QQ昵称", "所在分组", "相识时间", "亲密度", "共同好友", "共同群组", "用户主页", "即时消息"]
     ];
 
     for (const friend of friends) {
@@ -178,7 +188,27 @@ API.Friends.exportToExcel = async (friends) => {
         const user_qzone_url = { t: 's', v: "QQ空间", l: { Target: API.Common.getUserUrl(friend.uin), Tooltip: "QQ空间" } };
         // QQ聊天超链接
         const user_message_url = { t: 's', v: "QQ聊天", l: { Target: API.Common.getMessageUrl(friend.uin), Tooltip: "QQ聊天" } };
-        let rowData = [friend.uin, friend.remark, friend.name, friend.groupName, friend.addFriendTime, user_qzone_url, user_message_url];
+
+        // 共同信息
+        friend.common = friend.common || {};
+        friend.common.friend = friend.common.friend || [];
+        friend.common.group = friend.common.group || [];
+        const groups = [];
+        for (const group of friend.common.group) {
+            groups.push(group.name);
+        }
+        const rowData = [
+            friend.uin, 
+            friend.remark, 
+            friend.name, 
+            friend.groupName, 
+            friend.addFriendTime, 
+            friend.intimacyScore, 
+            friend.common.friend.length, 
+            groups.join('\n'), 
+            user_qzone_url, 
+            user_message_url
+        ];
         ws_data.push(rowData);
     }
 
