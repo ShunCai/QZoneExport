@@ -213,13 +213,14 @@ API.Videos.getAllComments = async (videos) => {
  * @param {Map} FILE_URLS 模块已下载映射
  */
 API.Videos.addDownloadTasks = (videos, module_dir, source, FILE_URLS) => {
-    if (!videos || API.Common.isQzoneUrl()) {
-        // QQ空间外链不添加下载任务
+    // 是否为其他模块添加视频下载任务
+    const isOther = module_dir ? true : false;
+    if (!videos || API.Common.isQzoneUrl() || (!isOther && QZone_Config.Videos.exportType == 'Link')) {
+        // QQ空间外链、视频备份类型为下载链接、则不添加下载任务
         return;
     }
 
     // 下载相对目录
-    const isOther = module_dir ? true : false;
     FILE_URLS = FILE_URLS || QZone.Videos.FILE_URLS;
     for (const video of videos) {
 
