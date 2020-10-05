@@ -227,6 +227,14 @@ API.Utils = {
     },
 
     /**
+     * 获取HTML的图片内容
+     * @param {string} url 图片地址
+     */
+    getImageHTML(url) {
+        return "<img src='{0}' >".format(url);
+    },
+
+    /**
      * Base64编码
      * @param {string} str 原始字符串
      */
@@ -526,6 +534,16 @@ API.Common = {
     },
 
     /**
+     * 获取用户头像超链接
+     * @param {string} uin 目标QQ号
+     * @param {string} nickName 目标昵称
+     * @param {string} type 类型
+     */
+    getUserImageLink(uin) {
+        return API.Utils.getImageHTML(API.Common.getUserLogoLocalUrl(uin));
+    },
+
+    /**
      * 获取唤起QQ聊天地址
      * @param {string} uin 目标QQ号
      */
@@ -562,6 +580,9 @@ API.Common = {
                 res = '../' + res;
                 break;
             case 'Videos_HTML':
+                res = '../' + res;
+                break;
+            case 'Friends_HTML':
                 res = '../' + res;
                 break;
             default:

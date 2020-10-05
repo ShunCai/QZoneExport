@@ -342,7 +342,7 @@ const MAX_MSG = {
         '请稍后...'
     ],
     Friends_Time: [
-        '正在获取好友添加时间',
+        '正在获取好友详细信息',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',

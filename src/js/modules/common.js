@@ -18,12 +18,7 @@ API.Common.initUserInfo = async () => {
         userInfo = Object.assign(QZone.Common.Target, userInfo);
 
         // 添加目标头像下载任务
-        API.Utils.newDownloadTask(API.Common.getUserLogoUrl(userInfo.uin), 'Common/images', userInfo.uin + ".jfif", userInfo);
-
-        if(QZone.Common.Target.uin !== QZone.Common.Owner.uin){
-            // 如果是备份他人空间，再添加自身的图片头像下载
-            API.Utils.newDownloadTask(API.Common.getUserLogoUrl(QZone.Common.Owner.uin), 'Common/images', QZone.Common.Owner.uin + ".jfif", QZone.Common.Owner);
-        }
+        API.Common.downloadUserAvatars([QZone.Common.Target, QZone.Common.Owner]);
 
         // 更换用户图片
         userInfo.avatar = API.Common.getUserLogoLocalUrl(userInfo.uin);
@@ -936,4 +931,38 @@ API.Common.getModulesLikeList = async (item, moduleConfig) => {
     }
     item.likeTotal = item.likes.length;
     return item.likes;
+}
+
+/**
+ * 添加QQ空间用户的头像下载
+ * @param {Object} user 用户
+ */
+API.Common.downloadUserAvatar = (user) => {
+    if (!user || !user.uin) {
+        return;
+    }
+    const avatarUrl = API.Common.getUserLogoUrl(user.uin);
+    if (QZone.Common.FILE_URLS.has(avatarUrl)) {
+        // 添加过下载任务则跳过
+        return;
+    }
+
+    API.Utils.newDownloadTask(avatarUrl, 'Common/images', user.uin + '', user);
+    user.avatar = API.Common.getUserLogoUrl(user.uin);
+    user.custom_avatar = API.Common.getUserLogoLocalUrl(user.uin);
+
+    QZone.Common.FILE_URLS.set(avatarUrl, 'Common/images/' + user.uin);
+}
+
+/**
+ * 添加QQ空间用户的头像下载
+ * @param {Array} users 用户列表
+ */
+API.Common.downloadUserAvatars = (users) => {
+    if (!users) {
+        return;
+    }
+    for (const user of users) {
+        API.Common.downloadUserAvatar(user);
+    }
 }
