@@ -219,6 +219,12 @@ API.Boards.exportToHtml = async (boards) => {
     const indicator = new StatusIndicator('Boards_Export_Other');
     indicator.setIndex("HTML");
     try {
+        // 基于JSON生成JS
+        console.info('生成留言JSON开始', boards);
+        await API.Utils.createFolder(QZone.Common.ROOT + '/json');
+        const jsonFile = await API.Common.writeJsonToJs('dataList', boards, QZone.Common.ROOT + '/json/boards.js');
+        console.info('生成留言JSON结束', jsonFile, boards);
+
         // 留言数据根据年份分组
         let yearMaps = API.Utils.groupedByTime(boards, "pubtime", 'year');
         // 基于模板生成年份留言HTML

@@ -371,6 +371,9 @@ const ExportFiles = [
         original: 'export/js/videos.js',
         target: FOLDER_ROOT + 'Common/js/videos.js'
     }, {
+        original: 'export/js/boards.js',
+        target: FOLDER_ROOT + 'Common/js/boards.js'
+    }, {
         original: 'export/js/favorites.js',
         target: FOLDER_ROOT + 'Common/js/favorites.js'
     }
