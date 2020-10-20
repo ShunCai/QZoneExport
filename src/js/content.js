@@ -47,7 +47,7 @@ class ThunderTask {
         this.url = url
         this.downloadState = 'in_progress'
         this.source = source
-        this.referer = window.location.href
+        this.referer = 'https://user.qzone.qq.com/'
     }
 
     /**

@@ -1123,6 +1123,7 @@ API.Utils = {
                     task.url
                 ],
                 {
+                    "referer":'https://user.qzone.qq.com/',
                     "out": QZone.Common.Config.ZIP_NAME + '/' + task.dir + "/" + task.name
                 }
             ]
