@@ -148,6 +148,27 @@ API.Utils = {
         }
         return ret;
     },
+    
+    /**
+     * 通过参数构建URL
+     * @param {string} url 
+     * @param {object} params 
+     */
+    toUrl(url, params) {
+        let paramsArr = [];
+        if (params) {
+            Object.keys(params).forEach(item => {
+                paramsArr.push(item + '=' + params[item]);
+            })
+            if (url.search(/\?/) === -1) {
+                url += '?' + paramsArr.join('&');
+            } else {
+                url += '&' + paramsArr.join('&');
+            }
+
+        }
+        return url;
+    },
 
     /**
      * 转换时间
@@ -320,7 +341,7 @@ API.Common = {
      * 获取用户空间的头像地址
      */
     getUserLogoUrl(uin) {
-        return "http://qlogo{host}.store.qq.com/qzone/{uin}/{uin}/{size}".format({
+        return "https://qlogo{host}.store.qq.com/qzone/{uin}/{uin}/{size}".format({
             host: uin % 4 || 1,
             uin: uin,
             size: 100
@@ -772,6 +793,86 @@ API.Messages = {
         return 'https://apis.map.qq.com/uri/v1/marker?marker=coord:{pos_y},{pos_x};title:{idname};addr:{name}'.format(ibs);
     }
 }
+
+/**
+ * 视频模块API
+ */
+API.Videos = {
+
+    /**
+     * 是否腾讯视频（判断不严谨，先临时判断）
+     * @param {object} 视频信息
+     */
+    isTencentVideo(video) {
+        let url2 = video.url2 || '';
+        let url3 = video.url3 || '';
+        if (!url2 || url3.indexOf('.mp4') > -1) {
+            // 如果URL都没有值，或者地址含有.mp4，肯定是空间视频？
+            return false;
+        }
+        if (url3.indexOf('tencentvideo') > -1) {
+            // 该判断不严谨，但是不知道怎么判断的好
+            return true;
+        }
+        return false;
+    },
+
+    /**
+     * 是否外部视频（判断不严谨，先临时判断）
+     * @param {object} 视频信息
+     */
+    isExternalVideo(video) {
+        let url3 = video.url3 || '';
+        const isTencentTV = API.Videos.isTencentVideo(video);
+        if (isTencentTV) {
+            return true;
+        }
+        if (url3.indexOf('.swf') > -1) {
+            // Flash地址肯定是外部视频？
+            return true;
+        }
+        return false;
+    },
+
+    /**
+     * 获取视频连接
+     * @param {object} 视频信息
+     */
+    getVideoUrl(video) {
+        // URL3个人相册视频？
+        let url = video.url3 || video.url;
+        if (video.source_type == "share") {
+            // 分享视频连接？
+            url = video.rt_url;
+        }
+        if (API.Videos.isTencentVideo(video)) {
+            // 腾讯视频
+            url = API.Videos.getTencentVideoUrl(video.video_id);
+        }
+        // 其他第三方视频
+        return url;
+    },
+
+    /**
+     * 获取腾讯视频的播放地址
+     * @param {string} vid 视频ID
+     */
+    getTencentVideoUrl(vid) {
+        let params = {
+            "origin": "https://user.qzone.qq.com",
+            "vid": vid,
+            "autoplay": true,
+            "volume": 1,
+            "disableplugin": "IframeBottomOpenClientBar",
+            "additionplugin": "IframeUiSearch",
+            "platId": "qzone_feed",
+            "show1080p": true,
+            "isDebugIframe": false
+        }
+        return API.Utils.toUrl('https://v.qq.com/txp/iframe/player.html', params);
+    }
+}
+
 
 /**
  * 模板常量
