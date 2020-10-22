@@ -19,6 +19,8 @@
 #### 在线安装
 - [Chrome浏览器](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
 
+- [Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/djfalpkpjgpkfnkfmnegbalnicdoljcn)
+
 - [360极速浏览器](https://ext.chrome.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
 
 - [360安全浏览器](https://ext.se.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
