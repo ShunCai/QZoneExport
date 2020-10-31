@@ -1194,7 +1194,7 @@ API.Photos.getAlbumsLikeList = async (items) => {
 
     // 获取点赞列表
     let count = 0;
-    for (let i = 0; i < _items.length; i++) {
+    end: for (let i = 0; i < _items.length; i++) {
         const list = _items[i];
 
         let tasks = [];
@@ -1204,9 +1204,9 @@ API.Photos.getAlbumsLikeList = async (items) => {
             item.likes = item.likes || [];
 
             if (!API.Photos.isNewAlbum(item.id)) {
-                // 已备份数据跳过不处理
-                indicator.addSkip(item);
-                continue;
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
             }
 
             indicator.setIndex(++count);
@@ -1225,6 +1225,9 @@ API.Photos.getAlbumsLikeList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
+    
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
 
     // 完成
     indicator.complete();
@@ -1250,7 +1253,7 @@ API.Photos.getPhotosLikeList = async (items) => {
 
     // 获取点赞列表
     let count = 0;
-    for (let i = 0; i < _items.length; i++) {
+    end: for (let i = 0; i < _items.length; i++) {
         const list = _items[i];
 
         let tasks = [];
@@ -1260,9 +1263,9 @@ API.Photos.getPhotosLikeList = async (items) => {
             item.likes = item.likes || [];
 
             if (!API.Photos.isNewItem(item.albumId, item)) {
-                // 已备份数据跳过不处理
-                indicator.addSkip(item);
-                continue;
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
             }
 
             indicator.setIndex(++count);
@@ -1281,6 +1284,9 @@ API.Photos.getPhotosLikeList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
+    
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
 
     // 完成
     indicator.complete();
@@ -1359,16 +1365,16 @@ API.Photos.getAllVisitorList = async (items) => {
 
     // 获取最近访问
     let count = 0;
-    for (let i = 0; i < _items.length; i++) {
+    end: for (let i = 0; i < _items.length; i++) {
         const list = _items[i];
 
         let tasks = [];
         for (let j = 0; j < list.length; j++) {
             const item = list[j];
             if (!API.Photos.isNewAlbum(item.id)) {
-                // 已备份数据跳过不处理
-                indicator.addSkip(item);
-                continue;
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
             }
             indicator.setIndex(++count);
             tasks.push(API.Photos.getItemAllVisitorsList(item).then((visitor) => {
@@ -1386,6 +1392,9 @@ API.Photos.getAllVisitorList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
+    
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
 
     // 完成
     indicator.complete();

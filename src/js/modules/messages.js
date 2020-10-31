@@ -29,10 +29,10 @@ API.Messages.export = async () => {
         items = await API.Messages.getItemsAllCommentList(items);
 
         // 获取说说赞记录
-        await API.Messages.getAllLikeList(items);
+        items = await API.Messages.getAllLikeList(items);
 
         // 获取最近访问
-        await API.Messages.getAllVisitorList(items);
+        items = await API.Messages.getAllVisitorList(items);
 
         // 添加说说多媒体下载任务
         items = await API.Messages.addMediaToTasks(items);
@@ -897,7 +897,7 @@ API.Messages.getAllLikeList = async (items) => {
 
     // 获取点赞列表
     let count = 0;
-    for (let i = 0; i < _items.length; i++) {
+    end: for (let i = 0; i < _items.length; i++) {
         const list = _items[i];
 
         let tasks = [];
@@ -907,9 +907,9 @@ API.Messages.getAllLikeList = async (items) => {
             item.likes = item.likes || [];
 
             if (!API.Common.isNewItem(item)) {
-                // 已备份数据跳过不处理
-                indicator.addSkip(item);
-                continue;
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
             }
             indicator.setIndex(++count);
             tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Messages).then((likes) => {
@@ -927,6 +927,9 @@ API.Messages.getAllLikeList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
+    
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
 
     // 完成
     indicator.complete();
@@ -995,16 +998,16 @@ API.Messages.getAllVisitorList = async (items) => {
 
     // 获取最近访问
     let count = 0;
-    for (let i = 0; i < _items.length; i++) {
+    end: for (let i = 0; i < _items.length; i++) {
         const list = _items[i];
 
         let tasks = [];
         for (let j = 0; j < list.length; j++) {
             const item = list[j];
             if (!API.Common.isNewItem(item)) {
-                // 已备份数据跳过不处理
-                indicator.addSkip(item);
-                continue;
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
             }
             indicator.setIndex(++count);
             tasks.push(API.Messages.getItemAllVisitorsList(item).then((visitor) => {
@@ -1022,6 +1025,9 @@ API.Messages.getAllVisitorList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
+    
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
 
     // 完成
     indicator.complete();

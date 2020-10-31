@@ -601,7 +601,7 @@ API.Videos.getAllLikeList = async (items) => {
 
     // 获取点赞列表
     let count = 0;
-    for (let i = 0; i < _items.length; i++) {
+    end: for (let i = 0; i < _items.length; i++) {
         const list = _items[i];
 
         let tasks = [];
@@ -619,9 +619,9 @@ API.Videos.getAllLikeList = async (items) => {
             item.uniKey = API.Messages.getUniKey(item.shuoshuoid);
 
             if (!API.Common.isNewItem(item)) {
-                // 已备份数据跳过不处理
-                indicator.addSkip(item);
-                continue;
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
             }
 
 
@@ -641,6 +641,9 @@ API.Videos.getAllLikeList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
+    
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
 
     // 完成
     indicator.complete();

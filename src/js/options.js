@@ -217,12 +217,13 @@
 				$task_sleep_row.hide();
 				$download_status_row.hide();
 				$download_thread_row.hide();
-				$file_suffix_row.hide();
-				$suffix_timeout_row.hide();
 
 				// 显示Aria2配置
 				$common_aria2_rpc_row.show();
 				$common_aria2_token_row.show();
+				$file_suffix_row.show();
+				$suffix_timeout_row.show();
+
 				$download_type_help.html('不了解Aria2请忽略该项，仅在<span style="color:red">Aria2的1.35.0以上版本</span>测试通过，请确保Aria2服务处于<span style="color:red">启动中</span>，并<span style="color:red">启用RPC服务</span>，目前仅支持<span style="color:red">HTTP协议</span>！');
 				break;
 			case 'Thunder':
@@ -243,7 +244,6 @@
 				$task_count_row.hide();
 				$task_sleep_row.hide();
 				$download_status_row.hide();
-
 				// 隐藏Aria2配置
 				$common_aria2_rpc_row.hide();
 				$common_aria2_token_row.hide();
@@ -257,6 +257,9 @@
 			case 'Browser':
 				$task_count_row.hide();
 				$task_sleep_row.hide();
+				// 隐藏Aria2配置
+				$common_aria2_rpc_row.hide();
+				$common_aria2_token_row.hide();
 
 				$download_status_row.show();
 				$file_suffix_row.show();

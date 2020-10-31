@@ -638,7 +638,7 @@ API.Blogs.getAllLikeList = async (items) => {
 
     // 获取点赞列表
     let count = 0;
-    for (let i = 0; i < _items.length; i++) {
+    end: for (let i = 0; i < _items.length; i++) {
         const list = _items[i];
 
         let tasks = [];
@@ -648,9 +648,9 @@ API.Blogs.getAllLikeList = async (items) => {
             item.likes = item.likes || [];
 
             if (!API.Common.isNewItem(item)) {
-                // 已备份数据跳过不处理
-                indicator.addSkip(item);
-                continue;
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
             }
             indicator.setIndex(++count);
             tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Blogs).then((likes) => {
@@ -668,6 +668,9 @@ API.Blogs.getAllLikeList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
+    
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
 
     // 完成
     indicator.complete();
@@ -737,15 +740,15 @@ API.Blogs.getAllVisitorList = async (items) => {
 
     // 获取最近访问
     let count = 0;
-    for (let i = 0; i < _items.length; i++) {
+    end: for (let i = 0; i < _items.length; i++) {
         const list = _items[i];
         let tasks = [];
         for (let j = 0; j < list.length; j++) {
             const item = list[j];
             if (!API.Common.isNewItem(item)) {
-                // 已备份数据跳过不处理
-                indicator.addSkip(item);
-                continue;
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
             }
             indicator.setIndex(++count);
             tasks.push(API.Blogs.getItemAllVisitorsList(item).then((visitor) => {
@@ -766,6 +769,9 @@ API.Blogs.getAllVisitorList = async (items) => {
 
     // 获取日志阅读数
     await API.Blogs.getAllReadCount(items);
+    
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
 
     // 完成
     indicator.complete();
@@ -783,8 +789,7 @@ API.Blogs.getAllReadCount = async (items) => {
         const _items = _.chunk(items, 10);
 
         // 获取最近访问
-        let count = 0;
-        for (let i = 0; i < _items.length; i++) {
+        end: for (let i = 0; i < _items.length; i++) {
             const list = _items[i];
 
             // 日志ID数组
@@ -792,9 +797,8 @@ API.Blogs.getAllReadCount = async (items) => {
             for (let j = 0; j < list.length; j++) {
                 const item = list[j];
                 if (!API.Common.isNewItem(item)) {
-                    // 已备份数据跳过不处理
-                    indicator.addSkip(item);
-                    continue;
+                    // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                    break end;
                 }
                 blogIds.push(item.blogid);
             }
