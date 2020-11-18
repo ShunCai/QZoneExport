@@ -329,20 +329,6 @@
 	})
 
 	let loadOptions = (options) => {
-		// 公共模块赋值
-		$("#common_list_retry_count").val(options.Common.listRetryCount);
-		$("#common_list_retry_sleep").val(options.Common.listRetrySleep);
-		$("#common_download_type").val(options.Common.downloadType).change();
-		$('#common_file_suffix').prop("checked", options.Common.isAutoFileSuffix).change();
-		$("#common_file_suffix_timeout").val(options.Common.autoFileSuffixTimeOut);
-		$('#common_download_status').prop("checked", options.Common.enabledShelf);
-		chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
-		$("#common_thunder_task_count").val(options.Common.thunderTaskNum);
-		$("#common_thunder_task_sleep").val(options.Common.thunderTaskSleep);
-		$("#common_download_thread").val(options.Common.downloadThread);
-		$("#common_aria2_rpc").val(options.Common.Aria2.rpc);
-		$("#common_aria2_token").val(options.Common.Aria2.token || '');
-		$('#common_user_link').prop("checked", options.Common.hasUserLink);
 
 		// 说说模块赋值
 		$("#messages_exportFormat").val(options.Messages.exportType);
@@ -469,6 +455,45 @@
 		$("#favorites_list_cost_min").val(options.Favorites.randomSeconds.min);
 		$("#favorites_list_cost_max").val(options.Favorites.randomSeconds.max);
 		$("#favorites_list_limit").val(options.Favorites.pageSize);
+
+		// 分享模块赋值
+		$("#shares_exportFormat").val(options.Shares.exportType);
+		$("#shares_increment_type").val(options.Shares.IncrementType).change();
+		$("#shares_increment_time").val(options.Shares.IncrementTime);
+		$("#shares_list_cost_min").val(options.Shares.randomSeconds.min);
+		$("#shares_list_cost_max").val(options.Shares.randomSeconds.max);
+		$("#shares_info_cost_min").val(options.Shares.Info.randomSeconds.min);
+		$("#shares_info_cost_max").val(options.Shares.Info.randomSeconds.max);
+		$("#shares_list_limit").val(options.Shares.pageSize);
+		// 评论列表
+		$("#shares_download_full_comments").prop("checked", options.Shares.Comments.isFull).change();
+		$("#shares_comments_min").val(options.Shares.Comments.randomSeconds.min);
+		$("#shares_comments_max").val(options.Shares.Comments.randomSeconds.max);
+		$("#shares_comments_limit").val(options.Shares.Comments.pageSize);
+		// 点赞列表
+		$("#shares_has_like").prop("checked", options.Shares.Like.isGet).change();
+		$("#shares_like_min").val(options.Shares.Like.randomSeconds.min);
+		$("#shares_like_max").val(options.Shares.Like.randomSeconds.max);
+		// 最近访问
+		$("#shares_has_visitor").prop("checked", options.Shares.Visitor.isGet).change();
+		$("#shares_visitor_min").val(options.Shares.Visitor.randomSeconds.min);
+		$("#shares_visitor_max").val(options.Shares.Visitor.randomSeconds.max);
+
+		// 公共模块赋值
+		$("#common_list_retry_count").val(options.Common.listRetryCount);
+		$("#common_list_retry_sleep").val(options.Common.listRetrySleep);
+		$("#common_download_type").val(options.Common.downloadType).change();
+		$('#common_file_suffix').prop("checked", options.Common.isAutoFileSuffix).change();
+		$("#common_file_suffix_timeout").val(options.Common.autoFileSuffixTimeOut);
+		$('#common_download_status').prop("checked", options.Common.enabledShelf);
+		chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
+		$("#common_thunder_task_count").val(options.Common.thunderTaskNum);
+		$("#common_thunder_task_sleep").val(options.Common.thunderTaskSleep);
+		$("#common_download_thread").val(options.Common.downloadThread);
+		$("#common_aria2_rpc").val(options.Common.Aria2.rpc);
+		$("#common_aria2_token").val(options.Common.Aria2.token || '');
+		$('#common_user_link').prop("checked", options.Common.hasUserLink);
+
 	}
 
 	// 读取数据，第一个参数是指定要读取的key以及设置默认值
@@ -479,22 +504,6 @@
 	});
 
 	let setOptions = () => {
-
-		// 公共模块赋值		
-		QZone_Config.Common.listRetryCount = $("#common_list_retry_count").val() * 1;
-		QZone_Config.Common.listRetrySleep = $("#common_list_retry_sleep").val() * 1;
-		QZone_Config.Common.isAutoFileSuffix = $('#common_file_suffix').prop("checked");
-		QZone_Config.Common.autoFileSuffixTimeOut = $("#common_file_suffix_timeout").val() * 1;
-		QZone_Config.Common.downloadType = $('#common_download_type').val();
-		QZone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
-		chrome.downloads.setShelfEnabled(QZone_Config.Common.enabledShelf);
-		QZone_Config.Common.thunderTaskNum = $("#common_thunder_task_count").val() * 1;
-		QZone_Config.Common.thunderTaskSleep = $("#common_thunder_task_sleep").val() * 1;
-		QZone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
-		QZone_Config.Common.Aria2.rpc = $("#common_aria2_rpc").val();
-		QZone_Config.Common.Aria2.token = $("#common_aria2_token").val();
-
-		QZone_Config.Common.hasUserLink = $('#common_user_link').prop("checked");
 
 		// 说说模块赋值
 		QZone_Config.Messages.exportType = $("#messages_exportFormat").val();
@@ -620,6 +629,44 @@
 		QZone_Config.Favorites.randomSeconds.min = $("#favorites_list_cost_min").val() * 1;
 		QZone_Config.Favorites.randomSeconds.max = $("#favorites_list_cost_max").val() * 1;
 		QZone_Config.Favorites.pageSize = $("#favorites_list_limit").val() * 1;
+
+		QZone_Config.Shares.exportType = $("#shares_exportFormat").val();
+		QZone_Config.Shares.IncrementType = $("#shares_increment_type").val();
+		QZone_Config.Shares.IncrementTime = $("#shares_increment_time").val();
+		QZone_Config.Shares.randomSeconds.min = $("#shares_list_cost_min").val() * 1;
+		QZone_Config.Shares.randomSeconds.max = $("#shares_list_cost_max").val() * 1;
+		QZone_Config.Shares.Info.randomSeconds.min = $("#shares_info_cost_min").val() * 1;
+		QZone_Config.Shares.Info.randomSeconds.max = $("#shares_info_cost_max").val() * 1;
+		QZone_Config.Shares.pageSize = $("#shares_list_limit").val() * 1;
+		// 评论列表
+		QZone_Config.Shares.Comments.isFull = $("#shares_download_full_comments").prop("checked");
+		QZone_Config.Shares.Comments.randomSeconds.min = $("#shares_comments_min").val() * 1;
+		QZone_Config.Shares.Comments.randomSeconds.max = $("#shares_comments_max").val() * 1;
+		QZone_Config.Shares.Comments.pageSize = $("#shares_comments_limit").val() * 1;
+		// 点赞列表
+		QZone_Config.Shares.Like.isGet = $("#shares_has_like").prop("checked");
+		QZone_Config.Shares.Like.randomSeconds.min = $("#shares_like_min").val() * 1;
+		QZone_Config.Shares.Like.randomSeconds.max = $("#shares_like_max").val() * 1;
+		// 最近访问
+		QZone_Config.Shares.Visitor.isGet = $("#shares_has_visitor").prop("checked");
+		QZone_Config.Shares.Visitor.randomSeconds.min = $("#shares_visitor_min").val() * 1;
+		QZone_Config.Shares.Visitor.randomSeconds.max = $("#shares_visitor_max").val() * 1;
+
+		// 公共模块赋值		
+		QZone_Config.Common.listRetryCount = $("#common_list_retry_count").val() * 1;
+		QZone_Config.Common.listRetrySleep = $("#common_list_retry_sleep").val() * 1;
+		QZone_Config.Common.isAutoFileSuffix = $('#common_file_suffix').prop("checked");
+		QZone_Config.Common.autoFileSuffixTimeOut = $("#common_file_suffix_timeout").val() * 1;
+		QZone_Config.Common.downloadType = $('#common_download_type').val();
+		QZone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
+		chrome.downloads.setShelfEnabled(QZone_Config.Common.enabledShelf);
+		QZone_Config.Common.thunderTaskNum = $("#common_thunder_task_count").val() * 1;
+		QZone_Config.Common.thunderTaskSleep = $("#common_thunder_task_sleep").val() * 1;
+		QZone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
+		QZone_Config.Common.Aria2.rpc = $("#common_aria2_rpc").val();
+		QZone_Config.Common.Aria2.token = $("#common_aria2_token").val();
+
+		QZone_Config.Common.hasUserLink = $('#common_user_link').prop("checked");
 
 		chrome.storage.sync.set(QZone_Config, function () {
 			console.info("保存成功！");

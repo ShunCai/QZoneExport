@@ -352,24 +352,6 @@ const MAX_MSG = {
         '正在导出QQ好友到 <span style="color: #1ca5fc;">{index}</span> 文件',
         '请稍后...'
     ],
-    Favorites: [
-        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的收藏列表',
-        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
-    ],
-    Favorites_Export: [
-        '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的收藏',
-        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
-    ],
-    Favorites_Export_Other: [
-        '正在导出收藏到 <span style="color: #1ca5fc;">{index}</span> 文件',
-        '请稍后...'
-    ],
     Photos: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的相册列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
@@ -474,6 +456,63 @@ const MAX_MSG = {
     ],
     Videos_Export: [
         '正在导出视频到 <span style="color: #1ca5fc;">{index}</span> 文件',
+        '请稍后...'
+    ],
+    Favorites: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的收藏列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Favorites_Export: [
+        '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的收藏',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Favorites_Export_Other: [
+        '正在导出收藏到 <span style="color: #1ca5fc;">{index}</span> 文件',
+        '请稍后...'
+    ],
+    Shares: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的分享列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Shares_Comments: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条分享的评论列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Shares_Like: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条分享的点赞列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Shares_Visitor: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条分享的最近访问',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Shares_Export: [
+        '正在导出分享',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Shares_Export_Other: [
+        '正在导出分享到 <span style="color: #1ca5fc;">{index}</span> 文件',
         '请稍后...'
     ],
     Common_File: [
@@ -751,6 +790,11 @@ const OperatorType = {
     Favorites: 'Favorites',
 
     /**
+    * 获取分享列表
+    */
+    Shares: 'Shares',
+
+    /**
      * 下载文件
      */
     FILE_LIST: 'FILE_LIST',
@@ -834,6 +878,13 @@ class QZoneOperator {
                 // 获取收藏列表
                 if (API.Common.isExport(moduleType)) {
                     await API.Favorites.export();
+                }
+                this.next(OperatorType.Shares);
+                break;
+            case OperatorType.Shares:
+                // 获取收藏列表
+                if (API.Common.isExport(moduleType)) {
+                    await API.Shares.export();
                 }
                 this.next(OperatorType.Photos);
                 break;

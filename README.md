@@ -16,16 +16,6 @@
 [![我是往事随风。你好，我是轻舞飞扬。](https://s1.ax1x.com/2020/05/16/YcekPP.gif)](https://v.qq.com/x/page/f08719wqfd0.html)
 
 ## 安装
-#### 在线安装
-- [Chrome浏览器](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
-
-- [Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/djfalpkpjgpkfnkfmnegbalnicdoljcn)
-
-- [360极速浏览器](https://ext.chrome.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
-
-- [360安全浏览器](https://ext.se.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
-
-- 其他Chromium内核浏览器请移步->[离线安装](#离线安装)。
 
 #### 在线安装
 - [Chrome浏览器](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)

@@ -87,6 +87,12 @@ const QZone_URLS = {
     /** 我的收藏 */
     FAVORITE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/fav.qzone.qq.com/cgi-bin/get_fav_list',
 
+    /** 分享列表 */
+    SHARE_LIST_URL: 'https://user.qzone.qq.com/p/h5/pc/api/sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzsharegetmylistbytype',
+
+    /** 分享评论 */
+    SHARE_COMMENTS_URL: 'https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshareget_comment',
+
     /** 点赞数目 */
     LIKE_COUNT_URL: 'https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/user/qz_opcnt2',
 
@@ -123,7 +129,8 @@ const API = {
     Boards: {},// 留言模块
     Photos: {},// 相册模块
     Videos: {},// 视频模块
-    Favorites: {}// 收藏模块
+    Favorites: {},// 收藏模块
+    Shares: {} // 分享模块
 };
 
 /**
@@ -958,6 +965,31 @@ API.Utils = {
     },
 
     /**
+     * 转换时间
+     *  @param {integer} time 
+     */
+    toDate(time) {
+        const now = new Date();
+        if (time.indexOf('今天') > -1) {
+            // 今天 13:46
+            time = time.replace('今天', now.format('yyyy-MM-dd'));
+        } else if (time.indexOf('昨天') > -1) {
+            // 昨天 23:46
+            time = time.replace('昨天', new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).format('yyyy-MM-dd'));
+        } else if (time.indexOf('前天') > -1) {
+            // 前天 23:46
+            time = time.replace('前天', new Date(now.getFullYear(), now.getMonth(), now.getDate() - 2).format('yyyy-MM-dd'));
+        } else if (time.indexOf('年') == -1) {
+            // 11 月 01 日 03:29
+            time = new Date().getFullYear() + '-' + time.replace('月', '-').replace('日', '');
+        } else if (time.indexOf('年') > -1) {
+            // 2019 年 08 月 01 日 16:36
+            time = time.replace('年', '-').replace('月', '-').replace('日', '');
+        }
+        return new Date(time);
+    },
+
+    /**
      * 转换JSON对象
      *  @param {string} json 
      *  @param {string} jsonpKey 
@@ -1044,6 +1076,7 @@ API.Utils = {
         url = url.replace(/^\/\//g, 'https://');
         // 替换HTTP协议
         url = url.replace(/http:\//, "https:/");
+        url = decodeURIComponent(url);
         return url;
     },
 
@@ -1061,6 +1094,7 @@ API.Utils = {
         url = url.replace(/^\/\//g, 'http://');
         // 替换HTTPS协议
         url = url.replace(/https:\//, "http:/");
+        url = decodeURIComponent(url);
         return url;
     },
 
@@ -1123,7 +1157,7 @@ API.Utils = {
                     task.url
                 ],
                 {
-                    "referer":'https://user.qzone.qq.com/',
+                    "referer": 'https://user.qzone.qq.com/',
                     "out": QZone.Common.Config.ZIP_NAME + '/' + task.dir + "/" + task.name
                 }
             ]
@@ -2381,7 +2415,7 @@ API.Photos = {
         const params = {
             "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
             "appid": 4,//4:相册
-            "param": "2;"+targeId,
+            "param": "2;" + targeId,
             "beginNum": QZone_Config.Blogs.Visitor.pageSize * pageIndex + 1,
             "num": QZone_Config.Blogs.Visitor.pageSize,
             "needFriend": 1,// TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
@@ -2828,7 +2862,6 @@ API.Favorites = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
             "type": 0,//全部\
             "start": page * QZone_Config.Favorites.pageSize,
-            "start": page * QZone_Config.Favorites.pageSize,
             "num": QZone_Config.Favorites.pageSize,
             "inCharset": "utf-8",
             "outCharset": "utf-8",
@@ -2841,6 +2874,265 @@ API.Favorites = {
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         }
         return API.Utils.get(QZone_URLS.FAVORITE_LIST_URL, params);
+    }
+
+};
+
+
+/**
+ * 分享源
+ */
+class ShareSource {
+
+    /**
+     * 
+     * @param {string} title 分享标题
+     * @param {string} desc 分享内容
+     * @param {string} url 分享URL
+     * @param {string} source_url 分享来源URL
+     * @param {string} source_name 分享来源名称
+     * @param {integer} count 分享次数
+     * @param {Array} images 图片
+     */
+    constructor(title, desc, url, source_url, source_name, count, images) {
+        this.title = title || '' // 标题
+        this.desc = desc || '' // 内容
+        this.url = url || ''// URL
+        this.from = {
+            url: source_url,
+            name: source_name
+        } // 来源
+        this.count = count || 0 // 分享次数
+        this.images = images || [] // 来源的图片
+    }
+}
+
+/**
+ * 分享信息
+ */
+class ShareInfo {
+
+    /**
+     * 
+     * @param {integer} id ID
+     * @param {string} uin 分享人
+     * @param {string} nickname 分享人昵称
+     * @param {string} type 分享类型
+     * @param {string} desc 分享描述
+     * @param {ShareSource} source 分享来源
+     * @param {integer} shareTime 分享时间
+     */
+    constructor(id, uin, nickname, type, desc, source, shareTime) {
+        this.id = id // ID
+        this.uin = uin // 分享人
+        this.nickname = nickname || '' // 分享人昵称
+        this.type = type || ''// 分享类型
+        this.desc = desc || ''// 分享信息
+        this.source = source || {} // 分享来源
+        this.shareTime = shareTime || 0 // 分享时间
+        this.likes = [] // 点赞人
+        this.likeTotal = 0 // 点赞数
+        this.comments = [] // 评论列表
+        this.commentTotal = 0 // 评论数
+    }
+}
+
+/**
+ * 分享数据
+ */
+class ShareData {
+
+    /**
+     * 
+     * @param {Array} list 分享信息
+     * @param {integer} total 条目总数据
+     */
+    constructor(list, total) {
+        this.list = list || [] // 分享信息
+        this.total = total || 0 // 条目总数据
+    }
+}
+
+
+/**
+ * 分享模块API
+ */
+API.Shares = {
+
+    getSourceType(url, defaultName) {
+        if (!url) {
+            return defaultName;
+        }
+        for (const sourceType of QZone_Config.Shares.SourceType) {
+            const name = sourceType.name;
+            for (const reg of sourceType.regulars) {
+                if (url.match(new RegExp(reg))) {
+                    return name;
+                }
+            }
+        }
+        return defaultName;
+    },
+
+    /**
+     * 获取分享列表
+     * @param {integer} page 当前页
+     */
+    getList(page) {
+        let params = {
+            "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "page": page,  // 当前页，从1开始
+            "num": QZone_Config.Shares.pageSize,  // 每页条目数
+            "spaceuin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "isfriend": 0,
+            "ttype": 0 // 全部分享类型
+        }
+        return API.Utils.get(QZone_URLS.SHARE_LIST_URL, params);
+    },
+
+    /**
+     * 转换分享网页到数据
+     * @param {String} html 分享页面内容
+     */
+    convert(html) {
+        const shareData = new ShareData();
+        if (!html) {
+            return shareData;
+        }
+        // 转换到JQuery对象
+        const $sharePage = jQuery(html);
+        const shares = $sharePage.find('#shares li') || [];
+        // 总数
+        const $total = $($sharePage.find('#app_mod > div.wrap > div.aside.col_lar.bg3 > div.mod_info.bg > div.mod_conts > p'));
+        shareData.total = $total && $total.text().replace('条分享', '') * 1 || 0;
+        // 当前页
+        const currentPage = $($sharePage.find('#app_mod > div.page_wrap > div > p.mod_pagenav_main > span > span > span')).text();
+
+        console.info('分析分享列表中，当前页：%s，条目数：%d，总条目数：%s', currentPage, shares.length, shareData.total);
+
+        const dataList = [];
+        for (const li of shares) {
+            const $li = $(li);
+            const $infoDiv = $($li.find('div.mod_info.bbor3.__item_main__'));
+            if (!$infoDiv) {
+                continue;
+            }
+            $li.find('script').each(function () {
+                const text = $(this).text();
+                if (text.indexOf('shareInfos.push') > -1) {
+                    eval('window.infoJson=' + /[\s\S]+shareInfos.push\((\{[\s\S]+\})\);[\s\S]+/.exec(text)[1]);
+                    return false;
+                }
+            })
+            if (!window.infoJson) {
+                continue;
+            }
+            // 分享显示区
+            const $contentDiv = $($infoDiv.find('div.mod_conts._share_desc_cont'));
+
+            // 分享源
+            // 标题
+            const $targetLink = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > h5 > strong > a.c_tx._share_title'));
+            const title = $targetLink && $targetLink.html() || '';
+            // 描述
+            const $desc = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > p:not(.mod_music,.c_tx3.comming)'));
+            const desc = $desc && $desc.html() || '';
+            // URL
+            let url = $targetLink && $targetLink.attr('href') || '#';
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = "https://user.qzone.qq.com/p/h5/pc/api/sns.qzone.qq.com/cgi-bin/qzshare/" + url;
+            }
+            // 分享次数
+            const $share_count = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > p > span.share_count'));
+            const count = $share_count && $share_count.text() || 0;
+            // 分享来源URL
+            const $fromLink = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > p.c_tx3.comming > a.c_tx3.mgrm'));
+            const fromUrl = $fromLink && $fromLink.attr('href') || '#';
+            let fromName = $fromLink && $fromLink.text() || '';
+            fromName = API.Shares.getSourceType(fromUrl, fromName);
+            // 配图
+            const images = [];
+            // 左图右文的图
+            const $normal_images = $($contentDiv.find('div.mod_details.lbor > div.layout_s > a.img_wrap > img')) || [];
+            if ($normal_images) {
+                $normal_images.each(function () {
+                    images.push({
+                        url: $(this).attr('src') || $(this).attr('data-src')
+                    });
+                });
+            }
+            // 相册、相片的图
+            const $album_images = $($contentDiv.find('div.mod_details.lbor > div.mod_list > div > ul > li > a.img_wrap > img')) || [];
+            if ($album_images) {
+                $album_images.each(function () {
+                    images.push({
+                        url: $(this).attr('src') || $(this).attr('data-src')
+                    });
+                });
+            }
+            const shareSource = new ShareSource(title, desc, url, fromUrl, fromName, count * 1, images);
+
+            // 分享时间
+            const $shareTime = $($contentDiv.find('div.c_tx3.mod_scraps > span:nth-child(1)'));
+
+            let shareTime = $shareTime && $shareTime.text() || '1970-01-01';
+
+            const poster = infoJson.poster || {};
+            const shareInfo = new ShareInfo(infoJson.id, poster.uin, poster.nickname, infoJson.type, infoJson.memo, shareSource, API.Utils.toDate(shareTime).getTime() / 1000);
+            // 评论数
+            const $commentCount = $($contentDiv.find('#' + li.id + '_commentCount'));
+            shareInfo.commentTotal = $commentCount && $commentCount.text() * 1 || 0;
+            // 点赞数
+            const $likeTotal = $($contentDiv.find('div.c_tx3.mod_scraps > span.mgrs.like_count.right > span > a:nth-child(3)'));
+            const likeTotal = $likeTotal && /赞\((\d)\)/.exec($likeTotal.text()) && /赞\((\d)\)/.exec($likeTotal.text())[1] || 0;
+            shareInfo.likeTotal = likeTotal * 1;
+            dataList.push(shareInfo);
+        }
+        shareData.list = dataList;
+        return shareData;
+    },
+
+    /**
+     * 获取分享评论列表
+     * @param {integer} page 当前页
+     */
+    getComments(id, page) {
+        const params = {
+            "fupdate": 2,
+            "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
+            "hostUin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "start": page * QZone_Config.Shares.Comments.pageSize,
+            "num": QZone_Config.Shares.Comments.pageSize,
+            "order": 1,
+            "topicId": (QZone.Common.Target.uin || API.Utils.initUin().Target.uin) + "_" + id,
+            "format": "json",
+            "inCharset": "utf-8",
+            "outCharset": "utf-8",
+            "ref": "",
+            "random": Math.random(),
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        return API.Utils.get(QZone_URLS.SHARE_COMMENTS_URL, params);
+    },
+
+    /**
+     * 获取最近访问列表
+     * @param {string} targeId 目标ID
+     * @param {integer} targeId 当前页索引
+     */
+    getVisitors(targeId, pageIndex) {
+        let params = {
+            "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "appid": 202,//202
+            "param": targeId,
+            "beginNum": QZone_Config.Shares.Visitor.pageSize * pageIndex + 1,
+            "num": QZone_Config.Shares.Visitor.pageSize,
+            "needFriend": 1,// TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
     }
 
 };

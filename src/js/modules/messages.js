@@ -555,7 +555,7 @@ API.Messages.getMarkdown = (item) => {
             contents.push("\t* {0}：{1}".format(repName, content));
 
             // 回复包含图片，理论上回复现在不能回复图片，兼容一下
-            var repImgs = repItem.pic || [];
+            const repImgs = repItem.pic || [];
             for (const repImg of repImgs) {
                 contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(repImg.custom_url, repImg.custom_filepath, "Messages_MD")));
             }

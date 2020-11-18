@@ -822,6 +822,8 @@ API.Common.initBackedUpItems = async () => {
     QZone.Friends.OLD_Data = Old_QZone.Friends ? Old_QZone.Friends.Data : [];
     // 覆盖更新收藏夹模块全局变量
     QZone.Favorites.OLD_Data = Old_QZone.Favorites ? Old_QZone.Favorites.Data : [];
+    // 覆盖更新分享模块全局变量
+    QZone.Shares.OLD_Data = Old_QZone.Favorites ? Old_QZone.Favorites.Data : [];
 }
 
 /**
