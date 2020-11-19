@@ -143,21 +143,22 @@ API.Messages.getAllFullContent = async (items) => {
     }
 
     // 状态更新器
-    let indicator = new StatusIndicator('Messages_Full_Content');
-
-    let more_items = API.Messages.getMoreItems(items);
+    const indicator = new StatusIndicator('Messages_Full_Content');
 
     // 更新总数
-    indicator.setTotal(more_items.length);
+    indicator.setTotal(items.length);
 
-    for (let i = 0; i < more_items.length; i++) {
-        const item = more_items[i];
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
 
         // 更新状态-当前位置
         indicator.setIndex(i + 1);
 
-        if (!API.Common.isNewItem(item)) {
-            // 已备份数据跳过不处理
+        // 是否有全文
+        const hasMoreContent = item.has_more_con === 1 || item.rt_has_more_con === 1;
+
+        if (!hasMoreContent || !API.Common.isNewItem(item)) {
+            // 不需要获取全文或者已备份数据跳过不处理
             indicator.addSkip(item);
             continue;
         }
@@ -233,9 +234,8 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
 /**
  * 获取单条说说的全部评论列表
  * @param {object} item 说说
- * @param {StatusIndicator} indicator 状态更新器
  */
-API.Messages.getItemAllCommentList = async (item, indicator) => {
+API.Messages.getItemAllCommentList = async (item) => {
     if (!(item.commenttotal > item.custom_comments.length)) {
         // 当前列表比评论总数小的时候才需要获取全部评论，否则则跳过
         return item.custom_comments;
@@ -248,16 +248,12 @@ API.Messages.getItemAllCommentList = async (item, indicator) => {
 
     // 更新总数
     const total = API.Utils.getCommentCount(item);
-    indicator.setTotal(total);
 
     const nextPage = async function (item, pageIndex) {
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
         return await API.Messages.getItemCommentList(item, pageIndex).then(async (dataList) => {
-            // 更新成功条目数
-            indicator.addSuccess(dataList.length);
-
             // 合并评论列表
             item.custom_comments = item.custom_comments.concat(dataList || []);
 
@@ -265,9 +261,6 @@ API.Messages.getItemAllCommentList = async (item, indicator) => {
             return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.custom_comments, arguments.callee, item, nextPageIndex);
         }).catch(async (e) => {
             console.error("获取说说评论列表异常，当前页：", pageIndex + 1, item, e);
-
-            indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
-
             // 当前页失败后，跳过继续请求下一页
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.custom_comments, arguments.callee, item, nextPageIndex);
@@ -289,26 +282,31 @@ API.Messages.getItemsAllCommentList = async (items) => {
         return items;
     }
 
+    // 状态更新器
+    const indicator = new StatusIndicator('Messages_Comments');
+    indicator.setTotal(items.length);
+
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
-
-        if (!API.Common.isNewItem(item)) {
-            // 已备份数据跳过不处理
-            continue;
-        }
-
-        // 单条说说状态更新器
-        let indicator = new StatusIndicator('Messages_Comments');
 
         // 更新当前位置
         indicator.setIndex(i + 1);
 
-        // 获取说说的全部评论
-        await API.Messages.getItemAllCommentList(item, indicator);
+        if (!API.Common.isNewItem(item)) {
+            // 已备份数据跳过不处理
+            indicator.addSkip(item);
+            continue;
+        }
 
-        // 完成
-        indicator.complete();
+        // 获取说说的全部评论
+        await API.Messages.getItemAllCommentList(item);
+
+        // 添加成功
+        indicator.addSuccess(item);
     }
+
+    // 完成
+    indicator.complete();
     return items;
 }
 
@@ -913,7 +911,6 @@ API.Messages.getAllLikeList = async (items) => {
             }
             indicator.setIndex(++count);
             tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Messages).then((likes) => {
-                console.debug('获取说说点赞完成', likes);
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {
@@ -927,7 +924,7 @@ API.Messages.getAllLikeList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
-    
+
     // 已备份数据跳过不处理
     indicator.setSkip(items.length - count);
 
@@ -935,7 +932,7 @@ API.Messages.getAllLikeList = async (items) => {
     indicator.complete();
 
     return items;
-},
+}
 
 /**
  * 获取单条说说的全部最近访问
@@ -944,7 +941,7 @@ API.Messages.getAllLikeList = async (items) => {
 API.Messages.getItemAllVisitorsList = async (item) => {
     // 清空原有的最近访问信息
     item.custom_visitor = {
-        viewCount : 0,
+        viewCount: 0,
         totalNum: 0,
         list: []
     };
@@ -957,7 +954,7 @@ API.Messages.getItemAllVisitorsList = async (item) => {
         const nextPageIndex = pageIndex + 1;
 
         return await API.Messages.getVisitors(item.tid, pageIndex).then(async (data) => {
-            data = API.Utils.toJson(data, /^_Callback\(/).data;
+            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
 
             // 合并
             item.custom_visitor.viewCount = data.viewCount || 0;
@@ -1011,7 +1008,6 @@ API.Messages.getAllVisitorList = async (items) => {
             }
             indicator.setIndex(++count);
             tasks.push(API.Messages.getItemAllVisitorsList(item).then((visitor) => {
-                console.debug('获取说说最近访问完成', visitor);
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {
@@ -1025,7 +1021,7 @@ API.Messages.getAllVisitorList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
-    
+
     // 已备份数据跳过不处理
     indicator.setSkip(items.length - count);
 

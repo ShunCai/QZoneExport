@@ -18,10 +18,10 @@ API.Common.initUserInfo = async () => {
         userInfo = Object.assign(QZone.Common.Target, userInfo);
 
         // 添加目标头像下载任务
-        API.Common.downloadUserAvatars([QZone.Common.Target, QZone.Common.Owner]);
+        API.Common.downloadUserAvatars([QZone.Common.Target, QZone.Common.Owner, userInfo]);
 
         // 更换用户图片
-        userInfo.avatar = API.Common.getUserLogoLocalUrl(userInfo.uin);
+        userInfo.avatar = API.Common.getUserLogoUrl(userInfo.uin);
     } catch (error) {
         console.error('初始化用户信息异常', error);
     }
@@ -46,6 +46,7 @@ API.Common.exportUser = async () => {
         userInfo.videos = QZone.Videos.Data.length;
         userInfo.boards = QZone.Boards.Data.length;
         userInfo.favorites = QZone.Favorites.Data.length;
+        userInfo.shares = QZone.Shares.Data.length;
         userInfo.friends = QZone.Friends.Data.length;
 
         // 根据导出类型导出数据
@@ -101,6 +102,8 @@ API.Common.exportUserToMd = async (userInfo) => {
     hasMd = hasMd || QZone_Config.Friends.exportType === 'MarkDown';
     // 收藏夹
     hasMd = hasMd || QZone_Config.Favorites.exportType === 'MarkDown';
+    // 分享
+    hasMd = hasMd || QZone_Config.Shares.exportType === 'MarkDown';
     // 相册
     hasMd = hasMd || QZone_Config.Photos.exportType === 'MarkDown';
     // 视频
@@ -123,9 +126,9 @@ API.Common.exportUserToMd = async (userInfo) => {
     contents.push('{desc}'.format(QZone.Common.Target));
 
     contents.push('### 空间概览');
-    contents.push('说说|日志|日记|相册|视频|留言|收藏|好友');
+    contents.push('说说|日志|日记|相册|视频|留言|收藏|分享|好友');
     contents.push('---|---|---|---|---|---|---|---');
-    contents.push('{messages}|{blogs}|{diaries}|{photos}|{videos}|{boards}|{favorites}|{friends}'.format(QZone.Common.Target));
+    contents.push('{messages}|{blogs}|{diaries}|{photos}|{videos}|{boards}|{favorites}|{shares}|{friends}'.format(QZone.Common.Target));
 
     await API.Utils.writeText(contents.join('\r\n'), FOLDER_ROOT + "index.md").then((fileEntry) => {
         console.info("导出空间预览到Markdown文件完成", fileEntry, userInfo);
@@ -152,6 +155,8 @@ API.Common.exportUserToHtml = async (userInfo) => {
     hasHtml = hasHtml || QZone_Config.Friends.exportType === 'HTML';
     // 收藏夹
     hasHtml = hasHtml || QZone_Config.Favorites.exportType === 'HTML';
+    // 分享
+    hasHtml = hasHtml || QZone_Config.Shares.exportType === 'HTML';
     // 相册
     hasHtml = hasHtml || QZone_Config.Photos.exportType === 'HTML';
     // 视频
@@ -406,7 +411,6 @@ API.Common.downloadByAria2 = async (tasks) => {
                 task.setState('interrupted');
                 indicator.addFailed(task);
             } else {
-                console.debug('添加到Aria2完成', result);
                 task.setState('complete');
                 // 添加成功
                 indicator.addSuccess(task);
@@ -723,6 +727,9 @@ API.Common.saveBackupItems = () => {
             },
             Favorites: {
                 Data: API.Common.isExport('Favorites') ? QZone.Favorites.Data : QZone.Favorites.OLD_Data
+            },
+            Shares: {
+                Data: API.Common.isExport('Shares') ? QZone.Shares.Data : QZone.Shares.OLD_Data
             }
         };
 
@@ -823,7 +830,7 @@ API.Common.initBackedUpItems = async () => {
     // 覆盖更新收藏夹模块全局变量
     QZone.Favorites.OLD_Data = Old_QZone.Favorites ? Old_QZone.Favorites.Data : [];
     // 覆盖更新分享模块全局变量
-    QZone.Shares.OLD_Data = Old_QZone.Favorites ? Old_QZone.Favorites.Data : [];
+    QZone.Shares.OLD_Data = Old_QZone.Shares ? Old_QZone.Shares.Data : [];
 }
 
 /**
@@ -940,12 +947,15 @@ API.Common.getModulesLikeList = async (item, moduleConfig) => {
  * @param {Object} user 用户
  */
 API.Common.downloadUserAvatar = (user) => {
-    if (!user || !user.uin) {
+    if (API.Common.isQzoneUrl() || !user || !user.uin) {
+        // 如果为QQ空间外链，则不下载
         return;
     }
     const avatarUrl = API.Common.getUserLogoUrl(user.uin);
     if (QZone.Common.FILE_URLS.has(avatarUrl)) {
         // 添加过下载任务则跳过
+        user.avatar = API.Common.getUserLogoUrl(user.uin);
+        user.custom_avatar = API.Common.getUserLogoLocalUrl(user.uin);
         return;
     }
 
@@ -953,7 +963,8 @@ API.Common.downloadUserAvatar = (user) => {
     user.avatar = API.Common.getUserLogoUrl(user.uin);
     user.custom_avatar = API.Common.getUserLogoLocalUrl(user.uin);
 
-    QZone.Common.FILE_URLS.set(avatarUrl, 'Common/images/' + user.uin);
+    // 添加映射
+    QZone.Common.FILE_URLS.set(avatarUrl, user.custom_avatar);
 }
 
 /**
@@ -961,7 +972,8 @@ API.Common.downloadUserAvatar = (user) => {
  * @param {Array} users 用户列表
  */
 API.Common.downloadUserAvatars = (users) => {
-    if (!users) {
+    if (API.Common.isQzoneUrl() || !users) {
+        // 如果为QQ空间外链，则不下载
         return;
     }
     for (const user of users) {

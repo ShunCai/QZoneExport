@@ -325,7 +325,7 @@ const Default_Config = {
         },
         Comments: {
             isFull: true, //是否全部评论
-            pageSize: 50,
+            pageSize: 20,
             randomSeconds: {
                 min: 1,
                 max: 2
@@ -356,6 +356,21 @@ const Default_Config = {
             }
         },
         SourceType: [{
+            name: "QQ空间秘密",
+            regulars: [
+                'zone.qq.com/secret'
+            ]
+        }, {
+            name: "手机QQ空间",
+            regulars: [
+                'mobile.qzone.qq.com'
+            ]
+        }, {
+            name: "QQ空间",
+            regulars: [
+                'qzone.qq.com'
+            ]
+        }, {
             name: "QQ音乐",
             regulars: [
                 'y.qq.com', 'i.y.qq.com', 'music.qq.com'
@@ -373,7 +388,7 @@ const Default_Config = {
         }, {
             name: "全民K歌",
             regulars: [
-                'kg.qq.com'
+                'kg.qq.com', 'kg2.qq.com'
             ]
         }, {
             name: "匿问我答",
@@ -393,7 +408,7 @@ const Default_Config = {
         }, {
             name: "QQ手游中心",
             regulars: [
-                'gamecenter.qq.com'
+                'gamecenter.qq.com', 'youxi.vip.qq.com'
             ]
         }, {
             name: "知乎",
@@ -419,6 +434,11 @@ const Default_Config = {
             name: "QQ小程序-腾讯视频",
             regulars: [
                 'mqqapi://microapp/open\\?mini_appid=1109840991'
+            ]
+        }, {
+            name: "QQ小程序",
+            regulars: [
+                'mqqapi://microapp'
             ]
         }, {
             name: "易企秀",
@@ -454,6 +474,101 @@ const Default_Config = {
             name: "一点资讯",
             regulars: [
                 'yidianzixun.com'
+            ]
+        }, {
+            name: "哔哩哔哩",
+            regulars: [
+                'bilibili.com'
+            ]
+        }, {
+            name: "百度贴吧",
+            regulars: [
+                'tieba.baidu.com'
+            ]
+        }, {
+            name: "水滴筹",
+            regulars: [
+                'shuidichou.com'
+            ]
+        }, {
+            name: "Reddit",
+            regulars: [
+                'reddit.com'
+            ]
+        }, {
+            name: "GitHub",
+            regulars: [
+                'github.com'
+            ]
+        }, {
+            name: "抖音",
+            regulars: [
+                'douyin.com'
+            ]
+        }, {
+            name: "今日头条",
+            regulars: [
+                'toutiao.com', 'toutiao.org'
+            ]
+        }, {
+            name: "酷我音乐",
+            regulars: [
+                'kuwo.cn'
+            ]
+        }, {
+            name: "火锅视频",
+            regulars: [
+                'yoo.qq.com'
+            ]
+        }, {
+            name: "全民小视频",
+            regulars: [
+                'quanmin.baidu.com'
+            ]
+        }, {
+            name: "王者荣耀",
+            regulars: [
+                'svp.tencent-cloud.com', 'qt.qq.com'
+            ]
+        }, {
+            name: "QQ飞车手游",
+            regulars: [
+                'speedm.qq.com'
+            ]
+        }, {
+            name: "QQ飞车",
+            regulars: [
+                'speed.qq.com'
+            ]
+        }, {
+            name: "QQ飞车",
+            regulars: [
+                'speed.qq.com'
+            ]
+        }, {
+            name: "英雄联盟",
+            regulars: [
+                'lol.qq.com'
+            ]
+        }, {
+            name: "看点快报",
+            regulars: [
+                'kuaibao.qq.com'
+            ]
+        }, {
+            name: "腾讯新闻",
+            regulars: [
+                'news.qq.com'
+            ]
+        }, {
+            name: "51CTO 学院",
+            regulars: [
+                'edu.51cto.com'
+            ]
+        }, {
+            name: "轻松筹",
+            regulars: [
+                'qschou.com'
             ]
         }]
     }

@@ -365,18 +365,14 @@ API.Photos.getAllAlbumImageList = async (items) => {
 /**
  * 获取单个相册的所有评论
  * @param {Object} item 相册对象
- * @param {StatusIndicator} indicator 进度更新器
  */
-API.Photos.getAlbumAllComments = async (item, indicator) => {
+API.Photos.getAlbumAllComments = async (item) => {
     // 清空相册原有的评论
     item.comments = [];
 
     const CONFIG = QZone_Config.Photos.Comments;
 
-    // 更新下载中
-    indicator.addDownload(item);
-
-    const nextPage = async function (item, pageIndex, indicator) {
+    const nextPage = async function (item, pageIndex) {
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
@@ -389,25 +385,23 @@ API.Photos.getAlbumAllComments = async (item, indicator) => {
 
             // 合并数据
             item.comments = API.Utils.unionItems(item.comments, data.comments);
-            indicator.addSuccess(data.comments);
 
             if (API.Common.isPreBackupPos(data.comments, CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return item.comments;
             }
             // 递归获取下一页
-            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.comment, item.comments, arguments.callee, item, nextPageIndex, indicator);
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.comment, item.comments, arguments.callee, item, nextPageIndex);
 
         }).catch(async (e) => {
             console.error("获取单个相册的评论列表异常：", pageIndex + 1, item, e);
-            indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
             // 递归获取下一页
-            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.comment, item.comments, arguments.callee, item, nextPageIndex, indicator);
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.comment, item.comments, arguments.callee, item, nextPageIndex);
         });
     }
 
-    await nextPage(item, 0, indicator);
+    await nextPage(item, 0);
 
     return item.comments;
 }
@@ -422,25 +416,38 @@ API.Photos.getAllAlbumsComments = async (items) => {
     if (!QZone_Config.Photos.Comments.isGet || API.Photos.isFile()) {
         return items;
     }
+
+    // 进度更新器
+    const indicator = new StatusIndicator('Photos_Albums_Comments');
+    // 更新总数
+    indicator.setTotal(items.length);
+
     for (let index = 0; index < items.length; index++) {
         const item = items[index];
+
+        // 更新当前位置
+        indicator.setIndex(index + 1);
+
         if (!API.Photos.isNewAlbum(item.id)) {
             // 已备份数据跳过不处理
+            indicator.addSkip(item);
             continue;
         }
         if (item.comment === 0) {
             // 没评论时，跳过
+            indicator.addSkip(item);
             continue;
         }
-        // 相册评论进度更新器
-        let indicator = new StatusIndicator('Photos_Albums_Comments');
-        // 更新总数
-        indicator.setTotal(item.comment);
-        indicator.setIndex(index + 1);
-        await API.Photos.getAlbumAllComments(item, indicator);
-        // 完成
-        indicator.complete();
+
+        // 获取单条的全部评论
+        await API.Photos.getAlbumAllComments(item);
+
+        // 添加成功
+        indicator.addSuccess(item);
     }
+        
+    // 完成
+    indicator.complete();
     return items;
 }
 
@@ -504,13 +511,18 @@ API.Photos.getAllImagesComments = async (items) => {
     if (!QZone_Config.Photos.Images.Comments.isGet || API.Photos.isFile()) {
         return items;
     }
+
     // 相片评论进度更新器
     const indicator = new StatusIndicator('Photos_Images_Comments');
+    // 更新总数
+    indicator.setTotal(items.length);
+
     for (let index = 0; index < items.length; index++) {
         const item = items[index];
-        // 更新总数
-        indicator.setTotal(item.cmtTotal || 0);
+
+        // 当前位置
         indicator.setIndex(index + 1);
+
         if (item.cmtTotal === 0) {
             // 没评论时，跳过
             indicator.addSkip(item);
@@ -521,7 +533,12 @@ API.Photos.getAllImagesComments = async (items) => {
             indicator.addSkip(item);
             continue;
         }
+
+        // 获取单张相片的全部评论
         await API.Photos.getImageAllComments(item, indicator);
+
+        // 添加成功
+        indicator.addSuccess(item);
     }
     // 完成
     indicator.complete();
@@ -1225,7 +1242,7 @@ API.Photos.getAlbumsLikeList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
-    
+
     // 已备份数据跳过不处理
     indicator.setSkip(items.length - count);
 
@@ -1270,7 +1287,6 @@ API.Photos.getPhotosLikeList = async (items) => {
 
             indicator.setIndex(++count);
             tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Photos).then((likes) => {
-                console.debug('获取相片点赞完成', likes);
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {
@@ -1284,7 +1300,7 @@ API.Photos.getPhotosLikeList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
-    
+
     // 已备份数据跳过不处理
     indicator.setSkip(items.length - count);
 
@@ -1311,7 +1327,7 @@ API.Photos.addPhotoUniKey = (photos) => {
 API.Photos.getItemAllVisitorsList = async (item) => {
     // 清空原有的最近访问信息
     item.custom_visitor = {
-        viewCount : 0,
+        viewCount: 0,
         totalNum: 0,
         list: []
     };
@@ -1324,7 +1340,7 @@ API.Photos.getItemAllVisitorsList = async (item) => {
         const nextPageIndex = pageIndex + 1;
 
         return await API.Photos.getVisitors(item.id, pageIndex).then(async (data) => {
-            data = API.Utils.toJson(data, /^_Callback\(/).data;
+            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
 
             // 合并
             item.custom_visitor.viewCount = data.viewCount || 0;
@@ -1378,7 +1394,6 @@ API.Photos.getAllVisitorList = async (items) => {
             }
             indicator.setIndex(++count);
             tasks.push(API.Photos.getItemAllVisitorsList(item).then((visitor) => {
-                console.debug('获取相册最近访问完成', visitor);
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {
@@ -1392,7 +1407,7 @@ API.Photos.getAllVisitorList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
-    
+
     // 已备份数据跳过不处理
     indicator.setSkip(items.length - count);
 

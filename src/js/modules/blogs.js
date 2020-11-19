@@ -207,29 +207,34 @@ API.Blogs.getItemsAllCommentList = async (items) => {
         return items;
     }
 
+    // 单条日志状态更新器
+    const indicator = new StatusIndicator('Blogs_Comments');
+    indicator.setTotal(items.length);
+
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
 
+        // 更新当前位置
+        indicator.setIndex(i + 1);
+
         if (!API.Common.isNewItem(item)) {
             // 已备份数据跳过不处理
+            indicator.addSkip(item);
             continue;
         }
 
         // 预防日志无评论
         item.comments = item.comments || [];
 
-        // 单条日志状态更新器
-        const indicator = new StatusIndicator('Blogs_Comments');
-
-        // 更新当前位置
-        indicator.setIndex(i + 1);
-
         // 获取日志的全部评论
-        await API.Blogs.getItemAllCommentList(item, indicator);
+        await API.Blogs.getItemAllCommentList(item);
 
-        // 已完成
-        indicator.complete();
+        // 添加成功
+        indicator.addSuccess(item);
     }
+
+    // 已完成
+    indicator.complete();
     return items;
 }
 
@@ -250,9 +255,8 @@ API.Blogs.getItemCommentList = async (item, pageIndex) => {
 /**
  * 获取单条日志的全部评论列表
  * @param {object} item 日志
- * @param {StatusIndicator} indicator 状态更新器
  */
-API.Blogs.getItemAllCommentList = async (item, indicator) => {
+API.Blogs.getItemAllCommentList = async (item) => {
     if (!(item.replynum > item.comments.length)) {
         // 当前列表比评论总数小的时候才需要获取全部评论，否则则跳过
         return item.comments;
@@ -265,7 +269,6 @@ API.Blogs.getItemAllCommentList = async (item, indicator) => {
 
     // 更新总数
     const total = item.replynum || 0;
-    indicator.setTotal(total);
 
     const nextPage = async function (item, pageIndex) {
 
@@ -277,14 +280,10 @@ API.Blogs.getItemAllCommentList = async (item, indicator) => {
             // 合并评论列表
             item.comments = item.comments.concat(dataList || []);
 
-            // 更新成功条目数
-            indicator.addSuccess(item.comments);
-
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.comments, arguments.callee, item, nextPageIndex);
         }).catch(async (e) => {
             console.error("获取日志评论列表异常，当前页：", pageIndex + 1, item, e);
-            indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.comments, arguments.callee, item, nextPageIndex);
@@ -292,9 +291,6 @@ API.Blogs.getItemAllCommentList = async (item, indicator) => {
     }
 
     await nextPage(item, 0);
-
-    // 完成
-    indicator.complete();
 
     return item.comments;
 }
@@ -654,7 +650,6 @@ API.Blogs.getAllLikeList = async (items) => {
             }
             indicator.setIndex(++count);
             tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Blogs).then((likes) => {
-                console.debug('获取日志点赞完成', likes);
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {
@@ -668,7 +663,7 @@ API.Blogs.getAllLikeList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
-    
+
     // 已备份数据跳过不处理
     indicator.setSkip(items.length - count);
 
@@ -686,7 +681,7 @@ API.Blogs.getAllLikeList = async (items) => {
 API.Blogs.getItemAllVisitorsList = async (item) => {
     // 清空原有的最近访问信息
     item.custom_visitor = {
-        viewCount : 0,
+        viewCount: 0,
         totalNum: 0,
         list: []
     };
@@ -699,7 +694,7 @@ API.Blogs.getItemAllVisitorsList = async (item) => {
         const nextPageIndex = pageIndex + 1;
 
         return await API.Blogs.getVisitors(item.blogid, pageIndex).then(async (data) => {
-            data = API.Utils.toJson(data, /^_Callback\(/).data;
+            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
 
             // 合并
             item.custom_visitor.viewCount = data.viewCount || 0;
@@ -752,7 +747,6 @@ API.Blogs.getAllVisitorList = async (items) => {
             }
             indicator.setIndex(++count);
             tasks.push(API.Blogs.getItemAllVisitorsList(item).then((visitor) => {
-                console.debug('获取日志最近访问完成', visitor);
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {
@@ -769,7 +763,7 @@ API.Blogs.getAllVisitorList = async (items) => {
 
     // 获取日志阅读数
     await API.Blogs.getAllReadCount(items);
-    
+
     // 已备份数据跳过不处理
     indicator.setSkip(items.length - count);
 
@@ -803,8 +797,9 @@ API.Blogs.getAllReadCount = async (items) => {
                 blogIds.push(item.blogid);
             }
             // 单独获取日志的阅读数
-            const readData = await API.Blogs.getReadCount(blogIds);
-            const readList = JSON.parse(readData).data.itemList || [];
+            const data = await API.Blogs.getReadCount(blogIds);
+            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
+            const readList = data.data.itemList || [];
             const idMaps = API.Utils.groupedByField(readList, "id");
             for (const item of list) {
                 if (idMaps.has(item.blogid)) {

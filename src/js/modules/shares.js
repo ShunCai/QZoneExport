@@ -99,7 +99,7 @@ API.Shares.getAllList = async () => {
  * @param {object} item 分享
  * @param {StatusIndicator} indicator 状态更新器
  */
-API.Shares.getItemAllCommentList = async (item, indicator) => {
+API.Shares.getItemAllCommentList = async (item) => {
 
     // 清空原有的评论列表
     item.comments = [];
@@ -109,7 +109,6 @@ API.Shares.getItemAllCommentList = async (item, indicator) => {
 
     // 更新总数
     const total = item.commentTotal || 0;
-    indicator.setTotal(total);
 
     const nextPage = async function (item, pageIndex) {
 
@@ -119,10 +118,9 @@ API.Shares.getItemAllCommentList = async (item, indicator) => {
         return await API.Shares.getComments(item.id, pageIndex).then(async (data) => {
 
             // JSON转换
-            data = JSON.parse(data).data || {};
+            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
 
             item.commentTotal = item.commentTotal || data.total || 0;
-            indicator.setTotal(item.commentTotal);
 
             data.comments = data.comments || [];
             // 处理发表时间
@@ -134,9 +132,6 @@ API.Shares.getItemAllCommentList = async (item, indicator) => {
                 }
             }
 
-            // 更新成功条目数
-            indicator.addSuccess(item.comments);
-
             // 合并评论列表
             item.comments = item.comments.concat(data.comments);
 
@@ -144,7 +139,6 @@ API.Shares.getItemAllCommentList = async (item, indicator) => {
             return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.comments, arguments.callee, item, nextPageIndex);
         }).catch(async (e) => {
             console.error("获取分享评论列表异常，当前页：", pageIndex + 1, item, e);
-            indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.comments, arguments.callee, item, nextPageIndex);
@@ -152,9 +146,6 @@ API.Shares.getItemAllCommentList = async (item, indicator) => {
     }
 
     await nextPage(item, 0);
-
-    // 完成
-    indicator.complete();
 
     return item.comments;
 }
@@ -169,29 +160,34 @@ API.Shares.getItemsAllCommentList = async (items) => {
         return items;
     }
 
+    // 单条分享状态更新器
+    const indicator = new StatusIndicator('Shares_Comments');
+    indicator.setTotal(items.length);
+
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
 
+        // 更新当前位置
+        indicator.setIndex(i + 1);
+
         if (!API.Common.isNewItem(item)) {
             // 已备份数据跳过不处理
+            indicator.addSkip(item);
             continue;
         }
 
         // 预防分享无评论
         item.comments = item.comments || [];
 
-        // 单条分享状态更新器
-        const indicator = new StatusIndicator('Shares_Comments');
-
-        // 更新当前位置
-        indicator.setIndex(i + 1);
-
         // 获取分享的全部评论
-        await API.Shares.getItemAllCommentList(item, indicator);
+        await API.Shares.getItemAllCommentList(item);
 
-        // 已完成
-        indicator.complete();
+        // 添加成功
+        indicator.addSuccess(item);
     }
+
+    // 已完成
+    indicator.complete();
     return items;
 }
 
@@ -231,7 +227,6 @@ API.Shares.getAllLikeList = async (items) => {
             }
             indicator.setIndex(++count);
             tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Shares).then((likes) => {
-                console.debug('获取分享点赞完成', likes);
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {
@@ -275,7 +270,7 @@ API.Shares.getItemAllVisitorsList = async (item) => {
         const nextPageIndex = pageIndex + 1;
 
         return await API.Shares.getVisitors(item.id, pageIndex).then(async (data) => {
-            data = API.Utils.toJson(data, /^_Callback\(/).data;
+            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
 
             // 合并
             item.custom_visitor.viewCount = data.viewCount || 0;
@@ -328,7 +323,6 @@ API.Shares.getAllVisitorList = async (items) => {
             }
             indicator.setIndex(++count);
             tasks.push(API.Shares.getItemAllVisitorsList(item).then((visitor) => {
-                console.debug('获取分享最近访问完成', visitor);
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {
@@ -376,7 +370,7 @@ API.Shares.addMediaToTasks = async (dataList) => {
         const comments = item.comments;
         for (const comment of comments) {
             comment.pic = comment.pic || [];
-            for (let pic of pics) {
+            for (let pic of comment.pic) {
                 pic.custom_url = pic.o_url || pic.hd_url || pic.b_url || pic.s_url;
                 await API.Utils.addDownloadTasks(pic, pic.custom_url, module_dir, item, QZone.Shares.FILE_URLS);
             }
@@ -439,11 +433,11 @@ API.Shares.exportToHtml = async (shares) => {
         for (const [year, yearItems] of yearMaps) {
             console.info('生成分享年份HTML文件开始', year, yearItems);
             // 基于模板生成所有分享HTML
-            let _messageMaps = new Map();
+            let _sharesMaps = new Map();
             const monthMaps = API.Utils.groupedByTime(yearItems, "shareTime", 'month');
-            _messageMaps.set(year, monthMaps);
+            _sharesMaps.set(year, monthMaps);
             let params = {
-                messageMaps: _messageMaps,
+                sharesMaps: _sharesMaps,
                 total: yearItems.length
             }
             let yearFile = await API.Common.writeHtmlofTpl('shares', params, QZone.Shares.ROOT + "/" + year + ".html");
@@ -453,7 +447,7 @@ API.Shares.exportToHtml = async (shares) => {
         console.info('生成分享汇总HTML文件开始', shares);
         // 基于模板生成汇总分享HTML
         let params = {
-            messageMaps: API.Utils.groupedByTime(shares, "shareTime", 'all'),
+            sharesMaps: API.Utils.groupedByTime(shares, "shareTime", 'all'),
             total: shares.length
         }
         let allFile = await API.Common.writeHtmlofTpl('shares', params, QZone.Shares.ROOT + "/index.html");

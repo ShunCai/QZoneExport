@@ -181,7 +181,6 @@ const MAX_MSG = {
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的全文',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
@@ -189,7 +188,6 @@ const MAX_MSG = {
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的更多图片',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
@@ -197,14 +195,13 @@ const MAX_MSG = {
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的语音信息',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
     Messages_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
@@ -255,9 +252,9 @@ const MAX_MSG = {
     ],
     Blogs_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日志的评论列表',
-        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
         '请稍后...'
     ],
     Blogs_Like: [
@@ -362,7 +359,7 @@ const MAX_MSG = {
     Photos_Albums_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 个相册的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
         '请稍后...'
     ],
@@ -391,16 +388,14 @@ const MAX_MSG = {
         '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片详情',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 张',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 张',
         '总共 <span style="color: #1ca5fc;">{total}</span> 张',
         '请稍后...'
     ],
     Photos_Images_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 张相片的评论列表',
-        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 张',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
-        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 张',
         '请稍后...'
     ],
     Photos_Images_Like: [
@@ -414,7 +409,6 @@ const MAX_MSG = {
         '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片类型',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 张',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 张',
         '总共 <span style="color: #1ca5fc;">{total}</span> 张',
         '请稍后...'
     ],
@@ -443,7 +437,7 @@ const MAX_MSG = {
     Videos_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 个视频的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
         '请稍后...'
     ],
@@ -486,7 +480,7 @@ const MAX_MSG = {
     Shares_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条分享的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
-        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
@@ -523,7 +517,7 @@ const MAX_MSG = {
         '请稍后...'
     ],
     Common_Thunder: [
-        '正在第 <span style="color: #1ca5fc;">{index}</span> 次唤起迅雷X下载文件',
+        '正在第 <span style="color: #1ca5fc;">{index}</span> 次唤起迅雷下载文件',
         '将在 <span style="color: #1ca5fc;">{nextTip}</span> 秒后再次唤起迅雷',
         '已添加 <span style="color: #1ca5fc;">{downloaded}</span> ',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
@@ -531,7 +525,7 @@ const MAX_MSG = {
     ],
     Common_Thunder_Link: [
         '正在生成迅雷下载链接',
-        '打包下载后，打开迅雷X复制根目录下的【迅雷下载链接.txt】',
+        '打包下载后，打开迅雷复制根目录下的【迅雷下载链接.txt】',
         '请稍后...'
     ],
     Common_Browser: [

@@ -148,7 +148,7 @@ API.Utils = {
         }
         return ret;
     },
-    
+
     /**
      * 通过参数构建URL
      * @param {string} url 
@@ -452,12 +452,22 @@ API.Common = {
         if (typeof contet === 'object') {
             return format(contet);
         }
-        return contet = contet.replace(/@\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))?(?:,auto:([^\}]*))?\}/g, function (str, uin, name) {
+
+        // 先处理一遍正常的@的内容
+        contet = contet.replace(/@\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))?(?:,auto:([^\}]*))?\}/g, function (str, uin, name) {
             return format({
                 uin: uin,
                 name: name
             });
         })
+
+        // 如果处理后，仍包含uin、nick、who，则表示是特殊情况(即nick存的是内容)，再处理一遍
+        if (contet.indexOf('uin') > -1 && contet.indexOf('nick') > -1 && contet.indexOf('who') > -1) {
+            contet = contet.replace(/\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))\}/g, function (str, uin, name) {
+                return name;
+            })
+        }
+        return contet;
     },
 
     /**
@@ -742,6 +752,41 @@ API.Common = {
 
         // 显示窗口
         $('#comments_win').modal('show');
+    },
+
+    /**
+     * 获取那年今日的数据
+     * @param {Array} dataList 数组
+     * @param {string} field 时间字段
+     */
+    getOldYearData(dataList, field) {
+        // 时间分组
+        // 时间分组
+        const yearMaps = API.Utils.groupedByTime(dataList, field, 'all');
+        const date = new Date();
+        // 当前年份跳过
+        const currentYear = date.getFullYear();
+        const currentMonthDay = date.format('-MM-dd');
+        const _yearMaps = new Map();
+        if (yearMaps) {
+            // 移除今年数据
+            yearMaps.delete(currentYear);
+        }
+        for (const [year, yearItemMaps] of yearMaps) {
+            for (const [month, monthItems] of yearItemMaps) {
+                const monthDayItems = [];
+                for (const item of monthItems) {
+                    const targetTime = API.Utils.formatDate(item[field]);
+                    if (targetTime.indexOf(currentMonthDay) > -1) {
+                        monthDayItems.push(item);
+                    }
+                }
+                if (monthDayItems.length > 0) {
+                    _yearMaps.set(year, monthDayItems);
+                }
+            }
+        }
+        return _yearMaps;
     }
 }
 
@@ -793,6 +838,31 @@ API.Messages = {
         return 'https://apis.map.qq.com/uri/v1/marker?marker=coord:{pos_y},{pos_x};title:{idname};addr:{name}'.format(ibs);
     }
 }
+
+/**
+ * 分享模块API
+ */
+API.Shares = {
+
+    /**
+     * 获取类型
+     */
+    getDisplayType(innerType) {
+        const Share_Types = {
+            1: '日志',
+            2: '相册',
+            3: "照片",
+            4: "网页",
+            5: '视频',
+            10: '商品',
+            13: '新闻',
+            17: '微博',
+            18: "音乐"
+        }
+        return Share_Types[innerType] || "其它";
+    }
+}
+
 
 /**
  * 视频模块API
@@ -934,7 +1004,7 @@ const TPL = {
             <%}%>
         </div>
     `,
-    
+
     /**
      * 最近访问
      */

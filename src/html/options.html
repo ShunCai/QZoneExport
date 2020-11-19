@@ -1007,7 +1007,7 @@
 											</div>
 										</div>
 									</div>
-									<small class="text-muted mt-2">备份<span class="text-danger">发表时间大于</span>该时间的分享的文件，<span class="text-danger">请保留上次备份文件内容</span></small>
+									<small class="text-muted mt-2">备份<span class="text-danger">分享时间大于</span>该时间的分享的文件，<span class="text-danger">请保留上次备份文件内容</span></small>
 								</div>
 								<br>
 								<h5 style="color:cadetblue">分享选项：</h5>
@@ -1038,6 +1038,42 @@
 										<input type="number" min="1" class="form-control" id="shares_info_cost_max" placeholder="最大间隔">
 									</div>
 									<small class="text-muted mt-2">分享全文请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">来源管理：</label>
+									<div class="col-sm-2">
+										<textarea class="form-control mt-2" id="sourceNames" rows="10"></textarea>
+									</div>
+									<small class="text-muted mt-2">
+										配置分享来源的显示名称，QQ空间默认显示来源的URL，为了开发方便^_^，本配置基于JSON配置，请参考默认配置格式维护，如若不会，不建议修改，不影响备份，来源与QQ空间显示保持一致！
+										<br>
+										<br>
+										默认配置无任何推广成分，仅收集于本人QQ部分好友供参考，可跟自身情况调整配置！
+										<br>
+										<br>
+										如果配置如下：
+										<code>
+											[{
+												"name": "QQ音乐",
+												"regulars": ["y.qq.com","music.qq.com"]
+											},
+											{
+												"name": "腾讯视频",
+												"regulars": ["v.qq.com"]
+											}]
+										</code>
+										<br>
+										<br>
+										且分享来源的源地址为：<span style="color: red;">https://v.qq.com/x/page/f08719wqfd0.html</span>
+										<br>
+										<br>
+										那么备份后则显示来自<span style="color: red;">腾讯视频</span>，而不是显示来自<span style="color: red;">v.qq.com</span>
+										<br>
+										<br>
+										匹配顺序：URL是否包含<span style="color: red;">y.qq.com</span>或<span style="color: red;">music.qq.com</span>，
+										包含则匹配到<span style="color: red;">QQ音乐</span>，
+										不包含继续匹配下一个<span style="color: red;">v.qq.com</span>，URL包含<span style="color: red;">v.qq.com</span>，则表示该分享源来自<span style="color: red;">腾讯视频</span>。
+									</small>
 								</div>
 								<br>
 								<h5 style="color:cadetblue">评论选项：</h5>
@@ -1140,8 +1176,8 @@
 											<option value="File" selected>助手内部</option>
 											<option value="Browser">浏览器（推荐）</option>
 											<option value="Aria2">Aria2</option>
-											<option value="Thunder">迅雷X（自动唤起）</option>
-											<option value="Thunder_Link">迅雷X（下载链接）</option>
+											<option value="Thunder">迅雷（自动唤起）</option>
+											<option value="Thunder_Link">迅雷（下载链接）</option>
 											<option value="QZone">QQ空间外链（不推荐）</option>
 										</select>
 									</div>

@@ -68,6 +68,9 @@
 						<a href="favorites/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.favorites >0 %>;">
 							收藏夹<span class="badge badge-primary badge-pill"><%:=user.favorites || 0%></span>
 						</a>
+						<a href="shares/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.shares >0 %>;">
+							分享<span class="badge badge-primary badge-pill"><%:=user.shares || 0%></span>
+						</a>
 						<a href="friends/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.friends >0 %>;">
 							好友<span class="badge badge-primary badge-pill"><%:=user.friends || 0%></span>
 						</a>

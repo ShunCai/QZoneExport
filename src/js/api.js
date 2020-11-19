@@ -759,12 +759,22 @@ API.Utils = {
         if (typeof contet === 'object') {
             return format(contet);
         }
-        return contet = contet.replace(/@\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))?(?:,auto:([^\}]*))?\}/g, function (str, uin, name) {
+
+        // 先处理一遍正常的@的内容
+        contet = contet.replace(/@\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))?(?:,auto:([^\}]*))?\}/g, function (str, uin, name) {
             return format({
                 uin: uin,
                 name: name
             });
         })
+
+        // 如果处理后，仍包含uin、nick、who，则表示是特殊情况(即nick存的是内容)，再处理一遍
+        if (contet.indexOf('uin') > -1 && contet.indexOf('nick') > -1 && contet.indexOf('who') > -1) {
+            contet = contet.replace(/\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))\}/g, function (str, uin, name) {
+                return name;
+            })
+        }
+        return contet;
     },
 
     /**
@@ -1472,7 +1482,7 @@ API.Common = {
     },
 
     /**
-     * 下载工具是否为迅雷X
+     * 下载工具是否为迅雷
      */
     isThunder() {
         return this.isDownloadType('Thunder');
@@ -1621,7 +1631,7 @@ API.Blogs = {
             "iNotice": 0,
             "inCharset": "utf-8",
             "outCharset": "utf-8",
-            "format": "json",
+            "format": "jsonp",
             "ref": "qzone",
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk()
         };
@@ -2291,7 +2301,7 @@ API.Photos = {
             "num": QZone_Config.Photos.Comments.pageSize,
             "order": 1, //倒序
             "topicId": albumId,
-            "format": "json",
+            "format": "jsonp",
             "inCharset": "utf-8",
             "outCharset": "utf-8",
             "t": Date.now(),
@@ -2932,6 +2942,7 @@ class ShareInfo {
         this.shareTime = shareTime || 0 // 分享时间
         this.likes = [] // 点赞人
         this.likeTotal = 0 // 点赞数
+        this.uniKey = '00' + uin + '00' + id
         this.comments = [] // 评论列表
         this.commentTotal = 0 // 评论数
     }
@@ -2959,6 +2970,24 @@ class ShareData {
  */
 API.Shares = {
 
+    /**
+     * 获取类型
+     */
+    getDisplayType(innerType) {
+        const Share_Types = {
+            1: '日志',
+            2: '相册',
+            3: "照片",
+            4: "网页",
+            5: '视频',
+            10: '商品',
+            13: '新闻',
+            17: '微博',
+            18: "音乐"
+        }
+        return Share_Types[innerType] || "其它";
+    },
+
     getSourceType(url, defaultName) {
         if (!url) {
             return defaultName;
@@ -2970,6 +2999,10 @@ API.Shares = {
                     return name;
                 }
             }
+        }
+        if ('undefined' === defaultName) {
+            // 特殊处理undefined字符串
+            return '网页';
         }
         return defaultName;
     },
@@ -3001,7 +3034,7 @@ API.Shares = {
         }
         // 转换到JQuery对象
         const $sharePage = jQuery(html);
-        const shares = $sharePage.find('#shares li') || [];
+        const shares = $sharePage.find('#shares > li') || [];
         // 总数
         const $total = $($sharePage.find('#app_mod > div.wrap > div.aside.col_lar.bg3 > div.mod_info.bg > div.mod_conts > p'));
         shareData.total = $total && $total.text().replace('条分享', '') * 1 || 0;
@@ -3024,12 +3057,15 @@ API.Shares = {
                     return false;
                 }
             })
-            if (!window.infoJson) {
-                continue;
-            }
             // 分享显示区
             const $contentDiv = $($infoDiv.find('div.mod_conts._share_desc_cont'));
-
+            // 分享描述
+            const $temp_desc = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > p.c_tx3.comming'));
+            // 分享审核中
+            const isReviewing = $temp_desc && $temp_desc.text() === '此条分享正在审核中';
+            if (!window.infoJson || !window.infoJson.ugcPlatform || window.infoJson.ugcPlatform === '' || isReviewing) {
+                continue;
+            }
             // 分享源
             // 标题
             const $targetLink = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > h5 > strong > a.c_tx._share_title'));
@@ -3062,7 +3098,7 @@ API.Shares = {
                 });
             }
             // 相册、相片的图
-            const $album_images = $($contentDiv.find('div.mod_details.lbor > div.mod_list > div > ul > li > a.img_wrap > img')) || [];
+            const $album_images = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > div.mod_list > ul > li > a.img_wrap > img')) || [];
             if ($album_images) {
                 $album_images.each(function () {
                     images.push({
@@ -3105,7 +3141,7 @@ API.Shares = {
             "num": QZone_Config.Shares.Comments.pageSize,
             "order": 1,
             "topicId": (QZone.Common.Target.uin || API.Utils.initUin().Target.uin) + "_" + id,
-            "format": "json",
+            "format": "jsonp",
             "inCharset": "utf-8",
             "outCharset": "utf-8",
             "ref": "",

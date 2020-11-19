@@ -133,9 +133,16 @@ API.Videos.getAllComments = async (videos) => {
         return videos;
     }
 
+    // 进度更新器
+    const indicator = new StatusIndicator('Videos_Comments');
+    indicator.setTotal(videos.length);
+
     for (let index = 0; index < videos.length; index++) {
 
         const video = videos[index];
+
+        // 当前位置
+        indicator.setIndex(index + 1);
 
         if (!API.Common.isNewItem(video)) {
             // 已备份数据跳过不处理
@@ -148,16 +155,11 @@ API.Videos.getAllComments = async (videos) => {
 
         if (!video.shuoshuoid) {
             // 说说ID为空时跳过不获取 TODO 待定
+            indicator.addSkip(video);
             continue;
         }
 
-        // 进度更新器
-        const indicator = new StatusIndicator('Videos_Comments');
-
-        // 当前位置
-        indicator.setIndex(index + 1);
-
-        const nextPage = async function (video, pageIndex, indicator) {
+        const nextPage = async function (video, pageIndex) {
             // 下一页索引
             const nextPageIndex = pageIndex + 1;
 
@@ -171,11 +173,9 @@ API.Videos.getAllComments = async (videos) => {
 
                 // 添加评论数到视频
                 video.cmtTotal = data.total || video.cmtTotal || 0;
-                indicator.setTotal(video.cmtTotal);
 
                 // 合并数据
                 video.comments = API.Utils.unionItems(video.comments, data.comments);
-                indicator.addSuccess(data.comments);
 
                 if (API.Common.isPreBackupPos(data.comments, CONFIG)) {
                     // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
@@ -187,7 +187,6 @@ API.Videos.getAllComments = async (videos) => {
 
             }).catch(async (e) => {
                 console.error("获取视频评论列表异常：", pageIndex + 1, video, e);
-                indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
                 // 当前页失败后，跳过继续请求下一页
                 // 递归获取下一页
                 return await API.Common.callNextPage(nextPageIndex, CONFIG, video.cmtTotal, video.comments, arguments.callee, video, nextPageIndex, indicator);
@@ -195,12 +194,13 @@ API.Videos.getAllComments = async (videos) => {
         }
 
         // 获取第一页评论
-        await nextPage(video, 0, indicator);
+        await nextPage(video, 0);
 
-        // 完成
-        indicator.complete();
+        indicator.addSuccess(video);
     }
 
+    // 完成
+    indicator.complete();
     return videos;
 }
 
@@ -641,7 +641,7 @@ API.Videos.getAllLikeList = async (items) => {
         // 每一批次完成后暂停半秒
         await API.Utils.sleep(500);
     }
-    
+
     // 已备份数据跳过不处理
     indicator.setSkip(items.length - count);
 

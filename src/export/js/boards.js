@@ -73,31 +73,7 @@ const YEAR_ITEMS = `
 $(function () {
 
     // 那年今日
-    // 时间分组
-    const yearMaps = API.Utils.groupedByTime(dataList, "pubtime", 'all');
-    const date = new Date();
-    // 当前年份跳过
-    const currentYear = date.getFullYear();
-    const currentMonthDay = date.format('-MM-dd');
-    const _yearMaps = new Map();
-    if(yearMaps){
-        // 移除今年数据
-        yearMaps.delete(currentYear);
-    }
-    for (const [year, yearItemMaps] of yearMaps) {
-        for (const [month, monthItems] of yearItemMaps) {
-            const monthDayItems = [];
-            for (const item of monthItems) {
-                const pubtime = API.Utils.formatDate(item.pubtime);
-                if(pubtime.indexOf(currentMonthDay) > -1){
-                    monthDayItems.push(item);
-                }
-            }
-            if(monthDayItems.length > 0){
-                _yearMaps.set(year, monthDayItems);
-            }
-        }
-    }
+    const _yearMaps = API.Common.getOldYearData(dataList, "pubtime");
 
     // 那年今日HTML
     const items_html = template(YEAR_ITEMS, { yearMaps: _yearMaps });

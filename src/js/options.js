@@ -238,7 +238,7 @@
 				$suffix_timeout_row.show();
 				$download_thread_row.show();
 
-				$download_type_help.html('仅在<span style="color:red">正版的安装版迅雷X（不禁用迅雷X基础服务）的10.1.3以上版本</span>测试通过，禁用服务或其他版本建议切换迅雷X（剪切板）');
+				$download_type_help.html('仅在<span style="color:red">正版的安装版迅雷（不禁用迅雷基础服务）的10.1.3以上版本</span>测试通过，建议提前启动迅雷，禁用服务或其他版本建议切换迅雷（剪切板）');
 				break;
 			case 'Thunder_Link':
 				$task_count_row.hide();
@@ -252,7 +252,7 @@
 				$suffix_timeout_row.show();
 				$download_thread_row.show();
 
-				$download_type_help.html('仅支持迅雷X且打开剪切板监听，打开迅雷X，复制ZIP包中【<span style="color:red">迅雷下载链接.txt</span>】文本内容自动新建下载任务');
+				$download_type_help.html('仅支持迅雷且打开剪切板监听，打开迅雷，复制ZIP包中【<span style="color:red">迅雷下载链接.txt</span>】文本内容自动新建下载任务');
 				break;
 			case 'Browser':
 				$task_count_row.hide();
@@ -280,7 +280,7 @@
 				$common_aria2_rpc_row.hide();
 				$common_aria2_token_row.hide();
 
-				$download_type_help.text('QQ空间外链仅适用于备份类型为非文件类型的，例如日志、说说等，文件类型的，例如相片、视频，将默认使用助手内部下载');
+				$download_type_help.text('不下载图片，直接使用QQ空间的图片地址，不推荐使用，可能会存在图片过期、禁止访问等问题');
 				break;
 			default:
 				break;
@@ -465,6 +465,8 @@
 		$("#shares_info_cost_min").val(options.Shares.Info.randomSeconds.min);
 		$("#shares_info_cost_max").val(options.Shares.Info.randomSeconds.max);
 		$("#shares_list_limit").val(options.Shares.pageSize);
+		// 分享来源显示名称
+		$('#sourceNames').val(JSON.stringify(options.Shares.SourceType, null, 4));
 		// 评论列表
 		$("#shares_download_full_comments").prop("checked", options.Shares.Comments.isFull).change();
 		$("#shares_comments_min").val(options.Shares.Comments.randomSeconds.min);
@@ -630,6 +632,7 @@
 		QZone_Config.Favorites.randomSeconds.max = $("#favorites_list_cost_max").val() * 1;
 		QZone_Config.Favorites.pageSize = $("#favorites_list_limit").val() * 1;
 
+		// 分享模块赋值
 		QZone_Config.Shares.exportType = $("#shares_exportFormat").val();
 		QZone_Config.Shares.IncrementType = $("#shares_increment_type").val();
 		QZone_Config.Shares.IncrementTime = $("#shares_increment_time").val();
@@ -638,6 +641,12 @@
 		QZone_Config.Shares.Info.randomSeconds.min = $("#shares_info_cost_min").val() * 1;
 		QZone_Config.Shares.Info.randomSeconds.max = $("#shares_info_cost_max").val() * 1;
 		QZone_Config.Shares.pageSize = $("#shares_list_limit").val() * 1;
+		try {
+			QZone_Config.Shares.SourceType = JSON.parse($("#sourceNames").val());
+		} catch (error) {
+			alert('来源管理JSON错误：' + error);
+			return false;
+		}
 		// 评论列表
 		QZone_Config.Shares.Comments.isFull = $("#shares_download_full_comments").prop("checked");
 		QZone_Config.Shares.Comments.randomSeconds.min = $("#shares_comments_min").val() * 1;
@@ -671,6 +680,8 @@
 		chrome.storage.sync.set(QZone_Config, function () {
 			console.info("保存成功！");
 		});
+
+		return true;
 	}
 
 	// 保存按钮
@@ -680,7 +691,10 @@
 			event.stopPropagation();
 			return;
 		}
-		setOptions();
+		const isSuccess = setOptions();
+		if(!isSuccess){
+			return;
+		}
 		tips('<span class="text-success">保存成功</span>，<span class="text-danger">刷新空间</span>页面后备份');
 		event.preventDefault();
 		event.stopPropagation();
