@@ -217,12 +217,13 @@
 				$task_sleep_row.hide();
 				$download_status_row.hide();
 				$download_thread_row.hide();
-				$file_suffix_row.hide();
-				$suffix_timeout_row.hide();
 
 				// 显示Aria2配置
 				$common_aria2_rpc_row.show();
 				$common_aria2_token_row.show();
+				$file_suffix_row.show();
+				$suffix_timeout_row.show();
+
 				$download_type_help.html('不了解Aria2请忽略该项，仅在<span style="color:red">Aria2的1.35.0以上版本</span>测试通过，请确保Aria2服务处于<span style="color:red">启动中</span>，并<span style="color:red">启用RPC服务</span>，目前仅支持<span style="color:red">HTTP协议</span>！');
 				break;
 			case 'Thunder':
@@ -237,13 +238,12 @@
 				$suffix_timeout_row.show();
 				$download_thread_row.show();
 
-				$download_type_help.html('仅在<span style="color:red">正版的安装版迅雷X（不禁用迅雷X基础服务）的10.1.3以上版本</span>测试通过，禁用服务或其他版本建议切换迅雷X（剪切板）');
+				$download_type_help.html('仅在<span style="color:red">正版的安装版迅雷（不禁用迅雷基础服务）的10.1.3以上版本</span>测试通过，建议提前启动迅雷，禁用服务或其他版本建议切换迅雷（剪切板）');
 				break;
 			case 'Thunder_Link':
 				$task_count_row.hide();
 				$task_sleep_row.hide();
 				$download_status_row.hide();
-
 				// 隐藏Aria2配置
 				$common_aria2_rpc_row.hide();
 				$common_aria2_token_row.hide();
@@ -252,11 +252,14 @@
 				$suffix_timeout_row.show();
 				$download_thread_row.show();
 
-				$download_type_help.html('仅支持迅雷X且打开剪切板监听，打开迅雷X，复制ZIP包中【<span style="color:red">迅雷下载链接.txt</span>】文本内容自动新建下载任务');
+				$download_type_help.html('仅支持迅雷且打开剪切板监听，打开迅雷，复制ZIP包中【<span style="color:red">迅雷下载链接.txt</span>】文本内容自动新建下载任务');
 				break;
 			case 'Browser':
 				$task_count_row.hide();
 				$task_sleep_row.hide();
+				// 隐藏Aria2配置
+				$common_aria2_rpc_row.hide();
+				$common_aria2_token_row.hide();
 
 				$download_status_row.show();
 				$file_suffix_row.show();
@@ -277,7 +280,7 @@
 				$common_aria2_rpc_row.hide();
 				$common_aria2_token_row.hide();
 
-				$download_type_help.text('QQ空间外链仅适用于备份类型为非文件类型的，例如日志、说说等，文件类型的，例如相片、视频，将默认使用助手内部下载');
+				$download_type_help.text('不下载图片，直接使用QQ空间的图片地址，不推荐使用，可能会存在图片过期、禁止访问等问题');
 				break;
 			default:
 				break;
@@ -326,20 +329,6 @@
 	})
 
 	let loadOptions = (options) => {
-		// 公共模块赋值
-		$("#common_list_retry_count").val(options.Common.listRetryCount);
-		$("#common_list_retry_sleep").val(options.Common.listRetrySleep);
-		$("#common_download_type").val(options.Common.downloadType).change();
-		$('#common_file_suffix').prop("checked", options.Common.isAutoFileSuffix).change();
-		$("#common_file_suffix_timeout").val(options.Common.autoFileSuffixTimeOut);
-		$('#common_download_status').prop("checked", options.Common.enabledShelf);
-		chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
-		$("#common_thunder_task_count").val(options.Common.thunderTaskNum);
-		$("#common_thunder_task_sleep").val(options.Common.thunderTaskSleep);
-		$("#common_download_thread").val(options.Common.downloadThread);
-		$("#common_aria2_rpc").val(options.Common.Aria2.rpc);
-		$("#common_aria2_token").val(options.Common.Aria2.token || '');
-		$('#common_user_link').prop("checked", options.Common.hasUserLink);
 
 		// 说说模块赋值
 		$("#messages_exportFormat").val(options.Messages.exportType);
@@ -466,6 +455,47 @@
 		$("#favorites_list_cost_min").val(options.Favorites.randomSeconds.min);
 		$("#favorites_list_cost_max").val(options.Favorites.randomSeconds.max);
 		$("#favorites_list_limit").val(options.Favorites.pageSize);
+
+		// 分享模块赋值
+		$("#shares_exportFormat").val(options.Shares.exportType);
+		$("#shares_increment_type").val(options.Shares.IncrementType).change();
+		$("#shares_increment_time").val(options.Shares.IncrementTime);
+		$("#shares_list_cost_min").val(options.Shares.randomSeconds.min);
+		$("#shares_list_cost_max").val(options.Shares.randomSeconds.max);
+		$("#shares_info_cost_min").val(options.Shares.Info.randomSeconds.min);
+		$("#shares_info_cost_max").val(options.Shares.Info.randomSeconds.max);
+		$("#shares_list_limit").val(options.Shares.pageSize);
+		// 分享来源显示名称
+		$('#sourceNames').val(JSON.stringify(options.Shares.SourceType, null, 4));
+		// 评论列表
+		$("#shares_download_full_comments").prop("checked", options.Shares.Comments.isFull).change();
+		$("#shares_comments_min").val(options.Shares.Comments.randomSeconds.min);
+		$("#shares_comments_max").val(options.Shares.Comments.randomSeconds.max);
+		$("#shares_comments_limit").val(options.Shares.Comments.pageSize);
+		// 点赞列表
+		$("#shares_has_like").prop("checked", options.Shares.Like.isGet).change();
+		$("#shares_like_min").val(options.Shares.Like.randomSeconds.min);
+		$("#shares_like_max").val(options.Shares.Like.randomSeconds.max);
+		// 最近访问
+		$("#shares_has_visitor").prop("checked", options.Shares.Visitor.isGet).change();
+		$("#shares_visitor_min").val(options.Shares.Visitor.randomSeconds.min);
+		$("#shares_visitor_max").val(options.Shares.Visitor.randomSeconds.max);
+
+		// 公共模块赋值
+		$("#common_list_retry_count").val(options.Common.listRetryCount);
+		$("#common_list_retry_sleep").val(options.Common.listRetrySleep);
+		$("#common_download_type").val(options.Common.downloadType).change();
+		$('#common_file_suffix').prop("checked", options.Common.isAutoFileSuffix).change();
+		$("#common_file_suffix_timeout").val(options.Common.autoFileSuffixTimeOut);
+		$('#common_download_status').prop("checked", options.Common.enabledShelf);
+		chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
+		$("#common_thunder_task_count").val(options.Common.thunderTaskNum);
+		$("#common_thunder_task_sleep").val(options.Common.thunderTaskSleep);
+		$("#common_download_thread").val(options.Common.downloadThread);
+		$("#common_aria2_rpc").val(options.Common.Aria2.rpc);
+		$("#common_aria2_token").val(options.Common.Aria2.token || '');
+		$('#common_user_link').prop("checked", options.Common.hasUserLink);
+
 	}
 
 	// 读取数据，第一个参数是指定要读取的key以及设置默认值
@@ -476,22 +506,6 @@
 	});
 
 	let setOptions = () => {
-
-		// 公共模块赋值		
-		QZone_Config.Common.listRetryCount = $("#common_list_retry_count").val() * 1;
-		QZone_Config.Common.listRetrySleep = $("#common_list_retry_sleep").val() * 1;
-		QZone_Config.Common.isAutoFileSuffix = $('#common_file_suffix').prop("checked");
-		QZone_Config.Common.autoFileSuffixTimeOut = $("#common_file_suffix_timeout").val() * 1;
-		QZone_Config.Common.downloadType = $('#common_download_type').val();
-		QZone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
-		chrome.downloads.setShelfEnabled(QZone_Config.Common.enabledShelf);
-		QZone_Config.Common.thunderTaskNum = $("#common_thunder_task_count").val() * 1;
-		QZone_Config.Common.thunderTaskSleep = $("#common_thunder_task_sleep").val() * 1;
-		QZone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
-		QZone_Config.Common.Aria2.rpc = $("#common_aria2_rpc").val();
-		QZone_Config.Common.Aria2.token = $("#common_aria2_token").val();
-
-		QZone_Config.Common.hasUserLink = $('#common_user_link').prop("checked");
 
 		// 说说模块赋值
 		QZone_Config.Messages.exportType = $("#messages_exportFormat").val();
@@ -618,9 +632,56 @@
 		QZone_Config.Favorites.randomSeconds.max = $("#favorites_list_cost_max").val() * 1;
 		QZone_Config.Favorites.pageSize = $("#favorites_list_limit").val() * 1;
 
+		// 分享模块赋值
+		QZone_Config.Shares.exportType = $("#shares_exportFormat").val();
+		QZone_Config.Shares.IncrementType = $("#shares_increment_type").val();
+		QZone_Config.Shares.IncrementTime = $("#shares_increment_time").val();
+		QZone_Config.Shares.randomSeconds.min = $("#shares_list_cost_min").val() * 1;
+		QZone_Config.Shares.randomSeconds.max = $("#shares_list_cost_max").val() * 1;
+		QZone_Config.Shares.Info.randomSeconds.min = $("#shares_info_cost_min").val() * 1;
+		QZone_Config.Shares.Info.randomSeconds.max = $("#shares_info_cost_max").val() * 1;
+		QZone_Config.Shares.pageSize = $("#shares_list_limit").val() * 1;
+		try {
+			QZone_Config.Shares.SourceType = JSON.parse($("#sourceNames").val());
+		} catch (error) {
+			alert('来源管理JSON错误：' + error);
+			return false;
+		}
+		// 评论列表
+		QZone_Config.Shares.Comments.isFull = $("#shares_download_full_comments").prop("checked");
+		QZone_Config.Shares.Comments.randomSeconds.min = $("#shares_comments_min").val() * 1;
+		QZone_Config.Shares.Comments.randomSeconds.max = $("#shares_comments_max").val() * 1;
+		QZone_Config.Shares.Comments.pageSize = $("#shares_comments_limit").val() * 1;
+		// 点赞列表
+		QZone_Config.Shares.Like.isGet = $("#shares_has_like").prop("checked");
+		QZone_Config.Shares.Like.randomSeconds.min = $("#shares_like_min").val() * 1;
+		QZone_Config.Shares.Like.randomSeconds.max = $("#shares_like_max").val() * 1;
+		// 最近访问
+		QZone_Config.Shares.Visitor.isGet = $("#shares_has_visitor").prop("checked");
+		QZone_Config.Shares.Visitor.randomSeconds.min = $("#shares_visitor_min").val() * 1;
+		QZone_Config.Shares.Visitor.randomSeconds.max = $("#shares_visitor_max").val() * 1;
+
+		// 公共模块赋值		
+		QZone_Config.Common.listRetryCount = $("#common_list_retry_count").val() * 1;
+		QZone_Config.Common.listRetrySleep = $("#common_list_retry_sleep").val() * 1;
+		QZone_Config.Common.isAutoFileSuffix = $('#common_file_suffix').prop("checked");
+		QZone_Config.Common.autoFileSuffixTimeOut = $("#common_file_suffix_timeout").val() * 1;
+		QZone_Config.Common.downloadType = $('#common_download_type').val();
+		QZone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
+		chrome.downloads.setShelfEnabled(QZone_Config.Common.enabledShelf);
+		QZone_Config.Common.thunderTaskNum = $("#common_thunder_task_count").val() * 1;
+		QZone_Config.Common.thunderTaskSleep = $("#common_thunder_task_sleep").val() * 1;
+		QZone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
+		QZone_Config.Common.Aria2.rpc = $("#common_aria2_rpc").val();
+		QZone_Config.Common.Aria2.token = $("#common_aria2_token").val();
+
+		QZone_Config.Common.hasUserLink = $('#common_user_link').prop("checked");
+
 		chrome.storage.sync.set(QZone_Config, function () {
 			console.info("保存成功！");
 		});
+
+		return true;
 	}
 
 	// 保存按钮
@@ -630,7 +691,10 @@
 			event.stopPropagation();
 			return;
 		}
-		setOptions();
+		const isSuccess = setOptions();
+		if(!isSuccess){
+			return;
+		}
 		tips('<span class="text-success">保存成功</span>，<span class="text-danger">刷新空间</span>页面后备份');
 		event.preventDefault();
 		event.stopPropagation();

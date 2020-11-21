@@ -9,6 +9,7 @@ $(function () {
         title: '头像',
         align: 'center',
         formatter: (value, row) => {
+            value = value || API.Common.getUserLogoUrl(row.uin);
             return API.Utils.getImageHTML(API.Common.getMediaPath(value, row.custom_avatar, "Friends_HTML"));
         }
     }, {

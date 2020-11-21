@@ -309,6 +309,269 @@ const Default_Config = {
             time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
         }
     },
+    // 分享模块
+    Shares: {
+        exportType: "HTML",// 内容备份类型
+        pageSize: 10,
+        randomSeconds: {
+            min: 1,
+            max: 2
+        },
+        Info: {
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        },
+        Comments: {
+            isFull: true, //是否全部评论
+            pageSize: 20,
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        },
+        IncrementType: "Full",// 增量备份类型
+        IncrementTime: "2005-06-06 00:00:00",// 增量时间
+        PreBackup: {
+            uin: 0, // 备份QQ
+            downloadType: undefined, // 下载方式
+            exportType: undefined, // 备份类型
+            field: "shareTime",// 比较字段
+            time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+        },
+        Like: {
+            isGet: false, //是否获取赞
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        },
+        Visitor: {
+            isGet: false, //是否获取最近访问
+            pageSize: 24,
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        },
+        SourceType: [{
+            name: "QQ空间秘密",
+            regulars: [
+                'zone.qq.com/secret'
+            ]
+        }, {
+            name: "手机QQ空间",
+            regulars: [
+                'mobile.qzone.qq.com'
+            ]
+        }, {
+            name: "QQ空间",
+            regulars: [
+                'qzone.qq.com'
+            ]
+        }, {
+            name: "QQ音乐",
+            regulars: [
+                'y.qq.com', 'i.y.qq.com', 'music.qq.com'
+            ]
+        }, {
+            name: "网易云音乐",
+            regulars: [
+                'music.163.com', 'y.music.163.com'
+            ]
+        }, {
+            name: "酷狗音乐",
+            regulars: [
+                'kugou.com', 'm.kugou.com', 't1.kugou.com'
+            ]
+        }, {
+            name: "全民K歌",
+            regulars: [
+                'kg.qq.com', 'kg2.qq.com'
+            ]
+        }, {
+            name: "匿问我答",
+            regulars: [
+                'ti.qq.com'
+            ]
+        }, {
+            name: "微信公众号",
+            regulars: [
+                'mp.weixin.qq.com'
+            ]
+        }, {
+            name: "天天爱消除",
+            regulars: [
+                'peng.qq.com'
+            ]
+        }, {
+            name: "QQ手游中心",
+            regulars: [
+                'gamecenter.qq.com', 'youxi.vip.qq.com'
+            ]
+        }, {
+            name: "知乎",
+            regulars: [
+                'zhihu.com', 'm.zhihu.com'
+            ]
+        }, {
+            name: "新浪微博",
+            regulars: [
+                'weibo.com', 'm.weibo.cn'
+            ]
+        }, {
+            name: "腾讯看点",
+            regulars: [
+                'post.mp.qq.com'
+            ]
+        }, {
+            name: "腾讯视频",
+            regulars: [
+                'v.qq.com', 'm.v.qq.com'
+            ]
+        }, {
+            name: "QQ小程序-腾讯视频",
+            regulars: [
+                'mqqapi://microapp/open\\?mini_appid=1109840991'
+            ]
+        }, {
+            name: "QQ小程序",
+            regulars: [
+                'mqqapi://microapp'
+            ]
+        }, {
+            name: "易企秀",
+            regulars: [
+                'i.eqxiu.com'
+            ]
+        }, {
+            name: "爱奇艺",
+            regulars: [
+                'iqiyi.com', 'www.iqiyi.com', 'm.iqiyi.com'
+            ]
+        }, {
+            name: "IT之家",
+            regulars: [
+                'm.ithome.com', 'www.ithome.com'
+            ]
+        }, {
+            name: "中国联通",
+            regulars: [
+                '10010.com', 'm.10010.com'
+            ]
+        }, {
+            name: "芒果TV",
+            regulars: [
+                'mgtv.com', 'm.mgtv.com'
+            ]
+        }, {
+            name: "乐视TV",
+            regulars: [
+                'letv.com', 'm.letv.com'
+            ]
+        }, {
+            name: "一点资讯",
+            regulars: [
+                'yidianzixun.com'
+            ]
+        }, {
+            name: "哔哩哔哩",
+            regulars: [
+                'bilibili.com'
+            ]
+        }, {
+            name: "百度贴吧",
+            regulars: [
+                'tieba.baidu.com'
+            ]
+        }, {
+            name: "水滴筹",
+            regulars: [
+                'shuidichou.com'
+            ]
+        }, {
+            name: "Reddit",
+            regulars: [
+                'reddit.com'
+            ]
+        }, {
+            name: "GitHub",
+            regulars: [
+                'github.com'
+            ]
+        }, {
+            name: "抖音",
+            regulars: [
+                'douyin.com'
+            ]
+        }, {
+            name: "今日头条",
+            regulars: [
+                'toutiao.com', 'toutiao.org'
+            ]
+        }, {
+            name: "酷我音乐",
+            regulars: [
+                'kuwo.cn'
+            ]
+        }, {
+            name: "火锅视频",
+            regulars: [
+                'yoo.qq.com'
+            ]
+        }, {
+            name: "全民小视频",
+            regulars: [
+                'quanmin.baidu.com'
+            ]
+        }, {
+            name: "王者荣耀",
+            regulars: [
+                'svp.tencent-cloud.com', 'qt.qq.com'
+            ]
+        }, {
+            name: "QQ飞车手游",
+            regulars: [
+                'speedm.qq.com'
+            ]
+        }, {
+            name: "QQ飞车",
+            regulars: [
+                'speed.qq.com'
+            ]
+        }, {
+            name: "QQ飞车",
+            regulars: [
+                'speed.qq.com'
+            ]
+        }, {
+            name: "英雄联盟",
+            regulars: [
+                'lol.qq.com'
+            ]
+        }, {
+            name: "看点快报",
+            regulars: [
+                'kuaibao.qq.com'
+            ]
+        }, {
+            name: "腾讯新闻",
+            regulars: [
+                'news.qq.com'
+            ]
+        }, {
+            name: "51CTO 学院",
+            regulars: [
+                'edu.51cto.com'
+            ]
+        }, {
+            name: "轻松筹",
+            regulars: [
+                'qschou.com'
+            ]
+        }]
+    }
 };
 
 /**
@@ -371,8 +634,14 @@ const ExportFiles = [
         original: 'export/js/videos.js',
         target: FOLDER_ROOT + 'Common/js/videos.js'
     }, {
+        original: 'export/js/boards.js',
+        target: FOLDER_ROOT + 'Common/js/boards.js'
+    }, {
         original: 'export/js/favorites.js',
         target: FOLDER_ROOT + 'Common/js/favorites.js'
+    }, {
+        original: 'export/js/shares.js',
+        target: FOLDER_ROOT + 'Common/js/shares.js'
     }
 ]
 
@@ -390,7 +659,8 @@ var QZone = {
             "Videos": true,
             "Boards": true,
             "Friends": true,
-            "Favorites": true
+            "Favorites": true,
+            "Shares": true
         },
         Owner: {
             uin: undefined
@@ -506,5 +776,25 @@ var QZone = {
         total: 0,
         Data: [],
         FILE_URLS: new Map()
+    },
+    // 分享模块
+    Shares: {
+        ROOT: FOLDER_ROOT + 'Shares',
+        IMAGES_ROOT: FOLDER_ROOT + 'Shares/Images',
+        total: 0,
+        Data: [],
+        FILE_URLS: new Map(),
+        // 分享类型
+        ShareType: {
+            1: '日志',
+            2: '相册',
+            3: "照片",
+            4: "网页",
+            5: '视频',
+            10: '商品',
+            13: '新闻',
+            17: '微博',
+            18: "音乐"
+        }
     }
 };

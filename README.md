@@ -1,6 +1,6 @@
 # QQ空间导出助手
 
-> QQ空间导出助手，用于备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友、收藏夹为文件，便于迁移与保存。
+> QQ空间导出助手，用于备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友、收藏夹、分享为文件，便于迁移与保存。
 
 ## 简介
 
@@ -16,16 +16,6 @@
 [![我是往事随风。你好，我是轻舞飞扬。](https://s1.ax1x.com/2020/05/16/YcekPP.gif)](https://v.qq.com/x/page/f08719wqfd0.html)
 
 ## 安装
-#### 在线安装
-- [Chrome浏览器](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
-
-- [Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/djfalpkpjgpkfnkfmnegbalnicdoljcn)
-
-- [360极速浏览器](https://ext.chrome.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
-
-- [360安全浏览器](https://ext.se.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
-
-- 其他Chromium内核浏览器请移步->[离线安装](#离线安装)。
 
 #### 在线安装
 - [Chrome浏览器](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
@@ -46,7 +36,7 @@
 4. 勾选开发者模式
 5. 点击[加载已解压的扩展程序]按钮
 6. 选择ZIP包解压文件夹
-7. 更多问题点击[这里](https://baidu.lvshuncai.com/?q=Q2hyb21lIOWuieijhSDnprvnur/lronoo4Ug5omp5bGVIENSWA==)
+7. 更多问题点击[这里](https://baidu.lvshuncai.com/?q=Q2hyb21lIOWuieijhSDnprvnur/lronoo4Ug5omp5bGVIFpJUA==)
 
 ##### 方式②：CRX安装
 1. [下载CRX包](https://github.com/ShunCai/QZoneExport/releases/latest)
@@ -56,7 +46,7 @@
 
 #### 版本要求
 未测试，建议Chromium内核版本在70以上。   
-理论上基于Chromium内核版本均可正常使用，但不保证均可使用。   
+理论上基于Chromium内核版本的浏览器均可正常使用，但不保证均可使用。   
 点击这里进行[浏览器内核版本检测](https://liulanmi.com/labs/core.html)
 
 
@@ -104,6 +94,8 @@
 ![QQ空间备份-留言板](https://s1.ax1x.com/2020/05/16/YcZSkq.png)
 #### 收藏夹
 ![QQ空间备份-收藏夹](https://s1.ax1x.com/2020/05/16/YcZpt0.png)
+#### 分享
+![QQ空间备份-分享](https://i.loli.net/2020/11/21/TLDtf5IGAMqYk3l.png)
 
 ## 依赖
 - [Blob.js](https://note.youdao.com/)

@@ -54,6 +54,7 @@
 							<a class="nav-item nav-link" id="nav-boards-tab" data-toggle="tab" href="#nav-boards" role="tab" aria-controls="nav-boards" aria-selected="false">留言板</a>
 							<a class="nav-item nav-link" id="nav-friends-tab" data-toggle="tab" href="#nav-friends" role="tab" aria-controls="nav-friends" aria-selected="false">好友</a>
 							<a class="nav-item nav-link" id="nav-favorites-tab" data-toggle="tab" href="#nav-favorites" role="tab" aria-controls="nav-favorites" aria-selected="false">收藏夹</a>
+							<a class="nav-item nav-link" id="nav-shares-tab" data-toggle="tab" href="#nav-shares" role="tab" aria-controls="nav-shares" aria-selected="false">分享</a>
 							<a class="nav-item nav-link " id="nav-common-tab" data-toggle="tab" href="#nav-common" role="tab" aria-controls="nav-common" aria-selected="false">公共</a>
 						</div>
 					</nav>
@@ -965,6 +966,188 @@
 								</div>
 							</form>
 						</div>
+						<div class="tab-pane fade" id="nav-shares" role="tabpanel" aria-labelledby="nav-shares-tab">
+							<br />
+							<form id="tb_shares" data-module="Shares">
+								<h5 style="color:cadetblue">公共选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label for="shares_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
+									<div class="col-sm-2">
+										<select id="shares_exportFormat" class="custom-select">
+											<option value="HTML" selected>HTML</option>
+											<!-- <option value="PDF">PDF</option> -->
+											<option value="MarkDown">MarkDown</option>
+											<option value="JSON">JSON</option>
+										</select>
+									</div>
+									<small class="text-muted mt-2">HTML可直接用浏览器打开查看，MD用Markdown编辑器打开，JSON适用于开发者数据迁移</small>
+								</div>
+								<div class="form-group row">
+									<label for="shares_increment_type" class="col-sm-1 col-form-label">增量备份：</label>
+									<div class="col-sm-2">
+										<select id="shares_increment_type" class="custom-select increment_type" data-module="Shares" data-time="#shares_increment_time" data-time-row="#shares_increment_time_row">
+											<option value="Full" selected>全量</option>
+											<option value="LastTime">上次备份</option>
+											<option value="Custom">自定义</option>
+										</select>
+									</div>
+									<div>
+										<button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Shares">重置</button>
+									</div>
+									<small class="text-muted ml-2"><span class="text-danger">内容信息全量备份</span>，如HTML、Markdown、JSON的；<span class="text-danger">文件增量备份</span>，即分享的配图、表情<br><span class="text-danger">增量维度：</span>分享的发表时间，修改/删除分享、新增/删除评论、新增/删除评论回复均不识别！</small>
+								</div>
+								<div class="form-group row" id="shares_increment_time_row">
+									<label for="shares_increment_time_display" class="col-sm-1 col-form-label">增量时间：</label>
+									<div class="col-sm-2">
+										<div class="input-group date increment_time" id="shares_increment_time_display" data-target-input="nearest">
+											<input type="text" id="shares_increment_time" class="form-control datetimepicker-input" data-target="#shares_increment_time_display" />
+											<div class="input-group-append" data-target="#shares_increment_time_display" data-toggle="datetimepicker">
+												<div class="input-group-text"><i class="fa fa-calendar"></i></div>
+											</div>
+										</div>
+									</div>
+									<small class="text-muted mt-2">备份<span class="text-danger">分享时间大于</span>该时间的分享的文件，<span class="text-danger">请保留上次备份文件内容</span></small>
+								</div>
+								<br>
+								<h5 style="color:cadetblue">分享选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">列表查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="shares_list_cost_min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="shares_list_cost_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<div class="form-group row">
+									<label for="shares_list_limit" class="col-sm-1 col-form-label">列表每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="10" max="100" class="form-control" id="shares_list_limit" placeholder="查询每页条数">
+									</div>
+									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">内容查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="shares_info_cost_min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="shares_info_cost_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">分享全文请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">来源管理：</label>
+									<div class="col-sm-2">
+										<textarea class="form-control mt-2" id="sourceNames" rows="10"></textarea>
+									</div>
+									<small class="text-muted mt-2">
+										配置分享来源的显示名称，QQ空间默认显示来源的URL，为了开发方便^_^，本配置基于JSON配置，请参考默认配置格式维护，如若不会，不建议修改，不影响备份，来源与QQ空间显示保持一致！
+										<br>
+										<br>
+										默认配置无任何推广成分，仅收集于本人QQ部分好友供参考，可跟自身情况调整配置！
+										<br>
+										<br>
+										如果配置如下：
+										<code>
+											[{
+												"name": "QQ音乐",
+												"regulars": ["y.qq.com","music.qq.com"]
+											},
+											{
+												"name": "腾讯视频",
+												"regulars": ["v.qq.com"]
+											}]
+										</code>
+										<br>
+										<br>
+										且分享来源的源地址为：<span style="color: red;">https://v.qq.com/x/page/f08719wqfd0.html</span>
+										<br>
+										<br>
+										那么备份后则显示来自<span style="color: red;">腾讯视频</span>，而不是显示来自<span style="color: red;">v.qq.com</span>
+										<br>
+										<br>
+										匹配顺序：URL是否包含<span style="color: red;">y.qq.com</span>或<span style="color: red;">music.qq.com</span>，
+										包含则匹配到<span style="color: red;">QQ音乐</span>，
+										不包含继续匹配下一个<span style="color: red;">v.qq.com</span>，URL包含<span style="color: red;">v.qq.com</span>，则表示该分享源来自<span style="color: red;">腾讯视频</span>。
+									</small>
+								</div>
+								<br>
+								<h5 style="color:cadetblue">评论选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<div class="col-sm-1">获取评论：</div>
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" class="custom-control-input" id="shares_download_full_comments" data-hidden="true" data-target-link="shares_comment_link">
+										<label style="margin-left: 14px;" class="custom-control-label" for="shares_download_full_comments" aria-describedby="shares_comments_help"></label>
+									</div>
+									<small id="shares_comments_help" class="text-muted">默认不获取评论，勾选获取评论</small>
+								</div>
+								<div class="form-group row" data-link="shares_comment_link">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="shares_comments_min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="shares_comments_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<div class="form-group row" data-link="shares_comment_link">
+									<label for="shares_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
+									<div class="col-sm-2">
+										<input type="number" min="10" max="20" class="form-control" id="shares_comments_limit" placeholder="查询每页条数">
+									</div>
+									<small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<h5 style="color:cadetblue">其他选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<div class="col-sm-1">点赞列表：</div>
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" name="QZone_Config.Shares.Like.isGet" class="custom-control-input" id="shares_has_like" data-hidden="true" data-target-link="shares_like_link">
+										<label style="margin-left: 14px;" class="custom-control-label" for="shares_has_like" aria-describedby="shares_like_help"></label>
+									</div>
+									<small class="text-muted">默认不获取赞，勾选获取，仅在备份类型为HTML、JSON时备份赞</small>
+								</div>
+								<div class="form-group row" data-link="shares_like_link">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="shares_like_min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="shares_like_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<hr>
+								<div class="form-group row">
+									<div class="col-sm-1">最近访问：</div>
+									<div class="col-sm-2 custom-control custom-checkbox">
+										<input type="checkbox" name="QZone_Config.Shares.Visitor.isGet" class="custom-control-input" id="shares_has_visitor" data-hidden="true" data-target-link="shares_visitor_link">
+										<label style="margin-left: 14px;" class="custom-control-label" for="shares_has_visitor" aria-describedby="shares_visitor_help"></label>
+									</div>
+									<small class="text-muted">默认不获取最近访问，勾选获取，理论上仅支持获取最近1000条访问记录（开通黄钻情况下），仅在备份类型为HTML、JSON时备份</small>
+								</div>
+								<div class="form-group row" data-link="shares_visitor_link">
+									<label class="col-sm-1 col-form-label">查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="shares_visitor_min" name="QZone_Config.Shares.Visitor.randomSeconds.min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="shares_visitor_max" name="QZone_Config.Shares.Visitor.randomSeconds.max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<div class="text-center">
+									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
+									<button type="button" class="btn btn-secondary reset" data-toggle="tooltip" title="重置当前配置模块设置项">重置</button>
+								</div>
+							</form>
+						</div>
 						<div class="tab-pane fade" id="nav-common" role="tabpanel" aria-labelledby="nav-common-tab">
 							<br />
 							<form id="tb_common" data-module="Common">
@@ -993,8 +1176,8 @@
 											<option value="File" selected>助手内部</option>
 											<option value="Browser">浏览器（推荐）</option>
 											<option value="Aria2">Aria2</option>
-											<option value="Thunder">迅雷X（自动唤起）</option>
-											<option value="Thunder_Link">迅雷X（下载链接）</option>
+											<option value="Thunder">迅雷（自动唤起）</option>
+											<option value="Thunder_Link">迅雷（下载链接）</option>
 											<option value="QZone">QQ空间外链（不推荐）</option>
 										</select>
 									</div>
