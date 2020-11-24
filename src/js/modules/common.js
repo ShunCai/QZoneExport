@@ -47,6 +47,7 @@ API.Common.exportUser = async () => {
         userInfo.boards = QZone.Boards.Data.length;
         userInfo.favorites = QZone.Favorites.Data.length;
         userInfo.shares = QZone.Shares.Data.length;
+        userInfo.visitors = QZone.Visitors.Data.total;
         userInfo.friends = QZone.Friends.Data.length;
 
         // 根据导出类型导出数据
@@ -104,6 +105,8 @@ API.Common.exportUserToMd = async (userInfo) => {
     hasMd = hasMd || QZone_Config.Favorites.exportType === 'MarkDown';
     // 分享
     hasMd = hasMd || QZone_Config.Shares.exportType === 'MarkDown';
+    // 访客
+    hasMd = hasMd || QZone_Config.Visitors.exportType === 'MarkDown';
     // 相册
     hasMd = hasMd || QZone_Config.Photos.exportType === 'MarkDown';
     // 视频
@@ -126,9 +129,9 @@ API.Common.exportUserToMd = async (userInfo) => {
     contents.push('{desc}'.format(QZone.Common.Target));
 
     contents.push('### 空间概览');
-    contents.push('说说|日志|日记|相册|视频|留言|收藏|分享|好友');
+    contents.push('说说|日志|日记|相册|视频|留言|收藏|分享|访客|好友');
     contents.push('---|---|---|---|---|---|---|---');
-    contents.push('{messages}|{blogs}|{diaries}|{photos}|{videos}|{boards}|{favorites}|{shares}|{friends}'.format(QZone.Common.Target));
+    contents.push('{messages}|{blogs}|{diaries}|{photos}|{videos}|{boards}|{favorites}|{shares}|{visitors}|{friends}'.format(QZone.Common.Target));
 
     await API.Utils.writeText(contents.join('\r\n'), FOLDER_ROOT + "index.md").then((fileEntry) => {
         console.info("导出空间预览到Markdown文件完成", fileEntry, userInfo);
@@ -157,6 +160,8 @@ API.Common.exportUserToHtml = async (userInfo) => {
     hasHtml = hasHtml || QZone_Config.Favorites.exportType === 'HTML';
     // 分享
     hasHtml = hasHtml || QZone_Config.Shares.exportType === 'HTML';
+    // 访客
+    hasHtml = hasHtml || QZone_Config.Visitors.exportType === 'HTML';
     // 相册
     hasHtml = hasHtml || QZone_Config.Photos.exportType === 'HTML';
     // 视频
@@ -730,6 +735,9 @@ API.Common.saveBackupItems = () => {
             },
             Shares: {
                 Data: API.Common.isExport('Shares') ? QZone.Shares.Data : QZone.Shares.OLD_Data
+            },
+            Visitors: {
+                Data: API.Common.isExport('Visitors') ? QZone.Visitors.Data : QZone.Visitors.OLD_Data
             }
         };
 
@@ -831,6 +839,12 @@ API.Common.initBackedUpItems = async () => {
     QZone.Favorites.OLD_Data = Old_QZone.Favorites ? Old_QZone.Favorites.Data : [];
     // 覆盖更新分享模块全局变量
     QZone.Shares.OLD_Data = Old_QZone.Shares ? Old_QZone.Shares.Data : [];
+    // 覆盖更新分享模块全局变量
+    QZone.Visitors.OLD_Data = Old_QZone.Visitors ? Old_QZone.Visitors.Data : {
+        items: [],
+        total: 0,
+        totalPage: 0
+    };
 }
 
 /**

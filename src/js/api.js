@@ -130,7 +130,8 @@ const API = {
     Photos: {},// 相册模块
     Videos: {},// 视频模块
     Favorites: {},// 收藏模块
-    Shares: {} // 分享模块
+    Shares: {}, // 分享模块
+    Visitors: {} // 访问模块
 };
 
 /**
@@ -188,6 +189,11 @@ API.Utils = {
                     let month_items = resMaps.get(date.getMonth() + 1) || [];
                     month_items.push(item);
                     resMaps.set(date.getMonth() + 1, month_items);
+                    break;
+                case 'day':
+                    let day_items = resMaps.get(date.getDate()) || [];
+                    day_items.push(item);
+                    resMaps.set(date.getDate(), day_items);
                     break;
                 default:
                     let all_month_maps = resMaps.get(date.getFullYear()) || new Map();
@@ -601,11 +607,14 @@ API.Utils = {
         let rs = /\/user\.qzone\.qq\.com\/([\d]+)/.exec(window.location.href);
         if (rs) {
             // 获取登录QQ
-            QZone.Common.Owner.uin = /\d.+/g.exec(API.Utils.getCookie('uin'))[0] - 0;
-            QZone.Common.Target = {
-                uin: rs[1] - 0,
-                title: document.title,
-                description: $('meta[name="description"]').attr("content"),
+            const res = /\d.+/g.exec(API.Utils.getCookie('uin'));
+            if (res && res.length > 0) {
+                QZone.Common.Owner.uin = /\d.+/g.exec(API.Utils.getCookie('uin'))[0] - 0;
+                QZone.Common.Target = {
+                    uin: rs[1] - 0,
+                    title: document.title,
+                    description: $('meta[name="description"]').attr("content"),
+                }
             }
         }
         return QZone.Common;
@@ -970,8 +979,9 @@ API.Utils = {
      * 转换时间
      *  @param {integer} time 
      */
-    formatDate(time) {
-        return new Date(time * 1000).format('yyyy-MM-dd hh:mm:ss');
+    formatDate(time, str) {
+        str = str || 'yyyy-MM-dd hh:mm:ss';
+        return new Date(time * 1000).format(str);
     },
 
     /**
@@ -2441,7 +2451,7 @@ API.Photos = {
      * @param {integer} targeId 当前页索引
      */
     getVisitors_2(targeId) {
-        let params = {
+        const params = {
             "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
             "mask": 2,
             "mod": 2,
@@ -3171,4 +3181,76 @@ API.Shares = {
         return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
     }
 
-};
+}
+
+/**
+ * 访客模块API
+ */
+API.Visitors = {
+
+    /**
+     * 获取访客列表
+     * @param {integer} page 当前页
+     */
+    getList(page) {
+        const isOwner = QZone.Common.Owner.uin === QZone.Common.Target.uin;
+        const params = {
+            "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
+            "mask": isOwner ? 7 : 2,
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "page": page,
+            "fupdate": 1,
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        }
+        if (isOwner) {
+            params.clear = 1;
+            params.sd = Math.random()
+        }
+        return API.Utils.get(isOwner ? QZone_URLS.VISITOR_MORE_LIST_URL : QZone_URLS.VISITOR_SIMPLE_LIST_URL, params);
+    },
+
+    /**
+     * 是否访问主页
+     * @param {Object} item 访客
+     */
+    isHome(item) {
+        item.blogs = item.blogs || [];
+        item.photoes = item.photoes || [];
+        item.shuoshuoes = item.shuoshuoes || [];
+        item.shares = item.shares || [];
+        return item.blogs.length === 0 && item.photoes.length === 0 && item.shuoshuoes.length === 0 && item.shares.length === 0;
+    },
+
+    /**
+     * 获取访问标题
+     * @param {Object} item 访客
+     */
+    getTitle(item) {
+        item.blogs = item.blogs || [];
+        item.photoes = item.photoes || [];
+        item.shuoshuoes = item.shuoshuoes || [];
+        item.shares = item.shares || [];
+        if (API.Visitors.isHome(item)) {
+            // 主页
+            return "访问了主页";
+        }
+        const titles = [];
+        // 说说
+        if (item.shuoshuoes.length > 0) {
+            titles.push('说说');
+        }
+        // 日志
+        if (item.blogs.length > 0) {
+            titles.push('日志');
+        }
+        // 相册
+        if (item.photoes.length > 0) {
+            titles.push('相册');
+        }
+        // 分享
+        if (item.shares.length > 0) {
+            titles.push('分享');
+        }
+        return '查看了' + titles.join('、');
+    }
+}

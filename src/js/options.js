@@ -481,6 +481,13 @@
 		$("#shares_visitor_min").val(options.Shares.Visitor.randomSeconds.min);
 		$("#shares_visitor_max").val(options.Shares.Visitor.randomSeconds.max);
 
+		// 分享模块赋值
+		$("#visitors_exportFormat").val(options.Visitors.exportType);
+		$("#visitors_increment_type").val(options.Visitors.IncrementType).change();
+		$("#visitors_increment_time").val(options.Visitors.IncrementTime);
+		$("#visitors_list_cost_min").val(options.Visitors.randomSeconds.min);
+		$("#visitors_list_cost_max").val(options.Visitors.randomSeconds.max);
+
 		// 公共模块赋值
 		$("#common_list_retry_count").val(options.Common.listRetryCount);
 		$("#common_list_retry_sleep").val(options.Common.listRetrySleep);
@@ -660,6 +667,13 @@
 		QZone_Config.Shares.Visitor.isGet = $("#shares_has_visitor").prop("checked");
 		QZone_Config.Shares.Visitor.randomSeconds.min = $("#shares_visitor_min").val() * 1;
 		QZone_Config.Shares.Visitor.randomSeconds.max = $("#shares_visitor_max").val() * 1;
+
+		// 访客模块赋值
+		QZone_Config.Visitors.exportType = $("#visitors_exportFormat").val();
+		QZone_Config.Visitors.IncrementType = $("#visitors_increment_type").val();
+		QZone_Config.Visitors.IncrementTime = $("#visitors_increment_time").val();
+		QZone_Config.Visitors.randomSeconds.min = $("#visitors_list_cost_min").val() * 1;
+		QZone_Config.Visitors.randomSeconds.max = $("#visitors_list_cost_max").val() * 1;
 
 		// 公共模块赋值		
 		QZone_Config.Common.listRetryCount = $("#common_list_retry_count").val() * 1;

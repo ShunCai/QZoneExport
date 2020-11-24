@@ -113,7 +113,8 @@ const API = {
     Boards: {},// 留言模块
     Photos: {},// 相册模块
     Videos: {},// 视频模块
-    Favorites: {}// 收藏模块
+    Shares: {},// 分享模块
+    Visitors: {}// 访客模块
 };
 
 /**
@@ -174,8 +175,9 @@ API.Utils = {
      * 转换时间
      *  @param {integer} time 
      */
-    formatDate(time) {
-        return new Date(time * 1000).format('yyyy-MM-dd hh:mm:ss');
+    formatDate(time, str) {
+        str = str || 'yyyy-MM-dd hh:mm:ss';
+        return new Date(time * 1000).format(str);
     },
 
     /**
@@ -309,6 +311,11 @@ API.Utils = {
                     let month_items = resMaps.get(date.getMonth() + 1) || [];
                     month_items.push(item);
                     resMaps.set(date.getMonth() + 1, month_items);
+                    break;
+                case 'day':
+                    let day_items = resMaps.get(date.getDate()) || [];
+                    day_items.push(item);
+                    resMaps.set(date.getDate(), day_items);
                     break;
                 default:
                     let all_month_maps = resMaps.get(date.getFullYear()) || new Map();
@@ -865,6 +872,58 @@ API.Shares = {
 
 
 /**
+ * 访客模块API
+ */
+API.Visitors = {
+
+    /**
+     * 是否访问主页
+     * @param {Object} item 访客
+     */
+    isHome(item) {
+        item.blogs = item.blogs || [];
+        item.photoes = item.photoes || [];
+        item.shuoshuoes = item.shuoshuoes || [];
+        item.shares = item.shares || [];
+        return item.blogs.length === 0 && item.photoes.length === 0 && item.shuoshuoes.length === 0 && item.shares.length === 0;
+    },
+
+    /**
+     * 获取访问标题
+     * @param {Object} item 访客
+     */
+    getTitle(item) {
+        item.blogs = item.blogs || [];
+        item.photoes = item.photoes || [];
+        item.shuoshuoes = item.shuoshuoes || [];
+        item.shares = item.shares || [];
+        if (API.Visitors.isHome(item)) {
+            // 主页
+            return "访问了主页";
+        }
+        const titles = [];
+        // 说说
+        if (item.shuoshuoes.length > 0) {
+            titles.push('说说');
+        }
+        // 日志
+        if (item.blogs.length > 0) {
+            titles.push('日志');
+        }
+        // 相册
+        if (item.photoes.length > 0) {
+            titles.push('相册');
+        }
+        // 分享
+        if (item.shares.length > 0) {
+            titles.push('分享');
+        }
+        return '查看了' + titles.join('、');
+    }
+}
+
+
+/**
  * 视频模块API
  */
 API.Videos = {
@@ -942,7 +1001,6 @@ API.Videos = {
         return API.Utils.toUrl('https://v.qq.com/txp/iframe/player.html', params);
     }
 }
-
 
 /**
  * 模板常量
