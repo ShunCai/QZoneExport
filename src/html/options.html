@@ -1229,7 +1229,7 @@
 									<div class="col-sm-2">
 										<input type="number" min="1" class="form-control" id="common_list_retry_sleep" placeholder="列表重试间隔" aria-describedby="common_list_retry_sleep_help">
 									</div>
-									<small id="common_list_retry_sleep_help" class="text-muted mt-2">每次重试时的间隔时间</small>
+									<small id="common_list_retry_sleep_help" class="text-muted mt-2">每次重试时的间隔秒数</small>
 								</div>
 								<h5 style="color:cadetblue">文件下载：</h5>
 								<hr>
@@ -1237,8 +1237,8 @@
 									<label for="common_download_type" class="col-sm-1 col-form-label">文件下载工具：</label>
 									<div class="col-sm-2">
 										<select id="common_download_type" class="custom-select" aria-describedby="common_download_type_help">
-											<option value="File" selected>助手内部</option>
-											<option value="Browser">浏览器（推荐）</option>
+											<!-- <option value="File" selected>助手内部</option> -->
+											<option value="Browser" selected>浏览器（推荐）</option>
 											<option value="Aria2">Aria2</option>
 											<option value="Thunder">迅雷（自动唤起）</option>
 											<option value="Thunder_Link">迅雷（下载链接）</option>
@@ -1312,7 +1312,7 @@
 									<div>
 										<button id="aria2_test" type="button" class="btn btn-outline-info" data-module="Common">测试</button>
 									</div>
-									<small id="common_aria2_rpc_help" class="text-muted mt-2">RPC地址，目前仅支持HTTP协议，请启用HTTP协议的RPC服务！</small>
+									<small id="common_aria2_rpc_help" class="text-muted mt-2">RPC地址，目前<span style="color: red;">仅支持HTTP协议</span>，请启用HTTP协议的RPC服务！</small>
 								</div>
 								<div id="common_aria2_token_row" class="form-group row" style="display: none;">
 									<label for="common_aria2_token" class="col-sm-1 col-form-label">Aria2 认证令牌：</label>

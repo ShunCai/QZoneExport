@@ -1373,17 +1373,6 @@ const browserTasks = new Array();
                                 port.postMessage(API.Utils.toJson(data, /^_Callback\(/));
                             });
                             break;
-                        case 'initAlbumInfo':
-                            // 获取相册信息
-                            API.Photos.getAlbums(0).then((data) => {
-                                // 去掉函数，保留json
-                                data = API.Utils.toJson(data, /^shine0_Callback\(/);
-                                if (data.data && data.data.user && data.data.user.diskused) {
-                                    data.data.user.capacity = API.Photos.getCapacityDisplay(data.data.user.diskused);
-                                }
-                                port.postMessage(data);
-                            });
-                            break;
                         case 'getAlbumList':
                             // 获取相册列表
                             if (_.isEmpty(QZone.Photos.Album.Data)) {
@@ -1393,6 +1382,12 @@ const browserTasks = new Array();
                             } else {
                                 port.postMessage(QZone.Photos.Album.Data);
                             }
+                            break;
+                        case 'initConfig':
+                            // 初始化配置
+                            chrome.storage.sync.get(Default_Config, function (item) {
+                                port.postMessage(item);
+                            })
                             break;
                         default:
                             break;
