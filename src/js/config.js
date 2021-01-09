@@ -780,8 +780,14 @@ var QZone = {
     // 留言板模块
     Boards: {
         ROOT: FOLDER_ROOT + 'Boards',
-        total: 0,
-        Data: [],
+        Data: {
+            items: [],
+            authorInfo: {
+                message: '',
+                sign: ''
+            },
+            total: 0
+        },
         FILE_URLS: new Map()
     },
     // QQ好友模块

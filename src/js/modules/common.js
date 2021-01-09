@@ -44,11 +44,11 @@ API.Common.exportUser = async () => {
         }
         userInfo.photos = photos.length;
         userInfo.videos = QZone.Videos.Data.length;
-        userInfo.boards = QZone.Boards.Data.length;
+        userInfo.boards = QZone.Boards.Data.total;
         userInfo.favorites = QZone.Favorites.Data.length;
         userInfo.shares = QZone.Shares.Data.length;
-        userInfo.visitors = QZone.Visitors.Data.total;
         userInfo.friends = QZone.Friends.Data.length;
+        userInfo.visitors = QZone.Visitors.Data.total;
 
         // 根据导出类型导出数据
         await API.Common.exportUserToJson(userInfo);
@@ -796,9 +796,22 @@ API.Common.resetQzoneItems = () => {
     QZone.Videos.OLD_Data = [];
 
     // 重置留言模块数据
-    QZone.Boards.total = 0;
-    QZone.Boards.Data = [];
-    QZone.Boards.OLD_Data = [];
+    QZone.Boards.Data = {
+        items: [],
+        authorInfo: {
+            message: '',
+            sign: ''
+        },
+        total: 0
+    };
+    QZone.Boards.OLD_Data = {
+        items: [],
+        authorInfo: {
+            message: '',
+            sign: ''
+        },
+        total: 0
+    };
 
     // 重置好友模块数据
     QZone.Friends.total = 0;
@@ -809,6 +822,18 @@ API.Common.resetQzoneItems = () => {
     QZone.Favorites.total = 0;
     QZone.Favorites.Data = [];
     QZone.Favorites.OLD_Data = [];
+
+    // 重置访客模块数据
+    QZone.Visitors.Data = {
+        items: [],
+        total: 0,
+        totalPage: 0
+    }
+    QZone.Visitors.OLD_Data = {
+        items: [],
+        total: 0,
+        totalPage: 0
+    }
 }
 
 /**
@@ -832,7 +857,14 @@ API.Common.initBackedUpItems = async () => {
     // 覆盖更新视频模块全局变量
     QZone.Videos.OLD_Data = Old_QZone.Videos ? Old_QZone.Videos.Data : [];
     // 覆盖更新留言板模块全局变量
-    QZone.Boards.OLD_Data = Old_QZone.Boards ? Old_QZone.Boards.Data : [];
+    QZone.Boards.OLD_Data = Old_QZone.Boards ? Old_QZone.Boards.Data : {
+        items: [],
+        authorInfo: {
+            message: '',
+            sign: ''
+        },
+        total: 0
+    };
     // 覆盖更新好友模块全局变量
     QZone.Friends.OLD_Data = Old_QZone.Friends ? Old_QZone.Friends.Data : [];
     // 覆盖更新收藏夹模块全局变量

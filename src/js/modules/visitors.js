@@ -186,46 +186,46 @@ API.Visitors.exportAllListToFiles = async (visitorInfo) => {
 
 /**
  * 导出访客到HTML文件
- * @param {Array} visitors 数据
+ * @param {Array} visitorInfo 数据
  */
-API.Visitors.exportToHtml = async (visitors) => {
+API.Visitors.exportToHtml = async (visitorInfo) => {
     const indicator = new StatusIndicator('Visitors_Export_Other');
     indicator.setIndex('HTML');
     try {
         // 基于JSON生成JS
-        console.info('生成访客JSON开始', visitors);
+        console.info('生成访客JSON开始', visitorInfo);
         await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('visitors', visitors, QZone.Common.ROOT + '/json/visitors.js');
-        console.info('生成访客JSON结束', jsonFile, visitors);
+        const jsonFile = await API.Common.writeJsonToJs('visitorInfo', visitorInfo, QZone.Common.ROOT + '/json/visitors.js');
+        console.info('生成访客JSON结束', jsonFile, visitorInfo);
 
         // 访客数据根据年份分组
-        let yearMaps = API.Utils.groupedByTime(visitors.items, "time", 'year');
+        let yearMaps = API.Utils.groupedByTime(visitorInfo.items, "time", 'year');
         // 基于模板生成年份访客HTML
         for (const [year, yearItems] of yearMaps) {
             console.info('生成访客年份HTML文件开始', year, yearItems);
             let params = {
                 visitors: yearItems,
-                total: visitors.total
+                total: yearItems.length
             }
             let yearFile = await API.Common.writeHtmlofTpl('visitors', params, QZone.Visitors.ROOT + "/" + year + ".html");
             console.info('生成访客年份HTML文件结束', year, yearItems, yearFile);
         }
 
-        console.info('生成访客汇总HTML文件开始', visitors);
+        console.info('生成访客汇总HTML文件开始', visitorInfo);
         // 基于模板生成汇总访客HTML
         let params = {
-            visitors: visitors.items,
-            total: visitors.total
+            visitors: visitorInfo.items,
+            total: visitorInfo.total
         }
         let allFile = await API.Common.writeHtmlofTpl('visitors', params, QZone.Visitors.ROOT + "/index.html");
-        console.info('生成访客汇总HTML文件结束', allFile, visitors);
+        console.info('生成访客汇总HTML文件结束', allFile, visitorInfo);
 
     } catch (error) {
-        console.error('导出访客到HTML异常', error, visitors);
+        console.error('导出访客到HTML异常', error, visitorInfo);
     }
     // 完成
     indicator.complete();
-    return visitors;
+    return visitorInfo;
 }
 
 /**
@@ -369,7 +369,7 @@ API.Visitors.exportToJson = async (visitorInfo) => {
         console.info('正在生成年份访客JSON文件', year);
         const yearFilePath = QZone.Visitors.ROOT + "/" + year + ".json";
         const yearInfo = {
-            total: visitorInfo.total,
+            total: yearItems.length,
             items: yearItems
         }
         await API.Utils.writeText(JSON.stringify(yearInfo), yearFilePath).then((fileEntry) => {
