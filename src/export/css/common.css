@@ -29,9 +29,20 @@ body::-webkit-scrollbar-track-piece {
 }
 
 body {
-    min-height: 100vh;
+    min-height: 900px;
     font: normal 16px sans-serif;
-    /* background-image: linear-gradient(to top, #e6e9f0 0%, #eef1f5 100%); */
+}
+
+@media screen and (max-width: 820px) {
+    body {
+        min-height: 1100px;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    body {
+        min-height: 1100px;
+    }
 }
 
 .BlogAnchor {
@@ -89,16 +100,31 @@ body {
     height: 400px;
     filter: saturate(0.5);
     background-image: url(../images/index.jpg);
-    background-size: 100% 100%;
+    background-size: 100%;
+    background-repeat: no-repeat;
     background-position: center center;
     border-radius: 20px;
-    color: white;
+}
+
+@media screen and (max-width: 820px) {
+    .export-tips {
+        background-size: 100% 100%;
+        height: 232px;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    .export-tips {
+        background-size: 100% 100%;
+        height: 232px;
+    }
 }
 
 .export-tips h5 {
     position: fixed;
     bottom: 0px;
     right: 8px;
+    color: white;
 }
 
 .data-info {
@@ -831,4 +857,20 @@ pre {
 
 .visitor-list .list-group-item .album {
     width: 110px;
+}
+
+@media screen and (max-width: 820px) {
+    .index-list-group .list-group-item{
+        display: flex!important;
+        justify-content: space-between!important;
+        align-items: center!important;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    .index-list-group .list-group-item{
+        display: flex!important;
+        justify-content: space-between!important;
+        align-items: center!important;
+    }
 }
