@@ -163,18 +163,9 @@ body {
     border-radius: 15px;
 }
 
-.messageText img {
-    max-width: 100%;
-}
-
 .messages {
     top: 57px;
     position: relative;
-}
-
-.messages img {
-    max-width: 100%;
-    max-height: 100%;
 }
 
 .favorites {
@@ -198,18 +189,13 @@ body {
 
 .medias-item {
     cursor: pointer;
-    flex: 0 0 33%;
     box-sizing: border-box;
     border: 1.5px solid transparent;
     overflow: hidden;
 }
 
 .medias-item:nth-last-child(1):first-child {
-    flex: 0 0 50%;
-}
-
-.medias-item:first-child:nth-last-child(4)~.medias-item:nth-child(2) {
-    margin-right: 33%;
+    flex: 0 0 30%;
 }
 
 .content a {
@@ -933,6 +919,7 @@ pre {
 }
 
 /* 说说图片左右上下居中 */
+
 .message-lightbox {
     display: flex;
     justify-content: center;
@@ -943,4 +930,30 @@ pre {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.medias-item img {
+    object-fit: cover;
+}
+
+.two {
+    max-width: 600px;
+    overflow: hidden;
+}
+
+.two .message-lightbox {
+    width: 279px;
+    height: 279px;
+    overflow: hidden;
+}
+
+.three {
+    max-width: 600px;
+    overflow: hidden;
+}
+
+.three .message-lightbox {
+    width: 185px;
+    height: 185px;
+    overflow: hidden;
 }

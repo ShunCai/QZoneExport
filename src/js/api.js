@@ -1538,6 +1538,28 @@ API.Common = {
         return "Common/images/{uin}".format({
             uin: uin
         });
+    },
+
+    /**
+     * 获取图片Class乐行
+     * @param {Object} message 说说
+     */
+    getImgClassType(message) {
+        let medias = message.custom_images || [];
+        if (message.custom_magics && message.custom_magics.length > 0) {
+            medias = message.custom_magics || [];
+        }
+        if (message.custom_videos && message.custom_videos.length > 0) {
+            medias = message.custom_videos || [];
+        }
+        if (1 < medias.length && medias.length<= 4) {
+            // 数量为2-4的，两行
+            return 'two';
+        } else if (5 <= medias.length) {
+            // 数量大于5的
+            return 'three';
+        }
+        return '';
     }
 }
 

@@ -794,6 +794,29 @@ API.Common = {
             }
         }
         return _yearMaps;
+    },
+
+
+    /**
+     * 获取图片Class乐行
+     * @param {Object} message 说说
+     */
+    getImgClassType(message) {
+        let medias = message.custom_images || [];
+        if (message.custom_magics && message.custom_magics.length > 0) {
+            medias = message.custom_magics || [];
+        }
+        if (message.custom_videos && message.custom_videos.length > 0) {
+            medias = message.custom_videos || [];
+        }
+        if (1 < medias.length && medias.length<= 4) {
+            // 数量为2-4的，两行
+            return 'two';
+        } else if (5 <= medias.length) {
+            // 数量大于5的
+            return 'three';
+        }
+        return '';
     }
 }
 
@@ -836,13 +859,13 @@ API.Blogs = {
 API.Messages = {
     /**
      * 获取地图超链接
-     * @param {object} ibs 坐标信息
+     * @param {object} lbs 坐标信息
      */
-    getMapUrl(ibs) {
-        if (!ibs) {
+    getMapUrl(lbs) {
+        if (!lbs) {
             return '#';
         }
-        return 'https://apis.map.qq.com/uri/v1/marker?marker=coord:{pos_y},{pos_x};title:{idname};addr:{name}'.format(ibs);
+        return 'https://apis.map.qq.com/uri/v1/marker?marker=coord:{pos_y},{pos_x};title:{idname};addr:{name}'.format(lbs);
     }
 }
 

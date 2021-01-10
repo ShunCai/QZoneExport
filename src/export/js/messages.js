@@ -48,14 +48,14 @@ const ITEM_TPL = `
                             <%}%>
                         <%}%>
                         <%/* 多媒体内容 */%>
-                        <div class="medias row p-3 lightgallery">
+                        <div class="medias row p-3 lightgallery <%:=API.Common.getImgClassType(message)%>">
                             <%/* 视频内容（一般为单视频） */%>
                             <%if(message.custom_videos){%>
                                 <%for(let video of message.custom_videos){%>
                                     <%if (API.Videos.isExternalVideo(video)) {%>
                                         <a class="medias-item border message-lightbox-external" href="<%:=API.Videos.getVideoUrl(video)%>" target="_blank">
                                             <span class="message-video"></span>
-                                            <img class="lazyload w-100" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>">
+                                            <img class="lazyload w-100 h-100" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>">
                                         </a>
                                     <%}else{%>
                                         <%/* 空间视频 */%>
@@ -64,7 +64,7 @@ const ITEM_TPL = `
                                             <div style="display:none;" id="<%:=video.video_id || video.vid || video.pic_id%>">
                                                 <video class="lg-video-object lg-html5" src="<%:=(video.custom_filepath || video.custom_url || video.url3)%>" controls="controls"></video>
                                             </div>
-                                            <img class="lazyload w-100" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" />
+                                            <img class="lazyload w-100 h-100" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" />
                                         </a>
                                     <%}%>
                                 <%}%>
@@ -76,7 +76,7 @@ const ITEM_TPL = `
                                         <%if (API.Videos.isExternalVideo(image.video_info)) {%>
                                             <a class="medias-item border message-lightbox-external" href="<%:=API.Videos.getVideoUrl(image.video_info)%>" target="_blank">
                                                 <span class="message-video"></span>
-                                                <img class="lazyload w-100" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>">
+                                                <img class="lazyload w-100 h-100" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>">
                                             </a>
                                         <%}else{%>
                                             <%/* 空间视频 */%>
@@ -85,21 +85,21 @@ const ITEM_TPL = `
                                                 <div style="display:none;" id="<%:=image.video_info.video_id || image.video_info.vid || image.pic_id%>">
                                                     <video class="lg-video-object lg-html5" src="<%:=(image.video_info.custom_filepath || image.video_info.custom_url || image.video_info.url3)%>" controls="controls"></video>
                                                 </div>
-                                                <img class="lazyload w-100" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" />
+                                                <img class="lazyload w-100 h-100" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" />
                                             </a>
                                         <%}%>
                                     <%}else{%>
                                         <a class="medias-item border message-lightbox" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
-                                            <img class="lazyload w-100" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
+                                            <img class="lazyload w-100 h-100" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
                                         </a>
                                     <%}%>
                                 <%}%>
                             <%}%>
                             <%/* 动画表情内容（目前只支持一个） */%>
-                            <%if(message.custom_images){%>
+                            <%if(message.custom_magics){%>
                                 <%for(let image of message.custom_magics){%>
                                     <a class="medias-item border message-lightbox" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
-                                        <img class="lazyload w-100" data-src='<%:=(image.custom_filepath || image.custom_url)%>'>
+                                        <img class="lazyload w-100 h-100" data-src='<%:=(image.custom_filepath || image.custom_url)%>'>
                                     </a>
                                     <hr>
                                 <%}%>
@@ -199,7 +199,7 @@ const ITEM_TPL = `
                     <ul class="list-group list-group-flush ml-4">
                         <%if(message.lbs && message.lbs.pos_x && message.lbs.pos_y){%>
                             <li class="list-group-item">
-                                <a class="fa fa-map-marker" target="_blank" href="<%:=API.Messages.getMapUrl(message.lbs)%>" class="card-link"> <%:=message.lbs.idname%></a>
+                                <a class="fa fa-map-marker" target="_blank" href="<%:=API.Messages.getMapUrl(message.lbs)%>" class="card-link"> <%:=message.lbs.idname || message.lbs.name%></a>
                             </li>
                         <%}%>
                         <%if(message.source_name){%>
