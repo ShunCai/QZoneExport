@@ -991,7 +991,7 @@ API.Videos = {
             "origin": "https://user.qzone.qq.com",
             "vid": vid,
             "autoplay": true,
-            "volume": 1,
+            "volume": 100,
             "disableplugin": "IframeBottomOpenClientBar",
             "additionplugin": "IframeUiSearch",
             "platId": "qzone_feed",

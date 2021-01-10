@@ -37,7 +37,7 @@
 	<main role="main">
 		<div class="albums py-5 bg-light" style="padding-top: 4rem!important;">
 			<div class="container-fluid tz-gallery">
-				<div id="lightgallery" class="row">
+				<div id="lightgallery" class="row photos">
 					<%/* 遍历相片 */%>
 					<%for (var photo of album.photoList) {%>
 						<div class="col-md-2 mb-2">
@@ -55,7 +55,7 @@
 									</div>
 								<%}else{%>
 									<a class="lightbox" href="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, 'Photos_HTML')%>" title="<%:=photo.name%>">
-										<img class="card-img card-img-top" height="225px" src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, 'Photos_HTML')%>">
+										<img class="card-img" height="225px" src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, 'Photos_HTML')%>">
 									</a>
 									<div class="card-body">
 										<span class="card-title"><%:=(photo.name || photo.uploadTime)%></span>

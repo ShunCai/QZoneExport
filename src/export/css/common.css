@@ -235,11 +235,9 @@ body {
     background: url(../images/video-play.png) no-repeat;
     height: 64px;
     width: 64px;
-    opacity: .5;
+    opacity: .7;
     cursor: pointer;
     position: absolute;
-    top: 38%;
-    left: 15%;
 }
 
 /*markdown_box*/
@@ -502,10 +500,6 @@ body {
     transform: translateY(-3px) scale(1.02);
 }
 
-.tz-gallery .lightbox img {
-    border-radius: 1rem 1rem 0 0;
-}
-
 .tz-gallery .caption {
     padding: 26px 30px;
     text-align: center;
@@ -555,11 +549,16 @@ body {
 .lightbox {
     height: 225px;
     cursor: pointer;
+    overflow-x: hidden;
+    text-align: center;
+    background-color: black !important;
+    border-top-left-radius: calc(1rem - 1px);
+    border-top-right-radius: calc(1rem - 1px);
 }
 
 .lightbox img {
     height: 100%;
-    width: 100%;
+    width: inherit;
 }
 
 .data-info .list-group-item {
@@ -860,7 +859,7 @@ pre {
 }
 
 @media screen and (max-width: 820px) {
-    .index-list-group .list-group-item{
+    .index-list-group .list-group-item {
         display: flex!important;
         justify-content: space-between!important;
         align-items: center!important;
@@ -868,9 +867,80 @@ pre {
 }
 
 @media screen and (max-width: 640px) {
-    .index-list-group .list-group-item{
+    .index-list-group .list-group-item {
         display: flex!important;
         justify-content: space-between!important;
         align-items: center!important;
     }
+}
+
+#albums_html .card-img {
+    width: inherit;
+    height: 225px;
+}
+
+#albums_html .thumbnail {
+    width: 225px;
+}
+
+#albums_html .thumbnail a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+    background-color: black !important;
+    border-top-left-radius: calc(1rem - 1px);
+    border-top-right-radius: calc(1rem - 1px);
+}
+
+/* 相册赞、评论、浏览按钮样式 */
+
+#albums_html .thumbnail .viewlikes {
+    position: absolute;
+    top: 25px;
+    left: 10px;
+    font-size: 17px;
+}
+
+#albums_html .thumbnail .viewcomments {
+    position: absolute;
+    top: 25px;
+    left: 50px;
+    font-size: 17px;
+}
+
+#albums_html .thumbnail .viewVisitors {
+    position: absolute;
+    top: 25px;
+    left: 95px;
+    font-size: 17px;
+}
+
+/* 相册相片列表赞、评论、浏览按钮样式 */
+
+.photos .thumbnail .viewlikes {
+    position: absolute;
+    top: 25px;
+    left: 10px;
+    font-size: 20px;
+}
+
+.photos .thumbnail .viewcomments {
+    position: absolute;
+    top: 25px;
+    left: 50px;
+    font-size: 20px;
+}
+
+/* 说说图片左右上下居中 */
+.message-lightbox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.message-lightbox-external {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

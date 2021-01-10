@@ -632,7 +632,7 @@ API.Common.isNewItem = (item) => {
  * @param {Object} moduleConfig 模块配置
  */
 API.Common.removeOldItems = (old_items, moduleConfig) => {
-    if (API.Common.isFullBackup(moduleConfig)) {
+    if (API.Common.isFullBackup(moduleConfig) || old_items === undefined) {
         // 选择全量备份时，直接返回空数组，当初没有历史数据处理
         return [];
     }

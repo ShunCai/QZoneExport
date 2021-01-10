@@ -96,7 +96,7 @@
                     break;
                 case 'QZone':
                     $download_help_reson.text('不下载文件，直接使用QQ空间在线文件地址');
-                    $download_help_suggestion.text('慎用，点击更换下载工具');
+                    $download_help_suggestion.text('可能存在有效期，点击更换下载工具');
                     break;
                 default:
                     break;
