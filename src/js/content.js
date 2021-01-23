@@ -958,7 +958,7 @@ class QZoneOperator {
                 await API.Utils.sleep(1000);
                 $("#downloadBtn").show();
                 $("#fileList").show();
-                $("#backupStatus").html("数据采集完成，<span style='color:red' >请点击下方下载按钮下载ZIP包</span>。");
+                $("#backupStatus").html("数据采集完成，<span style='color:red' >请点击下方【打包下载】ZIP包</span>。");
                 API.Utils.notification("QQ空间导出助手通知", "空间数据已获取完成，请点击下载！");
                 break;
             default:

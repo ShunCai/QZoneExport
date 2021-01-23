@@ -103,6 +103,71 @@ Array.prototype.remove = function (val, field) {
     }
 };
 
+// WeChat Emoji Datas
+const emojis = [{ "index": 2002, "key": "Smirk", "cn": "[奸笑]", "en": "[Smirk]", "image": "2_02.png" }, { "index": 2004, "key": "Hey", "cn": "[嘿哈]", "en": "[Hey]", "image": "2_04.png" }, { "index": 2005, "key": "Facepalm", "cn": "[捂脸]", "en": "[Facepalm]", "image": "2_05.png" }, { "index": 2006, "key": "Smart", "cn": "[机智]", "en": "[Smart]", "image": "2_06.png" }, { "index": 2007, "key": "Tea", "cn": "[茶]", "en": "[Tea]", "image": "2_07.png" }, { "index": 2009, "key": "Packet", "cn": "[红包]", "en": "[Packet]", "image": "2_09.png" }, { "index": 2010, "key": "Candle", "cn": "[蜡烛]", "en": "[Candle]", "image": "2_10.png" }, { "index": 2011, "key": "Yeah!", "cn": "[耶]", "en": "[Yeah!]", "image": "2_11.png" }, { "index": 2018, "key": "Concerned", "cn": "[皱眉]", "en": "[Concerned]", "image": "2_12.png" }, { "index": 2013, "key": "Blush", "cn": "[囧]", "en": "[Blush]", "image": "smiley_17b.png" }, { "index": 2014, "key": "Salute", "cn": "[抱拳]", "en": "[Salute]", "image": "smiley_17b.png" }, { "index": 2015, "key": "Chick", "cn": "[鸡]", "en": "[Chick]", "image": "2_14.png" }, { "index": 2016, "key": "Blessing", "cn": "[福]", "en": "[Blessing]", "image": "2_15.png" }, { "index": 2017, "key": "Bye", "cn": "[再见]", "en": "[Bye]", "image": "smiley_39b.png" }, { "index": 2019, "key": "Rich", "cn": "[發]", "en": "[Rich]", "image": "2_16.png" }, { "index": 2020, "key": "Pup", "cn": "[小狗]", "en": "[Pup]", "image": "2_17.png" }, { "index": 2021, "key": "Onlooker", "cn": "[吃瓜]", "en": "[Onlooker]", "image": "Watermelon.png" }, { "index": 2022, "key": "GoForIt", "cn": "[加油]", "en": "[GoForIt]", "image": "Addoil.png" }, { "index": 2023, "key": "Sweats", "cn": "[汗]", "en": "[Sweats]", "image": "Sweat.png" }, { "index": 2025, "key": "OMG", "cn": "[天啊]", "en": "[OMG]", "image": "Shocked!.png" }, { "index": 2027, "key": "Emm", "cn": "[Emm]", "en": "[Emm]", "image": "Cold.png" }, { "index": 2028, "key": "Respect", "cn": "[社会社会]", "en": "[Respect]", "image": "Social.png" }, { "index": 2030, "key": "Doge", "cn": "[旺柴]", "en": "[Doge]", "image": "Yellowdog.png" }, { "index": 2034, "key": "NoProb", "cn": "[旺柴]", "en": "[NoProb]", "image": "NoProb.png" }, { "index": 2036, "key": "MyBad", "cn": "[打脸]", "en": "[MyBad]", "image": "Slap.png" }, { "index": 2037, "key": "Wow", "cn": "[哇]", "en": "[Wow]", "image": "Wow!.png" }, { "index": 2038, "key": "KeepFighting", "cn": "[哇]", "en": "[KeepFighting]", "image": "KeepFighting.png" }, { "index": 2043, "key": "Boring", "cn": "[翻白眼]", "en": "[Boring]", "image": "Boring.png" }, { "index": 2044, "key": "666", "cn": "[666]", "en": "[Awesome]", "image": "666.png" }, { "index": 2045, "key": "LetMeSee", "cn": "[让我看看]", "en": "[LetMeSee]", "image": "LetMeSee.png" }, { "index": 2046, "key": "Sigh", "cn": "[叹气]", "en": "[Sigh]", "image": "Sigh.png" }, { "index": 2047, "key": "Hurt", "cn": "[苦涩]", "en": "[Hurt]", "image": "Hurt.png" }, { "index": 2048, "key": "Broken", "cn": "[裂开]", "en": "[Broken]", "image": "Broken.png" }, { "index": 2049, "key": "Flushed", "cn": "[脸红]", "en": "[Flushed]", "image": "Flushed.png" }, { "index": 2050, "key": "Happy", "cn": "[笑脸]", "en": "[Happy]", "image": "Happy.png" }, { "index": 2051, "key": "Lol", "cn": "[破涕为笑]", "en": "[Lol]", "image": "Lol.png" }, { "index": 2052, "key": "Fireworks", "cn": "[烟花]", "en": "[Fireworks]", "image": "Fireworks.png" }, { "index": 2053, "key": "gift", "cn": "[礼物]", "en": "[Gift]", "image": "Gift.png" }, { "index": 2054, "key": "Party", "cn": "[庆祝]", "en": "[Party]", "image": "Party.png" }, { "index": 2055, "key": "Terror", "cn": "[恐惧]", "en": "[Terror]", "image": "Terror.png" }, { "index": 2056, "key": "Duh", "cn": "[恐惧]", "en": "[Duh]", "image": "Duh.png" }, { "index": 2057, "key": "LetDown", "cn": "[失望]", "en": "[Let Down]", "image": "Let Down.png" }, { "index": 2058, "key": "Sick", "cn": "[生病]", "en": "[Sick]", "image": "Sick.png" }, { "index": 2059, "key": "Worship", "cn": "[合十]", "en": "[Worship]", "image": "Worship.png" }];
+
+// 表情转换实现
+const emotionMap = {}
+emojis.forEach((item, index) => {
+    if (item.cn) {
+        emotionMap[item.cn] = item
+    }
+    if (item.en) {
+        emotionMap[item.en] = item
+    }
+})
+
+/**
+ * 转换微信新表情
+ * @param {string} content 转换内容
+ */
+const parseEmoji = (content) => {
+    let emojiIndexList = []
+    for (const k in emotionMap) {
+        let idx = content.indexOf(k)
+        while (idx >= 0) {
+            emojiIndexList.push({ idx, code: k, type: 2 })
+            idx = content.indexOf(k, idx + k.length)
+        }
+    }
+
+    emojiIndexList = emojiIndexList.sort((a, b) => {
+        return a.idx - b.idx
+    })
+    const newContentList = []
+    let lastTextIndex = 0
+    emojiIndexList.forEach(item => {
+        if (lastTextIndex !== item.idx) {
+            newContentList.push({
+                type: 1,
+                content: content.substring(lastTextIndex, item.idx)
+            })
+        }
+        if (item.type === 2) {
+            newContentList.push({
+                type: item.type,
+                content: content.substr(item.idx, item.code.length),
+                image: emotionMap[item.code].image
+            })
+        } else {
+            newContentList.push({
+                type: item.type,
+                content: item.code,
+                image: item.image
+            })
+        }
+        lastTextIndex = item.idx + item.code.length
+    })
+    const lastText = content.substring(lastTextIndex)
+    if (lastText) {
+        newContentList.push({
+            type: 1,
+            content: lastText
+        })
+    }
+    return newContentList;
+}
+
 const API = {
     Utils: {},  // 工具类
     Common: {}, // 公共模块
@@ -496,6 +561,8 @@ API.Common = {
             item = this.formatEmoticon(item, type);
             // 转换@内容
             item = this.formatMention(item, type);
+            // 转换微信表情
+            item = API.Common.formatWxEmoji(item, type);
             return item;
         }
         var conlist = (isRt && item.rt_con && item.rt_con['conlist']) || item.conlist || [];
@@ -513,6 +580,8 @@ API.Common = {
                     info.custom_display = this.formatTopic(info.con, type);
                     // 转换表情
                     info.custom_display = this.formatEmoticon(info.custom_display, type);
+                    // 转换微信表情
+                    info.custom_display = API.Common.formatWxEmoji(info.custom_display, type);
                     // 转换@内容
                     info.custom_display = this.formatMention({
                         uin: info.uin,
@@ -540,6 +609,8 @@ API.Common = {
                         info.custom_display = this.formatTopic(info.con, type);
                         // 转换表情
                         info.custom_display = this.formatEmoticon(info.custom_display, type);
+                        // 转换微信表情
+                        info.custom_display = API.Common.formatWxEmoji(info.custom_display, type);
                         // 转换@内容
                         info.custom_display = this.formatMention(info.custom_display, type);
                         // 替换换行符
@@ -809,14 +880,40 @@ API.Common = {
         if (message.custom_videos && message.custom_videos.length > 0) {
             medias = message.custom_videos || [];
         }
-        if (1 < medias.length && medias.length<= 4) {
-            // 数量为2-4的，两行
+        if(medias.length == 3){
+            // 数量为3，小图，放一行
+            return 'three';
+        }else if (1 < medias.length && medias.length <= 4) {
+            // 数量为2-4的，大图
             return 'two';
         } else if (5 <= medias.length) {
-            // 数量大于5的
+            // 数量大于5的，小图
             return 'three';
         }
         return '';
+    },
+
+    /**
+     * 转换微信新表情
+     */
+    formatWxEmoji(content, type) {
+        const contentList = parseEmoji(content);
+        const imgRelativePath = 'https://cdn.jsdelivr.net/gh/ShunCai/QZoneExport@dev/src/img/emoji';
+        const result = [];
+        for (const _content of contentList) {
+            if (_content.type === 1) {
+                result.push(_content.content);
+            }
+            if (_content.type === 2) {
+                let res = "<img src='{0}' >".format(imgRelativePath + "/" + _content.image);
+                switch (type) {
+                    case 'MD':
+                        res = API.Utils.getImagesMarkdown(url);
+                }
+                result.push(res);
+            }
+        }
+        return result.join('');
     }
 }
 
