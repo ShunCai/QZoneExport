@@ -577,7 +577,7 @@ API.Common = {
                     // 转换特殊符号
                     info.custom_display = this.escHTML(info.nick);
                     // 转换话题
-                    info.custom_display = this.formatTopic(info.con, type);
+                    info.custom_display = this.formatTopic(info.con || info.custom_display, type);
                     // 转换表情
                     info.custom_display = this.formatEmoticon(info.custom_display, type);
                     // 转换微信表情
@@ -872,18 +872,18 @@ API.Common = {
      * 获取图片Class乐行
      * @param {Object} message 说说
      */
-    getImgClassType(message) {
-        let medias = message.custom_images || [];
+    getImgClassType(message, isShare) {
+        let medias = isShare ? message.source.images || [] : message.custom_images || [];
         if (message.custom_magics && message.custom_magics.length > 0) {
-            medias = message.custom_magics || [];
+            medias = medias.concat(message.custom_magics || []);
         }
         if (message.custom_videos && message.custom_videos.length > 0) {
-            medias = message.custom_videos || [];
+            medias = medias.concat(message.custom_videos || []);
         }
-        if(medias.length == 3){
+        if (medias.length == 3) {
             // 数量为3，小图，放一行
             return 'three';
-        }else if (1 < medias.length && medias.length <= 4) {
+        } else if (1 < medias.length && medias.length <= 4) {
             // 数量为2-4的，大图
             return 'two';
         } else if (5 <= medias.length) {
@@ -1096,6 +1096,9 @@ API.Videos = {
         }
         if (API.Videos.isTencentVideo(video)) {
             // 腾讯视频
+            if (!video.video_id) {
+                return video.url2;
+            }
             url = API.Videos.getTencentVideoUrl(video.video_id);
         }
         // 其他第三方视频

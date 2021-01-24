@@ -107,19 +107,19 @@
 									</div>
 								</div>
 								<%/* 多媒体内容 */%>
-								<div class="medias row p-3 ml-5 lightgallery">
+								<div class="medias row p-3 ml-5 lightgallery <%:=API.Common.getImgClassType(favorite)%>">
 									<%/* 视频内容 */%>
 									<%if(favorite.custom_videos){%>
 										<%for(let video of favorite.custom_videos){%>
 											<% video.vid = API.Utils.newSimpleUid(16, 16); %>
 											<%if(video.play_url){%>
-												<a class="medias-item border" target="_blank" href="<%:=video.play_url%>">
-													<!-- <span class="message-video"></span> -->
+												<a class="medias-item border message-lightbox-external" target="_blank" href="<%:=video.play_url%>">
+													<span class="message-video"></span>
 													<img class="lazyload w-100 h-100" data-src="<%:=video.custom_pre_filepath || video.preview_img%>">
 												</a>
 											<%}else{%>
 												<a class="medias-item border message-lightbox" data-poster="<%:=video.custom_pre_filepath || video.preview_img%>" data-html="#<%:=video.video_id || video.vid || video.pic_id%>">
-													<!-- <span class="message-video"></span> -->
+													<span class="message-video"></span>
 													<div style="display:none;" id="<%:=video.video_id || video.vid || video.pic_id%>">
 														<video class="lg-video-object lg-html5" src="<%:=video.custom_filepath || video.url%>" controls="controls"></video>
 													</div>

@@ -155,7 +155,7 @@ const ITEM_TPL = `
                                                 <%}%>
                                             </div>
                                             <%/* 评论回复 */%>
-                                            <%if(comment.reply_num > 0 && comment.list_3){%>
+                                            <%if(comment.list_3){%>
                                                 <%for(let reply of comment.list_3){%>
                                                     <div class="comments m-1">
                                                         <div class="container comment  m-3 p-0">

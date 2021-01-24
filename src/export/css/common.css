@@ -947,12 +947,24 @@ pre {
     overflow: hidden;
 }
 
+.two .message-lightbox-external {
+    width: 279px;
+    height: 279px;
+    overflow: hidden;
+}
+
 .three {
     max-width: 600px;
     overflow: hidden;
 }
 
 .three .message-lightbox {
+    width: 185px;
+    height: 185px;
+    overflow: hidden;
+}
+
+.three .message-lightbox-external {
     width: 185px;
     height: 185px;
     overflow: hidden;
