@@ -8,7 +8,7 @@
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 	<link rel="stylesheet" type="text/css" href="../common/css/common.css">
-	<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.0/dist/jquery.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 	<script type="text/javascript" src="../common/json/albums.js"></script>
@@ -49,30 +49,15 @@
 								<div class="card thumbnail mb-3 shadow-sm">
 									<span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=album.name%>"></span>
 									<a href="photos.html?albumId=<%:=album.id%>">
-										<img class="card-img card-img-top" height="225px" height="225px" src="<%:=(album.custom_filepath || album.custom_url || album.url || album.pre)%>">
+										<img class="card-img" src="<%:=(album.custom_filepath || album.custom_url || album.url || album.pre)%>">
 									</a>
 									<div class="card-body">
 										<span class="card-title"><%:=album.name%></span>
 									</div>
 									<span class="pic-num-wrap">
-										<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="id" data-target="<%:=album.id%>" style="
-																			position: absolute;
-																			top: 25px;
-																			left: 10px;
-																			font-size: 17px;
-																		"><%:=album.likes ? album.likes.length : 0%></span>
-										<span class="text-light fa fa-comments-o cursor viewcomments" title="查看评论" data-field="id" data-target="<%:=album.id%>" style="
-																			position: absolute;
-																			top: 25px;
-																			left: 50px;
-																			font-size: 17px;
-																		"><%:=album.comments ? album.comments.length : 0%></span>
-										<span class="text-light fa fa-eye cursor viewVisitors" title="最近访问" data-field="id" data-target="<%:=album.id%>" style="
-																			position: absolute;
-																			top: 25px;
-																			left: 95px;
-																			font-size: 17px;
-																		"><%:=album.custom_visitor ? album.custom_visitor.viewCount : 0%></span>
+										<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="id" data-target="<%:=album.id%>"><%:=album.likes ? album.likes.length : 0%></span>
+										<span class="text-light fa fa-comments-o cursor viewcomments" title="查看评论" data-field="id" data-target="<%:=album.id%>"><%:=album.comments ? album.comments.length : 0%></span>
+										<span class="text-light fa fa-eye cursor viewVisitors" title="最近访问" data-field="id" data-target="<%:=album.id%>"><%:=album.custom_visitor ? album.custom_visitor.viewCount : 0%></span>
 																		
 										<span class="pic-num" title="相片数量"><%:=album.total%></span>
 									</span>

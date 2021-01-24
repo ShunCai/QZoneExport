@@ -7,7 +7,7 @@
 	<title>QQ空间备份-留言板</title>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 	<link rel="stylesheet" type="text/css" href="../common/css/common.css">
-	<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.0/dist/jquery.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lazyload@2.0.0-rc.2/lazyload.js"></script>
@@ -37,11 +37,18 @@
 	</header>
 	<main role="main" class="flex-shrink-0">
 		<div id="boards_html" class="container boards p-3">
+			<h4 class="sidebar-h1 mt-1" data-tag="h1" data-sidebar="主人寄语">主人寄语</h4>
+			<div class="card border p-2 mt-1">
+				<div class="card-body">
+					<%:=authorInfo.message%>
+				</div>
+			</div>
+			<h4 class="sidebar-h1 mt-3" data-tag="h1" data-sidebar="留言板">留言板(<%:=total%>)</h4>
 			<%/* 遍历年份 */%>
 			<%for (var yearMap of boardMaps) {%>
-				<span class="sidebar-h1" data-tag="h1" data-sidebar="<%:=yearMap[0]%>年"></span>
+				<span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=yearMap[0]%>年"></span>
 				<%for (var monthMap of yearMap[1]) {%>
-					<span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=monthMap[0]%>月"></span>
+					<span class="sidebar-h3" data-tag="h3" data-sidebar="<%:=monthMap[0]%>月"></span>
 					<%for (let index = 0; index < monthMap[1].length; index++) {%>
 						<%const board = monthMap[1][index]%>
 						<%total = total -1%>

@@ -20,6 +20,90 @@
         });
     }
 
+    // 私密日志密码
+    $('#diaries_close').click(() => {
+        chrome.tabs.create({ url: "https://user.qzone.qq.com/" + $("#loginUin").text() + "/blog?catalog=private" })
+    })
+
+    // 打开文件下载工具
+    $('.download_tool').click(() => {
+        chrome.tabs.create({ url: "html/options.html#nav-common-tab" })
+    })
+
+    const initOwnerOp = (data) => {
+        // 是否为当前用户
+        let isOwner = data.Owner.uin == data.Target.uin;
+
+        // 显示信息
+        $("#loginUin").text(data.Owner.uin);
+        $("#targetUin").text(data.Target.uin);
+        $("#userType").text(isOwner ? '个人模式' : '他人模式');
+
+        $("#Diaries").attr("checked", isOwner);
+        $("#Diaries").attr("disabled", !isOwner);
+        $("#Friends").attr("checked", isOwner);
+        $("#Friends").attr("disabled", !isOwner);
+        $("#Favorites").attr("checked", isOwner);
+        $("#Favorites").attr("disabled", !isOwner);
+    }
+
+    // 初始化助手配置
+    const initConfig = () => {
+        sendMessage({
+            from: 'popup',
+            subject: 'initConfig'
+        }, (config) => {
+            console.info('助手配置：', config);
+
+            // 下载工具映射
+            const downloadTypeMapping = {
+                'File': '助手内部',
+                'Browser': '浏览器',
+                'Aria2': 'Aria2',
+                'Thunder': '迅雷（自动唤起）',
+                'Thunder_Link': '迅雷（下载链接）',
+                'QZone': 'QQ空间外链',
+            }
+
+            // 下载工具
+            const $download_tool_tip = $("#download_tool_tip");
+            $download_tool_tip.text(downloadTypeMapping[config.Common.downloadType]);
+
+            // 理由
+            const $download_help_reson = $("#download_help_reson");
+            // 建议
+            const $download_help_suggestion = $("#download_help_suggestion");
+            switch (config.Common.downloadType) {
+                case 'File':
+                    $download_help_reson.text('内部下载，限制较多已淘汰');
+                    $download_help_suggestion.text('点击更换下载工具');
+                    break;
+                case 'Browser':
+                    $download_help_reson.text('调用浏览器自带工具下载文件');
+                    $download_help_suggestion.text('请先关闭浏览器设置【下载前询问每个文件的保存位置】');
+                    break;
+                case 'Aria2':
+                    $download_help_reson.text('将调用Aria2服务下载文件');
+                    $download_help_suggestion.text('点击检查Aria2配置');
+                    break;
+                case 'Thunder':
+                    $download_help_reson.text('将调用本地迅雷下载文件');
+                    $download_help_suggestion.text('建议迅雷处于启动状态');
+                    break;
+                case 'Thunder_Link':
+                    $download_help_reson.text('将调用本地迅雷下载文件');
+                    $download_help_suggestion.text('建议迅雷处于启动状态');
+                    break;
+                case 'QZone':
+                    $download_help_reson.text('不下载文件，直接使用QQ空间在线文件地址');
+                    $download_help_suggestion.text('可能存在有效期，点击更换下载工具');
+                    break;
+                default:
+                    break;
+            }
+        });
+    }
+
     // 私密日志是否加密，加密提示用户先人工输入密码
     // 请求私密日志列表
     const checkDiaries = () => {
@@ -29,47 +113,16 @@
         }, (data) => {
             console.info('私密日志独立密码检测结果：', data);
 
-            const $tips = $("#tips");
+            const $diaries_tip = $("#diaries_tip");
             const $daries = $("#Diaries");
             if ($daries.prop('checked')) {
-                if (data.code === -50000 || data.message === '请先验证独立密码' || data.tips === 'A28F-0') {
-                    $tips.show();
-                    $tips.text('私密日记已开启独立密码认证，请先关闭！');
+                if (data.code === -50000) {
+                    $diaries_tip.show();
                 } else {
-                    $tips.hide();
+                    $diaries_tip.hide();
                 }
             } else {
-                $tips.hide();
-            }
-        });
-    }
-
-    // 获取相册列表
-    const initAlbumInfo = () => {
-        sendMessage({
-            from: 'popup',
-            subject: 'initAlbumInfo'
-        }, (data) => {
-            if (data.code < 0) {
-                $('#backup').attr('disabled', true);
-                return;
-            }
-            console.info('获取相册信息完成：', data);
-            const $album_tips = $("#album_tips");
-            const $photos = $("#Photos");
-            if ($photos.prop('checked')) {
-                $album_tips.show();
-                $album_tips.html('目标相册已用容量：{0}'.format(data.data.user.capacity));
-                if (data.data.user.diskused > 1000) {
-                    $album_tips.append('<br>备份相册，请使用第三方<a id="downloadType_album" href="#">【文件下载工具】</a>');
-
-                    // 打开公共配置
-                    $('#downloadType_album').click(() => {
-                        chrome.tabs.create({ url: "html/options.html#nav-common-tab" })
-                    })
-                }
-            } else {
-                $album_tips.hide();
+                $diaries_tip.hide();
             }
         });
     }
@@ -90,9 +143,7 @@
                 albumMap.set(album.className, items);
             }
             let contents = [];
-            for (const albumEntry of albumMap) {
-                let className = albumEntry[0];
-                let albums = albumEntry[1];
+            for (const [className, albums] of albumMap) {
                 contents.push('<optgroup label="' + className + '">');
                 for (const album of albums) {
                     contents.push('<option value="{0}" >{1}</option>'.format(album.id, album.name));
@@ -109,37 +160,19 @@
         });
     }
 
-
-    const initOwnerOp = (data) => {
-        // 是否为当前用户
-        let isOwner = data.Owner.uin == data.Target.uin;
-
-        // 显示信息
-        $("#loginUin").text(data.Owner.uin);
-        $("#targetUin").text(data.Target.uin);
-        $("#userType").text(isOwner ? '个人模式' : '他人模式');
-
-        $("#Diaries").attr("checked", isOwner);
-        $("#Diaries").attr("disabled", !isOwner);
-        $("#Friends").attr("checked", isOwner);
-        $("#Friends").attr("disabled", !isOwner);
-        $("#Favorites").attr("checked", isOwner);
-        $("#Favorites").attr("disabled", !isOwner);
-    }
-
     // 获取当前登录QQ或备份QQ
     sendMessage({
         from: 'popup',
         subject: 'initUin'
     }, (data) => {
+        // 读取助手配置
+        initConfig();
         // 显示备份用户
         initOwnerOp(data);
         // 检测私密日记密码
         checkDiaries();
         // 获取相册列表
         getAlbumList();
-        // 获取相册信息
-        initAlbumInfo();
     });
 
     // 私密日志独立密码提示
@@ -156,28 +189,8 @@
         } else {
             $export_albums_div.hide();
         }
-        initAlbumInfo();
     });
     $("#Photos").change();
-
-    // 视频选择事件
-    $("#Videos").change(function () {
-        const isCheck = $(this).prop('checked');
-        const $video_tips = $("#video_tips");
-        if (isCheck) {
-            $video_tips.show();
-            $video_tips.html('备份视频，请使用第三方<a id="downloadType_video" href="#">【文件下载工具】</a>');
-
-            // 打开公共配置
-            $('#downloadType_video').click(() => {
-                chrome.tabs.create({ url: "html/options.html#nav-common-tab" })
-            })
-
-        } else {
-            $video_tips.hide();
-        }
-    });
-    $("#Videos").change();
 
     // 绑定备份按钮事件
     $('#backup').click(() => {

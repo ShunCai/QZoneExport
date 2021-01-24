@@ -55,6 +55,7 @@
 							<a class="nav-item nav-link" id="nav-friends-tab" data-toggle="tab" href="#nav-friends" role="tab" aria-controls="nav-friends" aria-selected="false">好友</a>
 							<a class="nav-item nav-link" id="nav-favorites-tab" data-toggle="tab" href="#nav-favorites" role="tab" aria-controls="nav-favorites" aria-selected="false">收藏夹</a>
 							<a class="nav-item nav-link" id="nav-shares-tab" data-toggle="tab" href="#nav-shares" role="tab" aria-controls="nav-shares" aria-selected="false">分享</a>
+							<a class="nav-item nav-link" id="nav-visitors-tab" data-toggle="tab" href="#nav-visitors" role="tab" aria-controls="nav-visitors" aria-selected="false">访客</a>
 							<a class="nav-item nav-link " id="nav-common-tab" data-toggle="tab" href="#nav-common" role="tab" aria-controls="nav-common" aria-selected="false">公共</a>
 						</div>
 					</nav>
@@ -1148,6 +1149,69 @@
 								</div>
 							</form>
 						</div>
+						<div class="tab-pane fade" id="nav-visitors" role="tabpanel" aria-labelledby="nav-visitors-tab">
+							<br />
+							<form id="tb_visitors" data-module="Visitors">
+								<h5 style="color:cadetblue">公共选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label for="visitors_exportFormat" class="col-sm-1 col-form-label">备份类型：</label>
+									<div class="col-sm-2">
+										<select id="visitors_exportFormat" class="custom-select">
+											<option value="HTML" selected>HTML</option>
+											<!-- <option value="PDF">PDF</option> -->
+											<option value="MarkDown">MarkDown</option>
+											<option value="JSON">JSON</option>
+										</select>
+									</div>
+									<small class="text-muted mt-2">HTML可直接用浏览器打开查看，MD用Markdown编辑器打开，JSON适用于开发者数据迁移</small>
+								</div>
+								<div class="form-group row">
+									<label for="visitors_increment_type" class="col-sm-1 col-form-label">增量备份：</label>
+									<div class="col-sm-2">
+										<select id="visitors_increment_type" class="custom-select increment_type" data-module="Shares" data-time="#visitors_increment_time" data-time-row="#visitors_increment_time_row">
+											<option value="Full" selected>全量</option>
+											<option value="LastTime">上次备份</option>
+											<option value="Custom">自定义</option>
+										</select>
+									</div>
+									<div>
+										<button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Shares">重置</button>
+									</div>
+									<small class="text-muted ml-2"><span class="text-danger">内容信息全量备份</span>，如HTML、Markdown、JSON的；<span class="text-danger">文件增量备份</span>，即访问内容的配图、表情<br><span class="text-danger">增量维度：</span>访客的发表时间，修改/删除访客、新增/删除评论、新增/删除评论回复均不识别！</small>
+								</div>
+								<div class="form-group row" id="visitors_increment_time_row">
+									<label for="visitors_increment_time_display" class="col-sm-1 col-form-label">增量时间：</label>
+									<div class="col-sm-2">
+										<div class="input-group date increment_time" id="visitors_increment_time_display" data-target-input="nearest">
+											<input type="text" id="visitors_increment_time" class="form-control datetimepicker-input" data-target="#visitors_increment_time_display" />
+											<div class="input-group-append" data-target="#visitors_increment_time_display" data-toggle="datetimepicker">
+												<div class="input-group-text"><i class="fa fa-calendar"></i></div>
+											</div>
+										</div>
+									</div>
+									<small class="text-muted mt-2">备份<span class="text-danger">访客时间大于</span>该时间的访客的文件，<span class="text-danger">请保留上次备份文件内容</span></small>
+								</div>
+								<br>
+								<h5 style="color:cadetblue">访客选项：</h5>
+								<hr>
+								<div class="form-group row">
+									<label class="col-sm-1 col-form-label">列表查询间隔：</label>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="visitors_list_cost_min" placeholder="最小间隔">
+									</div>
+									<div class="col-sm-1">
+										<input type="number" min="1" class="form-control" id="visitors_list_cost_max" placeholder="最大间隔">
+									</div>
+									<small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+								</div>
+								<br>
+								<div class="text-center">
+									<button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
+									<button type="button" class="btn btn-secondary reset" data-toggle="tooltip" title="重置当前配置模块设置项">重置</button>
+								</div>
+							</form>
+						</div>
 						<div class="tab-pane fade" id="nav-common" role="tabpanel" aria-labelledby="nav-common-tab">
 							<br />
 							<form id="tb_common" data-module="Common">
@@ -1165,7 +1229,7 @@
 									<div class="col-sm-2">
 										<input type="number" min="1" class="form-control" id="common_list_retry_sleep" placeholder="列表重试间隔" aria-describedby="common_list_retry_sleep_help">
 									</div>
-									<small id="common_list_retry_sleep_help" class="text-muted mt-2">每次重试时的间隔时间</small>
+									<small id="common_list_retry_sleep_help" class="text-muted mt-2">每次重试时的间隔秒数</small>
 								</div>
 								<h5 style="color:cadetblue">文件下载：</h5>
 								<hr>
@@ -1173,8 +1237,8 @@
 									<label for="common_download_type" class="col-sm-1 col-form-label">文件下载工具：</label>
 									<div class="col-sm-2">
 										<select id="common_download_type" class="custom-select" aria-describedby="common_download_type_help">
-											<option value="File" selected>助手内部</option>
-											<option value="Browser">浏览器（推荐）</option>
+											<!-- <option value="File" selected>助手内部</option> -->
+											<option value="Browser" selected>浏览器（推荐）</option>
 											<option value="Aria2">Aria2</option>
 											<option value="Thunder">迅雷（自动唤起）</option>
 											<option value="Thunder_Link">迅雷（下载链接）</option>
@@ -1248,7 +1312,7 @@
 									<div>
 										<button id="aria2_test" type="button" class="btn btn-outline-info" data-module="Common">测试</button>
 									</div>
-									<small id="common_aria2_rpc_help" class="text-muted mt-2">RPC地址，目前仅支持HTTP协议，请启用HTTP协议的RPC服务！</small>
+									<small id="common_aria2_rpc_help" class="text-muted mt-2">RPC地址，目前<span style="color: red;">仅支持HTTP协议</span>，请启用HTTP协议的RPC服务！</small>
 								</div>
 								<div id="common_aria2_token_row" class="form-group row" style="display: none;">
 									<label for="common_aria2_token" class="col-sm-1 col-form-label">Aria2 认证令牌：</label>

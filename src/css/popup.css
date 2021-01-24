@@ -1,4 +1,16 @@
 body {
     width: 450px;
-    padding: 25px;
+    padding: 20px;
+}
+
+#export_albums_div .dropdown-header {
+    background-color: beige;
+    color: black;
+    font-size: medium;
+    text-align: center;
+}
+
+#export_albums_div .dropdown-item {
+    font-size: small;
+    color: #333538;
 }

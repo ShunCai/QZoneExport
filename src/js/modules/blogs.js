@@ -797,9 +797,9 @@ API.Blogs.getAllReadCount = async (items) => {
                 blogIds.push(item.blogid);
             }
             // 单独获取日志的阅读数
-            const data = await API.Blogs.getReadCount(blogIds);
+            let data = await API.Blogs.getReadCount(blogIds);
             data = API.Utils.toJson(data, /^_Callback\(/).data || {};
-            const readList = data.data.itemList || [];
+            const readList = data.itemList || [];
             const idMaps = API.Utils.groupedByField(readList, "id");
             for (const item of list) {
                 if (idMaps.has(item.blogid)) {

@@ -7,7 +7,7 @@
 	<title>QQ空间备份-<%:=user.spacename%></title>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 	<link rel="stylesheet" type="text/css" href="common/css/common.css">
-	<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.0/dist/jquery.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 </head>
@@ -46,7 +46,7 @@
 					<h5>致我们终（yi）将（jing）逝去的青春</h5>
 				</div>
 				<div class="data-info">
-					<div class="list-group list-group-horizontal" style="margin-bottom:200px;">
+					<div class="list-group list-group-horizontal-md index-list-group">
 						<a href="messages/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.messages >0 %>;">
 							说说<span class="badge badge-primary badge-pill"><%:=user.messages || 0%></span>
 						</a>
@@ -71,6 +71,9 @@
 						<a href="shares/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.shares >0 %>;">
 							分享<span class="badge badge-primary badge-pill"><%:=user.shares || 0%></span>
 						</a>
+						<a href="visitors/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.visitors >0 %>;">
+							访客<span class="badge badge-primary badge-pill"><%:=user.visitors || 0%></span>
+						</a>
 						<a href="friends/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.friends >0 %>;">
 							好友<span class="badge badge-primary badge-pill"><%:=user.friends || 0%></span>
 						</a>
@@ -79,7 +82,7 @@
 			</div>
 		</div>
 	</main>
-	<footer class="footer mt-auto py-3 bg-dark fixed-bottom">
+	<footer class="footer mt-auto py-3 bg-dark fixed-bottom mt-5">
 		<div class="container text-center">
 			<span class="text-white">落叶随风，青春，稍纵即逝。</span>
 		</div>

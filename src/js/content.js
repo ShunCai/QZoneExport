@@ -509,6 +509,23 @@ const MAX_MSG = {
         '正在导出分享到 <span style="color: #1ca5fc;">{index}</span> 文件',
         '请稍后...'
     ],
+    Visitors: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的访客列表',
+        '总共 <span style="color: #1ca5fc;">{totalPage}</span> 页',
+        '<span style="color: #1ca5fc;">{total}</span> 访问量',
+        '请稍后...'
+    ],
+    Visitors_Export: [
+        '正在导出访客',
+        '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Visitors_Export_Other: [
+        '正在导出访客到 <span style="color: #1ca5fc;">{index}</span> 文件',
+        '请稍后...'
+    ],
     Common_File: [
         '正在下载文件',
         '已下载 <span style="color: #1ca5fc;">{downloaded}</span> ',
@@ -560,6 +577,7 @@ class StatusIndicator {
         this.total = 0
         this.index = 0
         this.pageSize = 0
+        this.totalPage = 0
         this.nextTip = 0
         this.downloaded = 0
         this.downloading = 0
@@ -716,6 +734,15 @@ class StatusIndicator {
         this.skip = count
         this.print()
     }
+
+    /**
+     * 设置总数
+     * @param {integer} totalPage
+     */
+    setTotalPage(totalPage) {
+        this.totalPage = totalPage
+        this.print()
+    }
 }
 
 
@@ -787,6 +814,11 @@ const OperatorType = {
     * 获取分享列表
     */
     Shares: 'Shares',
+
+    /**
+    * 获取访客列表
+    */
+    Visitors: 'Visitors',
 
     /**
      * 下载文件
@@ -876,9 +908,16 @@ class QZoneOperator {
                 this.next(OperatorType.Shares);
                 break;
             case OperatorType.Shares:
-                // 获取收藏列表
+                // 获取分享列表
                 if (API.Common.isExport(moduleType)) {
                     await API.Shares.export();
+                }
+                this.next(OperatorType.Visitors);
+                break;
+            case OperatorType.Visitors:
+                // 获取访客
+                if (API.Common.isExport(moduleType)) {
+                    await API.Visitors.export();
                 }
                 this.next(OperatorType.Photos);
                 break;
@@ -919,7 +958,7 @@ class QZoneOperator {
                 await API.Utils.sleep(1000);
                 $("#downloadBtn").show();
                 $("#fileList").show();
-                $("#backupStatus").html("数据采集完成，请下载。");
+                $("#backupStatus").html("数据采集完成，<span style='color:red' >请点击下方【打包下载】ZIP包</span>。");
                 API.Utils.notification("QQ空间导出助手通知", "空间数据已获取完成，请点击下载！");
                 break;
             default:
@@ -1334,17 +1373,6 @@ const browserTasks = new Array();
                                 port.postMessage(API.Utils.toJson(data, /^_Callback\(/));
                             });
                             break;
-                        case 'initAlbumInfo':
-                            // 获取相册信息
-                            API.Photos.getAlbums(0).then((data) => {
-                                // 去掉函数，保留json
-                                data = API.Utils.toJson(data, /^shine0_Callback\(/);
-                                if (data.data && data.data.user && data.data.user.diskused) {
-                                    data.data.user.capacity = API.Photos.getCapacityDisplay(data.data.user.diskused);
-                                }
-                                port.postMessage(data);
-                            });
-                            break;
                         case 'getAlbumList':
                             // 获取相册列表
                             if (_.isEmpty(QZone.Photos.Album.Data)) {
@@ -1354,6 +1382,12 @@ const browserTasks = new Array();
                             } else {
                                 port.postMessage(QZone.Photos.Album.Data);
                             }
+                            break;
+                        case 'initConfig':
+                            // 初始化配置
+                            chrome.storage.sync.get(Default_Config, function (item) {
+                                port.postMessage(item);
+                            })
                             break;
                         default:
                             break;

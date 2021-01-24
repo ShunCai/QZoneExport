@@ -44,10 +44,11 @@ API.Common.exportUser = async () => {
         }
         userInfo.photos = photos.length;
         userInfo.videos = QZone.Videos.Data.length;
-        userInfo.boards = QZone.Boards.Data.length;
+        userInfo.boards = QZone.Boards.Data.total;
         userInfo.favorites = QZone.Favorites.Data.length;
         userInfo.shares = QZone.Shares.Data.length;
         userInfo.friends = QZone.Friends.Data.length;
+        userInfo.visitors = QZone.Visitors.Data.total;
 
         // 根据导出类型导出数据
         await API.Common.exportUserToJson(userInfo);
@@ -104,6 +105,8 @@ API.Common.exportUserToMd = async (userInfo) => {
     hasMd = hasMd || QZone_Config.Favorites.exportType === 'MarkDown';
     // 分享
     hasMd = hasMd || QZone_Config.Shares.exportType === 'MarkDown';
+    // 访客
+    hasMd = hasMd || QZone_Config.Visitors.exportType === 'MarkDown';
     // 相册
     hasMd = hasMd || QZone_Config.Photos.exportType === 'MarkDown';
     // 视频
@@ -126,9 +129,9 @@ API.Common.exportUserToMd = async (userInfo) => {
     contents.push('{desc}'.format(QZone.Common.Target));
 
     contents.push('### 空间概览');
-    contents.push('说说|日志|日记|相册|视频|留言|收藏|分享|好友');
+    contents.push('说说|日志|日记|相册|视频|留言|收藏|分享|访客|好友');
     contents.push('---|---|---|---|---|---|---|---');
-    contents.push('{messages}|{blogs}|{diaries}|{photos}|{videos}|{boards}|{favorites}|{shares}|{friends}'.format(QZone.Common.Target));
+    contents.push('{messages}|{blogs}|{diaries}|{photos}|{videos}|{boards}|{favorites}|{shares}|{visitors}|{friends}'.format(QZone.Common.Target));
 
     await API.Utils.writeText(contents.join('\r\n'), FOLDER_ROOT + "index.md").then((fileEntry) => {
         console.info("导出空间预览到Markdown文件完成", fileEntry, userInfo);
@@ -157,6 +160,8 @@ API.Common.exportUserToHtml = async (userInfo) => {
     hasHtml = hasHtml || QZone_Config.Favorites.exportType === 'HTML';
     // 分享
     hasHtml = hasHtml || QZone_Config.Shares.exportType === 'HTML';
+    // 访客
+    hasHtml = hasHtml || QZone_Config.Visitors.exportType === 'HTML';
     // 相册
     hasHtml = hasHtml || QZone_Config.Photos.exportType === 'HTML';
     // 视频
@@ -627,7 +632,7 @@ API.Common.isNewItem = (item) => {
  * @param {Object} moduleConfig 模块配置
  */
 API.Common.removeOldItems = (old_items, moduleConfig) => {
-    if (API.Common.isFullBackup(moduleConfig)) {
+    if (API.Common.isFullBackup(moduleConfig) || old_items === undefined) {
         // 选择全量备份时，直接返回空数组，当初没有历史数据处理
         return [];
     }
@@ -730,6 +735,9 @@ API.Common.saveBackupItems = () => {
             },
             Shares: {
                 Data: API.Common.isExport('Shares') ? QZone.Shares.Data : QZone.Shares.OLD_Data
+            },
+            Visitors: {
+                Data: API.Common.isExport('Visitors') ? QZone.Visitors.Data : QZone.Visitors.OLD_Data
             }
         };
 
@@ -788,9 +796,22 @@ API.Common.resetQzoneItems = () => {
     QZone.Videos.OLD_Data = [];
 
     // 重置留言模块数据
-    QZone.Boards.total = 0;
-    QZone.Boards.Data = [];
-    QZone.Boards.OLD_Data = [];
+    QZone.Boards.Data = {
+        items: [],
+        authorInfo: {
+            message: '',
+            sign: ''
+        },
+        total: 0
+    };
+    QZone.Boards.OLD_Data = {
+        items: [],
+        authorInfo: {
+            message: '',
+            sign: ''
+        },
+        total: 0
+    };
 
     // 重置好友模块数据
     QZone.Friends.total = 0;
@@ -801,6 +822,18 @@ API.Common.resetQzoneItems = () => {
     QZone.Favorites.total = 0;
     QZone.Favorites.Data = [];
     QZone.Favorites.OLD_Data = [];
+
+    // 重置访客模块数据
+    QZone.Visitors.Data = {
+        items: [],
+        total: 0,
+        totalPage: 0
+    }
+    QZone.Visitors.OLD_Data = {
+        items: [],
+        total: 0,
+        totalPage: 0
+    }
 }
 
 /**
@@ -824,13 +857,26 @@ API.Common.initBackedUpItems = async () => {
     // 覆盖更新视频模块全局变量
     QZone.Videos.OLD_Data = Old_QZone.Videos ? Old_QZone.Videos.Data : [];
     // 覆盖更新留言板模块全局变量
-    QZone.Boards.OLD_Data = Old_QZone.Boards ? Old_QZone.Boards.Data : [];
+    QZone.Boards.OLD_Data = Old_QZone.Boards ? Old_QZone.Boards.Data : {
+        items: [],
+        authorInfo: {
+            message: '',
+            sign: ''
+        },
+        total: 0
+    };
     // 覆盖更新好友模块全局变量
     QZone.Friends.OLD_Data = Old_QZone.Friends ? Old_QZone.Friends.Data : [];
     // 覆盖更新收藏夹模块全局变量
     QZone.Favorites.OLD_Data = Old_QZone.Favorites ? Old_QZone.Favorites.Data : [];
     // 覆盖更新分享模块全局变量
     QZone.Shares.OLD_Data = Old_QZone.Shares ? Old_QZone.Shares.Data : [];
+    // 覆盖更新分享模块全局变量
+    QZone.Visitors.OLD_Data = Old_QZone.Visitors ? Old_QZone.Visitors.Data : {
+        items: [],
+        total: 0,
+        totalPage: 0
+    };
 }
 
 /**

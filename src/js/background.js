@@ -176,26 +176,32 @@ chrome.runtime.onInstalled.addListener((details) => {
             switch (previousVersion) {
                 case '1.0.0':
                     // 上一个版本为1.0.0时，重置配置项
-                    chrome.storage.sync.clear(function(){
+                    chrome.storage.sync.clear(function () {
                         console.info('清空配置完成');
                     });
                     break;
                 case '1.0.1':
                     // 上一个版本为1.0.1时，重置配置项
-                    chrome.storage.sync.clear(function(){
+                    chrome.storage.sync.clear(function () {
                         console.info('清空配置完成');
                     });
                     break;
                 case '1.0.2':
                     // 上一个版本为1.0.2时，重置配置项
-                    chrome.storage.sync.clear(function(){
+                    chrome.storage.sync.clear(function () {
                         console.info('清空配置完成');
                     });
                     break;
                 case '1.0.5':
                     // 上一个版本为1.0.5时，重置配置项
-                    chrome.storage.sync.clear(function(){
+                    chrome.storage.sync.clear(function () {
                         console.info('清空配置完成');
+                    });
+                    break;
+                case '1.1.1':
+                    // 上一个版本为1.1.1时，重置备份数据
+                    chrome.storage.local.clear(function () {
+                        console.info('重置备份数据完成');
                     });
                     break;
                 default:

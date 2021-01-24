@@ -9,7 +9,7 @@
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.14/dist/css/lightgallery.min.css" integrity="sha256-8rfHbJr+ju3Oc099jFJMR1xAPu8CTPHU8uP5J3X/VAY=" crossorigin="anonymous">
 	<link rel="stylesheet" type="text/css" href="../common/css/common.css">
-	<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.0/dist/jquery.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.14/dist/js/lightgallery-all.min.js" integrity="sha256-0q70xbZ3GMwdiseCj/wfChJhq/3wzpNdgZinlSxSw14=" crossorigin="anonymous"></script>
@@ -98,19 +98,19 @@
 													<%}%>
 												<%}%>
 												<%/* 多媒体内容 */%>
-												<div class="medias row p-3 lightgallery">
+												<div class="medias row p-3 lightgallery <%:=API.Common.getImgClassType(message)%>">
 													<%/* 视频内容（一般为单视频） */%>
 													<%if(message.custom_videos){%>
 														<%for(let video of message.custom_videos){%>
 															<%if (API.Videos.isExternalVideo(video)) {%>
-																<a class="medias-item border" href="<%:=API.Videos.getVideoUrl(video)%>" target="_blank">
-																	<!-- <span class="message-video"></span> -->
+																<a class="medias-item border message-lightbox-external" href="<%:=API.Videos.getVideoUrl(video)%>" target="_blank">
+																	<span class="message-video"></span>
 																	<img class="lazyload w-100 h-100" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>">
 																</a>
 															<%}else{%>
 																<%/* 空间视频 */%>
 																<a class="medias-item border message-lightbox" data-poster="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" data-html="#<%:=video.video_id || video.vid || video.pic_id%>">
-																	<!-- <span class="message-video"></span> -->
+																	<span class="message-video"></span>
 																	<div style="display:none;" id="<%:=video.video_id || video.vid || video.pic_id%>">
 																		<video class="lg-video-object lg-html5" src="<%:=(video.custom_filepath || video.custom_url || video.url3)%>" controls="controls"></video>
 																	</div>
@@ -124,14 +124,14 @@
 														<%for(let image of message.custom_images){%>
 															<%if(image.is_video && image.video_info){%>
 																<%if (API.Videos.isExternalVideo(image.video_info)) {%>
-																	<a class="medias-item border" href="<%:=API.Videos.getVideoUrl(image.video_info)%>" target="_blank">
-																		<!-- <span class="message-video"></span> -->
+																	<a class="medias-item border message-lightbox-external" href="<%:=API.Videos.getVideoUrl(image.video_info)%>" target="_blank">
+																		<span class="message-video"></span>
 																		<img class="lazyload w-100 h-100" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>">
 																	</a>
 																<%}else{%>
 																	<%/* 空间视频 */%>
 																	<a class="medias-item border message-lightbox" data-poster="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" data-html="#<%:=image.video_info.video_id || image.video_info.vid || image.pic_id%>">
-																		<!-- <span class="message-video"></span> -->
+																		<span class="message-video"></span>
 																		<div style="display:none;" id="<%:=image.video_info.video_id || image.video_info.vid || image.pic_id%>">
 																			<video class="lg-video-object lg-html5" src="<%:=(image.video_info.custom_filepath || image.video_info.custom_url || image.video_info.url3)%>" controls="controls"></video>
 																		</div>
@@ -146,7 +146,7 @@
 														<%}%>
 													<%}%>
 													<%/* 动画表情内容（目前只支持一个） */%>
-													<%if(message.custom_images){%>
+													<%if(message.custom_magics){%>
 														<%for(let image of message.custom_magics){%>
 															<a class="medias-item border message-lightbox" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
 																<img class="lazyload w-100 h-100" data-src='<%:=(image.custom_filepath || image.custom_url)%>'>
@@ -178,7 +178,7 @@
 														<div class="p-1 border-top comments mt-3">
 															<div class="container comment  m-1 p-0">
 																<a class="me-a avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(comment.uin)%>">
-																	<img class="lazyload w-100 h-100 border rounded-circle" data-src="<%:=API.Common.getUserLogoUrl(comment.uin)%>" >
+																	<img class="lazyload w-100 border rounded-circle" data-src="<%:=API.Common.getUserLogoUrl(comment.uin)%>" >
 																</a>
 																<div class="ml-4">
 																	<%/* 评论 */%>
@@ -205,12 +205,12 @@
 																		<%}%>
 																	</div>
 																	<%/* 评论回复 */%>
-																	<%if(comment.reply_num > 0 && comment.list_3){%>
+																	<%if(comment.list_3){%>
 																		<%for(let reply of comment.list_3){%>
 																			<div class="comments m-1">
 																				<div class="container comment  m-3 p-0">
 																					<a class="me-a avatar p-0 m-0 " target="_blank" href="<%:=API.Common.getUserUrl(reply.uin)%>">
-																						<img class="lazyload w-100 h-100 border rounded-circle" data-src="<%:=API.Common.getUserLogoUrl(reply.uin)%>">
+																						<img class="lazyload w-100 border rounded-circle" data-src="<%:=API.Common.getUserLogoUrl(reply.uin)%>">
 																					</a>
 																					<div class=" ml-4  ">
 																						<div class="container ml-4">
@@ -249,7 +249,7 @@
 											<ul class="list-group list-group-flush ml-4">
 												<%if(message.lbs && message.lbs.pos_x && message.lbs.pos_y){%>
 													<li class="list-group-item">
-														<a class="fa fa-map-marker" target="_blank" href="<%:=API.Messages.getMapUrl(message.lbs)%>" class="card-link"> <%:=message.lbs.idname%></a>
+														<a class="fa fa-map-marker" target="_blank" href="<%:=API.Messages.getMapUrl(message.lbs)%>" class="card-link"> <%:=message.lbs.idname || message.lbs.name%></a>
 													</li>
 												<%}%>
 												<%if(message.source_name){%>

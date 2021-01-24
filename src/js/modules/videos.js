@@ -512,7 +512,7 @@ API.Videos.getTencentVideoUrl = (vid) => {
         "origin": "https://user.qzone.qq.com",
         "vid": vid,
         "autoplay": true,
-        "volume": 1,
+        "volume": 100,
         "disableplugin": "IframeBottomOpenClientBar",
         "additionplugin": "IframeUiSearch",
         "platId": "qzone_feed",
@@ -535,6 +535,9 @@ API.Videos.getVideoUrl = (video) => {
     }
     if (API.Videos.isTencentVideo(video)) {
         // 腾讯视频
+        if (!video.video_id) {
+            return video.url2;
+        }
         url = API.Videos.getTencentVideoUrl(video.video_id);
     }
     // 其他第三方视频
@@ -634,7 +637,6 @@ API.Videos.getAllLikeList = async (items) => {
                 console.error("获取视频点赞异常：", item, e);
                 indicator.addFailed(item);
             }));
-
         }
 
         await Promise.all(tasks);

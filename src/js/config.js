@@ -571,6 +571,23 @@ const Default_Config = {
                 'qschou.com'
             ]
         }]
+    },
+    // 访客模块
+    Visitors: {
+        exportType: "HTML",// 内容备份类型
+        randomSeconds: {
+            min: 1,
+            max: 2
+        },
+        IncrementType: "Full",// 增量备份类型
+        IncrementTime: "2005-06-06 00:00:00",// 增量时间
+        PreBackup: {
+            uin: 0, // 备份QQ
+            downloadType: undefined, // 下载方式
+            exportType: undefined, // 备份类型
+            field: "time",// 比较字段
+            time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+        }
     }
 };
 
@@ -642,6 +659,9 @@ const ExportFiles = [
     }, {
         original: 'export/js/shares.js',
         target: FOLDER_ROOT + 'Common/js/shares.js'
+    }, {
+        original: 'export/js/visitors.js',
+        target: FOLDER_ROOT + 'Common/js/visitors.js'
     }
 ]
 
@@ -660,7 +680,8 @@ var QZone = {
             "Boards": true,
             "Friends": true,
             "Favorites": true,
-            "Shares": true
+            "Shares": true,
+            "Visitors": true
         },
         Owner: {
             uin: undefined
@@ -759,8 +780,14 @@ var QZone = {
     // 留言板模块
     Boards: {
         ROOT: FOLDER_ROOT + 'Boards',
-        total: 0,
-        Data: [],
+        Data: {
+            items: [],
+            authorInfo: {
+                message: '',
+                sign: ''
+            },
+            total: 0
+        },
         FILE_URLS: new Map()
     },
     // QQ好友模块
@@ -796,5 +823,16 @@ var QZone = {
             17: '微博',
             18: "音乐"
         }
+    },
+    // 访客模块
+    Visitors: {
+        ROOT: FOLDER_ROOT + 'Visitors',
+        IMAGES_ROOT: FOLDER_ROOT + 'Visitors/Images',
+        Data: {
+            items: [],
+            total: 0,
+            totalPage: 0
+        },
+        FILE_URLS: new Map()
     }
 };

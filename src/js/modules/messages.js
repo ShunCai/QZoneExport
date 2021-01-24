@@ -748,6 +748,11 @@ API.Messages.getAllVoices = async (items) => {
         }
 
         const voices = item.custom_voices;
+        if (voices.length === 0) {
+            // 没有语音信息跳过
+            indicator.addSkip(item);
+            continue;
+        }
         for (const voice of voices) {
             await API.Messages.getVoiceInfo(voice).then((voiceInfo) => {
                 voiceInfo = API.Utils.toJson(voiceInfo, /^_Callback\(/);

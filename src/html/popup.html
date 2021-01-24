@@ -70,10 +70,11 @@
             <input type="checkbox" class="custom-control-input" id="Shares" name="exportType" value="Shares" checked>
             <label class="custom-control-label" for="Shares">分享</label>
         </div>
+        <div class="custom-control custom-checkbox custom-control-inline">
+            <input type="checkbox" class="custom-control-input" id="Visitors" name="exportType" value="Visitors" checked>
+            <label class="custom-control-label" for="Visitors">访客</label>
+        </div>
         <div class="container" style="margin-top: 10px">
-            <p id="tips" class="text-muted" style="display: none;"></p>
-            <p id="album_tips" class="text-muted" style="display: none;"></p>
-            <p id="video_tips" class="text-muted" style="display: none;"></p>
             <div id="export_albums_div" class="form-group row" style="display: none;">
                 <label for="export_albums" class="col-sm-1 col-form-label">相册列表：</label>
                 <div class="col-sm-2">
@@ -87,7 +88,16 @@
                 </div>
             </div>
         </div>
-        <button id="backup" type="button" class="btn btn-primary">开始备份</button>
+        <span id="diaries_tip" class="text-muted row ml-1" style="display: none;">私密日记已开启独立密码认证，请先<a id='diaries_close' target="_blank" style="color: red;">关闭</a></span>
+        <span id="download_tools_tip" class="text-muted row ml-1">当前文件下载工具为
+            <a id="download_tool_tip" class="download_tool_tip" href="#" target="_blank">助手内部</a>
+        </span>
+        <span id="download_help_tip" class="text-muted row ml-1">
+            <span id="download_help_reson">内部下载，限制较多已淘汰</span>， <a id='download_help_suggestion' class="download_tool" target="_blank" style="color: red;">点击更换下载工具</a>
+        </span>
+        <div class="text-center mt-3">
+            <button id="backup" type="button" class="btn btn-primary">开始备份</button>
+        </div>
     </div>
     <script src="../js/utils.js"></script>
     <script src="../vendor/jquery/jquery-3.3.1.min.js"></script>

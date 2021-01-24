@@ -62,7 +62,7 @@ const YEAR_ITEMS = `
             <%if (yearItems && yearItems.length > 0) {%>
                 <span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=year%>年"></span>
                 <%for (const board of yearItems) {%>
-                    `+ ITEM_TPL +`
+                    `+ ITEM_TPL + `
                 <%}%>  
             <%}%>       
         <%}%>
@@ -73,7 +73,7 @@ const YEAR_ITEMS = `
 $(function () {
 
     // 那年今日
-    const _yearMaps = API.Common.getOldYearData(dataList, "pubtime");
+    const _yearMaps = API.Common.getOldYearData(boardInfo.items, "pubtime");
 
     // 那年今日HTML
     const items_html = template(YEAR_ITEMS, { yearMaps: _yearMaps });
@@ -84,5 +84,5 @@ $(function () {
 
     // 图片懒加载
     lazyload();
-    
+
 });

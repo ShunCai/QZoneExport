@@ -23,7 +23,7 @@ const ITEM_TPL = `
                         <%}%>
                         <%/* 分享内容 */%>
                         <%/* 多媒体内容 */%>
-                        <div class="medias row p-3 lightgallery">
+                        <div class="medias row p-3 lightgallery <%:=API.Common.getImgClassType(share,true)%>">
                             <%/*  分享源图片 */%>
                             <%if(share.source.images){%>
                                 <%for(let image of share.source.images){%>
