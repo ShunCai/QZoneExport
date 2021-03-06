@@ -84,7 +84,7 @@ String.prototype.replaceAll = function (search, target) {
 Array.prototype.getIndex = function (val, field) {
     if (field) {
         return this.findIndex((obj) => {
-            if (obj[field] === val) {
+            if (obj[field] == val) {
                 return obj;
             }
         })

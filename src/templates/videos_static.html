@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+	<link rel="icon" href="https://qzonestyle.gtimg.cn/aoi/img/logo/favicon.ico">
+	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<title>QQ空间备份-视频</title>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.14/dist/css/lightgallery.min.css" integrity="sha256-8rfHbJr+ju3Oc099jFJMR1xAPu8CTPHU8uP5J3X/VAY=" crossorigin="anonymous">
+	<link rel="stylesheet" type="text/css" href="../common/css/common.css">
+	<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.14/dist/js/lightgallery-all.min.js" integrity="sha256-0q70xbZ3GMwdiseCj/wfChJhq/3wzpNdgZinlSxSw14=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/jquery-mousewheel@3.1.13/jquery.mousewheel.min.js"></script>
+</head>
+
+<body>
+	<header>
+		<nav class="navbar navbar-expand-lg navbar-dark fixed-top bg-dark">
+			<a class="navbar-brand" target="_blank" href="https://github.com/ShunCai/QZoneExport">QQ空间导出助手</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<nav aria-label="breadcrumb">
+					<ol class="breadcrumb bg-dark">
+						<li class="breadcrumb-item"><a href="../index.html">个人中心</a></li>
+						<li class="breadcrumb-item active" aria-current="page">视频</li>
+					</ol>
+				</nav>
+			</div>
+		</nav>
+	</header>
+	<main role="main">
+		<div class="albums py-5 bg-light" style="padding-top: 4rem!important;">
+			<div class="container-fluid tz-gallery">
+				<div id="lightgallery" class="row">
+					<%/* 遍历视频 */%>
+					<%for (var video of videos) {%>
+						<div class="col-md-2 mb-2">
+							<div class="card thumbnail mb-2 shadow-sm">
+								<div style="display:none;" id="<%:=video.vid%>">
+									<video class="lg-video-object lg-html5" src="<%:=(video.custom_filepath || video.custom_url || video.url)%>" controls="controls" ></video>
+								</div>
+								<a class="lightbox" data-poster="<%:=API.Common.getMediaPath(video.pre || video.custom_pre_url, video.custom_pre_filepath)%>" title="<%:=API.Common.formatContent(video.desc)%>" data-html="#<%:=video.vid%>">
+									<span class="photo-video"></span>
+									<img src="<%:=API.Common.getMediaPath(video.pre || video.custom_pre_url, video.custom_pre_filepath)%>" />
+								</a>
+								<div class="card-body">
+									<h5 class="card-title"><%:=video.desc ? API.Common.formatContent(video.desc) : API.Utils.formatDate(video.uploadTime)%></h5>
+								</div>
+							</div>
+						</div>
+					<%}%>
+				</div>
+			</div>
+		</div>
+	</main>
+	<script type="text/javascript">
+		$(function () {
+			// 渲染画廊
+			$("#lightgallery").lightGallery({
+				selector: '.lightbox',
+				share: false,
+				loop: false,
+				download: false
+			});
+		});
+	</script>
+</body>
+
+</html>

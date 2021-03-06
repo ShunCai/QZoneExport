@@ -1,6 +1,6 @@
 $(function () {
     let blogId = API.Utils.getUrlParam('blogId');
-    
+
     // 获取指定ID的日志
     const blogIndex = dataList.getIndex(blogId * 1, 'blogid');
     const blog = dataList[blogIndex];
@@ -19,5 +19,15 @@ $(function () {
     const comments_html = template(comments_tpl, { blog: blog });
     // 渲染模板到页面
     $("#comments_html").html(comments_html);
+
+    // 查看赞
+    $('.viewlikes').on('click', function () {
+        API.Common.showLikeWin(this, dataList);
+    });
+
+    // 最近访问
+    $('.viewVisitors').on('click', function () {
+        API.Common.showVisitorsWin(this, dataList);
+    });
 
 });

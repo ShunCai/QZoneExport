@@ -9,16 +9,18 @@
  */
 API.Photos.export = async () => {
     try {
-        // 获取所有的相册列表
-        let albumList = QZone.Photos.Album.Data || [];
-        if (albumList.length === 0) {
-            // 相册列表为空时才获取相册列表，不为空时代表是指定相册备份
-            albumList = await API.Photos.getAllAlbumList();
-        }
+        // 用户选择的备份相册列表
+        let albumList = await API.Photos.initAlbums();
         console.info('获取所有的相册列表完成', albumList);
 
         // 获取相册的评论列表
         albumList = await API.Photos.getAllAlbumsComments(albumList);
+
+        // 获取相册赞记录
+        await API.Photos.getAlbumsLikeList(albumList);
+
+        // 获取相册最近访问
+        await API.Photos.getAllVisitorList(albumList);
 
         // 获取所有相册的相片列表
         let imagesMapping = await API.Photos.getAllAlbumImageList(albumList);
@@ -26,17 +28,30 @@ API.Photos.export = async () => {
 
         // 获取所有相片的详情
         albumList = await API.Photos.getAllImagesInfos(albumList);
+        console.info('获取所有相片的详情完成', albumList);
 
         // 获取相片的评论列表
         let images = API.Photos.toImages(imagesMapping);
         images = await API.Photos.getAllImagesComments(images);
         console.info('获取所有相册的所有相片的评论列表完成', images);
 
+        // 添加点赞Key
+        API.Photos.addPhotoUniKey(images);
+
+        // 获取相片赞记录
+        await API.Photos.getPhotosLikeList(images);
+
         // 添加相片下载任务
         await API.Photos.addAlbumsDownloadTasks(albumList);
+        console.info('添加相片下载任务完成', albumList);
 
         // 根据导出类型导出数据    
         await API.Photos.exportAllListToFiles(albumList);
+        console.info('根据导出类型导出数据   完成', albumList);
+
+        // 设置备份时间
+        API.Common.setBackupInfo(QZone_Config.Photos);
+
     } catch (error) {
         console.error('相册导出异常', error);
     }
@@ -62,11 +77,10 @@ API.Photos.toImages = (imagesMapping) => {
 API.Photos.getAllImagesInfos = async (albumList) => {
     console.info('获取所有相片的详情开始', albumList);
 
-    for (let i = 0; i < albumList.length; i++) {
-        const album = albumList[i];
+    for (const album of albumList) {
 
         // 进度更新器
-        let indicator = new StatusIndicator('Photos_Images_Info');
+        const indicator = new StatusIndicator('Photos_Images_Info');
 
         // 开始
         indicator.print();
@@ -74,18 +88,23 @@ API.Photos.getAllImagesInfos = async (albumList) => {
         // 设置当前相册
         indicator.setIndex(album.name);
 
-        let photos = album.photoList || [];
+        const photos = album.photoList || [];
 
         // 设置总数
         indicator.setTotal(photos.length);
 
         // 同时请求数（提高相片处理速度）
-        const _photos = _.chunk(photos, Qzone_Config.Common.downloadThread);
-        for (let j = 0; j < _photos.length; j++) {
-            const list = _photos[j];
+        const _photos = _.chunk(photos, QZone_Config.Common.downloadThread);
+        for (const list of _photos) {
             let imageInfoTasks = [];
-            for (let k = 0; k < list.length; k++) {
-                const photo = list[k];
+            for (const photo of list) {
+
+                if (!API.Photos.isNewItem(album.id, photo)) {
+                    // 已备份数据跳过不处理
+                    indicator.addSkip(photo);
+                    continue;
+                }
+
                 // 更新获取进度
                 indicator.addDownload(photo);
                 let picKey = API.Photos.getImageKey(photo);
@@ -97,15 +116,10 @@ API.Photos.getAllImagesInfos = async (albumList) => {
                     // 拷贝覆盖属性到photo
                     // 清空源属性
                     let keys = Object.keys(photo);
-                    for (let i = 0; i < keys.length; i++) {
-                        const key = keys[i];
+                    for (const key of keys) {
                         delete photo[key];
                     }
                     Object.assign(photo, data[0]);
-
-                    // 更新相片的分类信息
-                    photo.albumClassId = album.classid;
-                    photo.albumClassName = album.className || QZone.Photos.Class[album.classid] || '其他';
 
                     // 更新获取进度
                     indicator.addSuccess(photo);
@@ -116,10 +130,22 @@ API.Photos.getAllImagesInfos = async (albumList) => {
                 });
                 imageInfoTasks.push(imageInfoTask);
             }
+
             await Promise.all(imageInfoTasks);
             // 每一批次完成后暂停半秒
             await API.Utils.sleep(500);
         }
+
+        // 更新信息
+        for (const photo of photos) {
+            photo.albumClassId = album.classid;
+            photo.albumClassName = album.className || QZone.Photos.Class[album.classid] || '其他';
+            // 上传时间处理
+            if (!photo.uploadTime && photo.uploadtime) {
+                photo.uploadTime = photo.uploadtime
+            }
+        }
+
         // 完成
         indicator.complete();
     }
@@ -134,13 +160,12 @@ API.Photos.getAllImagesInfos = async (albumList) => {
  * @param {StatusIndicator} indicator 状态更新器
  */
 API.Photos.getAlbumPageList = async (pageIndex, indicator) => {
-    console.debug("开始获取相册列表，当前页：", pageIndex + 1);
 
     // 状态更新器当前页
     indicator.setIndex(pageIndex + 1);
 
     // 更新获取中数据
-    indicator.addDownload(Qzone_Config.Photos.pageSize);
+    indicator.addDownload(QZone_Config.Photos.pageSize);
 
     // 查询相册
     return await API.Photos.getAlbums(pageIndex).then(async (data) => {
@@ -148,10 +173,8 @@ API.Photos.getAlbumPageList = async (pageIndex, indicator) => {
         data = API.Utils.toJson(data, /^shine0_Callback\(/);
         data = data.data;
 
-        console.debug("成功获取相册列表，当前页：", pageIndex + 1, data);
-
         // 更新总数
-        QZone.Photos.Album.total = data.albumsInUser || QZone.Album.total || 0;
+        QZone.Photos.Album.total = data.albumsInUser || QZone.Photos.Album.total || 0;
         indicator.setTotal(QZone.Photos.Album.total);
 
         let dataList = data.albumList || [];
@@ -167,68 +190,52 @@ API.Photos.getAlbumPageList = async (pageIndex, indicator) => {
  * 获取所有的相册列表
  */
 API.Photos.getAllAlbumList = async () => {
-    // 重置数据
-    QZone.Photos.Album.Data = [];
-
     // 进度更新器
-    let indicator = new StatusIndicator('Photos');
+    const indicator = new StatusIndicator('Photos');
 
     // 开始
     indicator.print();
 
-    let CONFIG = Qzone_Config.Photos;
+    const CONFIG = QZone_Config.Photos;
 
-    let nextPage = async function (pageIndex, indicator) {
+    const nextPage = async function (pageIndex, indicator) {
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
+
         return await API.Photos.getAlbumPageList(pageIndex, indicator).then(async (dataList) => {
-            // 添加到全局变量
-            QZone.Photos.Album.Data = QZone.Photos.Album.Data.concat(dataList);
 
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Photos.Album.total, QZone.Photos.Album.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
+            // 合并数据
+            QZone.Photos.Album.Data = API.Utils.unionItems(QZone.Photos.Album.Data, dataList);
+
+            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+                return QZone.Photos.Album.Data;
             }
-            return QZone.Photos.Album.Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Photos.Album.total, QZone.Photos.Album.Data, arguments.callee, nextPageIndex, indicator);
+
         }).catch(async (e) => {
             console.error("获取相册列表异常，当前页：", pageIndex + 1, e);
-            indicator.addFailed({
-                pageIndex: pageIndex,
-                pageSize: CONFIG.pageSize,
-                isPage: true
-            });
+            indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
+
             // 当前页失败后，跳过继续请求下一页
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Photos.Album.total, QZone.Photos.Album.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
-            }
-            return QZone.Photos.Album.Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Photos.Album.total, QZone.Photos.Album.Data, arguments.callee, nextPageIndex, indicator);
         });
     }
 
-    let albums = await nextPage(0, indicator);
+    await nextPage(0, indicator);
 
     // 更新相册类别
-    for (const album of albums) {
+    for (const album of QZone.Photos.Album.Data) {
         album.className = QZone.Photos.Class[album.classid] || '其他';
+        album.photoList = album.photoList || [];
     }
 
     // 完成
     indicator.complete();
 
-    return albums;
+    return QZone.Photos.Album.Data;
 
 }
 
@@ -240,10 +247,10 @@ API.Photos.getAllAlbumList = async () => {
  */
 API.Photos.getAlbumImagePageList = async (item, pageIndex, indicator) => {
     // 显示当前处理相册
-    indicator.index = item.name;
+    indicator.setIndex(item.name);
 
     // 更新获取中数据
-    indicator.addDownload(Qzone_Config.Photos.Images.pageSize);
+    indicator.addDownload(QZone_Config.Photos.Images.pageSize);
 
     return await API.Photos.getImages(item.id, pageIndex).then(async (data) => {
         // 去掉函数，保留json
@@ -274,68 +281,67 @@ API.Photos.getAlbumImagePageList = async (item, pageIndex, indicator) => {
 
 /**
  * 获取单个相册的全部相片列表
- * @param {Object} item 相册
+ * @param {Object} album 相册
  */
-API.Photos.getAlbumImageAllList = async (item) => {
+API.Photos.getAlbumImageAllList = async (album) => {
+    // 获取已备份数据
+    const OLD_Data = API.Photos.getPhotosByAlbumId(QZone.Photos.Album.OLD_Data, album.id);
     // 重置单个相册的数据
-    QZone.Photos.Images[item.id] = {
+    QZone.Photos.Images[album.id] = {
         total: 0,
+        OLD_Data: OLD_Data,
         Data: []
     };
     // 进度更新器
-    let indicator = new StatusIndicator('Photos_Images');
+    const indicator = new StatusIndicator('Photos_Images');
     // 开始
     indicator.print();
 
-    // 相册相片配置项
-    let CONFIG = Qzone_Config.Photos.Images;
+    // 相册配置项
+    const ALBUM_CONFIG = QZone_Config.Photos
+    // 相片配置项
+    const PHOTO_CONFIG = ALBUM_CONFIG.Images;
 
-    let nextPage = async function (pageIndex, indicator) {
-        return await API.Photos.getAlbumImagePageList(item, pageIndex, indicator).then(async (dataList) => {
-            // 添加到全局变量
-            QZone.Photos.Images[item.id].Data = QZone.Photos.Images[item.id].Data.concat(dataList);
+    const nextPage = async function (pageIndex, indicator) {
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
 
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Photos.Images[item.id].total, QZone.Photos.Images[item.id].Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
+        return await API.Photos.getAlbumImagePageList(album, pageIndex, indicator).then(async (dataList) => {
+
+            // 设置比较信息
+            dataList = API.Common.setCompareFiledInfo(dataList, 'uploadtime', 'uploadTime');
+
+            // 合并数据
+            QZone.Photos.Images[album.id].Data = API.Utils.unionItems(QZone.Photos.Images[album.id].Data, dataList);
+            if (API.Common.isPreBackupPos(dataList, ALBUM_CONFIG)) {
+                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+                return QZone.Photos.Images[album.id].Data;
             }
-            return QZone.Photos.Images[item.id].Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, PHOTO_CONFIG, QZone.Photos.Images[album.id].total, QZone.Photos.Images[album.id].Data, arguments.callee, nextPageIndex, indicator);
         }).catch(async (e) => {
-            console.error("获取相册列表异常，当前页：", pageIndex + 1, item, e);
-            indicator.addFailed({
-                pageIndex: pageIndex,
-                pageSize: CONFIG.pageSize,
-                isPage: true
-            });
+            console.error("获取相册列表异常，当前页：", pageIndex + 1, album, e);
+            indicator.addFailed(new PageInfo(pageIndex, PHOTO_CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Photos.Images[item.id].total, QZone.Photos.Images[item.id].Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
-            }
-            return QZone.Photos.Images[item.id].Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, PHOTO_CONFIG, QZone.Photos.Images[album.id].total, QZone.Photos.Images[album.id].Data, arguments.callee, nextPageIndex, indicator);
         });
     }
 
-    let dataList = await nextPage(0, indicator) || [];
+    await nextPage(0, indicator) || [];
+
+    if (!API.Photos.isNewAlbum(album.id)) {
+        // 合并、过滤数据
+        QZone.Photos.Images[album.id].Data = API.Common.unionBackedUpItems(ALBUM_CONFIG, QZone.Photos.Images[album.id].OLD_Data, QZone.Photos.Images[album.id].Data);
+
+        // 上传时间倒序
+        QZone.Photos.Images[album.id].Data = API.Utils.sort(QZone.Photos.Images[album.id].Data, ALBUM_CONFIG.PreBackup.field, true);
+    }
 
     // 完成
     indicator.complete();
 
-    return dataList;
+    return QZone.Photos.Images[album.id].Data;
 }
 
 /**
@@ -343,8 +349,7 @@ API.Photos.getAlbumImageAllList = async (item) => {
  * @param {Array} items 相册列表
  */
 API.Photos.getAllAlbumImageList = async (items) => {
-    for (let index = 0; index < items.length; index++) {
-        const item = items[index];
+    for (const item of items) {
         if (item.allowAccess === 0) {
             // 没权限的跳过不获取
             console.warn("无权限访问该相册", item);
@@ -360,60 +365,39 @@ API.Photos.getAllAlbumImageList = async (items) => {
 /**
  * 获取单个相册的所有评论
  * @param {Object} item 相册对象
- * @param {StatusIndicator} indicator 进度更新器
  */
-API.Photos.getAlbumAllComments = async (item, indicator) => {
+API.Photos.getAlbumAllComments = async (item) => {
     // 清空相册原有的评论
     item.comments = [];
 
-    let CONFIG = Qzone_Config.Photos.Comments;
+    const CONFIG = QZone_Config.Photos.Comments;
 
-    // 更新下载中
-    indicator.addDownload(item);
+    const nextPage = async function (item, pageIndex) {
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
 
-    let nextPage = async function (item, pageIndex) {
         return await API.Photos.getAlbumComments(item.id, pageIndex).then(async (data) => {
 
             // 去掉函数，保留json
             data = API.Utils.toJson(data, /^_Callback\(/);
             data = data.data;
+            data.comments = data.comments || [];
 
-            // 合并评论列表
-            item.comments = item.comments.concat(data.comments || []);
-            indicator.addSuccess(data.comments);
+            // 合并数据
+            item.comments = API.Utils.unionItems(item.comments, data.comments);
 
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, item.comment, item.comments);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(item, pageIndex + 1);
+            if (API.Common.isPreBackupPos(data.comments, CONFIG)) {
+                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+                return item.comments;
             }
-            return item.comments;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.comment, item.comments, arguments.callee, item, nextPageIndex);
+
         }).catch(async (e) => {
             console.error("获取单个相册的评论列表异常：", pageIndex + 1, item, e);
-            indicator.addFailed({
-                pageIndex: pageIndex,
-                pageSize: CONFIG.pageSize,
-                isPage: true
-            });
             // 当前页失败后，跳过继续请求下一页
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, item.comment, item.comments);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(item, pageIndex + 1);
-            }
-            return item.comments;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.comment, item.comments, arguments.callee, item, nextPageIndex);
         });
     }
 
@@ -429,24 +413,41 @@ API.Photos.getAlbumAllComments = async (item, indicator) => {
  */
 API.Photos.getAllAlbumsComments = async (items) => {
     // 是否需要获取相册的评论
-    if (!Qzone_Config.Photos.Comments.isGet || API.Photos.isFile()) {
+    if (!QZone_Config.Photos.Comments.isGet || API.Photos.isFile()) {
         return items;
     }
+
+    // 进度更新器
+    const indicator = new StatusIndicator('Photos_Albums_Comments');
+    // 更新总数
+    indicator.setTotal(items.length);
+
     for (let index = 0; index < items.length; index++) {
-        // 相册评论进度更新器
-        let indicator = new StatusIndicator('Photos_Albums_Comments');
         const item = items[index];
-        if (item.comment === 0) {
-            // 没评论时，跳过
+
+        // 更新当前位置
+        indicator.setIndex(index + 1);
+
+        if (!API.Photos.isNewAlbum(item.id)) {
+            // 已备份数据跳过不处理
+            indicator.addSkip(item);
             continue;
         }
-        // 更新总数
-        indicator.setTotal(item.comment);
-        indicator.setIndex(index + 1);
-        await API.Photos.getAlbumAllComments(item, indicator);
-        // 完成
-        indicator.complete();
+        if (item.comment === 0) {
+            // 没评论时，跳过
+            indicator.addSkip(item);
+            continue;
+        }
+
+        // 获取单条的全部评论
+        await API.Photos.getAlbumAllComments(item);
+
+        // 添加成功
+        indicator.addSuccess(item);
     }
+        
+    // 完成
+    indicator.complete();
     return items;
 }
 
@@ -459,58 +460,44 @@ API.Photos.getImageAllComments = async (item, indicator) => {
     // 清空相片原有的评论
     item.comments = [];
 
-    let CONFIG = Qzone_Config.Photos.Images.Comments;
+    const CONFIG = QZone_Config.Photos.Images.Comments;
 
     // 更新下载中
     indicator.addDownload(item);
 
-    let nextPage = async function (item, pageIndex) {
+    const nextPage = async function (item, pageIndex, indicator) {
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
+
         return await API.Photos.getImageComments(item.albumId, item.lloc, pageIndex).then(async (data) => {
 
             // 去掉函数，保留json
             data = API.Utils.toJson(data, /^_Callback\(/);
             data = data.data;
+            data.comments = data.comments || [];
 
-            // 合并评论列表
-            item.comments = item.comments.concat(data.comments || []);
+
+            // 合并数据
+            item.comments = API.Utils.unionItems(item.comments, data.comments);
             indicator.addSuccess(data.comments);
 
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, item.cmtTotal, item.comments);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(item, pageIndex + 1);
+            if (API.Common.isPreBackupPos(data.comments, CONFIG)) {
+                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+                return item.comments;
             }
-            return item.comments;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.cmtTotal, item.comments, arguments.callee, item, nextPageIndex, indicator);
+
         }).catch(async (e) => {
             console.error("获取单张相片的评论列表异常：", pageIndex + 1, item, e);
-            indicator.addFailed({
-                pageIndex: pageIndex,
-                pageSize: CONFIG.pageSize,
-                isPage: true
-            });
+            indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, item.cmtTotal, item.comments);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(item, pageIndex + 1);
-            }
-            return item.comments;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.cmtTotal, item.comments, arguments.callee, item, nextPageIndex, indicator);
         });
     }
 
-    await nextPage(item, 0);
+    await nextPage(item, 0, indicator);
 
     return item.comments;
 }
@@ -521,24 +508,40 @@ API.Photos.getImageAllComments = async (item, indicator) => {
  */
 API.Photos.getAllImagesComments = async (items) => {
     // 是否需要获取相片的评论
-    if (!Qzone_Config.Photos.Images.Comments.isGet || API.Photos.isFile()) {
+    if (!QZone_Config.Photos.Images.Comments.isGet || API.Photos.isFile()) {
         return items;
     }
+
+    // 相片评论进度更新器
+    const indicator = new StatusIndicator('Photos_Images_Comments');
+    // 更新总数
+    indicator.setTotal(items.length);
+
     for (let index = 0; index < items.length; index++) {
-        // 相片评论进度更新器
-        let indicator = new StatusIndicator('Photos_Images_Comments');
         const item = items[index];
+
+        // 当前位置
+        indicator.setIndex(index + 1);
+
         if (item.cmtTotal === 0) {
             // 没评论时，跳过
+            indicator.addSkip(item);
             continue;
         }
-        // 更新总数
-        indicator.setTotal(item.cmtTotal);
-        indicator.setIndex(index + 1);
+        if (!API.Photos.isNewItem(item.albumId, item)) {
+            // 已备份数据跳过不处理
+            indicator.addSkip(item);
+            continue;
+        }
+
+        // 获取单张相片的全部评论
         await API.Photos.getImageAllComments(item, indicator);
-        // 完成
-        indicator.complete();
+
+        // 添加成功
+        indicator.addSuccess(item);
     }
+    // 完成
+    indicator.complete();
     return items;
 }
 
@@ -548,18 +551,18 @@ API.Photos.getAllImagesComments = async (items) => {
  * @param {object} albums 相册列表
  */
 API.Photos.addAlbumsDownloadTasks = async (albums) => {
-    // 下载相对目录
-    let module_dir = 'Albums/';
+    for (const album of albums) {
+        const photos = album.photoList || [];
 
-    for (let index = 0; index < albums.length; index++) {
-        const album = albums[index];
-        let photos = album.photoList || [];
+        // 新备份数据才添加预览图与评论图下载任务
+        if (API.Photos.isNewAlbum(album.id)) {
 
-        // 添加相册预览图的下载任务
-        await API.Photos.addPreviewDownloadTasks(album, 'Albums/Images');
+            // 添加相册预览图的下载任务
+            await API.Photos.addPreviewDownloadTasks(album, 'Albums/Images');
 
-        // 添加评论的图片的下载任务
-        await API.Photos.addCommentDownloadTasks(album, 'Albums/Images');
+            // 添加评论的图片的下载任务
+            await API.Photos.addCommentDownloadTasks(album, 'Albums/Images');
+        }
 
         // 添加相片的下载任务
         await API.Photos.addPhotosDownloadTasks(album, photos);
@@ -621,16 +624,24 @@ API.Photos.addCommentDownloadTasks = async (item, dir) => {
  * @param {StatusIndicator} indicator 进度更新器
  */
 API.Photos.addPhotosDownloadTasks = async (album, photos) => {
+
     // 相片评论进度更新器
-    let indicator = new StatusIndicator('Photos_Images_Mime');
+    const indicator = new StatusIndicator('Photos_Images_Mime');
     // 设置当前位置
     indicator.setIndex(album.name);
+
     // 设置总数
     indicator.setTotal(photos.length);
 
     for (let index = 0; index < photos.length; index++) {
 
         const photo = photos[index];
+
+        if (!API.Photos.isNewItem(album.id, photo)) {
+            // 已备份数据跳过不处理
+            indicator.addSkip(photo);
+            continue;
+        }
 
         // 处理中
         indicator.addDownload(photo);
@@ -644,7 +655,7 @@ API.Photos.addPhotosDownloadTasks = async (album, photos) => {
         if (API.Common.isQzoneUrl()) {
             // QQ空间外链导出时，不需要添加下载任务，但是需要处理
             // 根据配置的清晰度匹配图片，默认高清
-            photo.custom_url = API.Photos.getDownloadUrl(photo, Qzone_Config.Photos.Images.exifType);
+            photo.custom_url = API.Photos.getDownloadUrl(photo, QZone_Config.Photos.Images.exifType);
         } else {
             // 非QQ空间外链导出时，需要添加下载任务
             // 如果相片是视频，需要下载视频
@@ -655,7 +666,7 @@ API.Photos.addPhotosDownloadTasks = async (album, photos) => {
 
                 // 下载预览图
                 // 根据配置的清晰度匹配图片，默认高清
-                photo.custom_url = API.Photos.getDownloadUrl(photo, Qzone_Config.Photos.Images.exifType);
+                photo.custom_url = API.Photos.getDownloadUrl(photo, QZone_Config.Photos.Images.exifType);
                 // 获取图片类型
                 const suffix = API.Photos.getPhotoType(photo);
                 photo.custom_pre_filename = filename + suffix;
@@ -674,7 +685,7 @@ API.Photos.addPhotosDownloadTasks = async (album, photos) => {
                 photo.custom_filepath = albumFolder + '/' + photo.custom_filename;
             } else {
                 // 根据配置的清晰度匹配图片，默认高清
-                photo.custom_url = API.Photos.getDownloadUrl(photo, Qzone_Config.Photos.Images.exifType);
+                photo.custom_url = API.Photos.getDownloadUrl(photo, QZone_Config.Photos.Images.exifType);
 
                 photo.custom_filename = QZone.Photos.FILE_URLS.get(photo.custom_url);
                 if (!photo.custom_filename) {
@@ -701,6 +712,8 @@ API.Photos.addPhotosDownloadTasks = async (album, photos) => {
         // 添加评论的下载任务
         await API.Photos.addCommentDownloadTasks(photo, albumFolder + '/Images');
     }
+
+    // 完成
     indicator.complete();
     return photos;
 }
@@ -722,7 +735,7 @@ API.Photos.exportAllListToFiles = async (albums) => {
  */
 API.Photos.exportAlbumsToFiles = async (albums) => {
     // 获取用户配置
-    let exportType = Qzone_Config.Photos.exportType;
+    let exportType = QZone_Config.Photos.exportType;
     switch (exportType) {
         case 'HTML':
             await API.Photos.exportAlbumsToHtml(albums);
@@ -809,27 +822,34 @@ API.Photos.exportAlbumsToMarkdown = async (albums) => {
 API.Photos.getAlbumsMarkdown = (albums) => {
     const contents = [];
     for (const album of albums) {
-        let albumName = album.name;
+
         // 相册名称与地址
-        let albumUrl = API.Photos.getAlbumUrl(QZone.Common.Target.uin, album.id);
+        const albumName = album.name;
+        const albumUrl = API.Photos.getAlbumUrl(QZone.Common.Target.uin, album.id);
         contents.push('> ' + API.Utils.getLink(albumUrl, albumName, "MD"));
         contents.push('\r\n');
+
         // 相册预览图
         let pre = API.Common.isQzoneUrl() ? (album.url || API.Photos.getPhotoPreUrl(album.pre)) : '../' + album.custom_filepath;
         contents.push('>[![{0}]({1})](https://user.qzone.qq.com/{2}/photo/{3}) '.format(albumName, pre, QZone.Common.Target.uin, album.id));
         contents.push('\r\n');
         contents.push('>{0} '.format(album.desc || albumName));
         contents.push('\r\n');
+
+        // 评论
         album.comments = album.comments || [];
         contents.push('> 评论({0})'.format(album.comments.length));
         contents.push('\r\n');
-        // 评论
-        for (let i = 0; i < album.comments.length; i++) {
-            const comment = album.comments[i];
+
+        for (const comment of album.comments) {
+            // 评论人
             const poster_name = API.Common.formatContent(comment.poster.name, 'MD');
-            let content = API.Common.formatContent(comment.content, 'MD');
             const poster_display = API.Common.getUserLink(comment.poster.id, poster_name, "MD");
+
+            // 评论内容
+            let content = API.Common.formatContent(comment.content, 'MD');
             contents.push("* {0}：{1}".format(poster_display, content));
+
             // 评论包含图片
             if (comment.pictotal > 0) {
                 let comment_images = comment.pic || [];
@@ -837,25 +857,28 @@ API.Photos.getAlbumsMarkdown = (albums) => {
                     let custom_url = image.o_url || image.hd_url || image.b_url || image.s_url || image.url;
                     custom_url = API.Common.isQzoneUrl() ? (image.custom_url || custom_url) : '../' + image.custom_filepath;
                     // 添加评论图片
-                    contents.push(API.Utils.getMdImage(custom_url));
+                    contents.push(API.Utils.getImagesMarkdown(custom_url));
                 }
             }
             // 评论的回复
             let replies = comment.replies || [];
             for (const repItem of replies) {
+
+                // 回复人
                 let repName = API.Common.formatContent(repItem.poster.name, 'MD');
-                let content = API.Common.formatContent(repItem.content, 'MD');
                 const rep_poster_display = API.Common.getUserLink(comment.poster.id, repName, "MD");
+
+                // 回复内容
+                let content = API.Common.formatContent(repItem.content, 'MD');
                 contents.push("\t* {0}：{1}".format(rep_poster_display, content));
-                if (repItem.pictotal > 0) {
-                    var repImgs = repItem.pic || [];
-                    for (const repImg of repImgs) {
-                        // 回复包含图片
-                        let custom_url = repImg.o_url || repImg.hd_url || repImg.b_url || repImg.s_url || repImg.url;
-                        custom_url = API.Common.isQzoneUrl() ? (repImg.custom_url || custom_url) : '../' + repImg.custom_filepath;
-                        // 添加回复评论图片
-                        contents.push(API.Utils.getMdImage(custom_url));
-                    }
+
+                const repImgs = repItem.pic || [];
+                for (const repImg of repImgs) {
+                    // 回复包含图片
+                    let custom_url = repImg.o_url || repImg.hd_url || repImg.b_url || repImg.s_url || repImg.url;
+                    custom_url = API.Common.isQzoneUrl() ? (repImg.custom_url || custom_url) : '../' + repImg.custom_filepath;
+                    // 添加回复评论图片
+                    contents.push(API.Utils.getImagesMarkdown(custom_url));
                 }
             }
         }
@@ -888,7 +911,7 @@ API.Photos.exportAlbumsToJson = async (albums) => {
  */
 API.Photos.exportPhotosToFiles = async (albums) => {
     // 获取用户配置
-    let exportType = Qzone_Config.Photos.exportType;
+    let exportType = QZone_Config.Photos.exportType;
     switch (exportType) {
         case 'HTML':
             await API.Photos.exportPhotosToHtml(albums);
@@ -922,6 +945,17 @@ API.Photos.exportPhotosToHtml = async (albums) => {
         console.info('生成相片列表HTML开始', albums);
         const infoFile = await API.Common.writeHtmlofTpl('photos', null, QZone.Photos.ROOT + "/photos.html");
         console.info('生成相片列表HTML结束', infoFile, albums);
+
+        for (const album of albums) {
+            // 生成相片列表HTML
+            console.info('生成相册的相片HTML开始', album);
+
+            const name = API.Utils.filenameValidate(album.name);
+            const albumFile = await API.Common.writeHtmlofTpl('photos_static', { album: album }, QZone.Photos.ROOT + "/" + name + ".html");
+
+            console.info('生成相册的相片HTML结束', albumFile, album);
+        }
+
     } catch (error) {
         console.error('导出相片到HTML异常', error, albums);
     }
@@ -941,23 +975,23 @@ API.Photos.exportPhotosToMarkdown = async (albums) => {
         const photos = album.photoList || [];
 
         // 每个相册的进度器
-        let indicator = new StatusIndicator('Photos_Images_Export');
+        const indicator = new StatusIndicator('Photos_Images_Export');
         indicator.setIndex(album.name);
         indicator.setTotal(photos.length);
         indicator.addDownload(photos);
 
-        let folderName = QZone.Photos.ROOT + '/' + categoryName + '/' + albumName;
+        const folderName = QZone.Photos.ROOT + '/' + categoryName + '/' + albumName;
         await API.Utils.createFolder(folderName);
 
         // 生成相片年份的MD文件
-        let year_maps = API.Utils.groupedByTime(photos, 'uploadTime', 'year');
+        const year_maps = API.Utils.groupedByTime(photos, 'uploadTime', 'year');
         for (const [year, year_photos] of year_maps) {
             let year_content = API.Photos.getPhotosMarkdownContents(year_photos);
             await API.Utils.writeText(year_content, folderName + "/" + year + '.md');
         }
 
         // 生成相册汇总的MD文件
-        let album_content = API.Photos.getPhotosMarkdownContents(photos);
+        const album_content = API.Photos.getPhotosMarkdownContents(photos);
         await API.Utils.writeText(album_content, folderName + "/" + albumName + '.md');
 
         indicator.addSuccess(photos);
@@ -971,7 +1005,7 @@ API.Photos.exportPhotosToMarkdown = async (albums) => {
  * @param {Array} albums 相片列表
  */
 API.Photos.getPhotosMarkdownContents = (photos) => {
-    let contents = [];
+    const contents = [];
     for (let index = 0; index < photos.length; index++) {
         const photo = photos[index];
         // 相片名称
@@ -984,7 +1018,7 @@ API.Photos.getPhotosMarkdownContents = (photos) => {
             contents.push('<video src="{0}" controls="controls" ></video>'.format(photo.custom_filename || photo.custom_url));
         } else {
             // 图片
-            contents.push(API.Utils.getMdImage(photo.custom_filename || photo.custom_url || photo.url, photo.name));
+            contents.push(API.Utils.getImagesMarkdown(photo.custom_filename || photo.custom_url || photo.url, photo.name));
         }
         contents.push('\r\n');
 
@@ -998,41 +1032,40 @@ API.Photos.getPhotosMarkdownContents = (photos) => {
 
         // 评论 TODO 兼容私密评论
         photo.comments = photo.comments || [];
-
-        for (let i = 0; i < photo.comments.length; i++) {
-            const comment = photo.comments[i];
+        for (const comment of photo.comments) {
+            // 评论人
             const poster_name = API.Common.formatContent(comment.poster.name, 'MD');
-            let content = API.Common.formatContent(comment.content, 'MD');
             const poster_display = API.Common.getUserLink(comment.poster.id, poster_name, "MD");
+            // 评论内容
+            let content = API.Common.formatContent(comment.content, 'MD');
             contents.push("* {0}：{1}".format(poster_display, content));
 
             // 评论包含图片
-            if (comment.pictotal > 0) {
-                let comment_images = comment.pic || [];
-                for (const image of comment_images) {
-                    let custom_url = image.o_url || image.hd_url || image.b_url || image.s_url || image.url;
-                    custom_url = API.Common.isQzoneUrl() ? (image.custom_url || custom_url) : image.custom_filepath
-                    // 添加评论图片
-                    contents.push(API.Utils.getMdImage(custom_url));
-                }
+            const comment_images = comment.pic || [];
+            for (const image of comment_images) {
+                let custom_url = image.o_url || image.hd_url || image.b_url || image.s_url || image.url;
+                custom_url = API.Common.isQzoneUrl() ? (image.custom_url || custom_url) : image.custom_filepath
+                // 添加评论图片
+                contents.push(API.Utils.getImagesMarkdown(custom_url));
             }
 
             // 评论的回复
-            let replies = comment.replies || [];
+            const replies = comment.replies || [];
             for (const repItem of replies) {
-                let repName = API.Common.formatContent(repItem.poster.name, 'MD');
-                let content = API.Common.formatContent(repItem.content, 'MD');
+                // 回复人
+                const repName = API.Common.formatContent(repItem.poster.name, 'MD');
                 const rep_poster_display = API.Common.getUserLink(comment.poster.id, repName, "MD");
+                // 回复内容
+                const content = API.Common.formatContent(repItem.content, 'MD');
                 contents.push("\t* {0}：{1}".format(rep_poster_display, content));
-                if (repItem.pictotal > 0) {
-                    var repImgs = repItem.pic || [];
-                    for (const repImg of repImgs) {
-                        // 回复包含图片
-                        let custom_url = repImg.o_url || repImg.hd_url || repImg.b_url || repImg.s_url || repImg.url;
-                        custom_url = API.Common.isQzoneUrl() ? (repImg.custom_url || custom_url) : repImg.custom_filepath
-                        // 添加回复评论图片
-                        contents.push(API.Utils.getMdImage(custom_url));
-                    }
+
+                const repImgs = repItem.pic || [];
+                for (const repImg of repImgs) {
+                    // 回复包含图片
+                    let custom_url = repImg.o_url || repImg.hd_url || repImg.b_url || repImg.s_url || repImg.url;
+                    custom_url = API.Common.isQzoneUrl() ? (repImg.custom_url || custom_url) : repImg.custom_filepath
+                    // 添加回复评论图片
+                    contents.push(API.Utils.getImagesMarkdown(custom_url));
                 }
             }
         }
@@ -1048,11 +1081,11 @@ API.Photos.getPhotosMarkdownContents = (photos) => {
 API.Photos.exportPhotosToJson = async (albums) => {
     let indicator = new StatusIndicator('Photos_Images_Export_Other');
     for (const album of albums) {
-        let categoryName = album.className || QZone.Photos.Class[album.classid] || '其他';
-        let albumName = API.Utils.filenameValidate(album.name);
+        const categoryName = album.className || QZone.Photos.Class[album.classid] || '其他';
+        const albumName = API.Utils.filenameValidate(album.name);
         const photos = album.photoList || [];
-        let json = JSON.stringify(photos);
-        let folderName = QZone.Photos.ROOT + '/' + categoryName + '/' + albumName;
+        const json = JSON.stringify(photos);
+        const folderName = QZone.Photos.ROOT + '/' + categoryName + '/' + albumName;
         await API.Utils.createFolder(folderName);
         await API.Utils.writeText(json, folderName + "/" + albumName + '.json');
     }
@@ -1064,5 +1097,322 @@ API.Photos.exportPhotosToJson = async (albums) => {
  * 导出类型是否为文件夹或文件
  */
 API.Photos.isFile = () => {
-    return Qzone_Config.Photos.exportType == 'Folder' || Qzone_Config.Photos.exportType == 'File'
+    return QZone_Config.Photos.exportType == 'Folder' || QZone_Config.Photos.exportType == 'File'
+}
+
+/**
+ * 根据相册ID获取相册列表中的相册
+ * @param {Array} items 相册列表
+ * @param {integer} albumId 模板相册ID
+ */
+API.Photos.getAlbumById = (items, albumId) => {
+    items = items || [];
+    // 获取指定相册数据
+    const albumIndex = items.getIndex(albumId, 'id');
+    const album = items[albumIndex];
+    return album;
+}
+
+/**
+ * 根据相册ID获取相册列表中的相片列表
+ * @param {Array} items 相册列表
+ * @param {integer} albumId 模板相册ID
+ */
+API.Photos.getPhotosByAlbumId = (items, albumId) => {
+    const album = API.Photos.getAlbumById(items, albumId);
+    if (!album) {
+        return [];
+    }
+    return album.photoList || [];
+}
+
+/**
+ * 是否增量条目
+ * @param {integer} albumId 相册ID
+ */
+API.Photos.isNewAlbum = (albumId) => {
+    if (!QZone.Photos.Album.OLD_Data || QZone.Photos.Album.OLD_Data.length === 0) {
+        // 没有存在已备份数据的，当作新数据处理
+        return true;
+    }
+    // 因为用户可以指定相册备份，不全量相册备份的情况下，不能直接取IncrementTime增量时间判断相片是否需要备份，IncrementTime仅适用全量备份的场景
+    const album = API.Photos.getAlbumById(QZone.Photos.Album.OLD_Data, albumId);
+    if (!album) {
+        return true;
+    }
+    return API.Common.isNewItem(album);
+}
+
+/**
+ * 是否增量条目
+ * @param {integer} albumId 相册ID
+ * @param {Object} photo 相片
+ */
+API.Photos.isNewItem = (albumId, photo) => {
+    // 因为用户可以指定相册备份，不全量相册备份的情况下，不能直接取IncrementTime增量时间判断相片是否需要备份，IncrementTime仅适用全量备份的场景
+    const album = API.Photos.getAlbumById(QZone.Photos.Album.OLD_Data, albumId);
+    if (!album) {
+        return true;
+    }
+    // 已备份相册，可以直接判断，其实也不严谨，先不处理
+    // 存在一种场景有问题（如1号只备份A相册，2号A相册上传了相片，3号只备份B相册，这时IncrementTime已刷成3号，此时备份A相册将无法备份2号上传的相片）
+    return API.Common.isNewItem(photo);
+}
+
+/**
+ * 初始化相册列表
+ */
+API.Photos.initAlbums = async () => {
+    let albumList = QZone.Photos.Album.Data || [];
+    const selects = QZone.Photos.Album.Select || [];
+    if (selects.length === 0) {
+        // 用户没有选择时，默认获取所有相册列表
+        albumList = await API.Photos.getAllAlbumList();
+    } else {
+        // 如果用户选择了备份指定的相册
+        // 合并数据
+        QZone.Photos.Album.Data = QZone.Photos.Album.Data.concat(selects);
+        albumList = QZone.Photos.Album.Data;
+    }
+    // 处理增量相册
+    // 合并、过滤数据
+    QZone.Photos.Album.Data = API.Utils.unionItems(QZone.Photos.Album.OLD_Data, QZone.Photos.Album.Data);
+    let albumIds = [];
+    for (let i = QZone.Photos.Album.Data.length - 1; i >= 0; i--) {
+        const album = QZone.Photos.Album.Data[i];
+        if (albumIds.indexOf(album.id) > -1) {
+            QZone.Photos.Album.Data.splice(i, 1);
+            continue;
+        }
+        albumIds.push(album.id);
+    }
+    for (const item of albumList) {
+        // 添加点赞Key
+        item.uniKey = API.Photos.getUniKey(item.id);
+    }
+    return albumList;
+}
+
+/**
+ * 获取相册赞记录
+ * @param {Array} items 相册列表
+ */
+API.Photos.getAlbumsLikeList = async (items) => {
+    if (!API.Common.isGetLike(QZone_Config.Photos)) {
+        // 不获取赞
+        return items;
+    }
+    // 进度更新器
+    const indicator = new StatusIndicator('Photos_Albums_Like');
+    indicator.setTotal(items.length);
+
+    // 同时请求数
+    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+
+    // 获取点赞列表
+    let count = 0;
+    end: for (let i = 0; i < _items.length; i++) {
+        const list = _items[i];
+
+        let tasks = [];
+        for (let j = 0; j < list.length; j++) {
+
+            const item = list[j];
+            item.likes = item.likes || [];
+
+            if (!API.Photos.isNewAlbum(item.id)) {
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
+            }
+
+            indicator.setIndex(++count);
+            tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Photos).then((likes) => {
+                console.info('获取相册点赞完成', likes);
+                // 获取完成
+                indicator.addSuccess(item);
+            }).catch((e) => {
+                console.error("获取相册点赞异常：", item, e);
+                indicator.addFailed(item);
+            }));
+
+        }
+
+        await Promise.all(tasks);
+        // 每一批次完成后暂停半秒
+        await API.Utils.sleep(500);
+    }
+
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
+
+    // 完成
+    indicator.complete();
+
+    return items;
+}
+
+/**
+ * 获取相片赞记录
+ * @param {Array} items 相片列表
+ */
+API.Photos.getPhotosLikeList = async (items) => {
+    if (!API.Common.isGetLike(QZone_Config.Photos)) {
+        // 不获取赞
+        return items;
+    }
+    // 进度更新器
+    const indicator = new StatusIndicator('Photos_Images_Like');
+    indicator.setTotal(items.length);
+
+    // 同时请求数
+    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+
+    // 获取点赞列表
+    let count = 0;
+    end: for (let i = 0; i < _items.length; i++) {
+        const list = _items[i];
+
+        let tasks = [];
+        for (let j = 0; j < list.length; j++) {
+
+            const item = list[j];
+            item.likes = item.likes || [];
+
+            if (!API.Photos.isNewItem(item.albumId, item)) {
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
+            }
+
+            indicator.setIndex(++count);
+            tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Photos).then((likes) => {
+                // 获取完成
+                indicator.addSuccess(item);
+            }).catch((e) => {
+                console.error("获取相片点赞异常：", item, e);
+                indicator.addFailed(item);
+            }));
+
+        }
+
+        await Promise.all(tasks);
+        // 每一批次完成后暂停半秒
+        await API.Utils.sleep(500);
+    }
+
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
+
+    // 完成
+    indicator.complete();
+
+    return items;
+}
+
+/**
+ * 转换数据
+ */
+API.Photos.addPhotoUniKey = (photos) => {
+    for (const photo of photos) {
+        // 添加点赞Key
+        photo.uniKey = API.Photos.getPhotoUniKey(photo);
+    }
+}
+
+/**
+ * 获取单条全部最近访问
+ * @param {object} item 说说
+ */
+API.Photos.getItemAllVisitorsList = async (item) => {
+    // 清空原有的最近访问信息
+    item.custom_visitor = {
+        viewCount: 0,
+        totalNum: 0,
+        list: []
+    };
+
+    // 最近访问配置
+    const CONFIG = QZone_Config.Photos.Visitor;
+
+    const nextPage = async function (item, pageIndex) {
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
+
+        return await API.Photos.getVisitors(item.id, pageIndex).then(async (data) => {
+            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
+
+            // 合并
+            item.custom_visitor.viewCount = data.viewCount || 0;
+            item.custom_visitor.totalNum = data.totalNum || 0;
+            item.custom_visitor.list = item.custom_visitor.list.concat(data.list || []);
+
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.custom_visitor.totalNum, item.custom_visitor.list, arguments.callee, item, nextPageIndex);
+        }).catch(async (e) => {
+            console.error("获取说说最近访问列表异常，当前页：", pageIndex + 1, item, e);
+
+            // 当前页失败后，跳过继续请求下一页
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.custom_visitor.totalNum, item.custom_visitor.list, arguments.callee, item, nextPageIndex);
+        });
+    }
+
+    await nextPage(item, 0);
+
+    return item.custom_visitor;
+}
+
+/**
+ * 获取最近访问
+ * @param {Array} items 说说列表
+ */
+API.Photos.getAllVisitorList = async (items) => {
+    if (!API.Common.isGetVisitor(QZone_Config.Photos)) {
+        // 不获取最近访问
+        return items;
+    }
+    // 进度更新器
+    const indicator = new StatusIndicator('Photos_Albums_Visitor');
+    indicator.setTotal(items.length);
+
+    // 同时请求数
+    const _items = _.chunk(items, 5);
+
+    // 获取最近访问
+    let count = 0;
+    end: for (let i = 0; i < _items.length; i++) {
+        const list = _items[i];
+
+        let tasks = [];
+        for (let j = 0; j < list.length; j++) {
+            const item = list[j];
+            if (!API.Photos.isNewAlbum(item.id)) {
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
+            }
+            indicator.setIndex(++count);
+            tasks.push(API.Photos.getItemAllVisitorsList(item).then((visitor) => {
+                // 获取完成
+                indicator.addSuccess(item);
+            }).catch((e) => {
+                console.error("获取相册最近访问异常：", item, e);
+                indicator.addFailed(item);
+            }));
+
+        }
+
+        await Promise.all(tasks);
+        // 每一批次完成后暂停半秒
+        await API.Utils.sleep(500);
+    }
+
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
+
+    // 完成
+    indicator.complete();
+
+    return items;
 }

@@ -11,6 +11,9 @@ API.Friends.export = async () => {
         // 获取所有的QQ好友
         let friends = await API.Friends.getAllList();
 
+        // 添加QQ好友的头像下载
+        API.Common.downloadUserAvatars(friends);
+
         // 根据分组名称（非分组ID）进行排序
         friends = API.Utils.sort(friends, 'groupName');
         console.info('排序后', friends, QZone.Friends.Data)
@@ -31,27 +34,26 @@ API.Friends.getAllList = async () => {
     QZone.Friends.Data = [];
 
     // 进度更新器
-    let indicator = new StatusIndicator('Friends');
+    const indicator = new StatusIndicator('Friends');
 
     // 开始
     indicator.print();
 
-    let friends = await API.Friends.getFriends().then(async (data) => {
+    await API.Friends.getFriends().then(async (data) => {
         data = API.Utils.toJson(data, /^_Callback\(/);
         data = data.data;
 
-        let friends = data.items || [];
+        QZone.Friends.Data = data.items || [];
 
-        QZone.Friends.total = friends.length || QZone.Friends.total || 0;
-        indicator.setTotal(friends.length);
+        QZone.Friends.total = QZone.Friends.Data.length || QZone.Friends.total || 0;
+        indicator.setTotal(QZone.Friends.total);
 
-        QZone.Friends.Data = data.items;
-        indicator.addSuccess(friends);
+        indicator.addSuccess(QZone.Friends.Data);
 
         // 获取好友成立时间
-        friends = await API.Friends.getFriendsTime(data, friends);
+        QZone.Friends.Data = await API.Friends.getFriendsTime(data, QZone.Friends.Data);
 
-        return friends;
+        return QZone.Friends.Data;
     }).catch((e) => {
         console.error("获取好友列表异常", e);
     })
@@ -59,47 +61,86 @@ API.Friends.getAllList = async () => {
     // 完成
     indicator.complete();
 
-    return friends || [];
+    // 根据QQ号去重合并
+    if (QZone_Config.Friends.isIncrement) {
+        QZone.Friends.Data = _.concat(QZone.Friends.OLD_Data, QZone.Friends.Data);
+        QZone.Friends.Data = _.unionBy(QZone.Friends.Data, 'uin');
+    }
+
+    return QZone.Friends.Data;
 }
 
 /**
  * 获取好友添加时间
  */
 API.Friends.getFriendsTime = async (data, friends) => {
+    if (!QZone_Config.Friends.hasAddTime || QZone_Config.Friends.exportType === 'MarkDown') {
+        // 不获取好友添加时间或导出类型为Markdown，则跳过不处理
+        return friends;
+    }
+
     // 进度更新器
-    let indicator = new StatusIndicator('Friends_Time');
+    const indicator = new StatusIndicator('Friends_Time');
+    indicator.setTotal(friends.length);
+
     // 将QQ分组进行分组
     let groups = data.gpnames;
     let groupMap = new Map();
     for (const group of groups) {
         groupMap.set(group.gpid, group.gpname);
     }
-    indicator.setTotal(friends.length);
+    // 遍历
     for (const friend of friends) {
+        // 设置默认值
         friend.groupName = groupMap.get(friend.groupid) || "默认分组";
-        if (!Qzone_Config.Friends.hasAddTime || Qzone_Config.Friends.exportType === 'MarkDown') {
-            // 不获取好友添加时间则跳过
+        const isMe = friend.uin === QZone.Common.Owner.uin;
+        if (isMe || !API.Friends.isNewItem(friend)) {
+            // 好友号为自己号或非新好友，跳过
+            if (isMe) {
+                friend.addFriendTime = "自己啦";
+                friend.intimacyScore = "这要看您多爱护自己啦";
+                friend.common = {};
+            }
+            indicator.addSkip(friend);
             continue;
         }
-        if (friend.uin === QZone.Common.Owner.uin) {
-            // 好友号为自己号的跳过
-            continue;
-        }
-        let addFriendTime = await API.Friends.getFriendshipTime(friend.uin).then((time_data) => {
-            indicator.addSuccess(1);
+        await API.Friends.getFriendshipTime(friend.uin).then((time_data) => {
             time_data = API.Utils.toJson(time_data, /^_Callback\(/);
             time_data = time_data.data;
+
+            // 添加时间
             let addTime = time_data.addFriendTime || 0;
             addTime = addTime == 0 ? "老朋友啦" : API.Utils.formatDate(addTime);
-            return addTime;
+            friend.addFriendTime = addTime;
+
+            // 亲密度
+            friend.intimacyScore = time_data.intimacyScore || 0;
+
+            // 共同信息(共同好友，共同群组)
+            friend.common = time_data.common || {};
+
+            // 成功
+            indicator.addSuccess(friend);
         }).catch((e) => {
-            indicator.addFailed(1);
+            // 失败
+            indicator.addFailed(friend);
             console.error("获取好友添加时间异常", friend, e);
         })
-        friend.addFriendTime = addFriendTime;
     }
+    // 完成
     indicator.complete();
     return friends;
+}
+
+/**
+ * 是否为新好友
+ * @param {object} item 好友
+ */
+API.Friends.isNewItem = (item) => {
+    if (!QZone_Config.Friends.isIncrement) {
+        return true;
+    }
+    return QZone.Friends.OLD_Data.getIndex(item.uin, 'uin') == -1;
 }
 
 /**
@@ -108,7 +149,7 @@ API.Friends.getFriendsTime = async (data, friends) => {
  */
 API.Friends.exportAllToFiles = async (friends) => {
     // 获取用户配置
-    let exportType = Qzone_Config.Friends.exportType;
+    let exportType = QZone_Config.Friends.exportType;
     switch (exportType) {
         case 'Excel':
             await API.Friends.exportToExcel(friends);
@@ -139,7 +180,7 @@ API.Friends.exportToExcel = async (friends) => {
 
     // Excel数据
     let ws_data = [
-        ["QQ号", "备注名称", "QQ昵称", "所在分组", "添加时间", "用户主页", "即时消息"]
+        ["QQ号", "备注名称", "QQ昵称", "所在分组", "相识时间", "亲密度", "共同好友", "共同群组", "用户主页", "即时消息"]
     ];
 
     for (const friend of friends) {
@@ -147,7 +188,27 @@ API.Friends.exportToExcel = async (friends) => {
         const user_qzone_url = { t: 's', v: "QQ空间", l: { Target: API.Common.getUserUrl(friend.uin), Tooltip: "QQ空间" } };
         // QQ聊天超链接
         const user_message_url = { t: 's', v: "QQ聊天", l: { Target: API.Common.getMessageUrl(friend.uin), Tooltip: "QQ聊天" } };
-        let rowData = [friend.uin, friend.remark, friend.name, friend.groupName, friend.addFriendTime, user_qzone_url, user_message_url];
+
+        // 共同信息
+        friend.common = friend.common || {};
+        friend.common.friend = friend.common.friend || [];
+        friend.common.group = friend.common.group || [];
+        const groups = [];
+        for (const group of friend.common.group) {
+            groups.push(group.name);
+        }
+        const rowData = [
+            friend.uin, 
+            friend.remark, 
+            friend.name, 
+            friend.groupName, 
+            friend.addFriendTime, 
+            friend.intimacyScore, 
+            friend.common.friend.length, 
+            groups.join('\n'), 
+            user_qzone_url, 
+            user_message_url
+        ];
         ws_data.push(rowData);
     }
 
@@ -161,7 +222,7 @@ API.Friends.exportToExcel = async (friends) => {
     // 写入XLSX到HTML5的FileSystem
     let xlsxArrayBuffer = API.Utils.toArrayBuffer(XLSX.write(workbook, { bookType: 'xlsx', bookSST: false, type: 'binary' }));
     await API.Utils.writeFile(xlsxArrayBuffer, QZone.Friends.ROOT + "/QQ好友.xlsx").then(fileEntry => {
-        console.debug('导出QQ好友到Excel成功', friends, fileEntry);
+        console.info('导出QQ好友到Excel成功', friends, fileEntry);
     }).catch(error => {
         console.error('导出QQ好友到Excel失败', friends, error);
     });

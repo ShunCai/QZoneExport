@@ -1,4 +1,5 @@
 /* 滚动条优化 */
+
 ::-webkit-scrollbar {
     width: 9px;
     height: 9px;
@@ -27,12 +28,12 @@ body::-webkit-scrollbar-track-piece {
     background-color: #666;
 }
 
-table{
-    table-layout:fixed;
+table {
+    table-layout: fixed;
 }
 
-table td{
+table td {
     overflow: hidden;
-    text-overflow:ellipsis;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }

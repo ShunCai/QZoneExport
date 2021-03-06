@@ -1,152 +1,6 @@
 // 浏览器下载信息，用于更改文件名
-let BrowseDownloads = new Map();
+const BrowseDownloads = new Map();
 let QZoneDownloadId = 0;
-
-// 默认配置
-const Default_Config = {
-    // 公共配置
-    Common: {
-        // 重试次数
-        listRetryCount: 2,
-        // 重试间隔
-        listRetrySleep: 1,
-        // 文件下载类型
-        downloadType: 'File',
-        // 自动识别文件后缀
-        isAutoFileSuffix: false,
-        // 后缀识别超时秒数
-        autoFileSuffixTimeOut: 30,
-        // 迅雷任务数        
-        thunderTaskNum: 5000,
-        // 唤起迅雷间隔        
-        thunderTaskSleep: 60,
-        // 文件下载并发数        
-        downloadThread: 10,
-        // 是否启用下载状态栏提醒
-        enabledShelf: true
-    },
-    // 说说模块
-    Messages: {
-        exportType: "HTML",// 内容备份类型
-        pageSize: 20,
-        randomSeconds: {
-            min: 1,
-            max: 2
-        },
-        isFull: true, //是否获取全文
-        Comments: {
-            isFull: true, //是否全部评论
-            pageSize: 20,
-            randomSeconds: {
-                min: 1,
-                max: 2
-            }
-        }
-    },
-    // 日志模块
-    Blogs: {
-        exportType: "HTML",// 内容备份类型
-        pageSize: 50,
-        randomSeconds: {
-            min: 1,
-            max: 2
-        },
-        Info: {
-            randomSeconds: {
-                min: 1,
-                max: 2
-            }
-        },
-        Comments: {
-            isFull: true, //是否全部评论
-            pageSize: 50,
-            randomSeconds: {
-                min: 1,
-                max: 2
-            }
-        }
-    },
-    // 私密日记模块
-    Diaries: {
-        exportType: "HTML",// 内容备份类型
-        pageSize: 50,
-        randomSeconds: {
-            min: 1,
-            max: 2
-        },
-        Info: {
-            randomSeconds: {
-                min: 1,
-                max: 2
-            }
-        }
-    },
-    // 相册模块
-    Photos: {
-        exportType: "HTML",
-        pageSize: 3000,
-        randomSeconds: {
-            min: 1,
-            max: 2
-        },
-        Comments: {
-            isGet: false, // 是否获取评论，默认不获取
-            pageSize: 100,
-            randomSeconds: {
-                min: 1,
-                max: 2
-            }
-        },
-        Images: {
-            pageSize: 90,
-            exifType: "raw",
-            randomSeconds: {
-                min: 1,
-                max: 2
-            },
-            Comments: {
-                isGet: false, // 是否获取评论，默认不获取
-                pageSize: 100,
-                randomSeconds: {
-                    min: 1,
-                    max: 2
-                }
-            }
-        }
-    },
-    // 视频模块
-    Videos: {
-        exportType: "HTML",
-        randomSeconds: {
-            min: 1,
-            max: 2
-        },
-        pageSize: 20
-    },
-    // 留言板模块
-    Boards: {
-        exportType: "HTML",
-        randomSeconds: {
-            min: 1,
-            max: 2
-        },
-        pageSize: 20
-    },
-    // QQ好友模块
-    Friends: {
-        exportType: "HTML",
-        hasAddTime: true
-    },
-    // 收藏夹模块
-    Favorites: {
-        exportType: "HTML",
-        randomSeconds: {
-            min: 1,
-            max: 2
-        },
-        pageSize: 30
-    },
-};
 
 /**
  * PageAction监听
@@ -173,7 +27,6 @@ chrome.runtime.onInstalled.addListener(function () {
 
 let sendMessage = (data, callback) => {
     chrome.runtime.sendMessage(data, function (res) {
-        console.debug('Background sendMessage', res);
         callback(res);
     });
 }
@@ -197,7 +50,6 @@ const downloadByBrowser = function (options) {
                 resolve(0);
             }
             BrowseDownloads.set(downloadId, options)
-            console.debug('添加到管理器完成，下载ID', downloadId);
             resolve(downloadId);
         });
     });
@@ -297,11 +149,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
  * 下载管理器重命名监听器
  */
 chrome.downloads.onDeterminingFilename.addListener(function (item, __suggest) {
-    function suggest(filename, conflictAction) {
+    function suggest(filename) {
         __suggest({
-            filename: filename,
-            conflictAction: conflictAction,
-            conflict_action: conflictAction
+            filename: filename
         });
     }
     let filename = item.filename;
@@ -313,7 +163,7 @@ chrome.downloads.onDeterminingFilename.addListener(function (item, __suggest) {
         // 备份文件
         QZoneDownloadId = item.id;
     }
-    suggest(filename, 'overwrite');
+    suggest(filename);
 });
 
 // 扩展安装时
@@ -326,26 +176,32 @@ chrome.runtime.onInstalled.addListener((details) => {
             switch (previousVersion) {
                 case '1.0.0':
                     // 上一个版本为1.0.0时，重置配置项
-                    chrome.storage.sync.set(Default_Config, function () {
-                        console.info("重置默认配置成功", Default_Config);
+                    chrome.storage.sync.clear(function () {
+                        console.info('清空配置完成');
                     });
                     break;
                 case '1.0.1':
                     // 上一个版本为1.0.1时，重置配置项
-                    chrome.storage.sync.set(Default_Config, function () {
-                        console.info("重置默认配置成功", Default_Config);
+                    chrome.storage.sync.clear(function () {
+                        console.info('清空配置完成');
                     });
                     break;
                 case '1.0.2':
                     // 上一个版本为1.0.2时，重置配置项
-                    chrome.storage.sync.set(Default_Config, function () {
-                        console.info("重置默认配置成功", Default_Config);
+                    chrome.storage.sync.clear(function () {
+                        console.info('清空配置完成');
                     });
                     break;
                 case '1.0.5':
                     // 上一个版本为1.0.5时，重置配置项
-                    chrome.storage.sync.set(Default_Config, function () {
-                        console.info("重置默认配置成功", Default_Config);
+                    chrome.storage.sync.clear(function () {
+                        console.info('清空配置完成');
+                    });
+                    break;
+                case '1.1.1':
+                    // 上一个版本为1.1.1时，重置备份数据
+                    chrome.storage.local.clear(function () {
+                        console.info('重置备份数据完成');
                     });
                     break;
                 default:

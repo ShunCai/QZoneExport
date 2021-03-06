@@ -11,15 +11,17 @@ API.Diaries.export = async () => {
 
         // 获取所有的私密日记数据
         let items = await API.Diaries.getAllList();
-        console.debug('私密日记列表获取完成', items);
+        console.info('私密日记列表获取完成', items);
 
         // 获取私密日记内容
         items = await API.Diaries.getAllContents(items);
-        console.debug('私密日记内容获取完成', items);
+        console.info('私密日记内容获取完成', items);
 
         // 根据导出类型导出数据    
         await API.Diaries.exportAllListToFiles(items);
 
+        // 设置备份时间
+        API.Common.setBackupInfo(QZone_Config.Diaries);
     } catch (error) {
         console.error('私密日记导出异常', error);
     }
@@ -30,15 +32,26 @@ API.Diaries.export = async () => {
  * @param {Array} items 私密日记列表
  */
 API.Diaries.getAllContents = async (items) => {
-    let indicator = new StatusIndicator('Diaries_Content');
+    // 进度更新器
+    const indicator = new StatusIndicator('Diaries_Content');
     indicator.setTotal(items.length);
+
     for (let index = 0; index < items.length; index++) {
         let item = items[index];
-        indicator.index = index + 1;
+
+        // 更新状态-当前位置
+        indicator.setIndex(index + 1);
+
+        if (!API.Common.isNewItem(item)) {
+            // 已备份数据跳过不处理
+            indicator.addSkip(item);
+            continue;
+        }
+
         await API.Diaries.getInfo(item.blogid).then(async (data) => {
             // 添加成功提示
             indicator.addSuccess(data);
-            let blogPage = jQuery(data);
+            const blogPage = jQuery(data);
             let blogData = null;
             // 获得网页中的私密日记JSON数据
             blogPage.find('script').each(function () {
@@ -76,11 +89,13 @@ API.Diaries.getAllContents = async (items) => {
             indicator.addFailed(item);
         })
         // 等待一下再请求
-        let min = Qzone_Config.Diaries.Info.randomSeconds.min;
-        let max = Qzone_Config.Diaries.Info.randomSeconds.max;
+        let min = QZone_Config.Diaries.Info.randomSeconds.min;
+        let max = QZone_Config.Diaries.Info.randomSeconds.max;
         let seconds = API.Utils.randomSeconds(min, max);
         await API.Utils.sleep(seconds * 1000);
     }
+
+    // 完成
     indicator.complete();
     return items;
 }
@@ -92,17 +107,14 @@ API.Diaries.getAllContents = async (items) => {
  * @param {StatusIndicator} indicator 状态更新器
  */
 API.Diaries.getList = async (pageIndex, indicator) => {
-    console.debug("开始获取私密日记列表，当前页：", pageIndex + 1);
     // 状态更新器当前页
     indicator.index = pageIndex + 1;
     return await API.Diaries.getDiaries(pageIndex).then(async (data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
 
-        console.debug("成功获取私密日记列表，当前页：", pageIndex + 1, data);
-
         // 更新状态-下载中的数量
-        indicator.addDownload(Qzone_Config.Diaries.pageSize);
+        indicator.addDownload(QZone_Config.Diaries.pageSize);
 
         // 更新状态-总数
         QZone.Diaries.total = data.data.total_num || QZone.Diaries.total || 0;
@@ -123,64 +135,52 @@ API.Diaries.getList = async (pageIndex, indicator) => {
  */
 API.Diaries.getAllList = async () => {
 
-    // 重置数据
-    QZone.Diaries.Data = [];
-    QZone.Diaries.Images = [];
-
     // 私密日记状态更新器
-    let indicator = new StatusIndicator('Diaries');
+    const indicator = new StatusIndicator('Diaries');
 
     // 开始
     indicator.print();
 
-    let CONFIG = Qzone_Config.Diaries;
+    // 配置项
+    const CONFIG = QZone_Config.Diaries;
 
-    let nextPage = async function (pageIndex, indicator) {
+    const nextPage = async function (pageIndex, indicator) {
+
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
+
         return await API.Diaries.getList(pageIndex, indicator).then(async (dataList) => {
-            // 添加到全局变量
-            QZone.Diaries.Data = QZone.Diaries.Data.concat(dataList);
 
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Diaries.total, QZone.Diaries.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
+            // 合并数据
+            QZone.Diaries.Data = API.Utils.unionItems(QZone.Diaries.Data, dataList);
+            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+                return QZone.Diaries.Data;
             }
-            return QZone.Diaries.Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Diaries.total, QZone.Diaries.Data, arguments.callee, nextPageIndex, indicator);
+
         }).catch(async (e) => {
             console.error("获取私密日记列表异常，当前页：", pageIndex + 1, e);
-            indicator.addFailed({
-                pageIndex: pageIndex,
-                pageSize: CONFIG.pageSize,
-                isPage: true
-            });
+            indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
-            // 是否还有下一页
-            let hasNextPage = API.Utils.hasNextPage(pageIndex + 1, CONFIG.pageSize, QZone.Diaries.total, QZone.Diaries.Data);
-            if (hasNextPage) {
-                // 请求一页成功后等待一秒再请求下一页
-                let min = CONFIG.randomSeconds.min;
-                let max = CONFIG.randomSeconds.max;
-                let seconds = API.Utils.randomSeconds(min, max);
-                await API.Utils.sleep(seconds * 1000);
-                // 总数不相等时继续获取
-                return await arguments.callee(pageIndex + 1, indicator);
-            }
-            return QZone.Diaries.Data;
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Diaries.total, QZone.Diaries.Data, arguments.callee, nextPageIndex, indicator);
         });
     }
 
     await nextPage(0, indicator);
 
+    // 合并、过滤数据
+    QZone.Diaries.Data = API.Common.unionBackedUpItems(CONFIG, QZone.Diaries.OLD_Data, QZone.Diaries.Data);
+
+    // 发表时间倒序
+    QZone.Diaries.Data = API.Utils.sort(QZone.Diaries.Data, CONFIG.PreBackup.field, true);
+
     // 完成
     indicator.complete();
 
-    return QZone.Diaries.Data
+    return QZone.Diaries.Data;
 }
 
 
@@ -190,7 +190,7 @@ API.Diaries.getAllList = async () => {
  */
 API.Diaries.exportAllListToFiles = async (items) => {
     // 获取用户配置
-    let exportType = Qzone_Config.Diaries.exportType;
+    let exportType = QZone_Config.Diaries.exportType;
     switch (exportType) {
         case 'HTML':
             await API.Diaries.exportToHtml(items);
@@ -236,8 +236,9 @@ API.Diaries.exportToHtml = async (items) => {
     // 每篇日记生成单独的HTML
     for (let i = 0; i < items.length; i++) {
         const blog = items[i];
+        let orderNum = API.Utils.prefixNumber(i + 1, items.length.toString().length);
         console.info('生成单篇日记详情HTML开始', blog);
-        const blogFile = await API.Common.writeHtmlofTpl('diaryinfo_static', { blog: blog }, QZone.Diaries.ROOT + "/{0}_{1}.html".format(i + 1, API.Utils.filenameValidate(blog.custom_title)));
+        const blogFile = await API.Common.writeHtmlofTpl('diaryinfo_static', { blog: blog }, QZone.Diaries.ROOT + "/{0}_{1}.html".format(orderNum, API.Utils.filenameValidate(blog.title)));
         console.info('生成单篇日记详情HTML结束', blogFile, blog);
     }
 
@@ -252,12 +253,14 @@ API.Diaries.exportToHtml = async (items) => {
  * @param {Array} items 私密日记列表
  */
 API.Diaries.exportToMarkdown = async (items) => {
-    let indicator = new StatusIndicator('Diaries_Export');
+    // 进度更新器
+    const indicator = new StatusIndicator('Diaries_Export');
     indicator.setTotal(items.length);
+
     for (let index = 0; index < items.length; index++) {
         const item = items[index];
         // 获取私密日记MD内容
-        let content = await API.Diaries.getItemMdContent(item);
+        let content = await API.Diaries.getMarkdown(item);
         let title = item.title;
         let date = new Date(item.pubtime * 1000).format('yyyyMMddhhmmss');
         let orderNum = API.Utils.prefixNumber(index + 1, QZone.Diaries.total.toString().length);
@@ -285,7 +288,7 @@ API.Diaries.exportToMarkdown = async (items) => {
  * 获取单篇私密日记的MD内容
  * @param {object} item 私密日记信息
  */
-API.Diaries.getItemMdContent = async (item) => {
+API.Diaries.getMarkdown = async (item) => {
     let contents = [];
     // 拼接标题，日期，内容
     contents.push("# " + item.title);
@@ -293,8 +296,8 @@ API.Diaries.getItemMdContent = async (item) => {
     contents.push("\r\n");
 
     // 根据HTML获取MD内容
-    let markdown = QZone.Common.MD.turndown(API.Utils.base64ToUtf8(item.html));
-    markdown = markdown + markdown.replace(/\n/g, "\r\n");
+    let markdown = QZone.Common.MD.turndown(API.Utils.base64ToUtf8(item.custom_html));
+    markdown = markdown.replace(/\n/g, "\r\n");
     contents.push(markdown);
     contents.push("\r\n");
 
@@ -330,7 +333,7 @@ API.Diaries.handerImages = async (item, images) => {
         // 添加下载任务
         API.Utils.newDownloadTask(url, 'Diaries/Images', custom_filename, item);
 
-        let exportType = Qzone_Config.Diaries.exportType;
+        let exportType = QZone_Config.Diaries.exportType;
         switch (exportType) {
             case 'MarkDown':
                 $img.attr('src', '../images/' + custom_filename);
@@ -357,7 +360,9 @@ API.Diaries.handerMedias = async (item, embeds) => {
         const $embed = $(embeds[i]);
         const data_type = $embed.attr('data-type');
         let vid = $embed.attr('data-vid');
-        let iframe_url;
+        const height = $embed.attr('height') || '480px';
+        const width = $embed.attr('height') || '600px';
+        let iframe_url = $embed.attr('src');
         switch (data_type) {
             case '1':
                 // 相册视频
@@ -370,7 +375,6 @@ API.Diaries.handerMedias = async (item, embeds) => {
                 }
                 // iframe 播放地址
                 iframe_url = 'https://h5.qzone.qq.com/video/index?vid=' + vid;
-                $embed.replaceWith('<iframe src="{0}" height="{1}" width="{2}" allowfullscreen="true"></iframe>'.format(iframe_url, $embed.attr('height'), $embed.attr('width')));
                 break;
             case '51':
                 // 外部视频
@@ -379,21 +383,19 @@ API.Diaries.handerMedias = async (item, embeds) => {
                     console.warn('历史数据或特殊数据跳过不处理', $embed);
                     return;
                 }
-                iframe_url = 'https://v.qq.com/txp/iframe/player.html?autoplay=true&vid=' + vid;
-                $embed.replaceWith('<iframe src="{0}" height="{1}" width="{2}" allowfullscreen="true"></iframe>'.format(iframe_url, $embed.attr('height'), $embed.attr('width')));
+                iframe_url = API.Videos.getTencentVideoUrl(vid);
                 break;
             default:
                 // 其他的
                 // 默认取src值
-                const src_url = $embed.attr('src');
-                vid = API.Utils.toParams(src_url)['vid'];
+                vid = API.Utils.toParams(iframe_url)['vid'];
                 if (vid) {
                     // 取到VID，默认当外部视频处理
-                    iframe_url = 'https://v.qq.com/txp/iframe/player.html?autoplay=true&vid=' + vid;
-                    $embed.replaceWith('<iframe src="{0}" height="{1}" width="{2}" allowfullscreen="true"></iframe>'.format(iframe_url, $embed.attr('height'), $embed.attr('width')));
+                    iframe_url = API.Videos.getTencentVideoUrl(vid);
                 }
                 break;
         }
+        $embed.replaceWith('<iframe src="{0}" height="{1}" width="{2}" allowfullscreen="true"></iframe>'.format(iframe_url, height, width));
     }
     return item;
 }

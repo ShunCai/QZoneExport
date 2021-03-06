@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
     "name": "QQ空间导出助手",
-    "description": "QQ空间导出助手，用于导出备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友、收藏夹为文件，便于迁移与保存",
-    "version": "1.0.6",
+    "description": "QQ空间导出助手，用于导出备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友、收藏夹、分享、访客为文件，便于迁移与保存",
+    "version": "1.1.2",
     "icons": {
         "128": "img/icon-128.png"
     },
@@ -38,6 +38,7 @@
                 "js/config.js",
                 "js/api.js",
                 "js/content.js",
+                "js/modules/common.js",
                 "js/modules/messages.js",
                 "js/modules/blogs.js",
                 "js/modules/diaries.js",
@@ -46,7 +47,8 @@
                 "js/modules/boards.js",
                 "js/modules/friends.js",
                 "js/modules/favorites.js",
-                "js/modules/common.js"
+                "js/modules/shares.js",
+                "js/modules/visitors.js"
             ],
             "css": [
                 "vendor/bootstrap/css/bootstrap.min.css",
@@ -61,7 +63,7 @@
         "default_popup": "html/popup.html"
     },
     "options_page": "html/options.html",
-    "content_security_policy": "script-src 'self' 'unsafe-eval' https://github.lvshuncai.com/ https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/; frame-src 'self' https://github.lvshuncai.com/ https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/; object-src 'self'",
+    "content_security_policy": "script-src 'self' 'unsafe-eval' https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/ https://cdn.jsdelivr.net/; frame-src 'self' https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/ https://cdn.jsdelivr.net/; object-src 'self'",
     "web_accessible_resources": [
         "others/README.md",
         "html/indicator.html",

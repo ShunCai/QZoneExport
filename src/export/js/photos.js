@@ -19,4 +19,15 @@ $(function () {
         loop: false,
         download: false
     });
+    
+    // 查看赞
+    $('.viewlikes').on('click', function () {
+        API.Common.showLikeWin(this, album.photoList);
+    });
+
+    // 查看评论
+    $('.viewcomments').on('click', function () {
+        API.Common.showCommentsWin(this, album.photoList);
+    });
+
 });
