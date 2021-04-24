@@ -14,3 +14,8 @@ body {
     font-size: small;
     color: #333538;
 }
+
+.download_tool {
+    color: red;
+    cursor: pointer;
+}

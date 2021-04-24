@@ -1167,7 +1167,6 @@ API.Utils = {
         url = url.replace(/^\/\//g, 'https://');
         // 替换HTTP协议
         url = url.replace(/http:\//, "https:/");
-        url = decodeURIComponent(url);
         return url;
     },
 
@@ -1185,7 +1184,6 @@ API.Utils = {
         url = url.replace(/^\/\//g, 'http://');
         // 替换HTTPS协议
         url = url.replace(/https:\//, "http:/");
-        url = decodeURIComponent(url);
         return url;
     },
 

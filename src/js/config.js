@@ -1,4 +1,3 @@
-
 /**
  * 默认配置
  */
@@ -10,7 +9,7 @@ const Default_Config = {
         // 重试间隔
         listRetrySleep: 1,
         // 文件下载类型
-        downloadType: 'File',
+        downloadType: 'Browser',
         Aria2: {
             rpc: 'http://localhost:6800/jsonrpc',
             token: undefined
@@ -32,7 +31,7 @@ const Default_Config = {
     },
     // 说说模块
     Messages: {
-        exportType: "HTML",// 内容备份类型
+        exportType: "HTML", // 内容备份类型
         pageSize: 20,
         randomSeconds: {
             min: 1,
@@ -47,16 +46,16 @@ const Default_Config = {
                 max: 2
             }
         },
-        IncrementType: "Full",// 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00",// 增量时间
+        IncrementType: "Full", // 增量备份类型
+        IncrementTime: "2005-06-06 00:00:00", // 增量时间
         PreBackup: {
             uin: 0, // 备份QQ
             downloadType: undefined, // 下载方式
             exportType: undefined, // 备份类型
-            field: "created_time",// 比较字段
-            time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+            field: "created_time", // 比较字段
+            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
         },
-        isFilterKeyword: false,// 是否过滤关键字
+        isFilterKeyword: false, // 是否过滤关键字
         FilterKeyWords: [
             '促销',
             '下单',
@@ -108,7 +107,7 @@ const Default_Config = {
     },
     // 日志模块
     Blogs: {
-        exportType: "HTML",// 内容备份类型
+        exportType: "HTML", // 内容备份类型
         pageSize: 50,
         randomSeconds: {
             min: 1,
@@ -128,14 +127,14 @@ const Default_Config = {
                 max: 2
             }
         },
-        IncrementType: "Full",// 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00",// 增量时间
+        IncrementType: "Full", // 增量备份类型
+        IncrementTime: "2005-06-06 00:00:00", // 增量时间
         PreBackup: {
             uin: 0, // 备份QQ
             downloadType: undefined, // 下载方式
             exportType: undefined, // 备份类型
-            field: "pubtime",// 比较字段
-            time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+            field: "pubtime", // 比较字段
+            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
         },
         Like: {
             isGet: false, //是否获取赞
@@ -155,7 +154,7 @@ const Default_Config = {
     },
     // 私密日记模块
     Diaries: {
-        exportType: "HTML",// 内容备份类型
+        exportType: "HTML", // 内容备份类型
         pageSize: 50,
         randomSeconds: {
             min: 1,
@@ -167,14 +166,14 @@ const Default_Config = {
                 max: 2
             }
         },
-        IncrementType: "Full",// 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00",// 增量时间
+        IncrementType: "Full", // 增量备份类型
+        IncrementTime: "2005-06-06 00:00:00", // 增量时间
         PreBackup: {
             uin: 0, // 备份QQ
             downloadType: undefined, // 下载方式
             exportType: undefined, // 备份类型
-            field: "pubtime",// 比较字段
-            time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+            field: "pubtime", // 比较字段
+            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
         }
     },
     // 相册模块
@@ -207,16 +206,17 @@ const Default_Config = {
                     min: 1,
                     max: 2
                 }
-            }
+            },
+            isGetPreview: true
         },
-        IncrementType: "Full",// 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00",// 增量时间
+        IncrementType: "Full", // 增量备份类型
+        IncrementTime: "2005-06-06 00:00:00", // 增量时间
         PreBackup: {
             uin: 0, // 备份QQ
             downloadType: undefined, // 下载方式
             exportType: undefined, // 备份类型
-            field: "uploadTime",// 比较字段
-            time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+            field: "uploadTime", // 比较字段
+            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
         },
         Like: {
             isGet: false, //是否获取赞
@@ -250,14 +250,14 @@ const Default_Config = {
                 max: 2
             }
         },
-        IncrementType: "Full",// 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00",// 增量时间
+        IncrementType: "Full", // 增量备份类型
+        IncrementTime: "2005-06-06 00:00:00", // 增量时间
         PreBackup: {
             uin: 0, // 备份QQ
             downloadType: undefined, // 下载方式
             exportType: undefined, // 备份类型
-            field: "uploadTime",// 比较字段
-            time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+            field: "uploadTime", // 比较字段
+            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
         },
         Like: {
             isGet: false, //是否获取赞
@@ -275,20 +275,20 @@ const Default_Config = {
             max: 2
         },
         pageSize: 20,
-        IncrementType: "Full",// 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00",// 增量时间
+        IncrementType: "Full", // 增量备份类型
+        IncrementTime: "2005-06-06 00:00:00", // 增量时间
         PreBackup: {
             uin: 0, // 备份QQ
             downloadType: undefined, // 下载方式
             exportType: undefined, // 备份类型
-            field: "pubtime",// 比较字段
-            time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+            field: "pubtime", // 比较字段
+            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
         }
     },
     // QQ好友模块
     Friends: {
         exportType: "HTML", // 导出类型
-        hasAddTime: true,// 是否获取好友添加时间
+        hasAddTime: true, // 是否获取好友添加时间
         isIncrement: false // 是否增量备份
     },
     // 收藏夹模块
@@ -299,19 +299,19 @@ const Default_Config = {
             max: 2
         },
         pageSize: 30,
-        IncrementType: "Full",// 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00",// 增量时间
+        IncrementType: "Full", // 增量备份类型
+        IncrementTime: "2005-06-06 00:00:00", // 增量时间
         PreBackup: {
             uin: 0, // 备份QQ
             downloadType: undefined, // 下载方式
             exportType: undefined, // 备份类型
-            field: "create_time",// 比较字段
-            time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+            field: "create_time", // 比较字段
+            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
         }
     },
     // 分享模块
     Shares: {
-        exportType: "HTML",// 内容备份类型
+        exportType: "HTML", // 内容备份类型
         pageSize: 10,
         randomSeconds: {
             min: 1,
@@ -331,14 +331,14 @@ const Default_Config = {
                 max: 2
             }
         },
-        IncrementType: "Full",// 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00",// 增量时间
+        IncrementType: "Full", // 增量备份类型
+        IncrementTime: "2005-06-06 00:00:00", // 增量时间
         PreBackup: {
             uin: 0, // 备份QQ
             downloadType: undefined, // 下载方式
             exportType: undefined, // 备份类型
-            field: "shareTime",// 比较字段
-            time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+            field: "shareTime", // 比较字段
+            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
         },
         Like: {
             isGet: false, //是否获取赞
@@ -574,19 +574,19 @@ const Default_Config = {
     },
     // 访客模块
     Visitors: {
-        exportType: "HTML",// 内容备份类型
+        exportType: "HTML", // 内容备份类型
         randomSeconds: {
             min: 1,
             max: 2
         },
-        IncrementType: "Full",// 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00",// 增量时间
+        IncrementType: "Full", // 增量备份类型
+        IncrementTime: "2005-06-06 00:00:00", // 增量时间
         PreBackup: {
             uin: 0, // 备份QQ
             downloadType: undefined, // 下载方式
             exportType: undefined, // 备份类型
-            field: "time",// 比较字段
-            time: "2005-06-06 00:00:00"// 上次备份时间，用于增量数据识别
+            field: "time", // 比较字段
+            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
         }
     }
 };
@@ -604,66 +604,64 @@ const FOLDER_ROOT = '/QQ空间备份/';
 /**
  * HTML备份导出文件
  */
-const ExportFiles = [
-    {
-        original: 'export/css/common.css',
-        target: FOLDER_ROOT + 'Common/css/common.css'
-    }, {
-        original: 'export/js/sidebar.js',
-        target: FOLDER_ROOT + 'Common/js/sidebar.js'
-    }, {
-        original: 'export/images/index.jpg',
-        target: FOLDER_ROOT + 'Common/images/index.jpg'
-    }, {
-        original: 'export/images/video-play.png',
-        target: FOLDER_ROOT + 'Common/images/video-play.png'
-    }, {
-        original: 'vendor/template/template.js',
-        target: FOLDER_ROOT + 'Common/js/template.js'
-    }, {
-        original: 'export/js/common.js',
-        target: FOLDER_ROOT + 'Common/js/common.js'
-    }, {
-        original: 'export/js/messages.js',
-        target: FOLDER_ROOT + 'Common/js/messages.js'
-    }, {
-        original: 'export/js/blogs.js',
-        target: FOLDER_ROOT + 'Common/js/blogs.js'
-    }, {
-        original: 'export/js/bloginfo.js',
-        target: FOLDER_ROOT + 'Common/js/bloginfo.js'
-    }, {
-        original: 'export/js/diaries.js',
-        target: FOLDER_ROOT + 'Common/js/diaries.js'
-    }, {
-        original: 'export/js/diaryinfo.js',
-        target: FOLDER_ROOT + 'Common/js/diaryinfo.js'
-    }, {
-        original: 'export/js/friends.js',
-        target: FOLDER_ROOT + 'Common/js/friends.js'
-    }, {
-        original: 'export/js/photos.js',
-        target: FOLDER_ROOT + 'Common/js/photos.js'
-    }, {
-        original: 'export/js/albums.js',
-        target: FOLDER_ROOT + 'Common/js/albums.js'
-    }, {
-        original: 'export/js/videos.js',
-        target: FOLDER_ROOT + 'Common/js/videos.js'
-    }, {
-        original: 'export/js/boards.js',
-        target: FOLDER_ROOT + 'Common/js/boards.js'
-    }, {
-        original: 'export/js/favorites.js',
-        target: FOLDER_ROOT + 'Common/js/favorites.js'
-    }, {
-        original: 'export/js/shares.js',
-        target: FOLDER_ROOT + 'Common/js/shares.js'
-    }, {
-        original: 'export/js/visitors.js',
-        target: FOLDER_ROOT + 'Common/js/visitors.js'
-    }
-]
+const ExportFiles = [{
+    original: 'export/css/common.css',
+    target: FOLDER_ROOT + 'Common/css/common.css'
+}, {
+    original: 'export/js/sidebar.js',
+    target: FOLDER_ROOT + 'Common/js/sidebar.js'
+}, {
+    original: 'export/images/index.jpg',
+    target: FOLDER_ROOT + 'Common/images/index.jpg'
+}, {
+    original: 'export/images/video-play.png',
+    target: FOLDER_ROOT + 'Common/images/video-play.png'
+}, {
+    original: 'vendor/template/template.js',
+    target: FOLDER_ROOT + 'Common/js/template.js'
+}, {
+    original: 'export/js/common.js',
+    target: FOLDER_ROOT + 'Common/js/common.js'
+}, {
+    original: 'export/js/messages.js',
+    target: FOLDER_ROOT + 'Common/js/messages.js'
+}, {
+    original: 'export/js/blogs.js',
+    target: FOLDER_ROOT + 'Common/js/blogs.js'
+}, {
+    original: 'export/js/bloginfo.js',
+    target: FOLDER_ROOT + 'Common/js/bloginfo.js'
+}, {
+    original: 'export/js/diaries.js',
+    target: FOLDER_ROOT + 'Common/js/diaries.js'
+}, {
+    original: 'export/js/diaryinfo.js',
+    target: FOLDER_ROOT + 'Common/js/diaryinfo.js'
+}, {
+    original: 'export/js/friends.js',
+    target: FOLDER_ROOT + 'Common/js/friends.js'
+}, {
+    original: 'export/js/photos.js',
+    target: FOLDER_ROOT + 'Common/js/photos.js'
+}, {
+    original: 'export/js/albums.js',
+    target: FOLDER_ROOT + 'Common/js/albums.js'
+}, {
+    original: 'export/js/videos.js',
+    target: FOLDER_ROOT + 'Common/js/videos.js'
+}, {
+    original: 'export/js/boards.js',
+    target: FOLDER_ROOT + 'Common/js/boards.js'
+}, {
+    original: 'export/js/favorites.js',
+    target: FOLDER_ROOT + 'Common/js/favorites.js'
+}, {
+    original: 'export/js/shares.js',
+    target: FOLDER_ROOT + 'Common/js/shares.js'
+}, {
+    original: 'export/js/visitors.js',
+    target: FOLDER_ROOT + 'Common/js/visitors.js'
+}]
 
 /**
  * QQ空间信息
