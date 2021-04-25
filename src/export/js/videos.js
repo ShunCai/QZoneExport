@@ -6,6 +6,10 @@ $(function () {
     const videos_html = template(videos_tpl, { videos: dataList || [] });
     // 渲染模板到页面
     $("#lightgallery").html(videos_html);
+
+    // 图片懒加载
+    lazyload();
+
     // 渲染画廊
     $("#lightgallery").lightGallery({
         selector: '.lightbox',

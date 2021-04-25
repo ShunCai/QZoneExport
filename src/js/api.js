@@ -185,16 +185,16 @@ const parseEmoji = (content) => {
 }
 
 const API = {
-    Utils: {},  // 工具类
+    Utils: {}, // 工具类
     Common: {}, // 公共模块
-    Blogs: {},  // 日志模块
-    Diaries: {},// 日记模块
-    Friends: {},// 好友模块
-    Messages: {},// 说说模块
-    Boards: {},// 留言模块
-    Photos: {},// 相册模块
-    Videos: {},// 视频模块
-    Favorites: {},// 收藏模块
+    Blogs: {}, // 日志模块
+    Diaries: {}, // 日记模块
+    Friends: {}, // 好友模块
+    Messages: {}, // 说说模块
+    Boards: {}, // 留言模块
+    Photos: {}, // 相册模块
+    Videos: {}, // 视频模块
+    Favorites: {}, // 收藏模块
     Shares: {}, // 分享模块
     Visitors: {} // 访问模块
 };
@@ -236,7 +236,7 @@ API.Utils = {
                 }
             }
             let date = null;
-            if (typeof (time) === 'string') {
+            if (typeof(time) === 'string') {
                 date = new Date(time);
             } else {
                 date = new Date(time * 1000);
@@ -290,88 +290,21 @@ API.Utils = {
     },
 
     /**
-     * 获取文件类型
-     * @param {string} url 文件URL
-     * @param {funcation} doneFun 回调函数
-     */
-    getMimeType(url) {
-        return new Promise(function (resolve, reject) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', url, true);
-            // 超时设置
-            xhr.timeout = (QZone_Config.Common.autoFileSuffixTimeOut || 15) * 1000;
-            xhr.onreadystatechange = function () {
-                if (2 == xhr.readyState) {
-                    let contentType = xhr.getResponseHeader('content-type') || xhr.getResponseHeader('Content-Type') || '';
-                    let suffix = contentType.split('/')[1];
-                    if ('octet-stream' === suffix) {
-                        let disposition = xhr.getResponseHeader('content-disposition') || xhr.getResponseHeader('Content-Disposition') || '';
-                        suffix = disposition.split('=')[1].split('.')[1];
-                    }
-                    var ret = {
-                        suffix: suffix,
-                        size: xhr.getResponseHeader('content-length') || xhr.getResponseHeader('Content-Length') || 0
-                    };
-                    this.abort();
-                    resolve(ret);
-                }
-            }
-            xhr.onerror = function (e) {
-                reject(e);
-            }
-            xhr.ontimeout = function (e) {
-                this.abort();
-                reject(e);
-            }
-            xhr.send();
-        });
-    },
-
-    /**
      * 通过URL直接匹配文件后缀名
      * @param {string} url 文件地址
      */
-    getFileSuffixByUrl(url) {
-        url = url || '';
+    getFileSuffixByUrl(url, defaultSuffix) {
+        let _url = url || '';
         // 尝试从URL直接匹配后缀名
-        let _url = url.split('?')[0]; //去参数
+        const urls = _url.split('?');
+        if (urls.length >= 1) {
+            _url = urls[0]; //去参数
+        }
         let res = /([^\.\/\\]+)\.([a-z]+)$/i.exec(_url);
         if (res) {
             return '.' + res[2];
         }
-        return res || '';
-    },
-
-    /**
-     * 通过URL请求文件识别后缀名
-     * @param {string} url 文件地址
-     */
-    async getFileSuffix(url) {
-        let suffix = API.Utils.getFileSuffixByUrl(url);
-        return await this.getMimeType(url).then((data) => {
-            let suffix = data.suffix
-            if (suffix) {
-                return '.' + suffix;
-            }
-            return suffix || '.jpeg';
-        }).catch((e) => {
-            console.error('获取文件类型异常', url, e);
-            return suffix || '.jpeg';
-        });
-    },
-
-    /**
-     * 根据配置获取文件后缀名
-     * @param {string} url 文件地址
-     */
-    async autoFileSuffix(url) {
-        let suffix = API.Utils.getFileSuffixByUrl(url);
-        if (!QZone_Config.Common.isAutoFileSuffix) {
-            return suffix;
-        }
-        // 转换HTTPS
-        url = API.Utils.makeDownloadUrl(url, true);
-        return API.Utils.getFileSuffix(this.toHttps(url));
+        return res || defaultSuffix || '';
     },
 
     /**
@@ -380,7 +313,7 @@ API.Utils = {
      * @param {string} filepath FileSystem路径
      */
     writeText(content, filepath) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(function(resolve, reject) {
             QZone.Common.Filer.write(filepath, { data: content, type: "text/plain", append: false }, (fileEntry) => {
                 resolve(fileEntry);
             }, (error) => {
@@ -395,7 +328,7 @@ API.Utils = {
      * @param {string} filepath FS的文件路径
      */
     writeFile(buffer, filepath) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(function(resolve, reject) {
             QZone.Common.Filer.write(filepath, { data: buffer }, (fileEntry) => {
                 resolve(fileEntry);
             }, (err) => {
@@ -411,7 +344,7 @@ API.Utils = {
      * @param {string} path FileSystem文件路径
      */
     downloadToFile(url, path) {
-        return new Promise(async function (resolve, reject) {
+        return new Promise(async function(resolve, reject) {
             await API.Utils.send(url, 'blob').then((xhr) => {
                 let res = xhr.response;
                 QZone.Common.Filer.write(path, { data: res, type: "blob" }, (fileEntry) => {
@@ -429,7 +362,7 @@ API.Utils = {
      * 切换根目录
      */
     switchToRoot() {
-        return new Promise(async function (resolve, reject) {
+        return new Promise(async function(resolve, reject) {
             QZone.Common.Filer.cd('/', (root) => {
                 resolve(root);
             }, (e) => {
@@ -445,20 +378,20 @@ API.Utils = {
      * @param {function} failFun 
      */
     Zip(root) {
-        return new Promise(async function (resolve, reject) {
-            let zipOneFile = function (entry) {
+        return new Promise(async function(resolve, reject) {
+            let zipOneFile = function(entry) {
                 let newName = encodeURIComponent(entry.name);
                 let fullPath = entry.fullPath.replace(entry.name, newName);
                 QZone.Common.Filer.open(fullPath, (f) => {
                     let reader = new FileReader();
-                    reader.onload = function (event) {
+                    reader.onload = function(event) {
                         QZone.Common.Zip.file(entry.fullPath, event.target.result, { binary: true });
                     }
                     reader.readAsArrayBuffer(f);
                 }, reject);
             };
 
-            (function (path) {
+            (function(path) {
                 let cl = arguments.callee;
                 QZone.Common.Filer.ls(path, (entries) => {
                     var i = 0;
@@ -484,7 +417,7 @@ API.Utils = {
      * @param {integer} timeout 超时秒数 
      */
     send(url, responseType, timeout) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(function(resolve, reject) {
             var request = new XMLHttpRequest();
             request.open("GET", url);
             if (responseType) {
@@ -496,14 +429,14 @@ API.Utils = {
             if (timeout) {
                 request.timeout = timeout * 1000;
             }
-            request.onload = function () {
+            request.onload = function() {
                 resolve(this);
             };
-            request.onerror = function (error) {
+            request.onerror = function(error) {
                 reject(error);
                 this.abort();
             };
-            request.ontimeout = function (error) {
+            request.ontimeout = function(error) {
                 reject(error);
                 this.abort();
             };
@@ -524,24 +457,24 @@ API.Utils = {
      * @param {string} url 请求URL
      */
     get(url, params) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(function(resolve, reject) {
             $.ajax({
                 url: url,
                 type: 'GET',
                 data: params,
                 // async: false,
                 // cache: false,
-                retries: QZone_Config.Common.listRetryCount,// 重试次数
-                retryInterval: QZone_Config.Common.listRetrySleep * 1000,// 每次重试间隔秒数
-                success: function (result) {
+                retries: QZone_Config.Common.listRetryCount, // 重试次数
+                retryInterval: QZone_Config.Common.listRetrySleep * 1000, // 每次重试间隔秒数
+                success: function(result) {
                     resolve(result);
                 },
-                error: function (xhr, status, error) {
+                error: function(xhr, status, error) {
                     if (this.retries > 0) {
                         this.retries--;
                         // 指定秒数后继续请求
                         let scope = this;
-                        setTimeout(function () {
+                        setTimeout(function() {
                             console.warn('请求接口异常，正在尝试重试', url, params, scope.retries);
                             $.ajax(scope);
                         }, this.retryInterval);
@@ -560,16 +493,16 @@ API.Utils = {
      * @param {object} data 请求数据
      */
     post(url, data) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(function(resolve, reject) {
             $.ajax({
                 url: url,
                 type: 'POST',
                 data: data,
                 contentType: "application/json;charset=utf-8",
-                success: function (result) {
+                success: function(result) {
                     resolve(result);
                 },
-                error: function (xhr, status, error) {
+                error: function(xhr, status, error) {
                     reject(error);
                 }
             });
@@ -583,7 +516,10 @@ API.Utils = {
     getUrlParam(name) {
         const reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
         const r = window.location.search.substr(1).match(reg);
-        if (r != null) return decodeURI(r[2]); return null;
+        if (r != null) {
+            return decodeURI(r[2]);
+        }
+        return null;
     },
 
     /**
@@ -596,7 +532,8 @@ API.Utils = {
             arr_url = reg_url.exec(url),
             ret = {};
         if (arr_url && arr_url[1]) {
-            var str_para = arr_url[1], result;
+            var str_para = arr_url[1],
+                result;
             while ((result = reg_para.exec(str_para)) != null) {
                 ret[result[1]] = result[2];
             }
@@ -649,7 +586,7 @@ API.Utils = {
      * 从 HTML 页面找到 token 保存起来
      */
     getQzoneToken() {
-        $("script").each(function () {
+        $("script").each(function() {
             var t = $(this).text();
             t = t.replace(/\ /g, "");
             if (t.indexOf('window.g_qzonetoken') !== -1) {
@@ -720,7 +657,7 @@ API.Utils = {
      * Promise超时
      */
     timeoutPromise(promise, ms) {
-        const timeout = API.Utils.sleep(ms).then(function () {
+        const timeout = API.Utils.sleep(ms).then(function() {
             throw new Error('Operation timed out after ' + ms + ' ms');
         });
         return Promise.race([promise, timeout]);
@@ -730,7 +667,7 @@ API.Utils = {
      * 生成一个UUID
      */
     newUid() {
-        const s4 = function () {
+        const s4 = function() {
             return Math.floor((1 + Math.random()) * 0x10000)
                 .toString(16)
                 .substring(1);
@@ -746,14 +683,16 @@ API.Utils = {
      */
     newSimpleUid(len, radix) {
         var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
-        var uuid = [], i;
+        var uuid = [],
+            i;
         radix = radix || chars.length;
         if (len) {
             for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random() * radix];
         } else {
             var r;
             uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-';
-            uuid[14] = '4'; for (i = 0; i < 36; i++) {
+            uuid[14] = '4';
+            for (i = 0; i < 36; i++) {
                 if (!uuid[i]) {
                     r = 0 | Math.random() * 16;
                     uuid[i] = chars[(i == 19) ? (r & 0x3) | 0x8 : r];
@@ -788,7 +727,7 @@ API.Utils = {
      * @param {string} b 
      */
     decode(b) {
-        return b && b.replace(/(%2C|%25|%7D)/g, function (b) {
+        return b && b.replace(/(%2C|%25|%7D)/g, function(b) {
             return unescape(b);
         })
     },
@@ -835,7 +774,7 @@ API.Utils = {
         }
 
         // 先处理一遍正常的@的内容
-        contet = contet.replace(/@\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))?(?:,auto:([^\}]*))?\}/g, function (str, uin, name) {
+        contet = contet.replace(/@\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))?(?:,auto:([^\}]*))?\}/g, function(str, uin, name) {
             return format({
                 uin: uin,
                 name: name
@@ -844,7 +783,7 @@ API.Utils = {
 
         // 如果处理后，仍包含uin、nick、who，则表示是特殊情况(即nick存的是内容)，再处理一遍
         if (contet.indexOf('uin') > -1 && contet.indexOf('nick') > -1 && contet.indexOf('who') > -1) {
-            contet = contet.replace(/\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))\}/g, function (str, uin, name) {
+            contet = contet.replace(/\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))\}/g, function(str, uin, name) {
                 return name;
             })
         }
@@ -865,7 +804,7 @@ API.Utils = {
         contet = contet.replace(/src=\"\/qzone\/em/g, 'src=\"http://qzonestyle.gtimg.cn/qzone/em');
 
         // 转换emoji表情链接
-        contet = contet.replace(/\[em\]e(\d+)\[\/em\]/gi, function (emoji, eid) {
+        contet = contet.replace(/\[em\]e(\d+)\[\/em\]/gi, function(emoji, eid) {
             let url = 'http://qzonestyle.gtimg.cn/qzone/em/e{0}.gif'.format(eid);
             // 默认返回HMTL格式
             let res = "<img src='{0}' >".format(url);
@@ -1012,7 +951,7 @@ API.Utils = {
      * @param {string} path 
      */
     createFolder(path) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(function(resolve, reject) {
             QZone.Common.Filer.mkdir(path, false, (entry) => {
                 resolve(entry);
             }, (e) => {
@@ -1028,7 +967,7 @@ API.Utils = {
         if (!window.Notification) {
             return;
         }
-        Notification.requestPermission().then(function (permission) {
+        Notification.requestPermission().then(function(permission) {
             if (permission === 'denied') {
                 return;
             }
@@ -1038,7 +977,7 @@ API.Utils = {
                     icon: API.Common.getUserLogoUrl(QZone.Common.Target.uin || API.Utils.initUin().Target.uin),
                     requireInteraction: true
                 });
-                notice_.onclick = function () {
+                notice_.onclick = function() {
                     // 单击消息提示框，进入浏览器页面
                     window.focus();
                 }
@@ -1100,7 +1039,7 @@ API.Utils = {
      * @param {string} type 转换类型，默认HTML,MD
      */
     formatLink(content, type) {
-        return content.replace(/(https|http|ftp|rtsp|mms)?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*/g, function (e, t, i) {
+        return content.replace(/(https|http|ftp|rtsp|mms)?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*/g, function(e, t, i) {
             return API.Utils.getLink(e, '网页链接', type);
         })
     },
@@ -1114,13 +1053,13 @@ API.Utils = {
         content = (content || "") + "";
         var t = content.split(/(#(?:.|<br\/>)+?#)/g);
         var o = false;
-        var n = ""
-            , res = "";
+        var n = "",
+            res = "";
         for (var a = 0; a < t.length; a++) {
             tag = t[a];
             o = false;
             n = "";
-            n = tag.replace(/#((?:.|<br\/>)+?)#/g, function (e, t, n) {
+            n = tag.replace(/#((?:.|<br\/>)+?)#/g, function(e, t, n) {
                 o = true;
                 let url = 'http://rc.qzone.qq.com/qzonesoso/?search=' + encodeURIComponent(t);
                 var a = API.Utils.getLink(url, '#{0}#'.format(t));
@@ -1167,6 +1106,12 @@ API.Utils = {
         url = url.replace(/^\/\//g, 'https://');
         // 替换HTTP协议
         url = url.replace(/http:\//, "https:/");
+        try {
+            // 解码
+            url = decodeURIComponent(url);
+        } catch (e) {
+            console.error("URL解码异常", e, url);
+        }
         return url;
     },
 
@@ -1184,6 +1129,12 @@ API.Utils = {
         url = url.replace(/^\/\//g, 'http://');
         // 替换HTTPS协议
         url = url.replace(/https:\//, "http:/");
+        try {
+            // 解码
+            url = decodeURIComponent(url);
+        } catch (e) {
+            console.error("URL解码异常", e, url);
+        }
         return url;
     },
 
@@ -1200,7 +1151,7 @@ API.Utils = {
      * @param {BrowserTask} task
      */
     downloadByBrowser(task) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(function(resolve, reject) {
             // 简单克隆
             let options = JSON.parse(JSON.stringify(task));
 
@@ -1216,7 +1167,7 @@ API.Utils = {
                 from: 'content',
                 type: 'download_browser',
                 options: options
-            }, function (id) {
+            }, function(id) {
                 if (chrome.runtime.lastError) {
                     task.setId(0);
                     console.error('添加到下载器失败', chrome.runtime.lastError.message, task);
@@ -1237,21 +1188,20 @@ API.Utils = {
         const Aria2Setting = QZone_Config.Common.Aria2;
         const token = "token:" + Aria2Setting.token;
         const data = {
-            "jsonrpc": "2.0",
-            "method": "aria2.addUri",
-            "id": Date.now(),
-            "params": [
-                token,
-                [
-                    task.url
-                ],
-                {
-                    "referer": 'https://user.qzone.qq.com/',
-                    "out": QZone.Common.Config.ZIP_NAME + '/' + task.dir + "/" + task.name
-                }
-            ]
-        }
-        // 添加下载任务到Aria2
+                "jsonrpc": "2.0",
+                "method": "aria2.addUri",
+                "id": Date.now(),
+                "params": [
+                    token, [
+                        task.url
+                    ],
+                    {
+                        "referer": 'https://user.qzone.qq.com/',
+                        "out": QZone.Common.Config.ZIP_NAME + '/' + task.dir + "/" + task.name
+                    }
+                ]
+            }
+            // 添加下载任务到Aria2
         return API.Utils.post(Aria2Setting.rpc, JSON.stringify(data));
     },
 
@@ -1260,7 +1210,7 @@ API.Utils = {
      * @param {string} state
      */
     getDownloadList(state) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(function(resolve, reject) {
             chrome.runtime.sendMessage({
                 from: 'content',
                 type: 'download_list',
@@ -1269,7 +1219,7 @@ API.Utils = {
                     orderBy: ['-startTime'],
                     state: state
                 }
-            }, function (data) {
+            }, function(data) {
                 if (chrome.runtime.lastError) {
                     // 发生异常，默认当作成功
                     resolve([]);
@@ -1285,12 +1235,12 @@ API.Utils = {
      * @param {integer} downloadId
      */
     resumeDownload(downloadId) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(function(resolve, reject) {
             chrome.runtime.sendMessage({
                 from: 'content',
                 type: 'download_resume',
                 downloadId: downloadId
-            }, function (data) {
+            }, function(data) {
                 if (chrome.runtime.lastError) {
                     resolve(0);
                     return;
@@ -1381,7 +1331,7 @@ API.Utils = {
         if (!items || items.length === 1) {
             return items;
         }
-        const compare = function (obj1, obj2) {
+        const compare = function(obj1, obj2) {
             let val1 = obj1[filed];
             let val2 = obj2[filed];
             if (typeof val1 === 'string' && typeof val2 === 'string') {
@@ -1482,7 +1432,7 @@ API.Common = {
             "unikey": unikey,
             "begin_uin": begin_uin || 0,
             "query_count": 60,
-            "if_first_page": begin_uin === 0 ? 1 : 0,//标识是否为首次请求 第一次请求为1，以后为0
+            "if_first_page": begin_uin === 0 ? 1 : 0, //标识是否为首次请求 第一次请求为1，以后为0
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         }
@@ -1677,7 +1627,16 @@ API.Blogs = {
     },
 
     getBlogLabel(e) {
-        var t = [["8", "审核不通过"], ["22", "审核中"], ["4", "顶"], ["21", "荐"], ["3", "转"], ["28", "转"], ["35", "转"], ["36", "转"]];
+        var t = [
+            ["8", "审核不通过"],
+            ["22", "审核中"],
+            ["4", "顶"],
+            ["21", "荐"],
+            ["3", "转"],
+            ["28", "转"],
+            ["35", "转"],
+            ["36", "转"]
+        ];
         var a = '';
         for (var o = 0; o < t.length; o++) {
             var n = t[o][0];
@@ -1823,11 +1782,11 @@ API.Blogs = {
     getVisitors(targeId, pageIndex) {
         const params = {
             "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
-            "appid": 2,//311：说说，2：日志
+            "appid": 2, //311：说说，2：日志
             "param": targeId,
             "beginNum": QZone_Config.Blogs.Visitor.pageSize * pageIndex + 1,
             "num": QZone_Config.Blogs.Visitor.pageSize,
-            "needFriend": 1,// TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
+            "needFriend": 1, // TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         }
@@ -1867,11 +1826,11 @@ API.Diaries = {
     },
 
     /**
-    * 获取私密日志详情
-    *
-    * @param {string} uin QQ号
-    * @param {integer} blogid 日志ID
-    */
+     * 获取私密日志详情
+     *
+     * @param {string} uin QQ号
+     * @param {integer} blogid 日志ID
+     */
     getInfo(blogid) {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
@@ -1901,8 +1860,8 @@ API.Friends = {
     getFriends() {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
-            "follow_flag": 0,//是否获取关注的认证空间
-            "groupface_flag": 0,//是否获取QQ群组信息
+            "follow_flag": 0, //是否获取关注的认证空间
+            "groupface_flag": 0, //是否获取QQ群组信息
             "fupdate": 1,
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
@@ -2109,11 +2068,11 @@ API.Messages = {
     getVisitors(targeId, pageIndex) {
         let params = {
             "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
-            "appid": 311,//311：说说，2：日志
+            "appid": 311, //311：说说，2：日志
             "param": targeId,
             "beginNum": QZone_Config.Messages.Visitor.pageSize * pageIndex + 1,
             "num": QZone_Config.Messages.Visitor.pageSize,
-            "needFriend": 1,// TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
+            "needFriend": 1, // TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         }
@@ -2302,7 +2261,8 @@ API.Photos = {
         let data = await API.Utils.get(QZone_URLS.PHOTOS_ROUTE_URL, params);
         data = API.Utils.toJson(data, /^photoDomainNameCallback\(/);
 
-        var e = new RegExp("^domain_\\d$"), o, c = [];
+        var e = new RegExp("^domain_\\d$"),
+            o, c = [];
 
         function u(t, a, e) {
             for (var i = 0, o = c.length; i < o; i++) {
@@ -2317,6 +2277,7 @@ API.Photos = {
                 idcNum: e
             })
         }
+
         function m() {
             for (var e = 0, i = c.length; e < i; e++) {
                 if (!c[e].failed) {
@@ -2499,7 +2460,7 @@ API.Photos = {
             "likeNum": 5,
             "inCharset": "utf-8",
             "outCharset": "utf-8",
-            "offset": 0,// 偏移量
+            "offset": 0, // 偏移量
             "number": 40,
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
             "hostUin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
@@ -2508,8 +2469,8 @@ API.Photos = {
             "sortOrder": 1,
             "showMode": 1,
             "need_private_comment": 1,
-            "prevNum": 0,// 前序的照片数量
-            "postNum": 0,// 后续的照片数量
+            "prevNum": 0, // 前序的照片数量
+            "postNum": 0, // 后续的照片数量
             "_": Date.now()
         }
         return API.Utils.get(QZone_URLS.IMAGES_INFO_URL, params);
@@ -2551,11 +2512,11 @@ API.Photos = {
     getVisitors(targeId, pageIndex) {
         const params = {
             "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
-            "appid": 4,//4:相册
+            "appid": 4, //4:相册
             "param": "2;" + targeId,
             "beginNum": QZone_Config.Blogs.Visitor.pageSize * pageIndex + 1,
             "num": QZone_Config.Blogs.Visitor.pageSize,
-            "needFriend": 1,// TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
+            "needFriend": 1, // TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         }
@@ -2997,7 +2958,7 @@ API.Favorites = {
     getFavorites(page) {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
-            "type": 0,//全部\
+            "type": 0, //全部\
             "start": page * QZone_Config.Favorites.pageSize,
             "num": QZone_Config.Favorites.pageSize,
             "inCharset": "utf-8",
@@ -3034,11 +2995,11 @@ class ShareSource {
     constructor(title, desc, url, source_url, source_name, count, images) {
         this.title = title || '' // 标题
         this.desc = desc || '' // 内容
-        this.url = url || ''// URL
+        this.url = url || '' // URL
         this.from = {
-            url: source_url,
-            name: source_name
-        } // 来源
+                url: source_url,
+                name: source_name
+            } // 来源
         this.count = count || 0 // 分享次数
         this.images = images || [] // 来源的图片
     }
@@ -3063,8 +3024,8 @@ class ShareInfo {
         this.id = id // ID
         this.uin = uin // 分享人
         this.nickname = nickname || '' // 分享人昵称
-        this.type = type || ''// 分享类型
-        this.desc = desc || ''// 分享信息
+        this.type = type || '' // 分享类型
+        this.desc = desc || '' // 分享信息
         this.source = source || {} // 分享来源
         this.shareTime = shareTime || 0 // 分享时间
         this.likes = [] // 点赞人
@@ -3141,8 +3102,8 @@ API.Shares = {
     getList(page) {
         let params = {
             "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
-            "page": page,  // 当前页，从1开始
-            "num": QZone_Config.Shares.pageSize,  // 每页条目数
+            "page": page, // 当前页，从1开始
+            "num": QZone_Config.Shares.pageSize, // 每页条目数
             "spaceuin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
             "isfriend": 0,
             "ttype": 0 // 全部分享类型
@@ -3177,14 +3138,14 @@ API.Shares = {
             if (!$infoDiv) {
                 continue;
             }
-            $li.find('script').each(function () {
-                const text = $(this).text();
-                if (text.indexOf('shareInfos.push') > -1) {
-                    eval('window.infoJson=' + /[\s\S]+shareInfos.push\((\{[\s\S]+\})\);[\s\S]+/.exec(text)[1]);
-                    return false;
-                }
-            })
-            // 分享显示区
+            $li.find('script').each(function() {
+                    const text = $(this).text();
+                    if (text.indexOf('shareInfos.push') > -1) {
+                        eval('window.infoJson=' + /[\s\S]+shareInfos.push\((\{[\s\S]+\})\);[\s\S]+/.exec(text)[1]);
+                        return false;
+                    }
+                })
+                // 分享显示区
             const $contentDiv = $($infoDiv.find('div.mod_conts._share_desc_cont'));
             // 分享描述
             const $temp_desc = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > p.c_tx3.comming'));
@@ -3218,7 +3179,7 @@ API.Shares = {
             // 左图右文的图
             const $normal_images = $($contentDiv.find('div.mod_details.lbor > div.layout_s > a.img_wrap > img')) || [];
             if ($normal_images) {
-                $normal_images.each(function () {
+                $normal_images.each(function() {
                     images.push({
                         url: $(this).attr('src') || $(this).attr('data-src')
                     });
@@ -3227,7 +3188,7 @@ API.Shares = {
             // 相册、相片的图
             const $album_images = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > div.mod_list > ul > li > a.img_wrap > img')) || [];
             if ($album_images) {
-                $album_images.each(function () {
+                $album_images.each(function() {
                     images.push({
                         url: $(this).attr('src') || $(this).attr('data-src')
                     });
@@ -3287,11 +3248,11 @@ API.Shares = {
     getVisitors(targeId, pageIndex) {
         let params = {
             "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
-            "appid": 202,//202
+            "appid": 202, //202
             "param": targeId,
             "beginNum": QZone_Config.Shares.Visitor.pageSize * pageIndex + 1,
             "num": QZone_Config.Shares.Visitor.pageSize,
-            "needFriend": 1,// TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
+            "needFriend": 1, // TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         }

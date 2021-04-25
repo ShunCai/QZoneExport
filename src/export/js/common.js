@@ -4,7 +4,7 @@
 // 例子： 
 // (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2006-07-02 08:09:04.423 
 // (new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2006-7-2 8:9:4.18 
-Date.prototype.format = function (fmt) {
+Date.prototype.format = function(fmt) {
     var o = {
         "M+": this.getMonth() + 1, //月份 
         "d+": this.getDate(), //日 
@@ -28,7 +28,7 @@ Date.prototype.format = function (fmt) {
  * var result1=template1.format("loogn",22);
  * var result2=template2.format({name:"loogn",age:22});
  */
-String.prototype.format = function (args) {
+String.prototype.format = function(args) {
     var result = this;
     if (arguments.length <= 0) {
         return result;
@@ -40,7 +40,7 @@ String.prototype.format = function (args) {
                 result = result.replace(reg, args[i]);
             }
         }
-    } else if (arguments.length == 1 && typeof (args) == "object") {
+    } else if (arguments.length == 1 && typeof(args) == "object") {
         // 支持属性多层嵌套替换
         const getValueByPath = (obj, path) => {
             const arr = path.split('.')
@@ -74,14 +74,14 @@ String.prototype.format = function (args) {
  * @param {String} search 搜索字符
  * @param {String} target 替换字符
  */
-String.prototype.replaceAll = function (search, target) {
+String.prototype.replaceAll = function(search, target) {
     return this.replace(new RegExp(search, "gm"), target);
 }
 
 /**
  * 数组查找索引
  */
-Array.prototype.getIndex = function (val, field) {
+Array.prototype.getIndex = function(val, field) {
     if (field) {
         return this.findIndex((obj) => {
             if (obj[field] == val) {
@@ -96,7 +96,7 @@ Array.prototype.getIndex = function (val, field) {
 /**
  * 删除元素
  */
-Array.prototype.remove = function (val, field) {
+Array.prototype.remove = function(val, field) {
     var index = this.getIndex(val, field);
     if (index > -1) {
         this.splice(index, 1);
@@ -169,17 +169,17 @@ const parseEmoji = (content) => {
 }
 
 const API = {
-    Utils: {},  // 工具类
+    Utils: {}, // 工具类
     Common: {}, // 公共模块
-    Blogs: {},  // 日志模块
-    Diaries: {},// 日记模块
-    Friends: {},// 好友模块
-    Messages: {},// 说说模块
-    Boards: {},// 留言模块
-    Photos: {},// 相册模块
-    Videos: {},// 视频模块
-    Shares: {},// 分享模块
-    Visitors: {}// 访客模块
+    Blogs: {}, // 日志模块
+    Diaries: {}, // 日记模块
+    Friends: {}, // 好友模块
+    Messages: {}, // 说说模块
+    Boards: {}, // 留言模块
+    Photos: {}, // 相册模块
+    Videos: {}, // 视频模块
+    Shares: {}, // 分享模块
+    Visitors: {} // 访客模块
 };
 
 /**
@@ -194,7 +194,10 @@ API.Utils = {
     getUrlParam(name) {
         const reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
         const r = window.location.search.substr(1).match(reg);
-        if (r != null) return decodeURI(r[2]); return null;
+        if (r != null) {
+            return decodeURI(r[2]);
+        }
+        return null;
     },
 
     /**
@@ -207,7 +210,8 @@ API.Utils = {
             arr_url = reg_url.exec(url),
             ret = {};
         if (arr_url && arr_url[1]) {
-            var str_para = arr_url[1], result;
+            var str_para = arr_url[1],
+                result;
             while ((result = reg_para.exec(str_para)) != null) {
                 ret[result[1]] = result[2];
             }
@@ -358,7 +362,7 @@ API.Utils = {
                 }
             }
             let date = null;
-            if (typeof (time) === 'string') {
+            if (typeof(time) === 'string') {
                 date = new Date(time);
             } else {
                 date = new Date(time * 1000);
@@ -447,13 +451,13 @@ API.Common = {
         content = (content || "") + "";
         var t = content.split(/(#(?:.|<br\/>)+?#)/g);
         var o = false;
-        var n = ""
-            , res = "";
+        var n = "",
+            res = "";
         for (var a = 0; a < t.length; a++) {
             tag = t[a];
             o = false;
             n = "";
-            n = tag.replace(/#((?:.|<br\/>)+?)#/g, function (e, t, n) {
+            n = tag.replace(/#((?:.|<br\/>)+?)#/g, function(e, t, n) {
                 o = true;
                 let url = 'http://rc.qzone.qq.com/qzonesoso/?search=' + encodeURIComponent(t);
                 var a = API.Utils.getLink(url, '#{0}#'.format(t));
@@ -488,7 +492,7 @@ API.Common = {
         contet = contet.replace(/src=\"\/qzone\/em/g, 'src=\"http://qzonestyle.gtimg.cn/qzone/em');
 
         // 转换emoji表情链接
-        contet = contet.replace(/\[em\]e(\d+)\[\/em\]/gi, function (emoji, eid) {
+        contet = contet.replace(/\[em\]e(\d+)\[\/em\]/gi, function(emoji, eid) {
             let url = 'http://qzonestyle.gtimg.cn/qzone/em/e{0}.gif'.format(eid);
             // 默认返回HMTL格式
             let res = "<img src='{0}' >".format(url);
@@ -526,7 +530,7 @@ API.Common = {
         }
 
         // 先处理一遍正常的@的内容
-        contet = contet.replace(/@\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))?(?:,auto:([^\}]*))?\}/g, function (str, uin, name) {
+        contet = contet.replace(/@\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))?(?:,auto:([^\}]*))?\}/g, function(str, uin, name) {
             return format({
                 uin: uin,
                 name: name
@@ -535,7 +539,7 @@ API.Common = {
 
         // 如果处理后，仍包含uin、nick、who，则表示是特殊情况(即nick存的是内容)，再处理一遍
         if (contet.indexOf('uin') > -1 && contet.indexOf('nick') > -1 && contet.indexOf('who') > -1) {
-            contet = contet.replace(/\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))\}/g, function (str, uin, name) {
+            contet = contet.replace(/\{uin:([^\}]*),nick:([^\}]*?)(?:,who:([^\}]*))\}/g, function(str, uin, name) {
                 return name;
             })
         }
@@ -934,7 +938,16 @@ API.Blogs = {
     },
 
     getBlogLabel(e) {
-        var t = [["8", "审核不通过"], ["22", "审核中"], ["4", "顶"], ["21", "荐"], ["3", "转"], ["28", "转"], ["35", "转"], ["36", "转"]];
+        var t = [
+            ["8", "审核不通过"],
+            ["22", "审核中"],
+            ["4", "顶"],
+            ["21", "荐"],
+            ["3", "转"],
+            ["28", "转"],
+            ["35", "转"],
+            ["36", "转"]
+        ];
         var a = '';
         for (var o = 0; o < t.length; o++) {
             var n = t[o][0];

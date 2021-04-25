@@ -16,6 +16,6 @@ body {
 }
 
 .download_tool {
-    color: red;
+    color: red !important;
     cursor: pointer;
 }

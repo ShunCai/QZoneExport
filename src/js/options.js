@@ -316,18 +316,6 @@
         }
     })
 
-    // 监听类型识别开关改变事件
-    $('#common_file_suffix').change(function() {
-        let downloadType = $('#common_download_type').val();
-        let suffix_timeout = $('#common_file_suffix_timeout')[0].parentNode.parentNode;
-        let isChecked = $(this).prop("checked");
-        if (isChecked && 'QZone' !== downloadType) {
-            $(suffix_timeout).show();
-        } else {
-            $(suffix_timeout).hide();
-        }
-    })
-
     let loadOptions = (options) => {
 
         // 说说模块赋值
@@ -493,8 +481,6 @@
         $("#common_list_retry_count").val(options.Common.listRetryCount);
         $("#common_list_retry_sleep").val(options.Common.listRetrySleep);
         $("#common_download_type").val(options.Common.downloadType).change();
-        $('#common_file_suffix').prop("checked", options.Common.isAutoFileSuffix).change();
-        $("#common_file_suffix_timeout").val(options.Common.autoFileSuffixTimeOut);
         $('#common_download_status').prop("checked", options.Common.enabledShelf);
         chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
         $("#common_thunder_task_count").val(options.Common.thunderTaskNum);
@@ -681,8 +667,6 @@
         // 公共模块赋值		
         QZone_Config.Common.listRetryCount = $("#common_list_retry_count").val() * 1;
         QZone_Config.Common.listRetrySleep = $("#common_list_retry_sleep").val() * 1;
-        QZone_Config.Common.isAutoFileSuffix = $('#common_file_suffix').prop("checked");
-        QZone_Config.Common.autoFileSuffixTimeOut = $("#common_file_suffix_timeout").val() * 1;
         QZone_Config.Common.downloadType = $('#common_download_type').val();
         QZone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
         chrome.downloads.setShelfEnabled(QZone_Config.Common.enabledShelf);

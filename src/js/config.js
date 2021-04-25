@@ -14,12 +14,8 @@ const Default_Config = {
             rpc: 'http://localhost:6800/jsonrpc',
             token: undefined
         },
-        // 自动识别文件后缀
-        isAutoFileSuffix: false,
-        // 后缀识别超时秒数
-        autoFileSuffixTimeOut: 30,
         // 迅雷任务数        
-        thunderTaskNum: 5000,
+        thunderTaskNum: 3000,
         // 唤起迅雷间隔        
         thunderTaskSleep: 60,
         // 文件下载并发数        
@@ -207,7 +203,7 @@ const Default_Config = {
                     max: 2
                 }
             },
-            isGetPreview: true
+            isGetPreview: false
         },
         IncrementType: "Full", // 增量备份类型
         IncrementTime: "2005-06-06 00:00:00", // 增量时间

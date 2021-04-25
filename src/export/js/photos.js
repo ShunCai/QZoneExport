@@ -12,6 +12,10 @@ $(function () {
     const photos_html = template(photos_tpl, { photos: album.photoList || [] });
     // 渲染模板到页面
     $("#lightgallery").html(photos_html);
+
+    // 图片懒加载
+    lazyload();
+
     // 渲染画廊
     $("#lightgallery").lightGallery({
         selector: '.lightbox',

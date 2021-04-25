@@ -77,9 +77,9 @@ class ThunderInfo {
     }
 
     /**
-    * 添加下载任务
-    * @param {ThunderTask} task 任务
-    */
+     * 添加下载任务
+     * @param {ThunderTask} task 任务
+     */
     addTask(task) {
         this.tasks.push(task);
     }
@@ -786,38 +786,38 @@ const OperatorType = {
     Diaries: 'Diaries',
 
     /**
-    * 获取相册照片
-    */
+     * 获取相册照片
+     */
     Photos: 'Photos',
 
     /**
-    * 获取视频列表
-    */
+     * 获取视频列表
+     */
     Videos: 'Videos',
 
     /**
-    * 获取留言板列表
-    */
+     * 获取留言板列表
+     */
     Boards: 'Boards',
 
     /**
-    * 获取QQ好友列表
-    */
+     * 获取QQ好友列表
+     */
     Friends: 'Friends',
 
     /**
-    * 获取收藏列表
-    */
+     * 获取收藏列表
+     */
     Favorites: 'Favorites',
 
     /**
-    * 获取分享列表
-    */
+     * 获取分享列表
+     */
     Shares: 'Shares',
 
     /**
-    * 获取访客列表
-    */
+     * 获取访客列表
+     */
     Visitors: 'Visitors',
 
     /**
@@ -984,15 +984,15 @@ class QZoneOperator {
         API.Photos.getRoute();
 
         // 读取配置项
-        chrome.storage.sync.get(Default_Config, function (item) {
+        chrome.storage.sync.get(Default_Config, function(item) {
             QZone_Config = item;
         })
 
         // 初始化文件夹
-        QZone.Common.Filer.init({ persistent: false, size: 10 * 1024 * 1024 * 1024 }, function (fs) {
-            QZone.Common.Filer.ls(FOLDER_ROOT, function (entries) {
+        QZone.Common.Filer.init({ persistent: false, size: 10 * 1024 * 1024 * 1024 }, function(fs) {
+            QZone.Common.Filer.ls(FOLDER_ROOT, function(entries) {
                 console.info('当前子目录：', entries);
-                QZone.Common.Filer.rm(FOLDER_ROOT, function () {
+                QZone.Common.Filer.rm(FOLDER_ROOT, function() {
                     console.info('清除历史数据成功！');
                 });
             });
@@ -1009,11 +1009,11 @@ class QZoneOperator {
         await API.Utils.switchToRoot();
 
         // 创建模块文件夹
-        let createModuleFolder = async function () {
+        let createModuleFolder = async function() {
             // 创建所有模块的目录
             for (let x in QZone) {
                 let obj = QZone[x];
-                if (typeof (obj) !== "object") {
+                if (typeof(obj) !== "object") {
                     continue;
                 }
                 let rootPath = obj['IMAGES_ROOT'] || obj['ROOT'];
@@ -1107,7 +1107,7 @@ class QZoneOperator {
                 $progressbar.css("width", metadata.percent.toFixed(2) + "%");
                 $progressbar.attr("aria-valuenow", metadata.percent.toFixed(2));
                 $progressbar.text('已下载' + metadata.percent.toFixed(2) + '%');
-            }).then(function (content) {
+            }).then(function(content) {
                 saveAs(content, zipName);
                 $progressbar.css("width", "100%");
                 $progressbar.attr("aria-valuenow", 100);
@@ -1131,7 +1131,7 @@ class QZoneOperator {
         })
 
         //进度模式窗口隐藏后
-        $('#progressModal').on('hidden.bs.modal', function () {
+        $('#progressModal').on('hidden.bs.modal', function() {
             $("#progressModal").remove();
             $("#modalTable").remove();
         })
@@ -1140,7 +1140,7 @@ class QZoneOperator {
          * 筛选数据
          * @param {string} value 过滤标识
          */
-        const filterData = async function (value) {
+        const filterData = async function(value) {
             if (value === 'all') {
                 $("#table").bootstrapTable('filterBy');
                 return;
@@ -1171,7 +1171,7 @@ class QZoneOperator {
         }
 
         // 查看指定状态的数据
-        $('#statusFilter').change(function () {
+        $('#statusFilter').change(function() {
             let value = $(this).val();
             if ('interrupted' === value || ('Thunder' === downloadType && 'all' === value)) {
                 // 失败列表与迅雷下载全部列表时才展示【继续重试】按钮
@@ -1183,7 +1183,7 @@ class QZoneOperator {
         })
 
         // 【重试】按钮点击事件
-        $againDownloadBtn.click(async function () {
+        $againDownloadBtn.click(async function() {
             let tasks = $('#table').bootstrapTable('getSelections');
             switch (downloadType) {
                 case 'File':
@@ -1218,7 +1218,7 @@ class QZoneOperator {
         })
 
         // 【迅雷下载】点击事件
-        $("#thunderDownload").click(async function () {
+        $("#thunderDownload").click(async function() {
             let tasks = $('#table').bootstrapTable('getSelections');
             let newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, QZone_Config.Common.downloadThread);
             for (const task of tasks) {
@@ -1229,7 +1229,7 @@ class QZoneOperator {
         })
 
         // 【浏览器下载】点击事件
-        $browserDownloadBtn.click(function () {
+        $browserDownloadBtn.click(function() {
             let tasks = $('#table').bootstrapTable('getSelections');
             let newBrowserTasks = [];
             for (const task of tasks) {
@@ -1240,7 +1240,7 @@ class QZoneOperator {
         })
 
         //显示下载任务列表
-        $('#modalTable').on('shown.bs.modal', function () {
+        $('#modalTable').on('shown.bs.modal', function() {
 
             // 重置筛选条件
             $('#statusFilter').val('interrupted');
@@ -1344,14 +1344,14 @@ const browserTasks = new Array();
 /**
  * 初始化监听
  */
-(function () {
+(function() {
 
     // 消息监听
-    chrome.runtime.onConnect.addListener(function (port) {
+    chrome.runtime.onConnect.addListener(function(port) {
         console.info("消息发送者：", port);
         switch (port.name) {
             case 'popup':
-                port.onMessage.addListener(function (request) {
+                port.onMessage.addListener(function(request) {
                     switch (request.subject) {
                         case 'startBackup':
                             QZone.Common.ExportType = request.exportType;
@@ -1385,7 +1385,7 @@ const browserTasks = new Array();
                             break;
                         case 'initConfig':
                             // 初始化配置
-                            chrome.storage.sync.get(Default_Config, function (item) {
+                            chrome.storage.sync.get(Default_Config, function(item) {
                                 port.postMessage(item);
                             })
                             break;
@@ -1412,7 +1412,7 @@ const browserTasks = new Array();
  * @param {string} FILE_URLS 文件下载链接
  * @param {string} suffix 文件后缀
  */
-API.Utils.addDownloadTasks = async (item, url, module_dir, source, FILE_URLS, suffix) => {
+API.Utils.addDownloadTasks = async(item, url, module_dir, source, FILE_URLS, suffix) => {
     url = API.Utils.toHttp(url);
     item.custom_url = url;
     if (API.Common.isQzoneUrl()) {
@@ -1421,14 +1421,9 @@ API.Utils.addDownloadTasks = async (item, url, module_dir, source, FILE_URLS, su
     let filename = FILE_URLS.get(url);
     if (!filename) {
         filename = API.Utils.newSimpleUid(8, 16);
-        if (suffix) {
-            filename = filename + suffix;
-            item.custom_mimeType = suffix;
-        } else {
-            let autoSuffix = await API.Utils.autoFileSuffix(url);
-            filename = filename + autoSuffix;
-            item.custom_mimeType = autoSuffix;
-        }
+        suffix = API.Utils.getFileSuffixByUrl(url, suffix);
+        filename = filename + suffix;
+        item.custom_mimeType = suffix;
     }
     item.custom_filename = filename;
     item.custom_filepath = 'Images/' + filename;
@@ -1475,7 +1470,7 @@ API.Utils.newDownloadTask = (url, folder, name, source, makeOrg) => {
 /**
  * 下载文件
  */
-API.Utils.downloadAllFiles = async () => {
+API.Utils.downloadAllFiles = async() => {
     let downloadType = QZone_Config.Common.downloadType;
     if (downloadType === 'QZone') {
         // 使用QQ空间外链时，不需要下载文件

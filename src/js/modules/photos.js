@@ -606,9 +606,7 @@ API.Photos.addCommentDownloadTasks = async(item, dir) => {
                 continue;
             }
             image.custom_filename = API.Utils.newSimpleUid(8, 16);
-            // 获取图片类型
-            let suffix = await API.Utils.autoFileSuffix(image.custom_url);
-            image.custom_filename = image.custom_filename + suffix;
+            image.custom_filename = image.custom_filename + API.Utils.getFileSuffixByUrl(image.custom_url);
             image.custom_filepath = 'Images/' + image.custom_filename;
             // 添加下载任务
             API.Utils.newDownloadTask(image.custom_url, dir, image.custom_filename, item);

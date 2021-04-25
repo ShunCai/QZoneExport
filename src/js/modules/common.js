@@ -6,7 +6,7 @@
 /**
  * 初始化用户信息
  */
-API.Common.initUserInfo = async () => {
+API.Common.initUserInfo = async() => {
     try {
 
         // 获取所有的QQ好友
@@ -30,7 +30,7 @@ API.Common.initUserInfo = async () => {
 /**
  * 导出用户个人档信息
  */
-API.Common.exportUser = async () => {
+API.Common.exportUser = async() => {
     try {
         let userInfo = QZone.Common.Target
 
@@ -70,7 +70,7 @@ API.Common.exportUser = async () => {
  * 导出个人信息到JSON文件
  * @param {Array} friends 好友列表
  */
-API.Common.exportUserToJson = async (userInfo) => {
+API.Common.exportUserToJson = async(userInfo) => {
     const json = JSON.stringify(userInfo);
     const path = QZone.Common.ROOT + '/json';
 
@@ -89,7 +89,7 @@ API.Common.exportUserToJson = async (userInfo) => {
  * 导出个人信息到MarkDown文件
  * @param {Array} friends 好友列表
  */
-API.Common.exportUserToMd = async (userInfo) => {
+API.Common.exportUserToMd = async(userInfo) => {
     // 导出类型存在MarkDown的时候才生成首页MarkDown
     // 说说
     let hasMd = QZone_Config.Messages.exportType === 'MarkDown';
@@ -144,7 +144,7 @@ API.Common.exportUserToMd = async (userInfo) => {
  * 导出个人信息到HTML文件
  * @param {Array} friends 好友列表
  */
-API.Common.exportUserToHtml = async (userInfo) => {
+API.Common.exportUserToHtml = async(userInfo) => {
     // 导出类型存在HTML的时候才生成首页HTML
     // 说说
     let hasHtml = QZone_Config.Messages.exportType === 'HTML';
@@ -192,7 +192,7 @@ API.Common.exportUserToHtml = async (userInfo) => {
  * @param {object} params 参数
  * @param {object} params 参数
  */
-API.Common.writeHtmlofTpl = async (name, params, indexHtmlePath) => {
+API.Common.writeHtmlofTpl = async(name, params, indexHtmlePath) => {
     let html = await API.Common.getHtmlTemplate(name, params);
     let fileEntry = await API.Utils.writeText(html, indexHtmlePath);
     return fileEntry;
@@ -203,7 +203,7 @@ API.Common.writeHtmlofTpl = async (name, params, indexHtmlePath) => {
  * @param {string} name 模板文件名
  * @param {object} params 参数
  */
-API.Common.getHtmlTemplate = async (name, params) => {
+API.Common.getHtmlTemplate = async(name, params) => {
     let html = await API.Utils.get(chrome.extension.getURL('templates/' + name + '.html'));
     if (!params) {
         return html;
@@ -217,7 +217,7 @@ API.Common.getHtmlTemplate = async (name, params) => {
  * @param {object} object 对象
  * @param {string} path js文件路径
  */
-API.Common.writeJsonToJs = async (key, object, path) => {
+API.Common.writeJsonToJs = async(key, object, path) => {
     let json = JSON.stringify(object);
     let js = 'const ' + key + ' = ' + json;
     let fileEntry = await API.Utils.writeText(js, path);
@@ -255,7 +255,7 @@ API.Common.handerContentImages = (content, type) => {
     }
     // 获取内容中的图片信息（如果说说本身的内容也是HTML/MD代码，也同样处理）
     if ("MD" === type) {
-        content.replace(/!\[.*?\]\((.+?)\)/g, function (linkmd, url) {
+        content.replace(/!\[.*?\]\((.+?)\)/g, function(linkmd, url) {
             let custom_filename = API.Common.addDownloadTask(url, content);
             return linkmd.replace(url, API.Common.getMediaPath(url, 'Common/images/' + custom_filename, "Messages_HTML"));
         })
@@ -281,11 +281,7 @@ API.Common.handerContentImages = (content, type) => {
 API.Common.addDownloadTask = (url, content) => {
     let custom_filename = QZone.Common.FILE_URLS.get(url);
     if (!custom_filename) {
-        // 添加下载任务
-        let uid = API.Utils.newSimpleUid(8, 16);
-        // 暂时不识别内容图片，这里识别文件名后缀涉及到async，渲染模板暂不支持await，也不能通过URL直接判断，因为文件名可能为GIF，实际类型却为PNG
-        let suffix = API.Utils.getFileSuffix(url);
-        custom_filename = uid + suffix;
+        custom_filename = API.Utils.newSimpleUid(8, 16);
         // 添加下载任务
         API.Utils.newDownloadTask(url, 'Common/images', custom_filename, content);
         QZone.Common.FILE_URLS.set(url, custom_filename);
@@ -324,7 +320,7 @@ API.Common.getMediaPath = (url, filepath, sourceType) => {
  * 通过Ajax请求下载文件
  * @param {Array} tasks
  */
-API.Common.downloadsByAjax = async (tasks) => {
+API.Common.downloadsByAjax = async(tasks) => {
 
     // 任务分组
     const _tasks = _.chunk(tasks, QZone_Config.Common.downloadThread);
@@ -362,13 +358,10 @@ API.Common.downloadsByAjax = async (tasks) => {
  * 通过浏览器下载文件
  * @param {BrowserTask} tasks 浏览器下载任务
  */
-API.Common.downloadsByBrowser = async (tasks) => {
+API.Common.downloadsByBrowser = async(tasks) => {
     // 进度器
     let indicator = new StatusIndicator('Common_Browser');
     indicator.setTotal(tasks.length);
-
-    // 超时秒数
-    const timeout = QZone_Config.Common.autoFileSuffixTimeOut * 1000;
 
     // 开始下载
     const _tasks = _.chunk(tasks, QZone_Config.Common.downloadThread);
@@ -377,7 +370,7 @@ API.Common.downloadsByBrowser = async (tasks) => {
         for (let j = 0; j < list.length; j++) {
             const task = list[j];
             // 添加任务到下载器的时候，可能存在一直无返回的情况，问题暂未定位，先临时添加超时秒数逻辑
-            await API.Utils.timeoutPromise(API.Utils.downloadByBrowser(task), timeout || 15).then((downloadTask) => {
+            await API.Utils.timeoutPromise(API.Utils.downloadByBrowser(task), 60 * 1000).then((downloadTask) => {
                 if (downloadTask.id > 0) {
                     task.setState('complete');
                     indicator.addSuccess(task);
@@ -403,7 +396,7 @@ API.Common.downloadsByBrowser = async (tasks) => {
  * 通过Aria2下载文件
  * @param {Array} tasks
  */
-API.Common.downloadByAria2 = async (tasks) => {
+API.Common.downloadByAria2 = async(tasks) => {
     // 进度更新器
     const indicator = new StatusIndicator('Common_Aria2');
     indicator.setTotal(tasks.length);
@@ -437,7 +430,7 @@ API.Common.downloadByAria2 = async (tasks) => {
  * 通过迅雷下载
  * @param {ThunderInfo} thunderInfo 迅雷下载信息
  */
-API.Common.invokeThunder = async (thunderInfo) => {
+API.Common.invokeThunder = async(thunderInfo) => {
     // 进度更新器
     const indicator = new StatusIndicator('Common_Thunder');
     indicator.setTotal(thunderInfo.tasks.length);
@@ -468,10 +461,10 @@ API.Common.invokeThunder = async (thunderInfo) => {
         // 继续唤起
         if (index < _tasks.length) {
             let sleep = QZone_Config.Common.thunderTaskSleep * 1;
-            let interId = setInterval(function () {
-                indicator.setNextTip(--sleep);
-            }, 1000)
-            // 等待指定秒再继续唤起，并给用户提示
+            let interId = setInterval(function() {
+                    indicator.setNextTip(--sleep);
+                }, 1000)
+                // 等待指定秒再继续唤起，并给用户提示
             await API.Utils.sleep(sleep * 1000);
             clearInterval(interId);
         }
@@ -483,7 +476,7 @@ API.Common.invokeThunder = async (thunderInfo) => {
  * 写入迅雷任务到文件
  * @param {ThunderInfo} thunderInfo 迅雷下载信息
  */
-API.Common.writeThunderTaskToFile = async (thunderInfo) => {
+API.Common.writeThunderTaskToFile = async(thunderInfo) => {
     // 进度更新器
     const indicator = new StatusIndicator('Common_Thunder_Link');
     indicator.print();
@@ -702,7 +695,7 @@ API.Common.unionBackedUpItems = (moduleConfig, old_items, new_items) => {
  * 保存当前备份数据
  */
 API.Common.saveBackupItems = () => {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function(resolve, reject) {
         const key = QZone.Common.Target.uin + "_" + QZone_Config.Common.downloadType;
         const backups = {};
         // 只存储需要的数据
@@ -742,7 +735,7 @@ API.Common.saveBackupItems = () => {
         };
 
         // 保存数据Storage TODO 保存大小是否受限？
-        chrome.storage.local.set(backups, function () {
+        chrome.storage.local.set(backups, function() {
             console.info("保存当前备份数据到Storage完成", backups);
             resolve(backups);
         });
@@ -754,11 +747,11 @@ API.Common.saveBackupItems = () => {
  * 获取上次备份数据
  */
 API.Common.getBackupItems = () => {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function(resolve, reject) {
         const key = QZone.Common.Target.uin + "_" + QZone_Config.Common.downloadType;
 
         // 保存数据Storage TODO 保存大小是否受限？
-        chrome.storage.local.get([key], function (data) {
+        chrome.storage.local.get([key], function(data) {
             console.info("基于Storage获取上次备份数据完成", data[key]);
             resolve(data[key]);
         });
@@ -839,7 +832,7 @@ API.Common.resetQzoneItems = () => {
 /**
  * 初始化已备份数据到全局变量
  */
-API.Common.initBackedUpItems = async () => {
+API.Common.initBackedUpItems = async() => {
     // 获取已备份数据
     const Old_QZone = await API.Common.getBackupItems();
     if (!Old_QZone || Object.keys(Old_QZone).length == 0) {
@@ -899,7 +892,7 @@ API.Common.hasNextPage = (pageIndex, pageSize, total, items) => {
  * @param {Function} call 下一页函数
  * @param {Array} args 下一页函数参数
  */
-API.Common.callNextPage = async (pageIndex, moduleConfig, total, items, call, ...args) => {
+API.Common.callNextPage = async(pageIndex, moduleConfig, total, items, call, ...args) => {
     // 是否存在下一页
     const hasNextPage = API.Common.hasNextPage(pageIndex, moduleConfig.pageSize, total, items);
     if (hasNextPage) {
@@ -955,7 +948,7 @@ API.Common.isGetVisitor = (CONFIG) => {
  * 获取模块点赞记录
  * @param {Object} item 对象
  */
-API.Common.getModulesLikeList = async (item, moduleConfig) => {
+API.Common.getModulesLikeList = async(item, moduleConfig) => {
     let nextUin = 0;
     item.likes = item.likes || [];
     if (!moduleConfig.Like.isGet) {
@@ -963,7 +956,7 @@ API.Common.getModulesLikeList = async (item, moduleConfig) => {
     }
     let hasNext = true;
     while (hasNext) {
-        await API.Common.getLikeList(item.uniKey, nextUin).then(async (data) => {
+        await API.Common.getLikeList(item.uniKey, nextUin).then(async(data) => {
             data = API.Utils.toJson(data, /^_Callback\(/);
             data = data.data || {};
             data.like_uin_info = data.like_uin_info || [];
