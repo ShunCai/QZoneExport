@@ -102,11 +102,25 @@
 				<div id="toolbar">
 					<div class="form-inline" role="form">
 						<div class="form-group">
+							<select id="moduleFilter" class="form-control" name="moduleFilter" style="display: inline-block;width: 100px;">
+								<option value="all" selected>全部</option>
+								<option value="Messages">说说</option>
+								<option value="Blogs">日志</option>
+								<option value="Diaries">私密日志</option>
+								<option value="Photos">相册</option>
+								<option value="Videos">视频</option>
+								<option value="Boards">留言板</option>
+								<option value="Friends">好友</option>
+								<option value="Favorites">收藏夹</option>
+								<option value="Shares">分享</option>
+								<option value="Visitors">访客</option>
+								<option value="Others">其它</option>
+							</select>
 							<select id="statusFilter" class="form-control" name="statusFilter" style="display: inline-block;width: 100px;">
 								<option value="all">全部</option>
 								<option value="interrupted" selected>已失败</option>
 								<option value="complete">已完成</option>
-								<option value="in_progress" selected>下载中</option>
+								<option value="in_progress">下载中</option>
 							</select>
 						</div>
 					</div>

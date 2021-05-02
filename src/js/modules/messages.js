@@ -6,7 +6,7 @@
 /**
  * 导出说说数据
  */
-API.Messages.export = async () => {
+API.Messages.export = async() => {
 
     try {
 
@@ -53,10 +53,10 @@ API.Messages.export = async () => {
  * @param {integer} pageIndex 指定页的索引
  * @param {StatusIndicator} indicator 状态更新器
  */
-API.Messages.getList = async (pageIndex, indicator) => {
+API.Messages.getList = async(pageIndex, indicator) => {
     // 状态更新器当前页
     indicator.index = pageIndex + 1;
-    return await API.Messages.getMessages(pageIndex).then(async (data) => {
+    return await API.Messages.getMessages(pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_preloadCallback\(/);
 
@@ -87,7 +87,7 @@ API.Messages.getList = async (pageIndex, indicator) => {
 /**
  * 获取所有说说列表
  */
-API.Messages.getAllList = async () => {
+API.Messages.getAllList = async() => {
 
     // 说说状态更新器
     const indicator = new StatusIndicator('Messages');
@@ -95,11 +95,11 @@ API.Messages.getAllList = async () => {
     // 说说配置项
     const CONFIG = QZone_Config.Messages;
 
-    const nextPage = async function (pageIndex, indicator) {
+    const nextPage = async function(pageIndex, indicator) {
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
-        return await API.Messages.getList(pageIndex, indicator).then(async (dataList) => {
+        return await API.Messages.getList(pageIndex, indicator).then(async(dataList) => {
             // 合并数据
             QZone.Messages.Data = API.Utils.unionItems(QZone.Messages.Data, dataList);
             if (API.Common.isPreBackupPos(dataList, CONFIG)) {
@@ -108,7 +108,7 @@ API.Messages.getAllList = async () => {
             }
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Messages.total, QZone.Messages.Data, arguments.callee, nextPageIndex, indicator);
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取说说列表异常，当前页：", nextPageIndex, e);
             indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
@@ -136,7 +136,7 @@ API.Messages.getAllList = async () => {
  * 获取所有说说的全文内容
  * @param {Array} items 说说列表
  */
-API.Messages.getAllFullContent = async (items) => {
+API.Messages.getAllFullContent = async(items) => {
     if (!QZone_Config.Messages.isFull) {
         // 不获取全文内容时，跳过不处理
         return items;
@@ -196,8 +196,8 @@ API.Messages.getAllFullContent = async (items) => {
  * @param {object} item 说说
  * @param {integer} pageIndex 页数索引
  */
-API.Messages.getItemCommentList = async (item, pageIndex) => {
-    return await API.Messages.getComments(item.tid, pageIndex).then(async (data) => {
+API.Messages.getItemCommentList = async(item, pageIndex) => {
+    return await API.Messages.getComments(item.tid, pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_preloadCallback\(/);
 
@@ -212,7 +212,7 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
             for (let j = 0; j < images.length; j++) {
                 // 处理说说评论的配图
                 const image = images[j];
-                await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, module_dir, item, QZone.Messages.FILE_URLS);
+                await API.Utils.addDownloadTasks('Messages', image, image.hd_url || image.b_url, module_dir, item, QZone.Messages.FILE_URLS);
             }
 
             // 获取评论回复
@@ -222,7 +222,7 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
                 let images = repItem.pic || [];
                 for (let r = 0; r < images.length; r++) {
                     const image = images[r];
-                    await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, module_dir, item, QZone.Messages.FILE_URLS);
+                    await API.Utils.addDownloadTasks('Messages', image, image.hd_url || image.b_url, module_dir, item, QZone.Messages.FILE_URLS);
                 }
             }
         }
@@ -235,7 +235,7 @@ API.Messages.getItemCommentList = async (item, pageIndex) => {
  * 获取单条说说的全部评论列表
  * @param {object} item 说说
  */
-API.Messages.getItemAllCommentList = async (item) => {
+API.Messages.getItemAllCommentList = async(item) => {
     if (!(item.commenttotal > item.custom_comments.length)) {
         // 当前列表比评论总数小的时候才需要获取全部评论，否则则跳过
         return item.custom_comments;
@@ -249,17 +249,17 @@ API.Messages.getItemAllCommentList = async (item) => {
     // 更新总数
     const total = API.Utils.getCommentCount(item);
 
-    const nextPage = async function (item, pageIndex) {
+    const nextPage = async function(item, pageIndex) {
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
-        return await API.Messages.getItemCommentList(item, pageIndex).then(async (dataList) => {
+        return await API.Messages.getItemCommentList(item, pageIndex).then(async(dataList) => {
             // 合并评论列表
             item.custom_comments = item.custom_comments.concat(dataList || []);
 
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.custom_comments, arguments.callee, item, nextPageIndex);
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取说说评论列表异常，当前页：", pageIndex + 1, item, e);
             // 当前页失败后，跳过继续请求下一页
             // 递归获取下一页
@@ -276,7 +276,7 @@ API.Messages.getItemAllCommentList = async (item) => {
  * 获取所有说说的评论列表
  * @param {string} item 说说
  */
-API.Messages.getItemsAllCommentList = async (items) => {
+API.Messages.getItemsAllCommentList = async(items) => {
     if (!QZone_Config.Messages.Comments.isFull) {
         // 不获取全部评论时，跳过
         return items;
@@ -313,7 +313,7 @@ API.Messages.getItemsAllCommentList = async (items) => {
 /**
  * 所有说说转换成导出文件
  */
-API.Messages.exportAllListToFiles = async (items) => {
+API.Messages.exportAllListToFiles = async(items) => {
     // 获取用户配置
     let exportType = QZone_Config.Messages.exportType;
     switch (exportType) {
@@ -336,7 +336,7 @@ API.Messages.exportAllListToFiles = async (items) => {
  * 导出说说到HTML文件
  * @param {Array} messages 数据
  */
-API.Messages.exportToHtml = async (messages) => {
+API.Messages.exportToHtml = async(messages) => {
     const indicator = new StatusIndicator('Messages_Export_Other');
     indicator.setIndex('HTML');
 
@@ -345,7 +345,7 @@ API.Messages.exportToHtml = async (messages) => {
         // 基于JSON生成JS
         console.info('生成说说JSON开始', messages);
         await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('dataList', messages, QZone.Common.ROOT + '/json/messages.js');
+        const jsonFile = await API.Common.writeJsonToJs('messages', messages, QZone.Common.ROOT + '/json/messages.js');
         console.info('生成说说JSON结束', jsonFile, messages);
 
         // 说说数据根据年份分组
@@ -386,7 +386,7 @@ API.Messages.exportToHtml = async (messages) => {
  * 导出说说到Markdown文件
  * @param {Array} items 数据
  */
-API.Messages.exportToMarkdown = async (items) => {
+API.Messages.exportToMarkdown = async(items) => {
     // 进度更新器
     const indicator = new StatusIndicator('Messages_Export_Other');
     indicator.setIndex('Markdown');
@@ -441,7 +441,7 @@ API.Messages.exportToMarkdown = async (items) => {
  * 导出说说到JSON文件
  * @param {Array} items 数据
  */
-API.Messages.exportToJson = async (items) => {
+API.Messages.exportToJson = async(items) => {
     // 进度功能性期
     const indicator = new StatusIndicator('Messages_Export_Other');
     indicator.setIndex('JSON');
@@ -567,7 +567,7 @@ API.Messages.getMarkdown = (item) => {
  * 添加说说的多媒体下载任务
  * @param {Array} dataList
  */
-API.Messages.addMediaToTasks = async (dataList) => {
+API.Messages.addMediaToTasks = async(dataList) => {
     if (!dataList) {
         return dataList;
     }
@@ -595,35 +595,35 @@ API.Messages.addMediaToTasks = async (dataList) => {
                     continue;
                 }
                 // 添加视频下载任务
-                API.Videos.addDownloadTasks([video], module_dir, item, QZone.Messages.FILE_URLS);
+                API.Videos.addDownloadTasks('Messages', [video], module_dir, item, QZone.Messages.FILE_URLS);
             } else {
                 // 普通图片
                 let url = image.url2 || image.url1;
-                await API.Utils.addDownloadTasks(image, url, module_dir, item, QZone.Messages.FILE_URLS);
+                await API.Utils.addDownloadTasks('Messages', image, url, module_dir, item, QZone.Messages.FILE_URLS);
             }
             indicator.addSuccess(image);
         }
 
         // 下载视频预览图及视频
-        API.Videos.addDownloadTasks(item.custom_videos, module_dir, item, QZone.Messages.FILE_URLS);
+        API.Videos.addDownloadTasks('Messages', item.custom_videos, module_dir, item, QZone.Messages.FILE_URLS);
         indicator.addSuccess(item.custom_videos);
 
         // 下载音乐预览图
         for (const audio of item.custom_audios) {
             // 音乐预览图不识别后缀，直接使用JEPG
-            await API.Utils.addDownloadTasks(audio, audio.image, module_dir, item, QZone.Messages.FILE_URLS, '.jpeg');
+            await API.Utils.addDownloadTasks('Messages', audio, audio.image, module_dir, item, QZone.Messages.FILE_URLS, '.jpeg');
             indicator.addSuccess(1);
         }
 
         // 下载语音
         for (const voice of item.custom_voices) {
-            await API.Utils.addDownloadTasks(voice, voice.custom_url, module_dir, item, QZone.Messages.FILE_URLS, '.mp3');
+            await API.Utils.addDownloadTasks('Messages', voice, voice.custom_url, module_dir, item, QZone.Messages.FILE_URLS, '.mp3');
             indicator.addSuccess(1);
         }
 
         // 下载特殊表情
         for (const magic of item.custom_magics) {
-            await API.Utils.addDownloadTasks(magic, magic.custom_url, module_dir, item, QZone.Messages.FILE_URLS, '.jpeg');
+            await API.Utils.addDownloadTasks('Messages', magic, magic.custom_url, module_dir, item, QZone.Messages.FILE_URLS, '.jpeg');
             indicator.addSuccess(1);
         }
 
@@ -635,7 +635,7 @@ API.Messages.addMediaToTasks = async (dataList) => {
             // 评论包含图片
             let images = comment.pic || [];
             for (const image of images) {
-                await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, module_dir, item, QZone.Messages.FILE_URLS);
+                await API.Utils.addDownloadTasks('Messages', image, image.hd_url || image.b_url, module_dir, item, QZone.Messages.FILE_URLS);
                 indicator.addSuccess(1);
             }
 
@@ -644,7 +644,7 @@ API.Messages.addMediaToTasks = async (dataList) => {
             for (const repItem of replies) {
                 let images = repItem.pic || [];
                 for (const image of images) {
-                    await API.Utils.addDownloadTasks(image, image.hd_url || image.b_url, module_dir, item, QZone.Messages.FILE_URLS);
+                    await API.Utils.addDownloadTasks('Messages', image, image.hd_url || image.b_url, module_dir, item, QZone.Messages.FILE_URLS);
                     indicator.addSuccess(1);
                 }
             }
@@ -659,7 +659,7 @@ API.Messages.addMediaToTasks = async (dataList) => {
  * 获取所有图片（超9张需单独获取）
  * @param {Array} items 说说列表
  */
-API.Messages.getAllImages = async (items) => {
+API.Messages.getAllImages = async(items) => {
     if (!items) {
         return items;
     }
@@ -726,7 +726,7 @@ API.Messages.getAllImages = async (items) => {
  * 获取语音说说的实际地址
  * @param {Array} items 说说列表
  */
-API.Messages.getAllVoices = async (items) => {
+API.Messages.getAllVoices = async(items) => {
     if (!items) {
         return items;
     }
@@ -886,7 +886,7 @@ API.Messages.filterKeyWords = (items) => {
  * 获取说说赞记录
  * @param {Array} items 说说列表
  */
-API.Messages.getAllLikeList = async (items) => {
+API.Messages.getAllLikeList = async(items) => {
     if (!API.Common.isGetLike(QZone_Config.Messages)) {
         // 不获取赞
         return items;
@@ -896,7 +896,7 @@ API.Messages.getAllLikeList = async (items) => {
     indicator.setTotal(items.length);
 
     // 同时请求数
-    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+    const _items = _.chunk(items, 10);
 
     // 获取点赞列表
     let count = 0;
@@ -943,7 +943,7 @@ API.Messages.getAllLikeList = async (items) => {
  * 获取单条说说的全部最近访问
  * @param {object} item 说说
  */
-API.Messages.getItemAllVisitorsList = async (item) => {
+API.Messages.getItemAllVisitorsList = async(item) => {
     // 清空原有的最近访问信息
     item.custom_visitor = {
         viewCount: 0,
@@ -954,11 +954,11 @@ API.Messages.getItemAllVisitorsList = async (item) => {
     // 说说最近访问配置
     const CONFIG = QZone_Config.Messages.Visitor;
 
-    const nextPage = async function (item, pageIndex) {
+    const nextPage = async function(item, pageIndex) {
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
-        return await API.Messages.getVisitors(item.tid, pageIndex).then(async (data) => {
+        return await API.Messages.getVisitors(item.tid, pageIndex).then(async(data) => {
             data = API.Utils.toJson(data, /^_Callback\(/).data || {};
 
             // 合并
@@ -968,7 +968,7 @@ API.Messages.getItemAllVisitorsList = async (item) => {
 
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, item.custom_visitor.totalNum, item.custom_visitor.list, arguments.callee, item, nextPageIndex);
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取说说最近访问列表异常，当前页：", pageIndex + 1, item, e);
 
             // 当前页失败后，跳过继续请求下一页
@@ -986,7 +986,7 @@ API.Messages.getItemAllVisitorsList = async (item) => {
  * 获取说说最近访问
  * @param {Array} items 说说列表
  */
-API.Messages.getAllVisitorList = async (items) => {
+API.Messages.getAllVisitorList = async(items) => {
     if (!API.Common.isGetVisitor(QZone_Config.Messages)) {
         // 不获取最近访问
         return items;
@@ -996,7 +996,7 @@ API.Messages.getAllVisitorList = async (items) => {
     indicator.setTotal(items.length);
 
     // 同时请求数
-    const _items = _.chunk(items, 5);
+    const _items = _.chunk(items, 10);
 
     // 获取最近访问
     let count = 0;

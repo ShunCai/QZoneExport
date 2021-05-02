@@ -94,7 +94,7 @@ API.Photos.getAllImagesInfos = async(albumList) => {
         indicator.setTotal(photos.length);
 
         // 同时请求数（提高相片处理速度）
-        const _photos = _.chunk(photos, QZone_Config.Common.downloadThread);
+        const _photos = _.chunk(photos, 10);
         for (const list of _photos) {
             let imageInfoTasks = [];
             for (const photo of list) {
@@ -113,13 +113,20 @@ API.Photos.getAllImagesInfos = async(albumList) => {
                     data = API.Utils.toJson(data, /^_Callback\(/);
                     data = data.data.photos || [];
 
+                    // 首个相片，即当前相片
+                    const firstPotho = data[0];
+                    if (firstPotho === undefined || firstPotho.picKey === undefined) {
+                        console.warn('无法获取到图片详情，将使用列表默认值！', album, photo, firstPotho);
+                        return;
+                    }
+
                     // 拷贝覆盖属性到photo
                     // 清空源属性
                     let keys = Object.keys(photo);
                     for (const key of keys) {
                         delete photo[key];
                     }
-                    Object.assign(photo, data[0]);
+                    Object.assign(photo, firstPotho);
 
                     // 更新获取进度
                     indicator.addSuccess(photo);
@@ -584,7 +591,7 @@ API.Photos.addPreviewDownloadTasks = async(item, dir) => {
     item.custom_filename = item.custom_filename + (API.Utils.getFileSuffixByUrl(item.custom_url) || '.jpeg');
     item.custom_filepath = 'Images/' + item.custom_filename;
     // 添加下载任务
-    API.Utils.newDownloadTask(item.custom_url, dir, item.custom_filename, item);
+    API.Utils.newDownloadTask('Photos', item.custom_url, dir, item.custom_filename, item);
     return item;
 }
 
@@ -609,7 +616,7 @@ API.Photos.addCommentDownloadTasks = async(item, dir) => {
             image.custom_filename = image.custom_filename + API.Utils.getFileSuffixByUrl(image.custom_url);
             image.custom_filepath = 'Images/' + image.custom_filename;
             // 添加下载任务
-            API.Utils.newDownloadTask(image.custom_url, dir, image.custom_filename, item);
+            API.Utils.newDownloadTask('Photos', image.custom_url, dir, image.custom_filename, item);
         }
     }
     return item;
@@ -670,14 +677,14 @@ API.Photos.addPhotosDownloadTasks = async(album, photos) => {
                 photo.custom_pre_filename = filename + suffix;
                 photo.custom_pre_filepath = albumFolder + '/' + photo.custom_pre_filename;
                 // 添加下载任务
-                API.Utils.newDownloadTask(photo.custom_url, albumFolder, photo.custom_pre_filename, photo);
+                API.Utils.newDownloadTask('Photos', photo.custom_url, albumFolder, photo.custom_pre_filename, photo);
 
                 // 下载视频
                 photo.custom_filename = QZone.Photos.FILE_URLS.get(photo.video_info.video_url);
                 if (!photo.custom_filename) {
                     photo.custom_filename = filename + '.mp4';
                     // 添加下载任务
-                    API.Utils.newDownloadTask(photo.video_info.video_url, albumFolder, photo.custom_filename, photo);
+                    API.Utils.newDownloadTask('Photos', photo.video_info.video_url, albumFolder, photo.custom_filename, photo);
                     QZone.Photos.FILE_URLS.set(photo.video_info.video_url, photo.custom_filename);
                 }
                 photo.custom_filepath = albumFolder + '/' + photo.custom_filename;
@@ -694,7 +701,7 @@ API.Photos.addPhotosDownloadTasks = async(album, photos) => {
                     photo.custom_filename = API.Utils.filenameValidate(orderNumber + '_' + photo.name + '_' + API.Utils.newSimpleUid(8, 16));
                     photo.custom_filename = photo.custom_filename + suffix;
                     // 添加下载任务
-                    API.Utils.newDownloadTask(photo.custom_url, albumFolder, photo.custom_filename, photo);
+                    API.Utils.newDownloadTask('Photos', photo.custom_url, albumFolder, photo.custom_filename, photo);
                     QZone.Photos.FILE_URLS.set(photo.custom_url, photo.custom_filename);
                 }
                 photo.custom_filepath = albumFolder + '/' + photo.custom_filename;
@@ -707,7 +714,7 @@ API.Photos.addPhotosDownloadTasks = async(album, photos) => {
                     // 如果需要获取预览图
                     photo.custom_pre_filepath = albumFolder + '/Images/' + photo.custom_filename;
                     // 添加下载任务
-                    API.Utils.newDownloadTask(photo.pre, albumFolder + '/Images', photo.custom_filename, photo);
+                    API.Utils.newDownloadTask('Photos', photo.pre, albumFolder + '/Images', photo.custom_filename, photo);
                 }
             }
         }
@@ -949,7 +956,7 @@ API.Photos.exportPhotosToHtml = async(albums) => {
         // 基于JSON生成JS
         console.info('生成相册JSON开始', albums);
         await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('dataList', albums, QZone.Common.ROOT + '/json/albums.js');
+        const jsonFile = await API.Common.writeJsonToJs('albums', albums, QZone.Common.ROOT + '/json/albums.js');
         console.info('生成相册JSON结束', jsonFile, albums);
 
         // 生成相片列表HTML
@@ -1218,7 +1225,7 @@ API.Photos.getAlbumsLikeList = async(items) => {
     indicator.setTotal(items.length);
 
     // 同时请求数
-    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+    const _items = _.chunk(items, 10);
 
     // 获取点赞列表
     let count = 0;
@@ -1277,7 +1284,7 @@ API.Photos.getPhotosLikeList = async(items) => {
     indicator.setTotal(items.length);
 
     // 同时请求数
-    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+    const _items = _.chunk(items, 10);
 
     // 获取点赞列表
     let count = 0;
@@ -1388,7 +1395,7 @@ API.Photos.getAllVisitorList = async(items) => {
     indicator.setTotal(items.length);
 
     // 同时请求数
-    const _items = _.chunk(items, 5);
+    const _items = _.chunk(items, 10);
 
     // 获取最近访问
     let count = 0;

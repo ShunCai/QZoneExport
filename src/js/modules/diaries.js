@@ -219,7 +219,7 @@ API.Diaries.exportToHtml = async(items) => {
     // 基于JSON生成JS
     console.info('生成私密日记JSON开始', items);
     await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-    const jsonFile = await API.Common.writeJsonToJs('dataList', items, QZone.Common.ROOT + '/json/diaries.js');
+    const jsonFile = await API.Common.writeJsonToJs('diaries', items, QZone.Common.ROOT + '/json/diaries.js');
     console.info('生成私密日记JSON结束', jsonFile, items);
 
 
@@ -330,7 +330,7 @@ API.Diaries.handerImages = async(item, images) => {
         let uid = API.Utils.newSimpleUid(8, 16);
         const custom_filename = uid + API.Utils.getFileSuffixByUrl(url);
         // 添加下载任务
-        API.Utils.newDownloadTask(url, 'Diaries/Images', custom_filename, item);
+        API.Utils.newDownloadTask('Diaries', url, 'Diaries/Images', custom_filename, item);
 
         let exportType = QZone_Config.Diaries.exportType;
         switch (exportType) {

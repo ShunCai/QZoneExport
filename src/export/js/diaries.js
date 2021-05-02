@@ -38,6 +38,6 @@ $(function () {
         formatter: (value) => {
             return API.Utils.formatDate(value);
         }
-    }], dataList);
+    }], diaries);
 
 });

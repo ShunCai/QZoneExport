@@ -178,6 +178,7 @@ const API = {
     Boards: {}, // 留言模块
     Photos: {}, // 相册模块
     Videos: {}, // 视频模块
+    Favorites: {}, // 收藏夹模块
     Shares: {}, // 分享模块
     Visitors: {} // 访客模块
 };
@@ -399,7 +400,6 @@ API.Utils = {
     }
 
 }
-
 
 /**
  * QQ空间公共模块
@@ -918,6 +918,51 @@ API.Common = {
             }
         }
         return result.join('');
+    },
+
+    /**
+     * 预加载前后预览图图片
+     * @param {integer} index 当前幻灯片位置
+     * @param {integer} loadSize 加载个数
+     */
+    renderPreviews(index, loadSize) {
+
+        // 加载当前位置
+        const renderPreview = function(index) {
+            const $img = $('.lightbox img').eq(index);
+            let src = $img.attr('src') || '';
+            if (!src.endsWith('loading.gif')) {
+                return;
+            }
+            src = $img.attr('data-src');
+            $('.lg-thumb-item img').eq(index).attr('src', src);
+        }
+
+        // 加载前后位置
+        for (var i = 0; i < loadSize; i++) {
+            renderPreview(index + i);
+            renderPreview(index - i);
+        }
+
+    },
+
+    /**
+     * 自动加载画廊预览图
+     * @param {object} gallery 画廊相册
+     */
+    autoLoadPreview(gallery) {
+        // 画廊切换图片后
+        gallery.on('onAfterSlide.lg', function(event, prevIndex, index) {
+            API.Common.renderPreviews(index, 20);
+        });
+
+        // 画廊打开后
+        gallery.on('onAfterOpen.lg', function() {
+            $('.lg-thumb-item').mousedown(function() {
+                const index = $(this).index();
+                API.Common.renderPreviews(index, 20);
+            })
+        });
     }
 }
 
@@ -980,6 +1025,31 @@ API.Messages = {
 }
 
 /**
+ * 收藏夹模块API
+ */
+API.Favorites = {
+
+    /**
+     * 获取收藏夹分享的URL
+     * @param {object} share_info 收藏夹分享信息
+     */
+    getShareUrl(share_info) {
+        if (!share_info) {
+            return "#";
+        }
+        if (share_info.music_list && share_info.music_list.length > 0) {
+            // 音乐分享
+            return share_info.music_list[0].music_info.play_url;
+        }
+        if (share_info.video_list && share_info.video_list.length > 0) {
+            // 视频分享
+            return share_info.video_list[0].video_info.play_url;
+        }
+        return share_info.share_url;
+    }
+}
+
+/**
  * 分享模块API
  */
 API.Shares = {
@@ -1002,7 +1072,6 @@ API.Shares = {
         return Share_Types[innerType] || "其它";
     }
 }
-
 
 /**
  * 访客模块API
@@ -1054,7 +1123,6 @@ API.Visitors = {
         return '查看了' + titles.join('、');
     }
 }
-
 
 /**
  * 视频模块API

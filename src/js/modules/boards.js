@@ -168,7 +168,7 @@ API.Boards.handerData = async(boardInfo) => {
                 custom_filename = API.Utils.newSimpleUid(8, 16);
                 custom_filename = custom_filename + API.Utils.getFileSuffixByUrl(url);
                 // 添加下载任务
-                API.Utils.newDownloadTask(url, 'Boards/Images', custom_filename, board);
+                API.Utils.newDownloadTask('Boards', url, 'Boards/Images', custom_filename, board);
                 QZone.Boards.FILE_URLS.set(url, custom_filename);
             }
             $img.attr('src', 'images/' + custom_filename);

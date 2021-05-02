@@ -613,6 +613,9 @@ const ExportFiles = [{
     original: 'export/images/video-play.png',
     target: FOLDER_ROOT + 'Common/images/video-play.png'
 }, {
+    original: 'export/images/loading.gif',
+    target: FOLDER_ROOT + 'Common/images/loading.gif'
+}, {
     original: 'vendor/template/template.js',
     target: FOLDER_ROOT + 'Common/js/template.js'
 }, {

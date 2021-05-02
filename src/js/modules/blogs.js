@@ -333,7 +333,7 @@ API.Blogs.exportToHtml = async(items) => {
 
     // 基于JSON生成JS
     await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-    await API.Common.writeJsonToJs('dataList', items, QZone.Common.ROOT + '/json/blogs.js');
+    await API.Common.writeJsonToJs('blogs', items, QZone.Common.ROOT + '/json/blogs.js');
 
     // 基于模板生成HTML
     await API.Common.writeHtmlofTpl('blogs', undefined, QZone.Blogs.ROOT + "/index.html");
@@ -507,7 +507,7 @@ API.Blogs.handerImages = async(item, images) => {
         let uid = API.Utils.newSimpleUid(8, 16);
         const custom_filename = uid + API.Utils.getFileSuffixByUrl(url);
         // 添加下载任务
-        API.Utils.newDownloadTask(url, 'Blogs/Images', custom_filename, item);
+        API.Utils.newDownloadTask('Blogs', url, 'Blogs/Images', custom_filename, item);
 
         switch (exportType) {
             case 'MarkDown':
@@ -629,7 +629,7 @@ API.Blogs.getAllLikeList = async(items) => {
     indicator.setTotal(items.length);
 
     // 同时请求数
-    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+    const _items = _.chunk(items, 10);
 
     // 获取点赞列表
     let count = 0;
@@ -730,7 +730,7 @@ API.Blogs.getAllVisitorList = async(items) => {
     indicator.setTotal(items.length);
 
     // 同时请求数
-    const _items = _.chunk(items, 5);
+    const _items = _.chunk(items, 10);
 
     // 获取最近访问
     let count = 0;

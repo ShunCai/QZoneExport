@@ -243,7 +243,7 @@ API.Friends.exportToHtml = async (friends) => {
     // 基于JSON生成JS
     console.info('生成好友JSON开始', friends);
     await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-    const jsonFile = await API.Common.writeJsonToJs('dataList', friends, QZone.Common.ROOT + '/json/friends.js');
+    const jsonFile = await API.Common.writeJsonToJs('friends', friends, QZone.Common.ROOT + '/json/friends.js');
     console.info('生成好友JSON结束', jsonFile, friends);
 
     // 基于模板生成HTML

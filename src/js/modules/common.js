@@ -235,7 +235,7 @@ API.Common.formatContent = (item, type, isRt, isSupportedHtml) => {
     let content = API.Utils.formatContent(item, type, isRt, isSupportedHtml);
     try {
         // 暂时不识别内容图片，这里识别文件名后缀涉及到async，渲染模板暂不支持await，也不能通过URL直接判断，因为文件名可能为GIF，实际类型却为PNG
-        // content = API.Common.handerContentImages(content, type);
+        // content = API.Common.handerContentImages("Others",content, type);
     } catch (error) {
         console.error('处理内容图片信息异常', error, item, type, isRt, isSupportedHtml);
     }
@@ -245,10 +245,11 @@ API.Common.formatContent = (item, type, isRt, isSupportedHtml) => {
 
 /**
  * 处理内容中的图片
+ * @param {string} module 模块
  * @param {string} content 内容
  * @param {string} type 类型
  */
-API.Common.handerContentImages = (content, type) => {
+API.Common.handerContentImages = (module, content, type) => {
     if (API.Common.isQzoneUrl() || !content) {
         // QQ空间外链不处理
         return content;
@@ -256,7 +257,7 @@ API.Common.handerContentImages = (content, type) => {
     // 获取内容中的图片信息（如果说说本身的内容也是HTML/MD代码，也同样处理）
     if ("MD" === type) {
         content.replace(/!\[.*?\]\((.+?)\)/g, function(linkmd, url) {
-            let custom_filename = API.Common.addDownloadTask(url, content);
+            let custom_filename = API.Common.addDownloadTask(module, url, content);
             return linkmd.replace(url, API.Common.getMediaPath(url, 'Common/images/' + custom_filename, "Messages_HTML"));
         })
         return content;
@@ -267,7 +268,7 @@ API.Common.handerContentImages = (content, type) => {
     for (let i = 0; i < images.length; i++) {
         const $img = $(images[i]);
         let url = $img.attr('orgsrc') || $img.attr('src') || '';
-        let custom_filename = API.Common.addDownloadTask(url, content);
+        let custom_filename = API.Common.addDownloadTask(module, url, content);
         $img.attr('src', API.Common.getMediaPath(url, 'Common/images/' + custom_filename, "Messages_HTML"));
     }
     return _html.html();
@@ -275,15 +276,16 @@ API.Common.handerContentImages = (content, type) => {
 
 /**
  * 添加内容中的图片下载任务
+ * @param {string} module 模块
  * @param {string} url 链接
  * @param {string} content 内容
  */
-API.Common.addDownloadTask = (url, content) => {
+API.Common.addDownloadTask = (module, url, content) => {
     let custom_filename = QZone.Common.FILE_URLS.get(url);
     if (!custom_filename) {
         custom_filename = API.Utils.newSimpleUid(8, 16);
         // 添加下载任务
-        API.Utils.newDownloadTask(url, 'Common/images', custom_filename, content);
+        API.Utils.newDownloadTask(module, url, 'Common/images', custom_filename, content);
         QZone.Common.FILE_URLS.set(url, custom_filename);
     }
     return custom_filename;
@@ -323,7 +325,7 @@ API.Common.getMediaPath = (url, filepath, sourceType) => {
 API.Common.downloadsByAjax = async(tasks) => {
 
     // 任务分组
-    const _tasks = _.chunk(tasks, QZone_Config.Common.downloadThread);
+    const _tasks = _.chunk(tasks, 10);
 
     const indicator = new StatusIndicator('Common_File');
     indicator.setTotal(tasks.length);
@@ -364,13 +366,13 @@ API.Common.downloadsByBrowser = async(tasks) => {
     indicator.setTotal(tasks.length);
 
     // 开始下载
-    const _tasks = _.chunk(tasks, QZone_Config.Common.downloadThread);
+    const _tasks = _.chunk(tasks, 10);
     for (let i = 0; i < _tasks.length; i++) {
         const list = _tasks[i];
         for (let j = 0; j < list.length; j++) {
             const task = list[j];
             // 添加任务到下载器的时候，可能存在一直无返回的情况，问题暂未定位，先临时添加超时秒数逻辑
-            await API.Utils.timeoutPromise(API.Utils.downloadByBrowser(task), 60 * 1000).then((downloadTask) => {
+            await API.Utils.timeoutPromise(API.Utils.downloadByBrowser(task), 15 * 1000).then((downloadTask) => {
                 if (downloadTask.id > 0) {
                     task.setState('complete');
                     indicator.addSuccess(task);
@@ -527,6 +529,7 @@ API.Common.handerThunderInfo = (thunderInfo) => {
     for (const _temp of _tasks) {
         delete _temp.downloadState;
         delete _temp.source;
+        delete _temp.module;
     }
 
     return _thunderInfo;
@@ -874,7 +877,7 @@ API.Common.initBackedUpItems = async() => {
 
 /**
  * 是否存在下一页
- * @param {integer} pageIndex 当前页索引
+ * @param {integer} pageIndex 下一页索引
  * @param {integer} pageSize 每页条目数
  * @param {integer} total 总数
  * @param {Array} items 已获取数据数组
@@ -885,7 +888,7 @@ API.Common.hasNextPage = (pageIndex, pageSize, total, items) => {
 
 /**
  * 获取下一页数据
- * @param {integer} pageIndex 当前页索引
+ * @param {integer} pageIndex 下一页索引
  * @param {object} moduleConfig 模块配置
  * @param {integer} total 总数
  * @param {Array} items 已获取数据
@@ -998,7 +1001,7 @@ API.Common.downloadUserAvatar = (user) => {
         return;
     }
 
-    API.Utils.newDownloadTask(avatarUrl, 'Common/images', user.uin + '', user);
+    API.Utils.newDownloadTask('Friends',avatarUrl, 'Common/images', user.uin + '', user);
     user.avatar = API.Common.getUserLogoUrl(user.uin);
     user.custom_avatar = API.Common.getUserLogoLocalUrl(user.uin);
 

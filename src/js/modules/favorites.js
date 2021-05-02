@@ -6,7 +6,7 @@
 /**
  * 导出收藏板
  */
-API.Favorites.export = async () => {
+API.Favorites.export = async() => {
     try {
         // 获取所有的收藏列表
         let dataList = await API.Favorites.getAllList();
@@ -31,7 +31,7 @@ API.Favorites.export = async () => {
  * @param {integer} pageIndex 指定页的索引
  * @param {StatusIndicator} indicator 状态更新器
  */
-API.Favorites.getPageList = async (pageIndex, indicator) => {
+API.Favorites.getPageList = async(pageIndex, indicator) => {
 
     // 状态更新器当前页
     indicator.setIndex(pageIndex + 1);
@@ -61,7 +61,7 @@ API.Favorites.getPageList = async (pageIndex, indicator) => {
 /**
  * 获取所有收藏列表
  */
-API.Favorites.getAllList = async () => {
+API.Favorites.getAllList = async() => {
 
     // 进度更新器
     const indicator = new StatusIndicator('Favorites');
@@ -71,11 +71,11 @@ API.Favorites.getAllList = async () => {
 
     const CONFIG = QZone_Config.Favorites;
 
-    const nextPage = async function (pageIndex, indicator) {
+    const nextPage = async function(pageIndex, indicator) {
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
-        return await API.Favorites.getPageList(pageIndex, indicator).then(async (dataList) => {
+        return await API.Favorites.getPageList(pageIndex, indicator).then(async(dataList) => {
 
             // 合并数据
             QZone.Favorites.Data = API.Utils.unionItems(QZone.Favorites.Data, dataList);
@@ -85,7 +85,7 @@ API.Favorites.getAllList = async () => {
             }
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Favorites.total, QZone.Favorites.Data, arguments.callee, nextPageIndex, indicator);
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取收藏列表异常，当前页：", pageIndex + 1, e);
             indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
@@ -112,7 +112,7 @@ API.Favorites.getAllList = async () => {
  * 导出收藏
  * @param {Array} favorites 收藏列表
  */
-API.Favorites.exportAllToFiles = async (favorites) => {
+API.Favorites.exportAllToFiles = async(favorites) => {
     // 获取用户配置
     let exportType = QZone_Config.Favorites.exportType;
     switch (exportType) {
@@ -135,13 +135,20 @@ API.Favorites.exportAllToFiles = async (favorites) => {
  * 导出收藏夹到HTML文件
  * @param {Array} favorites 数据
  */
-API.Favorites.exportToHtml = async (favorites) => {
+API.Favorites.exportToHtml = async(favorites) => {
     // 进度更新器
     const indicator = new StatusIndicator('Favorites_Export_Other');
     indicator.setIndex('HTML');
 
     try {
-        // 说说数据根据年份分组
+
+        // 基于JSON生成JS
+        console.info('生成收藏夹JSON开始', favorites);
+        await API.Utils.createFolder(QZone.Common.ROOT + '/json');
+        const jsonFile = await API.Common.writeJsonToJs('favorites', favorites, QZone.Common.ROOT + '/json/favorites.js');
+        console.info('生成分享JSON结束', jsonFile, favorites);
+
+        // 数据根据年份分组
         let yearMaps = API.Utils.groupedByTime(favorites, "create_time", 'year');
         // 基于模板生成年份说说HTML
         for (const [year, yearItems] of yearMaps) {
@@ -177,7 +184,7 @@ API.Favorites.exportToHtml = async (favorites) => {
  * 导出收藏到MD文件
  * @param {Array} favorites 收藏列表
  */
-API.Favorites.exportToMarkdown = async (favorites) => {
+API.Favorites.exportToMarkdown = async(favorites) => {
     // 进度更新器
     const indicator = new StatusIndicator('Favorites_Export_Other');
     indicator.setIndex('Markdown');
@@ -375,7 +382,7 @@ API.Favorites.getMarkdown = (favorite) => {
  * 导出收藏到JSON文件
  * @param {Array} favorites 收藏列表
  */
-API.Favorites.exportToJson = async (favorites) => {
+API.Favorites.exportToJson = async(favorites) => {
     // 进度更新器
     const indicator = new StatusIndicator('Favorites_Export_Other');
     indicator.setIndex(year);
@@ -414,7 +421,7 @@ API.Favorites.exportToJson = async (favorites) => {
  * 添加多媒体下载任务
  * @param {Array} dataList
  */
-API.Favorites.addMediaToTasks = async (dataList) => {
+API.Favorites.addMediaToTasks = async(dataList) => {
     // 下载相对目录
     let module_dir = 'Favorites/Images';
 
@@ -428,16 +435,16 @@ API.Favorites.addMediaToTasks = async (dataList) => {
         // 下载说说配图
         for (const image of item.custom_images) {
             let url = image.url;
-            await API.Utils.addDownloadTasks(image, url, module_dir, item, QZone.Favorites.FILE_URLS);
+            await API.Utils.addDownloadTasks('Favorites', image, url, module_dir, item, QZone.Favorites.FILE_URLS);
         }
 
         // 下载视频预览图及视频
-        API.Videos.addDownloadTasks(item.custom_videos, module_dir, item, QZone.Favorites.FILE_URLS);
+        API.Videos.addDownloadTasks('Favorites', item.custom_videos, module_dir, item, QZone.Favorites.FILE_URLS);
 
         // 下载音乐预览图
         for (const audio of item.custom_audios) {
             let url = audio.preview_img;
-            await API.Utils.addDownloadTasks(audio, url, module_dir, item, QZone.Favorites.FILE_URLS);
+            await API.Utils.addDownloadTasks('Favorites', audio, url, module_dir, item, QZone.Favorites.FILE_URLS);
         }
     }
     return dataList;

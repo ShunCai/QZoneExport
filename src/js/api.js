@@ -1162,6 +1162,7 @@ API.Utils = {
             delete options.source;
             delete options.state;
             delete options.downloadState;
+            delete options.module;
 
             chrome.runtime.sendMessage({
                 from: 'content',
@@ -2972,6 +2973,25 @@ API.Favorites = {
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
         }
         return API.Utils.get(QZone_URLS.FAVORITE_LIST_URL, params);
+    },
+
+    /**
+     * 获取收藏夹分享的URL
+     * @param {object} share_info 收藏夹分享信息
+     */
+    getShareUrl(share_info) {
+        if (!share_info) {
+            return "#";
+        }
+        if (share_info.music_list && share_info.music_list.length > 0) {
+            // 音乐分享
+            return share_info.music_list[0].music_info.play_url;
+        }
+        if (share_info.video_list && share_info.video_list.length > 0) {
+            // 视频分享
+            return share_info.video_list[0].video_info.play_url;
+        }
+        return share_info.share_url;
     }
 
 };

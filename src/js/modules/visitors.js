@@ -134,7 +134,7 @@ API.Visitors.addMediaToTasks = async (visitorInfo) => {
             if (!message.imgsrc) {
                 continue;
             }
-            await API.Utils.addDownloadTasks(message, message.imgsrc, module_dir, item, QZone.Visitors.FILE_URLS);
+            await API.Utils.addDownloadTasks('Visitors', message, message.imgsrc, module_dir, item, QZone.Visitors.FILE_URLS);
         }
 
         // 日志配图 暂无
@@ -146,7 +146,7 @@ API.Visitors.addMediaToTasks = async (visitorInfo) => {
             if (!photo.imgsrc) {
                 continue;
             }
-            await API.Utils.addDownloadTasks(photo, photo.imgsrc, module_dir, item, QZone.Visitors.FILE_URLS);
+            await API.Utils.addDownloadTasks('Visitors', photo, photo.imgsrc, module_dir, item, QZone.Visitors.FILE_URLS);
         }
 
         // 分享配图
@@ -155,7 +155,7 @@ API.Visitors.addMediaToTasks = async (visitorInfo) => {
             if (!share.imgsrc) {
                 continue;
             }
-            await API.Utils.addDownloadTasks(share, share.imgsrc, module_dir, item, QZone.Visitors.FILE_URLS);
+            await API.Utils.addDownloadTasks('Visitors', share, share.imgsrc, module_dir, item, QZone.Visitors.FILE_URLS);
         }
     }
     return visitorInfo;

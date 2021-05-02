@@ -86,7 +86,7 @@
 												<%}else if(favorite.type === 7){%>
 													<%/* 分享 */%>
 													<%if(favorite.title){%>
-														<pre><a target="_blank" href="<%:=favorite.share_info.share_url%>"><%:=favorite.title%></a></pre>
+														<pre><a target="_blank" href="<%:=API.Favorites.getShareUrl(favorite.share_info)%>"><%:=favorite.title%></a></pre>
 													<%}%>
 													<%if(favorite.abstract){%>
 														<pre><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true)%></pre>
@@ -121,7 +121,7 @@
 												<a class="medias-item border message-lightbox" data-poster="<%:=video.custom_pre_filepath || video.preview_img%>" data-html="#<%:=video.video_id || video.vid || video.pic_id%>">
 													<span class="message-video"></span>
 													<div style="display:none;" id="<%:=video.video_id || video.vid || video.pic_id%>">
-														<video class="lg-video-object lg-html5" src="<%:=video.custom_filepath || video.url%>" controls="controls"></video>
+														<video class="lg-video-object lg-html5" src="<%:=video.custom_filepath || video.url%>" controls="controls" preload="none"></video>
 													</div>
 													<img class="lazyload w-100 h-100" data-src="<%:=video.custom_pre_filepath || video.preview_img%>" />
 												</a>
@@ -143,7 +143,7 @@
 										<ul class="list-unstyled">
 											<%for(let music of favorite.custom_audios){%>
 												<li>
-													<a class="medias-item text-center message-lightbox" href="<%:=music.playurl%>">
+													<a class="medias-item text-center message-lightbox" href="<%:=music.playurl || music.play_url%>">
 														<img class="lazyload w-100 h-100" data-src="<%:=music.custom_filepath || music.custom_url%>">
 														<span><%:=music.song_name%></span>
 													</a>

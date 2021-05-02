@@ -149,7 +149,7 @@ const YEAR_ITEMS = `
 $(function () {
 
     // 那年今日
-    const _yearMaps = API.Common.getOldYearData(dataList, "shareTime");
+    const _yearMaps = API.Common.getOldYearData(shares, "shareTime");
 
     // 那年今日HTML
     const items_html = template(YEAR_ITEMS, { yearMaps: _yearMaps });
@@ -171,12 +171,12 @@ $(function () {
 
     // 点赞列表
     $('.viewlikes').on('click', function () {
-        API.Common.showLikeWin(this, dataList);
+        API.Common.showLikeWin(this, shares);
     });
 
     // 最近访问
     $('.viewVisitors').on('click', function () {
-        API.Common.showVisitorsWin(this, dataList);
+        API.Common.showVisitorsWin(this, shares);
     });
 
 });

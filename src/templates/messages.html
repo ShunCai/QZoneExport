@@ -112,7 +112,7 @@
 																<a class="medias-item border message-lightbox" data-poster="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" data-html="#<%:=video.video_id || video.vid || video.pic_id%>">
 																	<span class="message-video"></span>
 																	<div style="display:none;" id="<%:=video.video_id || video.vid || video.pic_id%>">
-																		<video class="lg-video-object lg-html5" src="<%:=(video.custom_filepath || video.custom_url || video.url3)%>" controls="controls"></video>
+																		<video class="lg-video-object lg-html5" src="<%:=(video.custom_filepath || video.custom_url || video.url3)%>" controls="controls" preload="none"></video>
 																	</div>
 																	<img class="lazyload w-100 h-100" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" />
 																</a>
@@ -133,7 +133,7 @@
 																	<a class="medias-item border message-lightbox" data-poster="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" data-html="#<%:=image.video_info.video_id || image.video_info.vid || image.pic_id%>">
 																		<span class="message-video"></span>
 																		<div style="display:none;" id="<%:=image.video_info.video_id || image.video_info.vid || image.pic_id%>">
-																			<video class="lg-video-object lg-html5" src="<%:=(image.video_info.custom_filepath || image.video_info.custom_url || image.video_info.url3)%>" controls="controls"></video>
+																			<video class="lg-video-object lg-html5" src="<%:=(image.video_info.custom_filepath || image.video_info.custom_url || image.video_info.url3)%>" controls="controls" preload="none"></video>
 																		</div>
 																		<img class="lazyload w-100 h-100" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" />
 																	</a>

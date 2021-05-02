@@ -15,6 +15,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.14/dist/js/lightgallery-all.min.js" integrity="sha256-0q70xbZ3GMwdiseCj/wfChJhq/3wzpNdgZinlSxSw14=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/jquery-mousewheel@3.1.13/jquery.mousewheel.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lazyload@2.0.0-rc.2/lazyload.js"></script>
+	<script type="text/javascript" src="../Common/js/common.js"></script>
 </head>
 
 <body>
@@ -43,11 +44,11 @@
 						<div class="col-md-2 mb-2">
 							<div class="card thumbnail mb-2 shadow-sm">
 								<div style="display:none;" id="<%:=video.vid%>">
-									<video class="lg-video-object lg-html5" src="<%:=(video.custom_filepath || video.custom_url || video.url)%>" controls="controls" ></video>
+									<video class="lg-video-object lg-html5" src="<%:=(video.custom_filepath || video.custom_url || video.url)%>" controls="controls" preload="none"></video>
 								</div>
 								<a class="lightbox" data-poster="<%:=API.Common.getMediaPath(video.pre || video.custom_pre_url, video.custom_pre_filepath)%>" title="<%:=API.Common.formatContent(video.desc)%>" data-html="#<%:=video.vid%>">
 									<span class="photo-video"></span>
-									<img class="lazyload" data-src="<%:=API.Common.getMediaPath(video.pre || video.custom_pre_url, video.custom_pre_filepath)%>" />
+									<img class="lazyload" src="../Common/Images/loading.gif" data-src="<%:=API.Common.getMediaPath(video.pre || video.custom_pre_url, video.custom_pre_filepath)%>" />
 								</a>
 								<div class="card-body">
 									<h5 class="card-title"><%:=video.desc ? API.Common.formatContent(video.desc) : API.Utils.formatDate(video.uploadTime)%></h5>
@@ -65,12 +66,16 @@
 			lazyload();
 
 			// 渲染画廊
-			$("#lightgallery").lightGallery({
+			const gallery = $("#lightgallery").lightGallery({
 				selector: '.lightbox',
 				share: false,
-				loop: false,
+				loop: true,
 				download: false
 			});
+
+			// 自动加载画廊预览图
+			API.Common.autoLoadPreview(gallery);
+
 		});
 	</script>
 </body>

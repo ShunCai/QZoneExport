@@ -7,12 +7,14 @@
 class DownloadTask {
 
     /**
+     * @param {string} module 模块
      * @param {string} dir 下载目录
      * @param {string} name 文件名，包含后缀
      * @param {string} url 文件地址
      * @param {object} source 文件来源
      */
-    constructor(dir, name, url, source) {
+    constructor(module, dir, name, url, source) {
+        this.module = module
         this.dir = dir
         this.name = name
         this.url = url
@@ -36,12 +38,14 @@ class ThunderTask {
 
     /**
      * 
+     * @param {string} module 模块
      * @param {string} dir 下载目录
      * @param {string} name 文件名，包含后缀
      * @param {string} url 文件地址
      * @param {object} source 文件来源
      */
-    constructor(dir, name, url, source) {
+    constructor(module, dir, name, url, source) {
+        this.module = module
         this.dir = dir
         this.name = name
         this.url = url
@@ -108,13 +112,15 @@ class BrowserTask {
 
     /**
      * 
+     * @param {string} module 模块
      * @param {string} url 下载地址
      * @param {string} root 下载根目录名称
      * @param {string} folder 根目录相对名称
      * @param {string} name 文件名称
      * @param {object} source 文件来源
      */
-    constructor(url, root, folder, name, source) {
+    constructor(module, url, root, folder, name, source) {
+        this.module = module;
         this.id = 0;
         this.url = url;
         this.dir = folder;
@@ -1138,13 +1144,10 @@ class QZoneOperator {
 
         /**
          * 筛选数据
-         * @param {string} value 过滤标识
+         * @param {string} module 模块
+         * @param {string} status 状态
          */
-        const filterData = async function(value) {
-            if (value === 'all') {
-                $("#table").bootstrapTable('filterBy');
-                return;
-            }
+        const filterData = async function(module, status) {
             switch (downloadType) {
                 case 'Browser':
                     // 下载方式为浏览器下载时
@@ -1166,20 +1169,37 @@ class QZoneOperator {
                     break;
             }
             $("#table").bootstrapTable('filterBy', {
-                downloadState: value
+                module: module === 'all' ? undefined : module,
+                downloadState: status === 'all' ? undefined : status,
+            }, {
+                filterAlgorithm: function(row, filters) {
+                    let hanRow = true;
+                    for (const key in filters) {
+                        if (filters[key] && row[key] !== filters[key]) {
+                            hanRow = false;
+                        }
+                    }
+                    return hanRow;
+                }
             })
         }
 
         // 查看指定状态的数据
+        $('#moduleFilter').change(function() {
+            $('#statusFilter').val('interrupted').change();
+        })
+
+        // 查看指定状态的数据
         $('#statusFilter').change(function() {
-            let value = $(this).val();
-            if ('interrupted' === value || ('Thunder' === downloadType && 'all' === value)) {
+            const status = $(this).val();
+            if ('interrupted' === status || ('Thunder' === downloadType && 'all' === status)) {
                 // 失败列表与迅雷下载全部列表时才展示【继续重试】按钮
                 $againDownloadBtn.show();
             } else {
                 $againDownloadBtn.hide();
             }
-            filterData(value);
+            const module = $('#moduleFilter').val();
+            filterData(module, status);
         })
 
         // 【重试】按钮点击事件
@@ -1222,7 +1242,7 @@ class QZoneOperator {
             let tasks = $('#table').bootstrapTable('getSelections');
             let newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, QZone_Config.Common.downloadThread);
             for (const task of tasks) {
-                newThunderInfo.tasks.push(new ThunderTask(task.dir, task.name, API.Utils.toHttp(task.url)));
+                newThunderInfo.tasks.push(new ThunderTask(task.module, task.dir, task.name, API.Utils.toHttp(task.url)));
                 task.setState('complete');
             }
             await API.Common.invokeThunder(newThunderInfo)
@@ -1233,7 +1253,7 @@ class QZoneOperator {
             let tasks = $('#table').bootstrapTable('getSelections');
             let newBrowserTasks = [];
             for (const task of tasks) {
-                newBrowserTasks.push(new BrowserTask(API.Utils.toHttp(task.url), thunderInfo.taskGroupName, task.dir, task.name));
+                newBrowserTasks.push(new BrowserTask(task.module, API.Utils.toHttp(task.url), thunderInfo.taskGroupName, task.dir, task.name));
                 task.setState('in_progress');
             }
             API.Common.downloadsByBrowser(newBrowserTasks);
@@ -1327,7 +1347,7 @@ class QZoneOperator {
             $('#table').bootstrapTable('resetView')
 
             // 默认加载失败的数据
-            filterData("interrupted");
+            filterData("all", "interrupted");
         })
     }
 }
@@ -1405,6 +1425,7 @@ const browserTasks = new Array();
 
 /**
  * 添加下载任务
+ * @param {String} module 模块
  * @param {string} item 对象
  * @param {string} url URL
  * @param {string} module_dir 模块下载目录
@@ -1412,7 +1433,7 @@ const browserTasks = new Array();
  * @param {string} FILE_URLS 文件下载链接
  * @param {string} suffix 文件后缀
  */
-API.Utils.addDownloadTasks = async(item, url, module_dir, source, FILE_URLS, suffix) => {
+API.Utils.addDownloadTasks = async(module, item, url, module_dir, source, FILE_URLS, suffix) => {
     url = API.Utils.toHttp(url);
     item.custom_url = url;
     if (API.Common.isQzoneUrl()) {
@@ -1429,30 +1450,31 @@ API.Utils.addDownloadTasks = async(item, url, module_dir, source, FILE_URLS, suf
     item.custom_filepath = 'Images/' + filename;
     if (!FILE_URLS.has(url)) {
         // 添加下载任务
-        API.Utils.newDownloadTask(url, module_dir, filename, source, suffix);
+        API.Utils.newDownloadTask(module, url, module_dir, filename, source, suffix);
         FILE_URLS.set(url, filename);
     }
 }
 
 /**
  * 添加下载任务
- * @param {url} url 下载地址
- * @param {folder} folder 下载相对目录
- * @param {name} name 文件名称
+ * @param {String} module 模块
+ * @param {String} url 下载地址
+ * @param {String} folder 下载相对目录
+ * @param {String} name 文件名称
  * @param {object} source 文件来源
  */
-API.Utils.newDownloadTask = (url, folder, name, source, makeOrg) => {
+API.Utils.newDownloadTask = (module, url, folder, name, source, makeOrg) => {
     if (!url) {
         return;
     }
     url = makeOrg ? url : API.Utils.makeDownloadUrl(url, true);
 
     // 添加Ajax请求下载任务
-    const ajax_down = new DownloadTask(folder, name, API.Common.isFile() ? API.Utils.toHttps(url) : url, source);
+    const ajax_down = new DownloadTask(module, folder, name, API.Common.isFile() ? API.Utils.toHttps(url) : url, source);
     // 添加浏览器下载任务
-    const browser_down = new BrowserTask(url, QZone.Common.Config.ZIP_NAME, folder, name, source);
+    const browser_down = new BrowserTask(module, url, QZone.Common.Config.ZIP_NAME, folder, name, source);
     // 添加迅雷下载任务
-    const thunder_down = new ThunderTask(folder, name, url, source);
+    const thunder_down = new ThunderTask(module, folder, name, url, source);
 
     // 因为视频存在有效期，所以尽量将MP4文件前置，尽早下载
     if (name && name.indexOf('mp4') > -1) {

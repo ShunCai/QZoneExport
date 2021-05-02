@@ -969,3 +969,10 @@ pre {
     height: 185px;
     overflow: hidden;
 }
+
+.lg-outer .lg-video .lg-object {
+    left: 50%;
+    width: auto!important;
+    height: 100%!important;
+    transform: translate(-50%, 0) !important;
+}
