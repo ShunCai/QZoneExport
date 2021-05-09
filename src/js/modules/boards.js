@@ -6,7 +6,7 @@
 /**
  * 导出留言板
  */
-API.Boards.export = async () => {
+API.Boards.export = async() => {
     try {
         // 获取所有的留言
         let boardInfo = await API.Boards.getAllList();
@@ -31,7 +31,7 @@ API.Boards.export = async () => {
  * @param {integer} pageIndex 指定页的索引
  * @param {StatusIndicator} indicator 状态更新器
  */
-API.Boards.getPageList = async (pageIndex, indicator) => {
+API.Boards.getPageList = async(pageIndex, indicator) => {
 
     // 状态更新器当前页
     indicator.setIndex(pageIndex + 1);
@@ -66,7 +66,7 @@ API.Boards.getPageList = async (pageIndex, indicator) => {
 /**
  * 获取所有留言列表
  */
-API.Boards.getAllList = async () => {
+API.Boards.getAllList = async() => {
 
     // 进度更新器
     const indicator = new StatusIndicator('Boards');
@@ -77,12 +77,12 @@ API.Boards.getAllList = async () => {
     // 配置项
     const CONFIG = QZone_Config.Boards;
 
-    const nextPage = async function (pageIndex, indicator) {
+    const nextPage = async function(pageIndex, indicator) {
 
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
-        return await API.Boards.getPageList(pageIndex, indicator).then(async (dataList) => {
+        return await API.Boards.getPageList(pageIndex, indicator).then(async(dataList) => {
 
             // 设置比较信息
             dataList = API.Common.setCompareFiledInfo(dataList, 'pubtime', 'pubtime');
@@ -95,7 +95,7 @@ API.Boards.getAllList = async () => {
             }
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Boards.Data.total, QZone.Boards.Data.items, arguments.callee, nextPageIndex, indicator);
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取留言列表异常，当前页：", pageIndex + 1, e);
             indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
@@ -122,7 +122,7 @@ API.Boards.getAllList = async () => {
  * 处理数据
  * @param {Array} boardInfo 留言信息
  */
-API.Boards.handerData = async (boardInfo) => {
+API.Boards.handerData = async(boardInfo) => {
     // 进度更新器
     const indicator = new StatusIndicator('Boards_Images_Mime');
 
@@ -166,10 +166,9 @@ API.Boards.handerData = async (boardInfo) => {
             let custom_filename = QZone.Boards.FILE_URLS.get(url);
             if (!custom_filename) {
                 custom_filename = API.Utils.newSimpleUid(8, 16);
-                let autoSuffix = await API.Utils.autoFileSuffix(url);
-                custom_filename = custom_filename + autoSuffix;
+                custom_filename = custom_filename + API.Utils.getFileSuffixByUrl(url);
                 // 添加下载任务
-                API.Utils.newDownloadTask(url, 'Boards/Images', custom_filename, board);
+                API.Utils.newDownloadTask('Boards', url, 'Boards/Images', custom_filename, board);
                 QZone.Boards.FILE_URLS.set(url, custom_filename);
             }
             $img.attr('src', 'images/' + custom_filename);
@@ -191,7 +190,7 @@ API.Boards.handerData = async (boardInfo) => {
  * 导出留言
  * @param {Array} boardInfo 留言信息
  */
-API.Boards.exportAllToFiles = async (boardInfo) => {
+API.Boards.exportAllToFiles = async(boardInfo) => {
     // 获取用户配置
     let exportType = QZone_Config.Boards.exportType;
     switch (exportType) {
@@ -215,7 +214,7 @@ API.Boards.exportAllToFiles = async (boardInfo) => {
  * 导出留言到HTML文件
  * @param {Array} boardInfo 留言信息
  */
-API.Boards.exportToHtml = async (boardInfo) => {
+API.Boards.exportToHtml = async(boardInfo) => {
     // 进度更新器
     const indicator = new StatusIndicator('Boards_Export_Other');
     indicator.setIndex("HTML");
@@ -264,7 +263,7 @@ API.Boards.exportToHtml = async (boardInfo) => {
  * 导出留言到MD文件
  * @param {Array} boardInfo 留言信息
  */
-API.Boards.exportToMarkdown = async (boardInfo) => {
+API.Boards.exportToMarkdown = async(boardInfo) => {
     // 进度更新器
     const indicator = new StatusIndicator('Boards_Export_Other');
     indicator.setIndex('Markdown');
@@ -386,7 +385,7 @@ API.Boards.getMarkdown = (borad) => {
  * 导出留言到JSON文件
  * @param {Array} boardInfo 留言信息
  */
-API.Boards.exportToJson = async (boardInfo) => {
+API.Boards.exportToJson = async(boardInfo) => {
     // 进度更新器
     const indicator = new StatusIndicator('Boards_Export_Other');
     indicator.setIndex('JSON');

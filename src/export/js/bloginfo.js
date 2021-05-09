@@ -2,8 +2,8 @@ $(function () {
     let blogId = API.Utils.getUrlParam('blogId');
 
     // 获取指定ID的日志
-    const blogIndex = dataList.getIndex(blogId * 1, 'blogid');
-    const blog = dataList[blogIndex];
+    const blogIndex = blogs.getIndex(blogId * 1, 'blogid');
+    const blog = blogs[blogIndex];
 
     // 渲染日志标题
     document.title = 'QQ空间备份-' + blog.custom_title;
@@ -22,12 +22,12 @@ $(function () {
 
     // 查看赞
     $('.viewlikes').on('click', function () {
-        API.Common.showLikeWin(this, dataList);
+        API.Common.showLikeWin(this, blogs);
     });
 
     // 最近访问
     $('.viewVisitors').on('click', function () {
-        API.Common.showVisitorsWin(this, dataList);
+        API.Common.showVisitorsWin(this, blogs);
     });
 
 });

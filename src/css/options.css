@@ -37,3 +37,7 @@ table td {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+#about .list-group-item{
+    padding: .5rem!important
+}

@@ -6,7 +6,7 @@
 /**
  * 导出视频数据
  */
-API.Videos.export = async () => {
+API.Videos.export = async() => {
     try {
         // 获取所有的视频列表
         let videos = await API.Videos.getAllList();
@@ -21,7 +21,7 @@ API.Videos.export = async () => {
         await API.Videos.getAllLikeList(videos);
 
         // 添加视频下载任务
-        API.Videos.addDownloadTasks(videos);
+        API.Videos.addDownloadTasks('Videos', videos);
 
         // 根据导出类型导出数据
         await API.Videos.exportAllToFiles(videos);
@@ -40,7 +40,7 @@ API.Videos.export = async () => {
  * @param {integer} pageIndex 指定页的索引
  * @param {StatusIndicator} indicator 状态更新器
  */
-API.Videos.getPageList = async (pageIndex, indicator) => {
+API.Videos.getPageList = async(pageIndex, indicator) => {
 
     // 状态更新器当前页
     indicator.setIndex(pageIndex + 1);
@@ -74,7 +74,7 @@ API.Videos.getPageList = async (pageIndex, indicator) => {
 /**
  * 获取所有视频列表
  */
-API.Videos.getAllList = async () => {
+API.Videos.getAllList = async() => {
     // 进度更新器
     const indicator = new StatusIndicator('Videos');
 
@@ -84,11 +84,11 @@ API.Videos.getAllList = async () => {
     // 视频配置项
     const CONFIG = QZone_Config.Videos;
 
-    const nextPage = async function (pageIndex, indicator) {
+    const nextPage = async function(pageIndex, indicator) {
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
-        return await API.Videos.getPageList(pageIndex, indicator).then(async (dataList) => {
+        return await API.Videos.getPageList(pageIndex, indicator).then(async(dataList) => {
             // 合并数据
             QZone.Videos.Data = API.Utils.unionItems(QZone.Videos.Data, dataList);
             if (API.Common.isPreBackupPos(dataList, CONFIG)) {
@@ -97,7 +97,7 @@ API.Videos.getAllList = async () => {
             }
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Videos.total, QZone.Videos.Data, arguments.callee, nextPageIndex, indicator);
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取视频列表异常，当前页：", pageIndex + 1, e);
             indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
@@ -124,7 +124,7 @@ API.Videos.getAllList = async () => {
  * 获取视频的所有评论
  * @param {Array} videos 视频列表
  */
-API.Videos.getAllComments = async (videos) => {
+API.Videos.getAllComments = async(videos) => {
     // 视频评论配置
     const CONFIG = QZone_Config.Videos.Comments;
 
@@ -159,12 +159,12 @@ API.Videos.getAllComments = async (videos) => {
             continue;
         }
 
-        const nextPage = async function (video, pageIndex) {
+        const nextPage = async function(video, pageIndex) {
             // 下一页索引
             const nextPageIndex = pageIndex + 1;
 
             // TODO，待确认是否存在shuoshuoid为空的情况，相册或视频直接上传？
-            return await API.Videos.getComments(video.shuoshuoid, pageIndex).then(async (data) => {
+            return await API.Videos.getComments(video.shuoshuoid, pageIndex).then(async(data) => {
 
                 // 去掉函数，保留json
                 data = API.Utils.toJson(data, /^_Callback\(/);
@@ -185,7 +185,7 @@ API.Videos.getAllComments = async (videos) => {
                 // 递归获取下一页
                 return await API.Common.callNextPage(nextPageIndex, CONFIG, video.cmtTotal, video.comments, arguments.callee, video, nextPageIndex, indicator);
 
-            }).catch(async (e) => {
+            }).catch(async(e) => {
                 console.error("获取视频评论列表异常：", pageIndex + 1, video, e);
                 // 当前页失败后，跳过继续请求下一页
                 // 递归获取下一页
@@ -207,12 +207,13 @@ API.Videos.getAllComments = async (videos) => {
 
 /**
  * 添加视频下载任务
+ * @param {string} module 模块
  * @param {Array} videos 视频列表
  * @param {string} module_dir 模块相对目录
  * @param {object} source 来源
  * @param {Map} FILE_URLS 模块已下载映射
  */
-API.Videos.addDownloadTasks = (videos, module_dir, source, FILE_URLS) => {
+API.Videos.addDownloadTasks = (module, videos, module_dir, source, FILE_URLS) => {
     // 是否为其他模块添加视频下载任务
     const isOther = module_dir ? true : false;
     if (!videos || API.Common.isQzoneUrl() || (!isOther && QZone_Config.Videos.exportType == 'Link')) {
@@ -234,7 +235,7 @@ API.Videos.addDownloadTasks = (videos, module_dir, source, FILE_URLS) => {
         // 预览图直接写死后缀
         video.custom_pre_filename = API.Utils.newSimpleUid(8, 16) + '.jpeg';
         video.custom_pre_filepath = 'Images/' + video.custom_pre_filename;
-        API.Utils.newDownloadTask(video.custom_pre_url, isOther ? module_dir : 'Videos/Images', video.custom_pre_filename, video);
+        API.Utils.newDownloadTask(module, video.custom_pre_url, isOther ? module_dir : 'Videos/Images', video.custom_pre_filename, video);
 
         // 如果是外部视频，跳过不下载
         if (video.play_url) {
@@ -255,7 +256,7 @@ API.Videos.addDownloadTasks = (videos, module_dir, source, FILE_URLS) => {
         video.custom_filepath = isOther ? 'Images/' + video.custom_filename : video.custom_filename;
         if (!FILE_URLS.has(video.custom_url)) {
             // 添加下载任务
-            API.Utils.newDownloadTask(video.custom_url, isOther ? module_dir : 'Videos', video.custom_filename, source || video);
+            API.Utils.newDownloadTask(module, video.custom_url, isOther ? module_dir : 'Videos', video.custom_filename, source || video);
             FILE_URLS.set(video.custom_url, video.custom_filename);
         }
     }
@@ -266,7 +267,7 @@ API.Videos.addDownloadTasks = (videos, module_dir, source, FILE_URLS) => {
  * 导出视频
  * @param {Array} videos 视频列表
  */
-API.Videos.exportAllToFiles = async (videos) => {
+API.Videos.exportAllToFiles = async(videos) => {
     // 获取用户配置
     let exportType = QZone_Config.Videos.exportType;
     switch (exportType) {
@@ -292,7 +293,7 @@ API.Videos.exportAllToFiles = async (videos) => {
  * 导出视频到HTML文件
  * @param {Array} videos 视频列表
  */
-API.Videos.exportToHtml = async (videos) => {
+API.Videos.exportToHtml = async(videos) => {
     // 进度更新器
     const indicator = new StatusIndicator('Videos_Export');
     indicator.setIndex('HTML');
@@ -301,7 +302,7 @@ API.Videos.exportToHtml = async (videos) => {
         // 基于JSON生成JS
         console.info('生成视频JSON开始', videos);
         await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('dataList', videos, QZone.Common.ROOT + '/json/videos.js');
+        const jsonFile = await API.Common.writeJsonToJs('videos', videos, QZone.Common.ROOT + '/json/videos.js');
         console.info('生成视频JSON结束', jsonFile, videos);
 
         // 生成视频汇总列表HTML
@@ -331,7 +332,7 @@ API.Videos.exportToHtml = async (videos) => {
  * 导出视频到MD文件
  * @param {Array} videos 视频列表
  */
-API.Videos.exportToMarkdown = async (videos) => {
+API.Videos.exportToMarkdown = async(videos) => {
 
     // 进度更新器
     const indicator = new StatusIndicator('Videos_Export');
@@ -461,7 +462,7 @@ API.Videos.getMarkdowns = (videos) => {
  * 导出视频下载链接到下载链接
  * @param {Array} items 视频列表
  */
-API.Videos.exportToLink = async (videos) => {
+API.Videos.exportToLink = async(videos) => {
     // 进度更新器
     const indicator = new StatusIndicator('Videos_Export');
     indicator.setIndex('下载链接');
@@ -486,7 +487,7 @@ API.Videos.exportToLink = async (videos) => {
  * 导出视频到JSON文件
  * @param {Array} videos 视频列表
  */
-API.Videos.exportToJson = async (videos) => {
+API.Videos.exportToJson = async(videos) => {
     // 状态更新器
     const indicator = new StatusIndicator('Videos_Export');
     indicator.setIndex('JSON');
@@ -590,7 +591,7 @@ API.Videos.isFile = () => {
  * 获取视频赞记录
  * @param {Array} items 日志列表
  */
-API.Videos.getAllLikeList = async (items) => {
+API.Videos.getAllLikeList = async(items) => {
     if (!API.Common.isGetLike(QZone_Config.Videos)) {
         // 不获取赞
         return items;
@@ -600,7 +601,7 @@ API.Videos.getAllLikeList = async (items) => {
     indicator.setTotal(items.length);
 
     // 同时请求数
-    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+    const _items = _.chunk(items, 10);
 
     // 获取点赞列表
     let count = 0;

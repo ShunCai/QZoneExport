@@ -80,5 +80,5 @@ $(function () {
             }
             return groups.join('<br>');
         }
-    }], dataList);
+    }], friends);
 });

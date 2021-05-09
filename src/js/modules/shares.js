@@ -207,7 +207,7 @@ API.Shares.getAllLikeList = async (items) => {
     indicator.setTotal(items.length);
 
     // 同时请求数
-    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+    const _items = _.chunk(items, 10);
 
     // 获取点赞列表
     let count = 0;
@@ -307,7 +307,7 @@ API.Shares.getAllVisitorList = async (items) => {
     indicator.setTotal(items.length);
 
     // 同时请求数
-    const _items = _.chunk(items, 5);
+    const _items = _.chunk(items, 10);
 
     // 获取最近访问
     let count = 0;
@@ -363,7 +363,7 @@ API.Shares.addMediaToTasks = async (dataList) => {
         // 来源配图（网页、音乐等）
         const images = item.source && item.source.images || [];
         for (const image of images) {
-            await API.Utils.addDownloadTasks(image, image.url, module_dir, item, QZone.Shares.FILE_URLS);
+            await API.Utils.addDownloadTasks('Shares', image, image.url, module_dir, item, QZone.Shares.FILE_URLS);
         }
 
         // 评论配图
@@ -372,7 +372,7 @@ API.Shares.addMediaToTasks = async (dataList) => {
             comment.pic = comment.pic || [];
             for (let pic of comment.pic) {
                 pic.custom_url = pic.o_url || pic.hd_url || pic.b_url || pic.s_url;
-                await API.Utils.addDownloadTasks(pic, pic.custom_url, module_dir, item, QZone.Shares.FILE_URLS);
+                await API.Utils.addDownloadTasks('Shares', pic, pic.custom_url, module_dir, item, QZone.Shares.FILE_URLS);
             }
             // 回复的图片
             comment.replies = comment.replies || [];
@@ -380,7 +380,7 @@ API.Shares.addMediaToTasks = async (dataList) => {
                 repItem.pic = repItem.pic || [];
                 for (let pic of repItem.pic) {
                     pic.custom_url = pic.o_url || pic.hd_url || pic.b_url || pic.s_url;
-                    await API.Utils.addDownloadTasks(pic, pic.custom_url, module_dir, item, QZone.Shares.FILE_URLS);
+                    await API.Utils.addDownloadTasks('Shares', pic, pic.custom_url, module_dir, item, QZone.Shares.FILE_URLS);
                 }
             }
         }
@@ -424,7 +424,7 @@ API.Shares.exportToHtml = async (shares) => {
         // 基于JSON生成JS
         console.info('生成分享JSON开始', shares);
         await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('dataList', shares, QZone.Common.ROOT + '/json/shares.js');
+        const jsonFile = await API.Common.writeJsonToJs('shares', shares, QZone.Common.ROOT + '/json/shares.js');
         console.info('生成分享JSON结束', jsonFile, shares);
 
         // 分享数据根据年份分组

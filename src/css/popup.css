@@ -4,7 +4,7 @@ body {
 }
 
 #export_albums_div .dropdown-header {
-    background-color: beige;
+    background-color: #dae0e5;
     color: black;
     font-size: medium;
     text-align: center;
@@ -13,4 +13,9 @@ body {
 #export_albums_div .dropdown-item {
     font-size: small;
     color: #333538;
+}
+
+.download_tool {
+    color: red !important;
+    cursor: pointer;
 }

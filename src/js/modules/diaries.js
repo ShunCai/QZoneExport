@@ -4,9 +4,9 @@
  */
 
 /**
-* 导出私密日记数据
-*/
-API.Diaries.export = async () => {
+ * 导出私密日记数据
+ */
+API.Diaries.export = async() => {
     try {
 
         // 获取所有的私密日记数据
@@ -31,7 +31,7 @@ API.Diaries.export = async () => {
  * 获取所有私密日记的内容
  * @param {Array} items 私密日记列表
  */
-API.Diaries.getAllContents = async (items) => {
+API.Diaries.getAllContents = async(items) => {
     // 进度更新器
     const indicator = new StatusIndicator('Diaries_Content');
     indicator.setTotal(items.length);
@@ -48,47 +48,47 @@ API.Diaries.getAllContents = async (items) => {
             continue;
         }
 
-        await API.Diaries.getInfo(item.blogid).then(async (data) => {
-            // 添加成功提示
-            indicator.addSuccess(data);
-            const blogPage = jQuery(data);
-            let blogData = null;
-            // 获得网页中的私密日记JSON数据
-            blogPage.find('script').each(function () {
-                let t = $(this).text();
-                if (t.indexOf('g_oBlogData') !== -1) {
-                    let dataM = /var g_oBlogData\s+=\s+({[\s\S]+});\s/;
-                    blogData = dataM.exec(t);
-                    if (blogData != null) {
-                        return false;
+        await API.Diaries.getInfo(item.blogid).then(async(data) => {
+                // 添加成功提示
+                indicator.addSuccess(data);
+                const blogPage = jQuery(data);
+                let blogData = null;
+                // 获得网页中的私密日记JSON数据
+                blogPage.find('script').each(function() {
+                    let t = $(this).text();
+                    if (t.indexOf('g_oBlogData') !== -1) {
+                        let dataM = /var g_oBlogData\s+=\s+({[\s\S]+});\s/;
+                        blogData = dataM.exec(t);
+                        if (blogData != null) {
+                            return false;
+                        }
                     }
+                })
+                if (blogData != null) {
+                    item = JSON.parse(blogData[1]).data;
                 }
+                const $detailBlog = blogPage.find("#blogDetailDiv:first");
+                // 添加原始HTML
+                item.html = API.Utils.utf8ToBase64($detailBlog.html());
+
+                // 处理图片信息
+                await API.Diaries.handerImages(item, $detailBlog.find("img"));
+
+                // 处理视频信息
+                await API.Diaries.handerMedias(item, $detailBlog.find("embed"));
+
+                // 更改自定义标题
+                item.custom_title = '《{0}》'.format(item.title);
+                // 添加自定义HTML
+                item.custom_html = API.Utils.utf8ToBase64($detailBlog.html());
+
+                items[index] = item;
+            }).catch((e) => {
+                console.error("获取私密日记内容异常", item, e);
+                // 添加失败提示
+                indicator.addFailed(item);
             })
-            if (blogData != null) {
-                item = JSON.parse(blogData[1]).data;
-            }
-            const $detailBlog = blogPage.find("#blogDetailDiv:first");
-            // 添加原始HTML
-            item.html = API.Utils.utf8ToBase64($detailBlog.html());
-
-            // 处理图片信息
-            await API.Diaries.handerImages(item, $detailBlog.find("img"));
-
-            // 处理视频信息
-            await API.Diaries.handerMedias(item, $detailBlog.find("embed"));
-
-            // 更改自定义标题
-            item.custom_title = '《{0}》'.format(item.title);
-            // 添加自定义HTML
-            item.custom_html = API.Utils.utf8ToBase64($detailBlog.html());
-
-            items[index] = item;
-        }).catch((e) => {
-            console.error("获取私密日记内容异常", item, e);
-            // 添加失败提示
-            indicator.addFailed(item);
-        })
-        // 等待一下再请求
+            // 等待一下再请求
         let min = QZone_Config.Diaries.Info.randomSeconds.min;
         let max = QZone_Config.Diaries.Info.randomSeconds.max;
         let seconds = API.Utils.randomSeconds(min, max);
@@ -106,10 +106,10 @@ API.Diaries.getAllContents = async (items) => {
  * @param {integer} pageIndex 指定页的索引
  * @param {StatusIndicator} indicator 状态更新器
  */
-API.Diaries.getList = async (pageIndex, indicator) => {
+API.Diaries.getList = async(pageIndex, indicator) => {
     // 状态更新器当前页
     indicator.index = pageIndex + 1;
-    return await API.Diaries.getDiaries(pageIndex).then(async (data) => {
+    return await API.Diaries.getDiaries(pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
 
@@ -133,7 +133,7 @@ API.Diaries.getList = async (pageIndex, indicator) => {
 /**
  * 获取所有私密日记列表
  */
-API.Diaries.getAllList = async () => {
+API.Diaries.getAllList = async() => {
 
     // 私密日记状态更新器
     const indicator = new StatusIndicator('Diaries');
@@ -144,12 +144,12 @@ API.Diaries.getAllList = async () => {
     // 配置项
     const CONFIG = QZone_Config.Diaries;
 
-    const nextPage = async function (pageIndex, indicator) {
+    const nextPage = async function(pageIndex, indicator) {
 
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
-        return await API.Diaries.getList(pageIndex, indicator).then(async (dataList) => {
+        return await API.Diaries.getList(pageIndex, indicator).then(async(dataList) => {
 
             // 合并数据
             QZone.Diaries.Data = API.Utils.unionItems(QZone.Diaries.Data, dataList);
@@ -160,7 +160,7 @@ API.Diaries.getAllList = async () => {
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Diaries.total, QZone.Diaries.Data, arguments.callee, nextPageIndex, indicator);
 
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取私密日记列表异常，当前页：", pageIndex + 1, e);
             indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
@@ -188,7 +188,7 @@ API.Diaries.getAllList = async () => {
  * 所有私密日记转换成导出文件
  * @param {Array} items 私密日记列表
  */
-API.Diaries.exportAllListToFiles = async (items) => {
+API.Diaries.exportAllListToFiles = async(items) => {
     // 获取用户配置
     let exportType = QZone_Config.Diaries.exportType;
     switch (exportType) {
@@ -211,7 +211,7 @@ API.Diaries.exportAllListToFiles = async (items) => {
  * 导出私密日记到HTML文件
  * @param {Array} items 日志列表
  */
-API.Diaries.exportToHtml = async (items) => {
+API.Diaries.exportToHtml = async(items) => {
     // 进度更新器
     const indicator = new StatusIndicator('Diaries_Export_Other');
     indicator.setIndex('HTML');
@@ -219,7 +219,7 @@ API.Diaries.exportToHtml = async (items) => {
     // 基于JSON生成JS
     console.info('生成私密日记JSON开始', items);
     await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-    const jsonFile = await API.Common.writeJsonToJs('dataList', items, QZone.Common.ROOT + '/json/diaries.js');
+    const jsonFile = await API.Common.writeJsonToJs('diaries', items, QZone.Common.ROOT + '/json/diaries.js');
     console.info('生成私密日记JSON结束', jsonFile, items);
 
 
@@ -252,7 +252,7 @@ API.Diaries.exportToHtml = async (items) => {
  * 导出私密日记到MarkDown文件
  * @param {Array} items 私密日记列表
  */
-API.Diaries.exportToMarkdown = async (items) => {
+API.Diaries.exportToMarkdown = async(items) => {
     // 进度更新器
     const indicator = new StatusIndicator('Diaries_Export');
     indicator.setTotal(items.length);
@@ -288,7 +288,7 @@ API.Diaries.exportToMarkdown = async (items) => {
  * 获取单篇私密日记的MD内容
  * @param {object} item 私密日记信息
  */
-API.Diaries.getMarkdown = async (item) => {
+API.Diaries.getMarkdown = async(item) => {
     let contents = [];
     // 拼接标题，日期，内容
     contents.push("# " + item.title);
@@ -311,7 +311,7 @@ API.Diaries.getMarkdown = async (item) => {
  * @param {object} item 日志
  * @param {Array} images 图片元素列表
  */
-API.Diaries.handerImages = async (item, images) => {
+API.Diaries.handerImages = async(item, images) => {
     if (!images) {
         return item;
     }
@@ -328,10 +328,9 @@ API.Diaries.handerImages = async (item, images) => {
             continue;
         }
         let uid = API.Utils.newSimpleUid(8, 16);
-        let suffix = await API.Utils.autoFileSuffix(url);
-        const custom_filename = uid + suffix;
+        const custom_filename = uid + API.Utils.getFileSuffixByUrl(url);
         // 添加下载任务
-        API.Utils.newDownloadTask(url, 'Diaries/Images', custom_filename, item);
+        API.Utils.newDownloadTask('Diaries', url, 'Diaries/Images', custom_filename, item);
 
         let exportType = QZone_Config.Diaries.exportType;
         switch (exportType) {
@@ -351,7 +350,7 @@ API.Diaries.handerImages = async (item, images) => {
  * @param {object} item 日志
  * @param {Array} embeds 图片元素列表
  */
-API.Diaries.handerMedias = async (item, embeds) => {
+API.Diaries.handerMedias = async(item, embeds) => {
     if (!embeds) {
         // 无图片不处理
         return item;
@@ -404,7 +403,7 @@ API.Diaries.handerMedias = async (item, embeds) => {
  * 导出私密日记到JSON文件
  * @param {Array} items 私密日记列表
  */
-API.Diaries.exportToJson = async (items) => {
+API.Diaries.exportToJson = async(items) => {
     const indicator = new StatusIndicator('Diaries_Export_Other');
     indicator.setIndex('JSON');
     let json = JSON.stringify(items);

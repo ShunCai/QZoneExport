@@ -4,9 +4,9 @@
  */
 
 /**
-* 导出日志数据
-*/
-API.Blogs.export = async () => {
+ * 导出日志数据
+ */
+API.Blogs.export = async() => {
     try {
         // 获取所有的日志数据
         let items = await API.Blogs.getAllList();
@@ -39,7 +39,7 @@ API.Blogs.export = async () => {
  * 获取所有日志的内容
  * @param {Array} items 日志列表
  */
-API.Blogs.getAllContents = async (items) => {
+API.Blogs.getAllContents = async(items) => {
     // 进度更新器
     const indicator = new StatusIndicator('Blogs_Content');
     indicator.setTotal(items.length);
@@ -56,51 +56,51 @@ API.Blogs.getAllContents = async (items) => {
             continue;
         }
 
-        await API.Blogs.getInfo(item.blogId).then(async (data) => {
-            // 添加成功提示
-            indicator.addSuccess(data);
-            let blogPage = jQuery(data);
-            let blogData = null;
-            // 获得网页中的日志JSON数据
-            blogPage.find('script').each(function () {
-                let t = $(this).text();
-                if (t.indexOf('g_oBlogData') !== -1) {
-                    let dataM = /var g_oBlogData\s+=\s+({[\s\S]+});\s/;
-                    blogData = dataM.exec(t);
-                    if (blogData != null) {
-                        return false;
+        await API.Blogs.getInfo(item.blogId).then(async(data) => {
+                // 添加成功提示
+                indicator.addSuccess(data);
+                let blogPage = jQuery(data);
+                let blogData = null;
+                // 获得网页中的日志JSON数据
+                blogPage.find('script').each(function() {
+                    let t = $(this).text();
+                    if (t.indexOf('g_oBlogData') !== -1) {
+                        let dataM = /var g_oBlogData\s+=\s+({[\s\S]+});\s/;
+                        blogData = dataM.exec(t);
+                        if (blogData != null) {
+                            return false;
+                        }
                     }
+                })
+                if (blogData != null) {
+                    item = JSON.parse(blogData[1]).data;
                 }
+                // 获得网页中的日志正文
+                const $detailBlog = blogPage.find("#blogDetailDiv:first");
+
+                // 添加原始HTML
+                item.html = API.Utils.utf8ToBase64($detailBlog.html());
+
+                // 处理图片信息
+                await API.Blogs.handerImages(item, $detailBlog.find("img"));
+
+                // 处理视频信息
+                await API.Blogs.handerMedias(item, $detailBlog.find("embed"));
+
+                // 更改自定义标题
+                item.custom_title = '《{0}》'.format(item.title);
+                // 添加自定义HTML
+                item.custom_html = API.Utils.utf8ToBase64($detailBlog.html());
+                // 添加点赞Key
+                item.uniKey = API.Blogs.getUniKey(item.blogid || item.blogId);
+
+                items[index] = item;
+            }).catch((e) => {
+                console.error("获取日志内容异常", item, e);
+                // 添加失败提示
+                indicator.addFailed(item);
             })
-            if (blogData != null) {
-                item = JSON.parse(blogData[1]).data;
-            }
-            // 获得网页中的日志正文
-            const $detailBlog = blogPage.find("#blogDetailDiv:first");
-
-            // 添加原始HTML
-            item.html = API.Utils.utf8ToBase64($detailBlog.html());
-
-            // 处理图片信息
-            await API.Blogs.handerImages(item, $detailBlog.find("img"));
-
-            // 处理视频信息
-            await API.Blogs.handerMedias(item, $detailBlog.find("embed"));
-
-            // 更改自定义标题
-            item.custom_title = '《{0}》'.format(item.title);
-            // 添加自定义HTML
-            item.custom_html = API.Utils.utf8ToBase64($detailBlog.html());
-            // 添加点赞Key
-            item.uniKey = API.Blogs.getUniKey(item.blogid || item.blogId);
-
-            items[index] = item;
-        }).catch((e) => {
-            console.error("获取日志内容异常", item, e);
-            // 添加失败提示
-            indicator.addFailed(item);
-        })
-        // 等待一下再请求
+            // 等待一下再请求
         let min = QZone_Config.Blogs.Info.randomSeconds.min;
         let max = QZone_Config.Blogs.Info.randomSeconds.max;
         let seconds = API.Utils.randomSeconds(min, max);
@@ -117,10 +117,10 @@ API.Blogs.getAllContents = async (items) => {
  * @param {integer} pageIndex 指定页的索引
  * @param {StatusIndicator} indicator 状态更新器
  */
-API.Blogs.getList = async (pageIndex, indicator) => {
+API.Blogs.getList = async(pageIndex, indicator) => {
     // 状态更新器当前页
     indicator.index = pageIndex + 1;
-    return await API.Blogs.getBlogs(pageIndex).then(async (data) => {
+    return await API.Blogs.getBlogs(pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
 
@@ -144,7 +144,7 @@ API.Blogs.getList = async (pageIndex, indicator) => {
 /**
  * 获取所有日志列表
  */
-API.Blogs.getAllList = async () => {
+API.Blogs.getAllList = async() => {
 
     // 日志状态更新器
     const indicator = new StatusIndicator('Blogs');
@@ -154,12 +154,12 @@ API.Blogs.getAllList = async () => {
 
     const CONFIG = QZone_Config.Blogs;
 
-    const nextPage = async function (pageIndex, indicator) {
+    const nextPage = async function(pageIndex, indicator) {
 
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
-        return await API.Blogs.getList(pageIndex, indicator).then(async (dataList) => {
+        return await API.Blogs.getList(pageIndex, indicator).then(async(dataList) => {
 
             // 设置比较信息
             dataList = API.Common.setCompareFiledInfo(dataList, 'pubTime', 'pubtime');
@@ -173,7 +173,7 @@ API.Blogs.getAllList = async () => {
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Blogs.total, QZone.Blogs.Data, arguments.callee, nextPageIndex, indicator);
 
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取日志列表异常，当前页：", pageIndex + 1, e);
             indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
@@ -201,7 +201,7 @@ API.Blogs.getAllList = async () => {
  * 获取所有日志的评论列表
  * @param {string} item 日志
  */
-API.Blogs.getItemsAllCommentList = async (items) => {
+API.Blogs.getItemsAllCommentList = async(items) => {
     if (!QZone_Config.Blogs.Comments.isFull) {
         // 不获取全部评论时，跳过
         return items;
@@ -243,8 +243,8 @@ API.Blogs.getItemsAllCommentList = async (items) => {
  * @param {object} item 日志
  * @param {integer} pageIndex 页数索引
  */
-API.Blogs.getItemCommentList = async (item, pageIndex) => {
-    return await API.Blogs.getComments(item.blogid, pageIndex).then(async (data) => {
+API.Blogs.getItemCommentList = async(item, pageIndex) => {
+    return await API.Blogs.getComments(item.blogid, pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
         data = data.data;
@@ -256,7 +256,7 @@ API.Blogs.getItemCommentList = async (item, pageIndex) => {
  * 获取单条日志的全部评论列表
  * @param {object} item 日志
  */
-API.Blogs.getItemAllCommentList = async (item) => {
+API.Blogs.getItemAllCommentList = async(item) => {
     if (!(item.replynum > item.comments.length)) {
         // 当前列表比评论总数小的时候才需要获取全部评论，否则则跳过
         return item.comments;
@@ -270,19 +270,19 @@ API.Blogs.getItemAllCommentList = async (item) => {
     // 更新总数
     const total = item.replynum || 0;
 
-    const nextPage = async function (item, pageIndex) {
+    const nextPage = async function(item, pageIndex) {
 
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
-        return await API.Blogs.getItemCommentList(item, pageIndex).then(async (dataList) => {
+        return await API.Blogs.getItemCommentList(item, pageIndex).then(async(dataList) => {
 
             // 合并评论列表
             item.comments = item.comments.concat(dataList || []);
 
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.comments, arguments.callee, item, nextPageIndex);
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取日志评论列表异常，当前页：", pageIndex + 1, item, e);
             // 当前页失败后，跳过继续请求下一页
             // 递归获取下一页
@@ -300,7 +300,7 @@ API.Blogs.getItemAllCommentList = async (item) => {
  * 所有日志转换成导出文件
  * @param {Array} items 日志列表
  */
-API.Blogs.exportAllListToFiles = async (items) => {
+API.Blogs.exportAllListToFiles = async(items) => {
     // 获取用户配置
     let exportType = QZone_Config.Blogs.exportType;
     switch (exportType) {
@@ -326,14 +326,14 @@ API.Blogs.exportAllListToFiles = async (items) => {
  * 导出日志到HTML文件
  * @param {Array} items 日志列表
  */
-API.Blogs.exportToHtml = async (items) => {
+API.Blogs.exportToHtml = async(items) => {
     // 进度更新器
     const indicator = new StatusIndicator('Blogs_Export_Other');
     indicator.setIndex('HTML');
 
     // 基于JSON生成JS
     await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-    await API.Common.writeJsonToJs('dataList', items, QZone.Common.ROOT + '/json/blogs.js');
+    await API.Common.writeJsonToJs('blogs', items, QZone.Common.ROOT + '/json/blogs.js');
 
     // 基于模板生成HTML
     await API.Common.writeHtmlofTpl('blogs', undefined, QZone.Blogs.ROOT + "/index.html");
@@ -358,7 +358,7 @@ API.Blogs.exportToHtml = async (items) => {
  * 导出日志到HTML文件
  * @param {Array} items 日志列表
  */
-API.Blogs.exportToPDF = async (items) => {
+API.Blogs.exportToPDF = async(items) => {
     // 进度更新器
     const indicator = new StatusIndicator('Blogs_Export_Other');
     indicator.setIndex('PDF');
@@ -371,7 +371,7 @@ API.Blogs.exportToPDF = async (items) => {
         doc.setFont('QZoneExport');
         const html = API.Utils.base64ToUtf8(blog.html);
         doc.html($(html)[0], {
-            callback: function (doc) {
+            callback: function(doc) {
                 doc.save("{0}_{1}.pdf".format(orderNum, API.Utils.filenameValidate(blog.title)));
             },
             x: 10,
@@ -389,7 +389,7 @@ API.Blogs.exportToPDF = async (items) => {
  * 导出日志到MarkDown文件
  * @param {Array} items 日志列表
  */
-API.Blogs.exportToMarkdown = async (items) => {
+API.Blogs.exportToMarkdown = async(items) => {
     // 进度更新器
     const indicator = new StatusIndicator('Blogs_Export');
     indicator.setTotal(items.length);
@@ -430,7 +430,7 @@ API.Blogs.exportToMarkdown = async (items) => {
  * 获取单篇日志的MD内容
  * @param {object} item 日志信息
  */
-API.Blogs.getMarkdown = async (item) => {
+API.Blogs.getMarkdown = async(item) => {
     const contents = [];
     // 标题
     contents.push("# " + item.title);
@@ -486,7 +486,7 @@ API.Blogs.getMarkdown = async (item) => {
  * @param {object} item 日志
  * @param {Array} images 图片元素列表
  */
-API.Blogs.handerImages = async (item, images) => {
+API.Blogs.handerImages = async(item, images) => {
     let exportType = QZone_Config.Blogs.exportType;
     if (!images) {
         // 无图片不处理
@@ -505,10 +505,9 @@ API.Blogs.handerImages = async (item, images) => {
             continue;
         }
         let uid = API.Utils.newSimpleUid(8, 16);
-        let suffix = await API.Utils.autoFileSuffix(url);
-        const custom_filename = uid + suffix;
+        const custom_filename = uid + API.Utils.getFileSuffixByUrl(url);
         // 添加下载任务
-        API.Utils.newDownloadTask(url, 'Blogs/Images', custom_filename, item);
+        API.Utils.newDownloadTask('Blogs', url, 'Blogs/Images', custom_filename, item);
 
         switch (exportType) {
             case 'MarkDown':
@@ -527,7 +526,7 @@ API.Blogs.handerImages = async (item, images) => {
  * @param {object} item 日志
  * @param {Array} embeds 图片元素列表
  */
-API.Blogs.handerMedias = async (item, embeds) => {
+API.Blogs.handerMedias = async(item, embeds) => {
     if (!embeds) {
         // 无图片不处理
         return item;
@@ -580,7 +579,7 @@ API.Blogs.handerMedias = async (item, embeds) => {
  * 导出日志到JSON文件
  * @param {Array} items 日志列表
  */
-API.Blogs.exportToJson = async (items) => {
+API.Blogs.exportToJson = async(items) => {
     let indicator = new StatusIndicator('Blogs_Export_Other');
     indicator.setIndex('JSON');
     let json = JSON.stringify(items);
@@ -594,7 +593,7 @@ API.Blogs.exportToJson = async (items) => {
  * @param {Array} items 列表
  */
 API.Blogs.sort = (items) => {
-    const compare = function (obj1, obj2) {
+    const compare = function(obj1, obj2) {
         const isTop1 = API.Blogs.getBlogLabel(obj1).indexOf('顶') > -1;
         const isTop2 = API.Blogs.getBlogLabel(obj2).indexOf('顶') > -1;
         const res = obj1.pubtime > obj2.pubtime ? 1 : -1;
@@ -618,7 +617,7 @@ API.Blogs.sort = (items) => {
  * 获取日志赞记录
  * @param {Array} items 日志列表
  */
-API.Blogs.getAllLikeList = async (items) => {
+API.Blogs.getAllLikeList = async(items) => {
 
     if (!API.Common.isGetLike(QZone_Config.Blogs)) {
         // 不获取赞
@@ -630,7 +629,7 @@ API.Blogs.getAllLikeList = async (items) => {
     indicator.setTotal(items.length);
 
     // 同时请求数
-    const _items = _.chunk(items, QZone_Config.Common.downloadThread);
+    const _items = _.chunk(items, 10);
 
     // 获取点赞列表
     let count = 0;
@@ -678,7 +677,7 @@ API.Blogs.getAllLikeList = async (items) => {
  * 获取单条日志的全部最近访问
  * @param {object} item 说说
  */
-API.Blogs.getItemAllVisitorsList = async (item) => {
+API.Blogs.getItemAllVisitorsList = async(item) => {
     // 清空原有的最近访问信息
     item.custom_visitor = {
         viewCount: 0,
@@ -689,11 +688,11 @@ API.Blogs.getItemAllVisitorsList = async (item) => {
     // 说说最近访问配置
     const CONFIG = QZone_Config.Blogs.Visitor;
 
-    const nextPage = async function (item, pageIndex) {
+    const nextPage = async function(item, pageIndex) {
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
-        return await API.Blogs.getVisitors(item.blogid, pageIndex).then(async (data) => {
+        return await API.Blogs.getVisitors(item.blogid, pageIndex).then(async(data) => {
             data = API.Utils.toJson(data, /^_Callback\(/).data || {};
 
             // 合并
@@ -703,7 +702,7 @@ API.Blogs.getItemAllVisitorsList = async (item) => {
 
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, item.custom_visitor.totalNum, item.custom_visitor.list, arguments.callee, item, nextPageIndex);
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取日志最近访问列表异常，当前页：", pageIndex + 1, item, e);
 
             // 当前页失败后，跳过继续请求下一页
@@ -721,7 +720,7 @@ API.Blogs.getItemAllVisitorsList = async (item) => {
  * 获取日志最近访问
  * @param {Array} items 日志列表
  */
-API.Blogs.getAllVisitorList = async (items) => {
+API.Blogs.getAllVisitorList = async(items) => {
     if (!API.Common.isGetVisitor(QZone_Config.Blogs)) {
         // 不获取最近访问
         return items;
@@ -731,7 +730,7 @@ API.Blogs.getAllVisitorList = async (items) => {
     indicator.setTotal(items.length);
 
     // 同时请求数
-    const _items = _.chunk(items, 5);
+    const _items = _.chunk(items, 10);
 
     // 获取最近访问
     let count = 0;
@@ -777,7 +776,7 @@ API.Blogs.getAllVisitorList = async (items) => {
  * 获取日志阅读数
  * @param {Array} items 日志列表
  */
-API.Blogs.getAllReadCount = async (items) => {
+API.Blogs.getAllReadCount = async(items) => {
     try {
         // 同时请求数
         const _items = _.chunk(items, 10);

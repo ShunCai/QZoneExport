@@ -50,6 +50,6 @@ $(function () {
         align: 'center',
         width: "20",
         sortable: true
-    }], dataList);
+    }], blogs);
 
 });
