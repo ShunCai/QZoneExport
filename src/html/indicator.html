@@ -1,108 +1,114 @@
 <div class="modal fade" id="progressModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="progress-modal-label" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" role="document">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title h5" id="exampleModalLongTitle">QQ空间导出助手</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title h5" id="exampleModalLongTitle">QQ空间导出助手</h5>
+                <div id="showAbout" class="mt-1" style="cursor: pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
+						<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"></path>
+						<path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"></path>
+					</svg>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
-			</div>
-			<div class="modal-body">
-				<h6 class="h6" id="backupStatus">正在收集QQ空间数据，请不要<span style="color:red">关闭或刷新</span>当前页面和<span style="color: red">打开</span>新的QQ空间页面。</h6>
-				<hr />
-				<div class="container">
-					<p id="Messages_Tips" style="font-size: medium;"></p>
-					<p id="Messages_Filter_Tips" style="font-size: medium;"></p>
-					<p id="Messages_Full_Content_Tips" style="font-size: medium;"></p>
-					<p id="Messages_More_Images_Tips" style="font-size: medium;"></p>
-					<p id="Messages_Voices_Tips" style="font-size: medium;"></p>
-					<p id="Messages_Comments_Tips" style="font-size: medium;"></p>
-					<p id="Messages_Like_Tips" style="font-size: medium;"></p>
-					<p id="Messages_Visitor_Tips" style="font-size: medium;"></p>
-					<p id="Messages_Images_Mime_Tips" style="font-size: medium;"></p>
-					<p id="Messages_Export_Tips" style="font-size: medium;"></p>
-					<p id="Messages_Export_OTher_Tips" style="font-size: medium;"></p>
-					<p id="Blogs_Tips" style="font-size: medium;"></p>
-					<p id="Blogs_Content_Tips" style="font-size: medium;"></p>
-					<p id="Blogs_Comments_Tips" style="font-size: medium;"></p>
-					<p id="Blogs_Like_Tips" style="font-size: medium;"></p>
-					<p id="Blogs_Visitor_Tips" style="font-size: medium;"></p>
-					<p id="Blogs_Export_Tips" style="font-size: medium;"></p>
-					<p id="Blogs_Export_Other_Tips" style="font-size: medium;"></p>
-					<p id="Diaries_Tips" style="font-size: medium;"></p>
-					<p id="Diaries_Content_Tips" style="font-size: medium;"></p>
-					<p id="Diaries_Export_Tips" style="font-size: medium;"></p>
-					<p id="Diaries_Export_Other_Tips" style="font-size: medium;"></p>
-					<p id="Boards_Tips" style="font-size: medium;"></p>
-					<p id="Boards_Images_Mime_Tips" style="font-size: medium;"></p>
-					<p id="Boards_Export_Tips" style="font-size: medium;"></p>
-					<p id="Boards_Export_Other_Tips" style="font-size: medium;"></p>
-					<p id="Friends_Tips" style="font-size: medium;"></p>
-					<p id="Friends_Time_Tips" style="font-size: medium;"></p>
-					<p id="Friends_Export_Tips" style="font-size: medium;"></p>
-					<p id="Favorites_Tips" style="font-size: medium;"></p>
-					<p id="Favorites_Export_Tips" style="font-size: medium;"></p>
-					<p id="Favorites_Export_Other_Tips" style="font-size: medium;"></p>
-					<p id="Shares_Tips" style="font-size: medium;"></p>
-					<p id="Shares_Comments_Tips" style="font-size: medium;"></p>
-					<p id="Shares_Like_Tips" style="font-size: medium;"></p>
-					<p id="Shares_Visitor_Tips" style="font-size: medium;"></p>
-					<p id="Shares_Export_Tips" style="font-size: medium;"></p>
-					<p id="Shares_Export_Other_Tips" style="font-size: medium;"></p>
-					<p id="Visitors_Tips" style="font-size: medium;"></p>
-					<p id="Visitors_Export_Tips" style="font-size: medium;"></p>
-					<p id="Visitors_Export_Other_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Albums_Comments_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Albums_Like_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Albums_Visitor_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Images_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Images_Mime_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Images_Info_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Images_Comments_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Images_Like_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Export_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Export_Other_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Images_Export_Tips" style="font-size: medium;"></p>
-					<p id="Photos_Images_Export_Other_Tips" style="font-size: medium;"></p>
-					<p id="Videos_Tips" style="font-size: medium;"></p>
-					<p id="Videos_Comments_Tips" style="font-size: medium;"></p>
-					<p id="Videos_Like_Tips" style="font-size: medium;"></p>
-					<p id="Videos_Export_Tips" style="font-size: medium;"></p>
-					<p id="Common_File_Tips" style="font-size: medium;"></p>
-					<p id="Common_Thunder_Tips" style="font-size: medium;"></p>
-					<p id="Common_Thunder_Link_Tips" style="font-size: medium;"></p>
-					<p id="Common_Browser_Tips" style="font-size: medium;"></p>
-					<p id="Common_Aria2_Tips" style="font-size: medium;"></p>
-				</div>
-				<br />
-				<div id="progress" class="progress" style="display: none;">
-					<div id="progressbar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">已下载 0%</div>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<button id="fileList" type="button" class="btn btn-outline-info" style="display: none;" data-toggle="modal" data-target="#modalTable">下载管理</button>
-				<button id="showFolder" type="button" class="btn btn-outline-success" style="display: none;">查看备份</button>
-				<button id="downloadBtn" type="button" class="btn btn-primary" style="display: none;">打包下载</button>
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
-			</div>
-		</div>
-	</div>
+            </div>
+            <div class="modal-body">
+                <h6 class="h6" id="backupStatus">正在收集QQ空间数据，请不要<span style="color:red">关闭或刷新</span>当前页面和<span style="color: red">打开</span>新的QQ空间页面。</h6>
+                <hr />
+                <div class="container">
+                    <p id="Messages_Tips" style="font-size: medium;"></p>
+                    <p id="Messages_Filter_Tips" style="font-size: medium;"></p>
+                    <p id="Messages_Full_Content_Tips" style="font-size: medium;"></p>
+                    <p id="Messages_More_Images_Tips" style="font-size: medium;"></p>
+                    <p id="Messages_Voices_Tips" style="font-size: medium;"></p>
+                    <p id="Messages_Comments_Tips" style="font-size: medium;"></p>
+                    <p id="Messages_Like_Tips" style="font-size: medium;"></p>
+                    <p id="Messages_Visitor_Tips" style="font-size: medium;"></p>
+                    <p id="Messages_Images_Mime_Tips" style="font-size: medium;"></p>
+                    <p id="Messages_Export_Tips" style="font-size: medium;"></p>
+                    <p id="Messages_Export_OTher_Tips" style="font-size: medium;"></p>
+                    <p id="Blogs_Tips" style="font-size: medium;"></p>
+                    <p id="Blogs_Content_Tips" style="font-size: medium;"></p>
+                    <p id="Blogs_Comments_Tips" style="font-size: medium;"></p>
+                    <p id="Blogs_Like_Tips" style="font-size: medium;"></p>
+                    <p id="Blogs_Visitor_Tips" style="font-size: medium;"></p>
+                    <p id="Blogs_Export_Tips" style="font-size: medium;"></p>
+                    <p id="Blogs_Export_Other_Tips" style="font-size: medium;"></p>
+                    <p id="Diaries_Tips" style="font-size: medium;"></p>
+                    <p id="Diaries_Content_Tips" style="font-size: medium;"></p>
+                    <p id="Diaries_Export_Tips" style="font-size: medium;"></p>
+                    <p id="Diaries_Export_Other_Tips" style="font-size: medium;"></p>
+                    <p id="Boards_Tips" style="font-size: medium;"></p>
+                    <p id="Boards_Images_Mime_Tips" style="font-size: medium;"></p>
+                    <p id="Boards_Export_Tips" style="font-size: medium;"></p>
+                    <p id="Boards_Export_Other_Tips" style="font-size: medium;"></p>
+                    <p id="Friends_Tips" style="font-size: medium;"></p>
+                    <p id="Friends_Time_Tips" style="font-size: medium;"></p>
+                    <p id="Friends_Export_Tips" style="font-size: medium;"></p>
+                    <p id="Favorites_Tips" style="font-size: medium;"></p>
+                    <p id="Favorites_Export_Tips" style="font-size: medium;"></p>
+                    <p id="Favorites_Export_Other_Tips" style="font-size: medium;"></p>
+                    <p id="Shares_Tips" style="font-size: medium;"></p>
+                    <p id="Shares_Comments_Tips" style="font-size: medium;"></p>
+                    <p id="Shares_Like_Tips" style="font-size: medium;"></p>
+                    <p id="Shares_Visitor_Tips" style="font-size: medium;"></p>
+                    <p id="Shares_Export_Tips" style="font-size: medium;"></p>
+                    <p id="Shares_Export_Other_Tips" style="font-size: medium;"></p>
+                    <p id="Visitors_Tips" style="font-size: medium;"></p>
+                    <p id="Visitors_Export_Tips" style="font-size: medium;"></p>
+                    <p id="Visitors_Export_Other_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Albums_Comments_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Albums_Like_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Albums_Visitor_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Images_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Images_Mime_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Images_Info_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Images_Comments_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Images_Like_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Export_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Export_Other_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Images_Export_Tips" style="font-size: medium;"></p>
+                    <p id="Photos_Images_Export_Other_Tips" style="font-size: medium;"></p>
+                    <p id="Videos_Tips" style="font-size: medium;"></p>
+                    <p id="Videos_Comments_Tips" style="font-size: medium;"></p>
+                    <p id="Videos_Like_Tips" style="font-size: medium;"></p>
+                    <p id="Videos_Export_Tips" style="font-size: medium;"></p>
+                    <p id="Common_File_Tips" style="font-size: medium;"></p>
+                    <p id="Common_Thunder_Tips" style="font-size: medium;"></p>
+                    <p id="Common_Thunder_Link_Tips" style="font-size: medium;"></p>
+                    <p id="Common_Browser_Tips" style="font-size: medium;"></p>
+                    <p id="Common_Aria2_Tips" style="font-size: medium;"></p>
+                </div>
+                <br />
+                <div id="progress" class="progress" style="display: none;">
+                    <div id="progressbar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">已下载 0%</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="fileList" type="button" class="btn btn-outline-info" style="display: none;" data-toggle="modal" data-target="#modalTable">下载管理</button>
+                <button id="showFolder" type="button" class="btn btn-outline-success" style="display: none;">查看备份</button>
+                <button id="downloadBtn" type="button" class="btn btn-primary" style="display: none;">打包下载</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
 </div>
 <div id="modalTable" data-backdrop="static" data-keyboard="false" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="file-list-lable" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered modal-xl" role="document">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title">文件列表</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">文件列表</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
-			</div>
-			<div class="modal-body">
-				<div id="toolbar">
-					<div class="form-inline" role="form">
-						<div class="form-group">
-							<select id="moduleFilter" class="form-control" name="moduleFilter" style="display: inline-block;width: 100px;">
+            </div>
+            <div class="modal-body">
+                <div id="toolbar">
+                    <div class="form-inline" role="form">
+                        <div class="form-group">
+                            <select id="moduleFilter" class="form-control" name="moduleFilter" style="display: inline-block;width: 100px;">
 								<option value="all" selected>全部</option>
 								<option value="Messages">说说</option>
 								<option value="Blogs">日志</option>
@@ -116,23 +122,23 @@
 								<option value="Visitors">访客</option>
 								<option value="Others">其它</option>
 							</select>
-							<select id="statusFilter" class="form-control" name="statusFilter" style="display: inline-block;width: 100px;">
+                            <select id="statusFilter" class="form-control" name="statusFilter" style="display: inline-block;width: 100px;">
 								<option value="all">全部</option>
 								<option value="interrupted" selected>已失败</option>
 								<option value="complete">已完成</option>
 								<option value="in_progress">下载中</option>
 							</select>
-						</div>
-					</div>
-				</div>
-				<table id="table"></table>
-			</div>
-			<div class="modal-footer">
-				<button id="browserDownload" type="button" class="btn btn-outline-success" data-dismiss="modal">浏览器下载</button>
-				<button id="thunderDownload" type="button" class="btn btn-outline-secondary" data-dismiss="modal">迅雷下载</button>
-				<button id="againDownload" type="button" class="btn btn-primary" data-dismiss="modal">继续重试</button>
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
-			</div>
-		</div>
-	</div>
+                        </div>
+                    </div>
+                </div>
+                <table id="table"></table>
+            </div>
+            <div class="modal-footer">
+                <button id="browserDownload" type="button" class="btn btn-outline-success" data-dismiss="modal">浏览器下载</button>
+                <button id="thunderDownload" type="button" class="btn btn-outline-secondary" data-dismiss="modal">迅雷下载</button>
+                <button id="againDownload" type="button" class="btn btn-primary" data-dismiss="modal">继续重试</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
 </div>

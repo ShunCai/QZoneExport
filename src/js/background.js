@@ -5,28 +5,26 @@ let QZoneDownloadId = 0;
 /**
  * PageAction监听
  */
-chrome.runtime.onInstalled.addListener(function () {
-    chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
-        chrome.declarativeContent.onPageChanged.addRules([
-            {
-                conditions: [
-                    // 打开QQ空间显示pageAction
-                    new chrome.declarativeContent.PageStateMatcher({
-                        pageUrl: {
-                            urlMatches: 'https://user.qzone.qq.com/\d*',
-                            schemes: ['https']
-                        }
-                    })
-                ],
-                actions: [new chrome.declarativeContent.ShowPageAction()]
-            }
-        ]);
+chrome.runtime.onInstalled.addListener(function() {
+    chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
+        chrome.declarativeContent.onPageChanged.addRules([{
+            conditions: [
+                // 打开QQ空间显示pageAction
+                new chrome.declarativeContent.PageStateMatcher({
+                    pageUrl: {
+                        urlMatches: 'https://user.qzone.qq.com/\d*',
+                        schemes: ['https']
+                    }
+                })
+            ],
+            actions: [new chrome.declarativeContent.ShowPageAction()]
+        }]);
     });
 });
 
 
 let sendMessage = (data, callback) => {
-    chrome.runtime.sendMessage(data, function (res) {
+    chrome.runtime.sendMessage(data, function(res) {
         callback(res);
     });
 }
@@ -36,9 +34,9 @@ let sendMessage = (data, callback) => {
  * 浏览器下载(发送消息给背景页下载)
  * @param {object} options
  */
-const downloadByBrowser = function (options) {
-    return new Promise(function (resolve, reject) {
-        chrome.downloads.download(options, function (downloadId) {
+const downloadByBrowser = function(options) {
+    return new Promise(function(resolve, reject) {
+        chrome.downloads.download(options, function(downloadId) {
             if (chrome.runtime.lastError) {
                 console.error(chrome.runtime.lastError.message, options);
                 // 返回失败标识
@@ -59,9 +57,9 @@ const downloadByBrowser = function (options) {
  * 查询下载项
  * @param {string} state
  */
-const getDownloadList = function (options) {
-    return new Promise(function (resolve, reject) {
-        chrome.downloads.search(options, function (data) {
+const getDownloadList = function(options) {
+    return new Promise(function(resolve, reject) {
+        chrome.downloads.search(options, function(data) {
             if (chrome.runtime.lastError) {
                 console.error(chrome.runtime.lastError.message, options);
                 // 返回失败标识
@@ -77,9 +75,9 @@ const getDownloadList = function (options) {
  * 恢复下载
  * @param {string} downloadId
  */
-const resumeDownload = function (downloadId) {
-    return new Promise(function (resolve, reject) {
-        chrome.downloads.resume(downloadId, function () {
+const resumeDownload = function(downloadId) {
+    return new Promise(function(resolve, reject) {
+        chrome.downloads.resume(downloadId, function() {
             if (chrome.runtime.lastError) {
                 console.error(chrome.runtime.lastError.message, downloadId);
                 // 返回失败标识
@@ -94,7 +92,7 @@ const resumeDownload = function (downloadId) {
 /**
  * 消息监听器，监听来自其他页面的消息
  */
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     console.info("Background 接收到消息！", request, sender);
     switch (request.from) {
         case 'content':
@@ -132,6 +130,12 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                     // 打开下载的ZIP文件
                     chrome.downloads.show(QZoneDownloadId);
                     break;
+                case 'showAbout':
+                    // 显示关于页面
+                    chrome.tabs.create({
+                        url: 'html/about.html'
+                    });
+                    break;
                 default:
                     console.warn('Background 接收到消息，但未识别类型！', request);
                     break;
@@ -148,7 +152,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 /**
  * 下载管理器重命名监听器
  */
-chrome.downloads.onDeterminingFilename.addListener(function (item, __suggest) {
+chrome.downloads.onDeterminingFilename.addListener(function(item, __suggest) {
     function suggest(filename) {
         __suggest({
             filename: filename
@@ -172,35 +176,42 @@ chrome.runtime.onInstalled.addListener((details) => {
     let reason = details.reason;
     let previousVersion = details.previousVersion;
     switch (reason) {
-        case 'update':
+        // 安装
+        case chrome.runtime.OnInstalledReason.INSTALL:
+            chrome.tabs.create({
+                url: 'html/options.html'
+            });
+            break;
+            // 更新
+        case chrome.runtime.OnInstalledReason.UPDATE:
             switch (previousVersion) {
                 case '1.0.0':
                     // 上一个版本为1.0.0时，重置配置项
-                    chrome.storage.sync.clear(function () {
+                    chrome.storage.sync.clear(function() {
                         console.info('清空配置完成');
                     });
                     break;
                 case '1.0.1':
                     // 上一个版本为1.0.1时，重置配置项
-                    chrome.storage.sync.clear(function () {
+                    chrome.storage.sync.clear(function() {
                         console.info('清空配置完成');
                     });
                     break;
                 case '1.0.2':
                     // 上一个版本为1.0.2时，重置配置项
-                    chrome.storage.sync.clear(function () {
+                    chrome.storage.sync.clear(function() {
                         console.info('清空配置完成');
                     });
                     break;
                 case '1.0.5':
                     // 上一个版本为1.0.5时，重置配置项
-                    chrome.storage.sync.clear(function () {
+                    chrome.storage.sync.clear(function() {
                         console.info('清空配置完成');
                     });
                     break;
                 case '1.1.1':
                     // 上一个版本为1.1.1时，重置备份数据
-                    chrome.storage.local.clear(function () {
+                    chrome.storage.local.clear(function() {
                         console.info('重置备份数据完成');
                     });
                     break;
@@ -208,7 +219,6 @@ chrome.runtime.onInstalled.addListener((details) => {
                     break;
             }
             break;
-
         default:
             break;
     }

@@ -1142,6 +1142,14 @@ class QZoneOperator {
             $("#modalTable").remove();
         })
 
+        // 关于按钮点击后
+        $('#showAbout').on('click', function() {
+            chrome.runtime.sendMessage({
+                from: 'content',
+                type: 'showAbout'
+            });
+        })
+
         /**
          * 筛选数据
          * @param {string} module 模块
