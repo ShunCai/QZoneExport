@@ -47,7 +47,7 @@
 #### 版本要求
 1. 未测试，建议Chromium内核版本在70以上。  
 2. 理论上基于Chromium内核版本的浏览器均可正常使用
-3. [点击查看当前浏览器内核版本](https://liulanmi.com/labs/core.html)
+3. [查看当前浏览器内核版本](https://liulanmi.com/labs/core.html)
 
 
 ## 使用
