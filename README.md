@@ -124,13 +124,13 @@
 
 ## 预览
 #### 首页
-[![首页](https://z3.ax1x.com/2021/08/22/hSIABQ.md.png)](https://imgtu.com/i/hSIABQ)
+[![首页](https://z3.ax1x.com/2021/08/22/hSIABQ.png)](https://imgtu.com/i/hSIABQ)
 #### 说说列表
 ![说说](https://s1.ax1x.com/2020/05/16/YcVx7n.png)
 #### 日志列表
 ![Q日志详情](https://s1.ax1x.com/2020/05/16/YcZ9hV.png)
 #### 相册列表
-[![相册列表](https://z3.ax1x.com/2021/08/22/hSI3B4.md.png)](https://imgtu.com/i/hSI3B4)
+[![相册列表](https://z3.ax1x.com/2021/08/22/hSI3B4.png)](https://imgtu.com/i/hSI3B4)
 #### 相片列表
 ![相片](https://s1.ax1x.com/2020/05/16/YcZi1U.png)
 #### 相片详情
@@ -140,9 +140,9 @@
 #### 收藏夹
 ![收藏夹](https://s1.ax1x.com/2020/05/16/YcZpt0.png)
 #### 分享
-[![分享](https://z3.ax1x.com/2021/08/22/hSTSQf.md.png)](https://imgtu.com/i/hSTSQf)
+[![分享](https://z3.ax1x.com/2021/08/22/hSTSQf.png)](https://imgtu.com/i/hSTSQf)
 #### 访客
-[![访客](https://z3.ax1x.com/2021/08/22/hSo6LF.md.png)](https://imgtu.com/i/hSo6LF)
+[![访客](https://z3.ax1x.com/2021/08/22/hSo6LF.png)](https://imgtu.com/i/hSo6LF)
 
 ## 依赖
 - [Blob.js](https://note.youdao.com/)
