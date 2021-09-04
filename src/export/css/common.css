@@ -976,3 +976,7 @@ pre {
     height: 100%!important;
     transform: translate(-50%, 0) !important;
 }
+
+.message-infos>.list-group-item{
+    padding: .25rem 1.25rem;
+}

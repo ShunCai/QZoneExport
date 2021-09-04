@@ -24,7 +24,7 @@
 <body>
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
-            <a class="navbar-brand" href="#">QQ空间导出助手</a>
+            <a class="navbar-brand" target="_blank" href="https://github.com/ShunCai/QZoneExport">QQ空间导出助手</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
 			</button>
@@ -32,6 +32,9 @@
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item active">
                         <a id="setting-link" class="nav-link" href="options.html">设置<span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a id="about-link" class="nav-link" href="tools.html">工具</a>
                     </li>
                     <li class="nav-item">
                         <a id="about-link" class="nav-link" href="about.html">关于</a>
@@ -488,6 +491,72 @@
                                         <input type="number" min="1" class="form-control" id="diaries_info_cost_max" placeholder="最大间隔">
                                     </div>
                                     <small class="text-muted mt-2">日记全文请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+                                </div>
+                                <h5 style="color:cadetblue">评论选项：</h5>
+                                <hr>
+                                <div class="form-group row">
+                                    <div class="col-sm-1">所有评论：</div>
+                                    <div class="col-sm-2 custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="diaries_download_full_comments" data-hidden="true" data-target-link="diaries_comment_link">
+                                        <label style="margin-left: 14px;" class="custom-control-label" for="diaries_download_full_comments" aria-describedby="diaries_comments_help"></label>
+                                    </div>
+                                    <small id="diaries_comments_help" class="text-muted">默认下载前50条评论，勾选下载全部</small>
+                                </div>
+                                <div class="form-group row" data-link="diaries_comment_link">
+                                    <label class="col-sm-1 col-form-label">查询间隔：</label>
+                                    <div class="col-sm-1">
+                                        <input type="number" min="1" class="form-control" id="diaries_comments_min" placeholder="最小间隔">
+                                    </div>
+                                    <div class="col-sm-1">
+                                        <input type="number" min="1" class="form-control" id="diaries_comments_max" placeholder="最大间隔">
+                                    </div>
+                                    <small class="text-muted mt-2">每页请求间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+                                </div>
+                                <div class="form-group row" data-link="diaries_comment_link">
+                                    <label for="diaries_list_limit" class="col-sm-1 col-form-label">每页条数：</label>
+                                    <div class="col-sm-2">
+                                        <input type="number" min="15" max="50" class="form-control" id="diaries_comments_limit" placeholder="查询每页条数">
+                                    </div>
+                                    <small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
+                                </div>
+                                <h5 style="color:cadetblue">其他选项：</h5>
+                                <hr>
+                                <div class="form-group row">
+                                    <div class="col-sm-1">点赞列表：</div>
+                                    <div class="col-sm-2 custom-control custom-checkbox">
+                                        <input type="checkbox" name="QZone_Config.Diaries.Like.isGet" class="custom-control-input" id="diaries_has_like" data-hidden="true" data-target-link="diaries_like_link">
+                                        <label style="margin-left: 14px;" class="custom-control-label" for="diaries_has_like" aria-describedby="diaries_like_help"></label>
+                                    </div>
+                                    <small class="text-muted">默认不获取赞，勾选获取，仅在备份类型为HTML、JSON时备份赞</small>
+                                </div>
+                                <div class="form-group row" data-link="diaries_like_link">
+                                    <label class="col-sm-1 col-form-label">查询间隔：</label>
+                                    <div class="col-sm-1">
+                                        <input type="number" min="1" class="form-control" id="diaries_like_min" placeholder="最小间隔">
+                                    </div>
+                                    <div class="col-sm-1">
+                                        <input type="number" min="1" class="form-control" id="diaries_like_max" placeholder="最大间隔">
+                                    </div>
+                                    <small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
+                                </div>
+                                <hr>
+                                <div class="form-group row">
+                                    <div class="col-sm-1">最近访问：</div>
+                                    <div class="col-sm-2 custom-control custom-checkbox">
+                                        <input type="checkbox" name="QZone_Config.Diaries.Visitor.isGet" class="custom-control-input" id="diaries_has_visitor" data-hidden="true" data-target-link="diaries_visitor_link">
+                                        <label style="margin-left: 14px;" class="custom-control-label" for="diaries_has_visitor" aria-describedby="diaries_visitor_help"></label>
+                                    </div>
+                                    <small class="text-muted">默认不获取最近访问，勾选获取，理论上仅支持获取最近1000条访问记录（开通黄钻情况下），仅在备份类型为HTML、JSON时备份</small>
+                                </div>
+                                <div class="form-group row" data-link="diaries_visitor_link">
+                                    <label class="col-sm-1 col-form-label">查询间隔：</label>
+                                    <div class="col-sm-1">
+                                        <input type="number" min="1" class="form-control" id="diaries_visitor_min" name="QZone_Config.Diaries.Visitor.randomSeconds.min" placeholder="最小间隔">
+                                    </div>
+                                    <div class="col-sm-1">
+                                        <input type="number" min="1" class="form-control" id="diaries_visitor_max" name="QZone_Config.Diaries.Visitor.randomSeconds.max" placeholder="最大间隔">
+                                    </div>
+                                    <small class="text-muted mt-2">每页请求的间隔秒数，一般保持默认即可，如遇获取失败，可做微调</small>
                                 </div>
                                 <div class="text-center">
                                     <button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
@@ -1246,12 +1315,11 @@
                                     <label for="common_download_type" class="col-sm-1 col-form-label">文件下载工具：</label>
                                     <div class="col-sm-2">
                                         <select id="common_download_type" class="custom-select" aria-describedby="common_download_type_help">
-											<!-- <option value="File" selected>助手内部</option> -->
-											<option value="Browser" selected>浏览器（推荐）</option>
+											<option value="Browser" selected>浏览器(默认)</option>
 											<option value="Aria2">Aria2</option>
-											<option value="Thunder">迅雷（自动唤起）</option>
-											<option value="Thunder_Link">迅雷（下载链接）</option>
-											<option value="QZone">QQ空间外链（不推荐）</option>
+											<option value="Thunder">迅雷</option>
+											<option value="Thunder_Link">下载链接(迅雷专用)</option>
+											<option value="QZone">QQ空间外链(不推荐)</option>
 										</select>
                                     </div>
                                     <small id="common_download_type_help" class="text-muted mt-2">助手内部目前暂不支持数据容量大于2G的，2G内建议使用助手内部下载，超2G的建议使用其他方式下载</small>

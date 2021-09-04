@@ -38,6 +38,18 @@ $(function () {
         formatter: (value) => {
             return API.Utils.formatDate(value);
         }
+    }, {
+        field: 'replynum',
+        title: '评论数',
+        align: 'center',
+        width: "20",
+        sortable: true
+    }, {
+        field: 'custom_visitor.viewCount',
+        title: '阅读数',
+        align: 'center',
+        width: "20",
+        sortable: true
     }], diaries);
 
 });

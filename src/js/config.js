@@ -5,9 +5,9 @@ const Default_Config = {
     // 公共配置
     Common: {
         // 重试次数
-        listRetryCount: 2,
+        listRetryCount: 3,
         // 重试间隔
-        listRetrySleep: 1,
+        listRetrySleep: 2,
         // 文件下载类型
         downloadType: 'Browser',
         Aria2: {
@@ -162,6 +162,14 @@ const Default_Config = {
                 max: 2
             }
         },
+        Comments: {
+            isFull: true, //是否全部评论
+            pageSize: 50,
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        },
         IncrementType: "Full", // 增量备份类型
         IncrementTime: "2005-06-06 00:00:00", // 增量时间
         PreBackup: {
@@ -170,6 +178,21 @@ const Default_Config = {
             exportType: undefined, // 备份类型
             field: "pubtime", // 比较字段
             time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
+        },
+        Like: {
+            isGet: false, //是否获取赞
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
+        },
+        Visitor: {
+            isGet: false, //是否获取最近访问
+            pageSize: 24,
+            randomSeconds: {
+                min: 1,
+                max: 2
+            }
         }
     },
     // 相册模块

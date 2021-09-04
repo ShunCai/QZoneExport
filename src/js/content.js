@@ -303,6 +303,27 @@ const MAX_MSG = {
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
         '请稍后...'
     ],
+    Diaries_Comments: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇私密日记的评论列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+        '请稍后...'
+    ],
+    Diaries_Like: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇私密日记的点赞列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+        '请稍后...'
+    ],
+    Diaries_Visitor: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇私密日记的最近访问',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+        '请稍后...'
+    ],
     Diaries_Export: [
         '正在导出私密日记',
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',

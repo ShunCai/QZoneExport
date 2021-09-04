@@ -48,7 +48,7 @@
 									<div style="display:none;" id="<%:=photo.video_info.vid%>">
 										<video class="lg-video-object lg-html5" src="<%:=API.Common.getMediaPath(photo.video_info.video_url, photo.custom_filepath, 'Photos_HTML')%>" controls="controls" preload="none"></video>
 									</div>
-									<a class="lightbox" data-poster="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath, 'Photos_HTML')%>" title="<%:=photo.name%>" data-html="#<%:=photo.video_info.vid%>">
+									<a class="lightbox" data-poster="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath, 'Photos_HTML')%>" title="<%:=photo.desc || photo.name%>" data-html="#<%:=photo.video_info.vid%>">
 										<span class="photo-video"></span>
 										<img class="lazyload"  src="../Common/Images/loading.gif" data-src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath,'Photos_HTML')%>" />
 									</a>
@@ -56,7 +56,7 @@
 										<span class="card-title"><%:=(photo.name || photo.uploadTime)%></span>
 									</div>
 								<%}else{%>
-									<a class="lightbox" href="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, 'Photos_HTML')%>" title="<%:=photo.name%>">
+									<a class="lightbox" href="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, 'Photos_HTML')%>" title="<%:=photo.desc || photo.name%>">
 										<img class="lazyload card-img" height="225px"  src="../Common/Images/loading.gif" data-src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath || photo.custom_filepath, 'Photos_HTML')%>">
 									</a>
 									<div class="card-body">

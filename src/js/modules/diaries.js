@@ -17,6 +17,15 @@ API.Diaries.export = async() => {
         items = await API.Diaries.getAllContents(items);
         console.info('私密日记内容获取完成', items);
 
+        // 获取所有的私密日记评论，由普通日志转私密日记的，会保留评论
+        items = await API.Diaries.getItemsAllCommentList(items);
+
+        // 获取日志点赞列表
+        await API.Diaries.getAllLikeList(items);
+
+        // 获取日志最近浏览
+        await API.Diaries.getAllVisitorList(items);
+
         // 根据导出类型导出数据    
         await API.Diaries.exportAllListToFiles(items);
 
@@ -81,6 +90,8 @@ API.Diaries.getAllContents = async(items) => {
                 item.custom_title = '《{0}》'.format(item.title);
                 // 添加自定义HTML
                 item.custom_html = API.Utils.utf8ToBase64($detailBlog.html());
+                // 添加点赞Key
+                item.uniKey = API.Blogs.getUniKey(item.blogid || item.blogId);
 
                 items[index] = item;
             }).catch((e) => {
@@ -183,6 +194,303 @@ API.Diaries.getAllList = async() => {
     return QZone.Diaries.Data;
 }
 
+/**
+ * 获取所有日志的评论列表
+ * @param {string} item 日志
+ */
+ API.Diaries.getItemsAllCommentList = async(items) => {
+    if (!QZone_Config.Diaries.Comments.isFull) {
+        // 不获取全部评论时，跳过
+        return items;
+    }
+
+    // 单条日志状态更新器
+    const indicator = new StatusIndicator('Diaries_Comments');
+    indicator.setTotal(items.length);
+
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+
+        // 更新当前位置
+        indicator.setIndex(i + 1);
+
+        if (!API.Common.isNewItem(item)) {
+            // 已备份数据跳过不处理
+            indicator.addSkip(item);
+            continue;
+        }
+
+        // 预防日志无评论
+        item.comments = item.comments || [];
+
+        // 获取日志的全部评论
+        await API.Diaries.getItemAllCommentList(item);
+
+        // 添加成功
+        indicator.addSuccess(item);
+    }
+
+    // 已完成
+    indicator.complete();
+    return items;
+}
+
+/**
+ * 获取单条日志的单页评论列表
+ * @param {object} item 日志
+ * @param {integer} pageIndex 页数索引
+ */
+API.Diaries.getItemCommentList = async(item, pageIndex) => {
+    return await API.Diaries.getComments(item.blogid, pageIndex).then(async(data) => {
+        // 去掉函数，保留json
+        data = API.Utils.toJson(data, /^_Callback\(/);
+        data = data.data;
+        return data.comments || [];
+    });
+}
+
+/**
+ * 获取单条日志的全部评论列表
+ * @param {object} item 日志
+ */
+API.Diaries.getItemAllCommentList = async(item) => {
+    if (!(item.replynum > item.comments.length)) {
+        // 当前列表比评论总数小的时候才需要获取全部评论，否则则跳过
+        return item.comments;
+    }
+    // 清空原有的评论列表
+    item.comments = [];
+
+    // 日志评论配置
+    const CONFIG = QZone_Config.Diaries.Comments;
+
+    // 更新总数
+    const total = item.replynum || 0;
+
+    const nextPage = async function(item, pageIndex) {
+
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
+
+        return await API.Diaries.getItemCommentList(item, pageIndex).then(async(dataList) => {
+
+            // 合并评论列表
+            item.comments = item.comments.concat(dataList || []);
+
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.comments, arguments.callee, item, nextPageIndex);
+        }).catch(async(e) => {
+            console.error("获取日志评论列表异常，当前页：", pageIndex + 1, item, e);
+            // 当前页失败后，跳过继续请求下一页
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.comments, arguments.callee, item, nextPageIndex);
+        });
+    }
+
+    await nextPage(item, 0);
+
+    return item.comments;
+}
+
+
+/**
+ * 获取日志赞记录
+ * @param {Array} items 日志列表
+ */
+ API.Diaries.getAllLikeList = async(items) => {
+
+    if (!API.Common.isGetLike(QZone_Config.Diaries)) {
+        // 不获取赞
+        return items;
+    }
+
+    // 进度更新器
+    const indicator = new StatusIndicator('Diaries_Like');
+    indicator.setTotal(items.length);
+
+    // 同时请求数
+    const _items = _.chunk(items, 10);
+
+    // 获取点赞列表
+    let count = 0;
+    end: for (let i = 0; i < _items.length; i++) {
+        const list = _items[i];
+
+        let tasks = [];
+        for (let j = 0; j < list.length; j++) {
+
+            const item = list[j];
+            item.likes = item.likes || [];
+
+            if (!API.Common.isNewItem(item)) {
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
+            }
+            indicator.setIndex(++count);
+            tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Diaries).then((likes) => {
+                // 获取完成
+                indicator.addSuccess(item);
+            }).catch((e) => {
+                console.error("获取私密日记点赞异常：", item, e);
+                indicator.addFailed(item);
+            }));
+
+        }
+
+        await Promise.all(tasks);
+        // 每一批次完成后暂停半秒
+        await API.Utils.sleep(500);
+    }
+
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
+
+    // 完成
+    indicator.complete();
+
+    return items;
+}
+
+
+/**
+ * 获取单条日志的全部最近访问
+ * @param {object} item 说说
+ */
+API.Diaries.getItemAllVisitorsList = async(item) => {
+    // 清空原有的最近访问信息
+    item.custom_visitor = {
+        viewCount: 0,
+        totalNum: 0,
+        list: []
+    };
+
+    // 说说最近访问配置
+    const CONFIG = QZone_Config.Diaries.Visitor;
+
+    const nextPage = async function(item, pageIndex) {
+        // 下一页索引
+        const nextPageIndex = pageIndex + 1;
+
+        return await API.Diaries.getVisitors(item.blogid, pageIndex).then(async(data) => {
+            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
+
+            // 合并
+            item.custom_visitor.viewCount = data.viewCount || 0;
+            item.custom_visitor.totalNum = data.totalNum || 0;
+            item.custom_visitor.list = item.custom_visitor.list.concat(data.list || []);
+
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.custom_visitor.totalNum, item.custom_visitor.list, arguments.callee, item, nextPageIndex);
+        }).catch(async(e) => {
+            console.error("获取日志最近访问列表异常，当前页：", pageIndex + 1, item, e);
+
+            // 当前页失败后，跳过继续请求下一页
+            // 递归获取下一页
+            return await API.Common.callNextPage(nextPageIndex, CONFIG, item.custom_visitor.totalNum, item.custom_visitor.list, arguments.callee, item, nextPageIndex);
+        });
+    }
+
+    await nextPage(item, 0);
+
+    return item.custom_visitor;
+}
+
+/**
+ * 获取日志最近访问
+ * @param {Array} items 日志列表
+ */
+API.Diaries.getAllVisitorList = async(items) => {
+    if (!API.Common.isGetVisitor(QZone_Config.Diaries)) {
+        // 不获取最近访问
+        return items;
+    }
+    // 进度更新器
+    const indicator = new StatusIndicator('Diaries_Visitor');
+    indicator.setTotal(items.length);
+
+    // 同时请求数
+    const _items = _.chunk(items, 10);
+
+    // 获取最近访问
+    let count = 0;
+    end: for (let i = 0; i < _items.length; i++) {
+        const list = _items[i];
+        let tasks = [];
+        for (let j = 0; j < list.length; j++) {
+            const item = list[j];
+            if (!API.Common.isNewItem(item)) {
+                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                await Promise.all(tasks);
+                break end;
+            }
+            indicator.setIndex(++count);
+            tasks.push(API.Diaries.getItemAllVisitorsList(item).then((visitor) => {
+                // 获取完成
+                indicator.addSuccess(item);
+            }).catch((e) => {
+                console.error("获取日志最近访问异常：", item, e);
+                indicator.addFailed(item);
+            }));
+
+        }
+
+        await Promise.all(tasks);
+        // 每一批次完成后暂停半秒
+        await API.Utils.sleep(500);
+    }
+
+    // 获取日志阅读数
+    await API.Diaries.getAllReadCount(items);
+
+    // 已备份数据跳过不处理
+    indicator.setSkip(items.length - count);
+
+    // 完成
+    indicator.complete();
+
+    return items;
+}
+
+/**
+ * 获取日志阅读数
+ * @param {Array} items 日志列表
+ */
+API.Diaries.getAllReadCount = async(items) => {
+    try {
+        // 同时请求数
+        const _items = _.chunk(items, 10);
+
+        // 获取最近访问
+        end: for (let i = 0; i < _items.length; i++) {
+            const list = _items[i];
+
+            // 日志ID数组
+            const blogIds = [];
+            for (let j = 0; j < list.length; j++) {
+                const item = list[j];
+                if (!API.Common.isNewItem(item)) {
+                    // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+                    break end;
+                }
+                blogIds.push(item.blogid);
+            }
+            // 单独获取日志的阅读数
+            let data = await API.Diaries.getReadCount(blogIds);
+            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
+            const readList = data.itemList || [];
+            const idMaps = API.Utils.groupedByField(readList, "id");
+            for (const item of list) {
+                if (idMaps.has(item.blogid)) {
+                    item.custom_visitor.viewCount = idMaps.get(item.blogid)[0].read || item.custom_visitor.viewCount;
+                }
+            }
+        }
+    } catch (error) {
+        console.error("获取日志阅读数异常：", error);
+    }
+    return items;
+}
 
 /**
  * 所有私密日记转换成导出文件
@@ -289,7 +597,7 @@ API.Diaries.exportToMarkdown = async(items) => {
  * @param {object} item 私密日记信息
  */
 API.Diaries.getMarkdown = async(item) => {
-    let contents = [];
+    const contents = [];
     // 拼接标题，日期，内容
     contents.push("# " + item.title);
     contents.push("> " + API.Utils.formatDate(item.pubtime));
@@ -302,7 +610,40 @@ API.Diaries.getMarkdown = async(item) => {
     contents.push("\r\n");
 
     // 拼接评论
-    contents.push("> 评论(0):");
+    contents.push("> 评论({0})".format(item.replynum));
+
+    let comments = item.comments || [];
+    for (const comment of comments) {
+        // 评论人
+        let poster = comment.poster.name || QZone.Common.Target.nickname || '';
+        poster = API.Common.formatContent(poster, 'MD');
+        poster = API.Common.getUserLink(comment.poster.id, poster, 'MD', true);
+
+        // 评论内容
+        let content = API.Common.formatContent(comment.content, 'MD');
+        // 替换换行符
+        content = content.replace(/\n/g, "");
+
+        // 添加评论内容
+        contents.push('* {0}：{1}'.format(poster, content));
+
+        // 评论的回复
+        const replies = comment.replies || [];
+        for (const rep of replies) {
+            // 回复人
+            let repPoster = rep.poster.name || QZone.Common.Target.nickname || '';
+            repPoster = API.Common.formatContent(repPoster, 'MD');
+            repPoster = API.Common.getUserLink(rep.poster.id, repPoster, 'MD', true);
+
+            // 回复内容
+            let repContent = API.Common.formatContent(rep.content, 'MD');
+            // 替换换行符
+            repContent = repContent.replace(/\n/g, "");
+
+            // 添加评论内容
+            contents.push('\t* {0}：{1}'.format(repPoster, repContent));
+        }
+    }
     return contents.join('\r\n');
 }
 

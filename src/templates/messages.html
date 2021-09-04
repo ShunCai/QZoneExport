@@ -246,10 +246,16 @@
 													<%}%>
 												<%}%>
 											</div>
-											<ul class="list-group list-group-flush ml-4">
+											<ul class="message-infos list-group list-group-flush ml-4">
 												<%if(message.lbs && message.lbs.pos_x && message.lbs.pos_y){%>
 													<li class="list-group-item">
 														<a class="fa fa-map-marker" target="_blank" href="<%:=API.Messages.getMapUrl(message.lbs)%>" class="card-link"> <%:=message.lbs.idname || message.lbs.name%></a>
+													</li>
+												<%}%>
+												<%if(!(!message.story_info || !message.story_info.time || !message.story_info.lbs)){%>
+													<li class="list-group-item">
+														<a class="fa fa-map-marker" target="_blank" href="<%:=API.Messages.getMapUrl(message.story_info.lbs)%>" class="card-link"><%:=message.story_info.lbs.idname || message.story_info.lbs.name%></a> 
+														<span class="fa fa-camera text-muted">拍摄于 <%:=API.Utils.formatDate(message.story_info.time)%> </span>
 													</li>
 												<%}%>
 												<%if(message.source_name){%>

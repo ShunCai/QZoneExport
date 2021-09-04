@@ -37,6 +37,9 @@ API.Messages.export = async() => {
         // 添加说说多媒体下载任务
         items = await API.Messages.addMediaToTasks(items);
 
+        // 处理特殊坐标数据，避免地图跳转错误
+        API.Messages.dealLbs(items);
+
         // 根据导出类型导出数据    
         await API.Messages.exportAllListToFiles(items);
 
@@ -1034,4 +1037,27 @@ API.Messages.getAllVisitorList = async(items) => {
     indicator.complete();
 
     return items;
+}
+
+/**
+ * 处理特殊坐标
+ * @param {Array} items 说说列表
+ */
+API.Messages.dealLbs = function(items) {
+    for (const item of items) {
+        const lbs = item.lbs;
+        if (!lbs || !lbs.pos_x || !lbs.pos_y) {
+            continue;
+        }
+        // 特殊坐标处理
+        if (Number.parseInt(lbs.pos_x) > 1000000) {
+            lbs.pos_x = lbs.pos_x / 1000000
+        }
+        if (Number.parseInt(lbs.pos_y) > 1000000) {
+            lbs.pos_y = lbs.pos_y / 1000000
+        }
+        // 科学计算法处理
+        lbs.pos_x = Number.parseFloat(lbs.pos_x).toString();
+        lbs.pos_y = Number.parseFloat(lbs.pos_y).toString();
+    }
 }

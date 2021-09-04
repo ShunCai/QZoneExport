@@ -375,6 +375,19 @@
         $("#diaries_info_cost_min").val(options.Diaries.Info.randomSeconds.min);
         $("#diaries_info_cost_max").val(options.Diaries.Info.randomSeconds.max);
         $("#diaries_list_limit").val(options.Diaries.pageSize);
+        // 评论列表
+        $("#diaries_download_full_comments").prop("checked", options.Diaries.Comments.isFull).change();
+        $("#diaries_comments_min").val(options.Diaries.Comments.randomSeconds.min);
+        $("#diaries_comments_max").val(options.Diaries.Comments.randomSeconds.max);
+        $("#diaries_comments_limit").val(options.Diaries.Comments.pageSize);
+        // 点赞列表
+        $("#diaries_has_like").prop("checked", options.Diaries.Like.isGet).change();
+        $("#diaries_like_min").val(options.Diaries.Like.randomSeconds.min);
+        $("#diaries_like_max").val(options.Diaries.Like.randomSeconds.max);
+        // 最近访问
+        $("#diaries_has_visitor").prop("checked", options.Diaries.Visitor.isGet).change();
+        $("#diaries_visitor_min").val(options.Diaries.Visitor.randomSeconds.min);
+        $("#diaries_visitor_max").val(options.Diaries.Visitor.randomSeconds.max);
 
         // 相册模块赋值
         $("#photos_exportFormat").val(options.Photos.exportType).change();
@@ -557,6 +570,19 @@
         QZone_Config.Diaries.Info.randomSeconds.min = $("#diaries_info_cost_min").val() * 1;
         QZone_Config.Diaries.Info.randomSeconds.max = $("#diaries_info_cost_max").val() * 1;
         QZone_Config.Diaries.pageSize = $("#diaries_list_limit").val() * 1;
+        // 评论列表
+        QZone_Config.Diaries.Comments.isFull = $("#diaries_download_full_comments").prop("checked");
+        QZone_Config.Diaries.Comments.randomSeconds.min = $("#diaries_comments_min").val() * 1;
+        QZone_Config.Diaries.Comments.randomSeconds.max = $("#diaries_comments_max").val() * 1;
+        QZone_Config.Diaries.Comments.pageSize = $("#diaries_comments_limit").val() * 1;
+        // 点赞列表
+        QZone_Config.Diaries.Like.isGet = $("#diaries_has_like").prop("checked");
+        QZone_Config.Diaries.Like.randomSeconds.min = $("#diaries_like_min").val() * 1;
+        QZone_Config.Diaries.Like.randomSeconds.max = $("#diaries_like_max").val() * 1;
+        // 最近访问
+        QZone_Config.Diaries.Visitor.isGet = $("#diaries_has_visitor").prop("checked");
+        QZone_Config.Diaries.Visitor.randomSeconds.min = $("#diaries_visitor_min").val() * 1;
+        QZone_Config.Diaries.Visitor.randomSeconds.max = $("#diaries_visitor_max").val() * 1;
 
         // 相册模块赋值
         QZone_Config.Photos.exportType = $("#photos_exportFormat").val();
