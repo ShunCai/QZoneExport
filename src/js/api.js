@@ -1924,6 +1924,23 @@ API.Friends = {
  * 说说模块API
  */
 API.Messages = {
+    /**
+     * 获取首页说说FEED流
+     * @param {integer} page 第几页
+     */
+    getFeeds(page) {
+        let params = {
+            "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
+            "hostUin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
+            "start": page * QZone_Config.Boards.pageSize,//56
+            // "outputhtmlfeed": 1,
+            "count": QZone_Config.Boards.pageSize,
+            "useutf8": 1,
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk()
+            // "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+        };
+        return API.Utils.get(QZone_URLS.HOME_PAGE_FEED_ALL_URL, params);
+    },
 
     /**
      * 获取说说UniKey，用于获取点赞数据
