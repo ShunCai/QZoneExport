@@ -49,6 +49,36 @@ API.Messages.export = async() => {
 }
 
 /**
+ * 获取一页的feed
+ * @param {integer} pageIndex 指定页的索引
+ * @param {StatusIndicator} indicator 状态更新器
+ */
+API.Messages.getFeedsPageList = async(pageIndex, indicator) => {
+    // 状态更新器当前页
+    indicator.setIndex(pageIndex + 1);
+    // 更新获取中提示
+    indicator.addDownload(QZone_Config.Messages.pageSize);
+    return await API.Messages.getFeeds(pageIndex).then(data => {
+        // 去掉函数，保留json
+        data = API.Utils.toJson(data, /^_Callback\(/);
+        data = data.data || {};//data.friend_data
+
+        // 更新总数，目前看FEED流里没给出总数，main里有一个total_number但值不对
+        //QZone.Messages.Data.total = data.total || QZone.Messages.Data.total || 0;
+
+        indicator.setTotal(QZone.Messages.Data.total);
+
+        let dataList = data.friend_data || [];
+        // 转换数据
+        dataList = API.Messages.convertFeed(dataList);
+        //  更新获取成功数据
+        indicator.addSuccess(dataList);
+
+        return dataList;
+    })
+}
+
+/**
  * 获取单页的说说列表
  * @param {integer} pageIndex 指定页的索引
  * @param {StatusIndicator} indicator 状态更新器
@@ -767,6 +797,24 @@ API.Messages.getAllVoices = async(items) => {
     }
     // 完成
     indicator.complete();
+    return items;
+}
+
+API.Messages.convertFeed = (items) => {
+    items = items || [];
+    for (const item of items) {
+        // todo 内容 转码的HTML，还需要处理图片下载及路径处理
+        item.custom_content = item.html
+
+        // 位置
+        item.lbs = item.lbs || {};
+
+        // 创建时间
+        item.custom_create_time = API.Utils.formatDate(item.feedstime);
+
+        // 添加点赞Key
+        item.uniKey = API.Messages.getUniKey(item.tid);
+    }
     return items;
 }
 

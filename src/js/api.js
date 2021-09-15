@@ -1932,9 +1932,9 @@ API.Messages = {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
             "hostUin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
-            "start": page * QZone_Config.Boards.pageSize,//56
+            "start": page * QZone_Config.Messages.pageSize,//56
             // "outputhtmlfeed": 1,
-            "count": QZone_Config.Boards.pageSize,
+            "count": QZone_Config.Messages.pageSize,
             "useutf8": 1,
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk()
             // "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
