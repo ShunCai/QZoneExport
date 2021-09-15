@@ -1931,7 +1931,7 @@ API.Messages = {
     getFeeds(page) {
         let params = {
             "uin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
-            "hostUin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
+            "hostuin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
             "start": page * QZone_Config.Messages.pageSize,//56
             // "outputhtmlfeed": 1,
             "count": QZone_Config.Messages.pageSize,
