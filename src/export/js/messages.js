@@ -13,15 +13,9 @@ const ITEM_TPL = `
                     <div class="messageText ml-4 container m-2">
                         <%/* 说说内容 */%>
                         <%/* 说说全文 */%>
+                        <pre class="card-text content <%:=message.has_more_con ? 'hasMore' : ''%>"><%:=API.Common.formatContent(message, "HTML", false, false)%></pre>
                         <%if(message.has_more_con){%>
-                            <details>
-                                <summary>查看全文</summary>
-                                <div class="container">
-                                    <%:=API.Common.formatContent(message, "HTML", false, false)%>
-                                </div>
-                            </details>
-                        <%}else{%>
-                            <pre class="card-text content"><%:=API.Common.formatContent(message, "HTML", false, false)%></pre>
+                            <span class="fa fa-2x fa-angle-down cursor readMore" title="展开全文"></span>
                         <%}%>
                         <%/* 语音内容 */%>
                         <%if(message.custom_voices){%>
@@ -36,15 +30,9 @@ const ITEM_TPL = `
                                 <span class="text-info"><%:=API.Common.formatContent(message.rt_uinname)%>：</span>
                             </a>
                             <%/* 转发全文 */%>
+                            <pre class="card-text content <%:=message.has_more_con ? 'hasMore' : ''%>"><%:=API.Common.formatContent(message, "HTML", true, false)%></pre>
                             <%if(message.rt_has_more_con && message.rt_con){%>
-                                <details class="float-left ml-3" >
-                                    <summary>查看全文</summary>
-                                    <div class="container">
-                                        <%:=API.Common.formatContent(message, "HTML", true, false)%>
-                                    </div>
-                                </details>
-                            <%}else{%>
-                                <pre class="card-text content"><%:=API.Common.formatContent(message, "HTML", true, false)%></pre>
+                                <span class="fa fa-2x fa-angle-down cursor readMore" title="展开全文"></span>
                             <%}%>
                         <%}%>
                         <%/* 多媒体内容 */%>
@@ -279,6 +267,24 @@ $(function () {
     // 最近访问
     $('.viewVisitors').on('click', function () {
         API.Common.showVisitorsWin(this, messages);
+    });
+
+    // 查看全文
+    $(".readMore").unbind("click").click(function(e) {
+        const text = $(this).attr('title');
+        if (text == "展开全文") {
+            $(this).attr('title',"收起全文");
+            $(this).removeClass("fa-angle-down");
+            $(this).addClass("fa-angle-up");
+            $(this).prev().addClass("more");
+        }
+        if (text == "收起全文") {
+            $(this).attr('title',"展开全文");
+            $(this).removeClass("fa-angle-up");
+            $(this).addClass("fa-angle-down");
+            $(this).prev().removeClass("more");
+        }
+        return;
     });
 
 });

@@ -980,3 +980,20 @@ pre {
 .message-infos>.list-group-item{
     padding: .25rem 1.25rem;
 }
+
+/* 有全文时，限制高度 */
+.messageText pre.hasMore {
+    height: 13rem !important;
+    overflow: hidden;
+}
+
+/* 查看全文时，不限制高度 */
+.messageText pre.more {
+    height: auto !important;
+}
+
+/* 查看全文图标样式 */
+.readMore {
+    display: block;
+    text-align: center;
+}

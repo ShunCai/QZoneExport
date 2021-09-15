@@ -34,6 +34,7 @@ const Default_Config = {
             max: 2
         },
         isFull: true, //是否获取全文
+        isShowMore: false, //是否展开全文
         Comments: {
             isFull: true, //是否全部评论
             pageSize: 20,

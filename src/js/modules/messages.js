@@ -362,7 +362,8 @@ API.Messages.exportToHtml = async(messages) => {
             _messageMaps.set(year, monthMaps);
             let params = {
                 messageMaps: _messageMaps,
-                total: yearItems.length
+                total: yearItems.length,
+                config: QZone_Config
             }
             let yearFile = await API.Common.writeHtmlofTpl('messages', params, QZone.Messages.ROOT + "/" + year + ".html");
             console.info('生成说说年份HTML文件结束', year, yearItems, yearFile);
@@ -372,7 +373,8 @@ API.Messages.exportToHtml = async(messages) => {
         // 基于模板生成汇总说说HTML
         let params = {
             messageMaps: API.Utils.groupedByTime(messages, "custom_create_time", 'all'),
-            total: messages.length
+            total: messages.length,
+            config: QZone_Config
         }
         let allFile = await API.Common.writeHtmlofTpl('messages', params, QZone.Messages.ROOT + "/index.html");
         console.info('生成说说汇总HTML文件结束', allFile, messages);

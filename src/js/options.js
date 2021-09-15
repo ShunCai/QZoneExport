@@ -326,6 +326,7 @@
         $("#messages_list_cost_max").val(options.Messages.randomSeconds.max);
         $("#messages_list_limit").val(options.Messages.pageSize);
         $("#messages_full").prop("checked", options.Messages.isFull);
+        $("#messages_full_show").prop("checked", options.Messages.isShowMore);
         $("#message_is_filter").prop("checked", options.Messages.isFilterKeyword).change();
         $("#filterKeywords").val(options.Messages.FilterKeyWords.join('\n'));
         // 评论列表
@@ -522,6 +523,7 @@
         QZone_Config.Messages.randomSeconds.max = $("#messages_list_cost_max").val() * 1;
         QZone_Config.Messages.pageSize = $("#messages_list_limit").val() * 1;
         QZone_Config.Messages.isFull = $("#messages_full").prop("checked");
+        QZone_Config.Messages.isShowMore = $("#messages_full_show").prop("checked");
         QZone_Config.Messages.isFilterKeyword = $("#message_is_filter").prop("checked");
         QZone_Config.Messages.FilterKeyWords = $("#filterKeywords").val().split('\n');
         // 评论列表
