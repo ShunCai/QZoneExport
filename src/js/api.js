@@ -2,6 +2,8 @@
  * QQ空间Rest API配置
  */
 const QZone_URLS = {
+    /** 首页FEED流 */
+    HOME_PAGE_FEED_ALL_URL: "https://user.qzone.qq.com/proxy/domain/ic2.qzone.qq.com/cgi-bin/feeds/feeds_html_act_all",
 
     /** 个人统计 */
     USER_COUNT_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/main_page_cgi",

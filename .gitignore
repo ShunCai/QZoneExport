@@ -1,3 +1,8 @@
 /releases
 backup
 json
+/.idea/.gitignore
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/QZoneExport.iml
+/.idea/vcs.xml
