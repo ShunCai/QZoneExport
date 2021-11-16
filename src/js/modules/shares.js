@@ -423,8 +423,8 @@ API.Shares.exportToHtml = async (shares) => {
     try {
         // 基于JSON生成JS
         console.info('生成分享JSON开始', shares);
-        await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('shares', shares, QZone.Common.ROOT + '/json/shares.js');
+        await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
+        const jsonFile = await API.Common.writeJsonToJs('shares', shares, API.Common.getModuleRoot('Common') + '/json/shares.js');
         console.info('生成分享JSON结束', jsonFile, shares);
 
         // 分享数据根据年份分组
@@ -440,7 +440,7 @@ API.Shares.exportToHtml = async (shares) => {
                 sharesMaps: _sharesMaps,
                 total: yearItems.length
             }
-            let yearFile = await API.Common.writeHtmlofTpl('shares', params, QZone.Shares.ROOT + "/" + year + ".html");
+            let yearFile = await API.Common.writeHtmlofTpl('shares', params, API.Common.getModuleRoot('Shares') + "/" + year + ".html");
             console.info('生成分享年份HTML文件结束', year, yearItems, yearFile);
         }
 
@@ -450,7 +450,7 @@ API.Shares.exportToHtml = async (shares) => {
             sharesMaps: API.Utils.groupedByTime(shares, "shareTime", 'all'),
             total: shares.length
         }
-        let allFile = await API.Common.writeHtmlofTpl('shares', params, QZone.Shares.ROOT + "/index.html");
+        let allFile = await API.Common.writeHtmlofTpl('shares', params, API.Common.getModuleRoot('Shares') + "/index.html");
         console.info('生成分享汇总HTML文件结束', allFile, shares);
 
     } catch (error) {
@@ -565,7 +565,7 @@ API.Shares.exportToMarkdown = async (items) => {
             allYearContents.push(yearContent);
 
             // 生成年份文件
-            const yearFilePath = QZone.Shares.ROOT + "/" + year + ".md";
+            const yearFilePath = API.Common.getModuleRoot('Shares') + "/" + year + ".md";
             await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
                 console.info('备份分享列表到Markdown完成，当前年份=', year, fileEntry);
             }).catch(error => {
@@ -574,7 +574,7 @@ API.Shares.exportToMarkdown = async (items) => {
         }
 
         // 生成汇总文件
-        await API.Utils.writeText(allYearContents.join('\r\n'), QZone.Shares.ROOT + '/Shares.md').then((fileEntry) => {
+        await API.Utils.writeText(allYearContents.join('\r\n'), API.Common.getModuleRoot('Shares') + '/Shares.md').then((fileEntry) => {
             console.info('生成汇总分享Markdown文件完成', items, fileEntry);
         }).catch((e) => {
             console.error("生成汇总分享Markdown文件异常", items, e)
@@ -602,7 +602,7 @@ API.Shares.exportToJson = async (items) => {
     const yearDataMap = API.Utils.groupedByTime(items, "shareTime", "year");
     for (const [year, yearItems] of yearDataMap) {
         console.info('正在生成年份分享JSON文件', year);
-        const yearFilePath = QZone.Shares.ROOT + "/" + year + ".json";
+        const yearFilePath = API.Common.getModuleRoot('Shares') + "/" + year + ".json";
         await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath).then((fileEntry) => {
             console.info('生成年份分享JSON文件完成', year, fileEntry);
         }).catch((e) => {
@@ -612,7 +612,7 @@ API.Shares.exportToJson = async (items) => {
 
     // 生成汇总JSON
     const json = JSON.stringify(items);
-    await API.Utils.writeText(json, QZone.Shares.ROOT + '/shares.json').then((fileEntry) => {
+    await API.Utils.writeText(json, API.Common.getModuleRoot('Shares') + '/shares.json').then((fileEntry) => {
         console.info('生成汇总分享JSON文件完成', items, fileEntry);
     }).catch((e) => {
         console.error("生成汇总分享JSON文件异常", items, e)

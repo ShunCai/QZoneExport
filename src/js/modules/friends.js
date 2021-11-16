@@ -221,7 +221,7 @@ API.Friends.exportToExcel = async (friends) => {
 
     // 写入XLSX到HTML5的FileSystem
     let xlsxArrayBuffer = API.Utils.toArrayBuffer(XLSX.write(workbook, { bookType: 'xlsx', bookSST: false, type: 'binary' }));
-    await API.Utils.writeFile(xlsxArrayBuffer, QZone.Friends.ROOT + "/QQ好友.xlsx").then(fileEntry => {
+    await API.Utils.writeFile(xlsxArrayBuffer, API.Common.getModuleRoot('Friends') + "/QQ好友.xlsx").then(fileEntry => {
         console.info('导出QQ好友到Excel成功', friends, fileEntry);
     }).catch(error => {
         console.error('导出QQ好友到Excel失败', friends, error);
@@ -242,13 +242,13 @@ API.Friends.exportToHtml = async (friends) => {
 
     // 基于JSON生成JS
     console.info('生成好友JSON开始', friends);
-    await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-    const jsonFile = await API.Common.writeJsonToJs('friends', friends, QZone.Common.ROOT + '/json/friends.js');
+    await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
+    const jsonFile = await API.Common.writeJsonToJs('friends', friends, API.Common.getModuleRoot('Common') + '/json/friends.js');
     console.info('生成好友JSON结束', jsonFile, friends);
 
     // 基于模板生成HTML
     console.info('生成好友列表HTML开始', friends);
-    const listFile = await API.Common.writeHtmlofTpl('friends', null, QZone.Friends.ROOT + "/index.html");
+    const listFile = await API.Common.writeHtmlofTpl('friends', null, API.Common.getModuleRoot('Friends') + "/index.html");
     console.info('生成好友列表HTML结束', listFile, friends);
 
     // 更新完成信息
@@ -290,7 +290,7 @@ API.Friends.exportToMarkDown = async (friends) => {
         contents.push('\r\n');
     }
     let content = contents.join('');
-    await API.Utils.writeText(content, QZone.Friends.ROOT + '/QQ好友.md').then((fileEntry) => {
+    await API.Utils.writeText(content, API.Common.getModuleRoot('Friends') + '/QQ好友.md').then((fileEntry) => {
         console.info("导出QQ好友的MarkDown文件到FileSystem完成", fileEntry);
     }).catch((error) => {
         console.error("导出QQ好友的MarkDown文件到FileSystem异常", error);
@@ -311,7 +311,7 @@ API.Friends.exportToJson = async (friends) => {
     indicator.setIndex('JSON');
 
     let json = JSON.stringify(friends);
-    await API.Utils.writeText(json, QZone.Friends.ROOT + '/friends.json').then((fileEntry) => {
+    await API.Utils.writeText(json, API.Common.getModuleRoot('Friends') + '/friends.json').then((fileEntry) => {
         console.info("导出QQ好友的JSON文件到FileSystem完成", fileEntry);
     }).catch((error) => {
         console.error("导出QQ好友的JSON文件到FileSystem异常", error);

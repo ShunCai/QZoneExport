@@ -221,8 +221,8 @@ API.Boards.exportToHtml = async(boardInfo) => {
     try {
         // 基于JSON生成JS
         console.info('生成留言JSON开始', boardInfo);
-        await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('boardInfo', boardInfo, QZone.Common.ROOT + '/json/boards.js');
+        await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
+        const jsonFile = await API.Common.writeJsonToJs('boardInfo', boardInfo, API.Common.getModuleRoot('Common') + '/json/boards.js');
         console.info('生成留言JSON结束', jsonFile, boardInfo);
 
         // 留言数据根据年份分组
@@ -239,7 +239,7 @@ API.Boards.exportToHtml = async(boardInfo) => {
                 total: yearItems.length,
                 authorInfo: boardInfo.authorInfo
             }
-            const yearFile = await API.Common.writeHtmlofTpl('boards', params, QZone.Boards.ROOT + "/" + year + ".html");
+            const yearFile = await API.Common.writeHtmlofTpl('boards', params, API.Common.getModuleRoot('Boards') + "/" + year + ".html");
             console.info('生成年份HTML文件结束', year, yearItems, yearFile);
         }
 
@@ -250,7 +250,7 @@ API.Boards.exportToHtml = async(boardInfo) => {
             total: boardInfo.total,
             authorInfo: boardInfo.authorInfo
         }
-        const allFile = await API.Common.writeHtmlofTpl('boards', params, QZone.Boards.ROOT + "/index.html");
+        const allFile = await API.Common.writeHtmlofTpl('boards', params, API.Common.getModuleRoot('Boards') + "/index.html");
         console.info('生成汇总HTML文件结束', allFile, boardInfo);
     } catch (error) {
         console.error('导出留言到HTML异常', error, boardInfo);
@@ -311,7 +311,7 @@ API.Boards.exportToMarkdown = async(boardInfo) => {
             // 汇总年份内容
             allYearContents.push(year_contents.join('\r\n'));
 
-            const yearFilePath = QZone.Boards.ROOT + "/" + year + ".md";
+            const yearFilePath = API.Common.getModuleRoot('Boards') + "/" + year + ".md";
 
             // 合并个人寄语
             _messsages[5] = '> 留言(' + year_total + ')  ';
@@ -329,7 +329,7 @@ API.Boards.exportToMarkdown = async(boardInfo) => {
         allYearContents = _messsages.concat(allYearContents);
 
         // 生成汇总文件
-        await API.Utils.writeText(allYearContents.join('\r\n'), QZone.Boards.ROOT + '/Boards.md');
+        await API.Utils.writeText(allYearContents.join('\r\n'), API.Common.getModuleRoot('Boards') + '/Boards.md');
     } catch (error) {
         console.error('导出留言到Markdown文件异常', error, boardInfo);
     }
@@ -399,7 +399,7 @@ API.Boards.exportToJson = async(boardInfo) => {
             authorInfo: boardInfo.authorInfo,
             total: yearItems.length
         }
-        const yearFilePath = QZone.Boards.ROOT + "/" + year + ".json";
+        const yearFilePath = API.Common.getModuleRoot('Boards') + "/" + year + ".json";
         await API.Utils.writeText(JSON.stringify(yearInfo), yearFilePath).then(fileEntry => {
             console.info('备份留言列表完成，当前年份=', year, yearInfo, fileEntry);
         }).catch(error => {
@@ -407,7 +407,7 @@ API.Boards.exportToJson = async(boardInfo) => {
         });
     }
 
-    await API.Utils.writeText(JSON.stringify(boardInfo), QZone.Boards.ROOT + '/boards.json').then(fileEntry => {
+    await API.Utils.writeText(JSON.stringify(boardInfo), API.Common.getModuleRoot('Boards') + '/boards.json').then(fileEntry => {
         console.info('备份留言列表完成', boardInfo, fileEntry);
     }).catch(error => {
         console.error('备份留言列表失败', boardInfo, error);

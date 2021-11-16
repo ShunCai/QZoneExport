@@ -1,5 +1,5 @@
 /**
- * QQ空间数据统计信息
+ * QQ空间数据统计分析信息
  * @author https://lvshuncai.com
  */
 "use strict";

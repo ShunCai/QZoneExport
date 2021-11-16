@@ -526,19 +526,19 @@ API.Diaries.exportToHtml = async(items) => {
 
     // 基于JSON生成JS
     console.info('生成私密日记JSON开始', items);
-    await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-    const jsonFile = await API.Common.writeJsonToJs('diaries', items, QZone.Common.ROOT + '/json/diaries.js');
+    await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
+    const jsonFile = await API.Common.writeJsonToJs('diaries', items, API.Common.getModuleRoot('Common') + '/json/diaries.js');
     console.info('生成私密日记JSON结束', jsonFile, items);
 
 
     // 基于模板生成HTML
     console.info('生成私密日记列表HTML开始', items);
-    const listFile = await API.Common.writeHtmlofTpl('diaries', undefined, QZone.Diaries.ROOT + "/index.html");
+    const listFile = await API.Common.writeHtmlofTpl('diaries', undefined, API.Common.getModuleRoot('Diaries') + "/index.html");
     console.info('生成私密日记列表HTML结束', listFile, items);
 
     // 生成私密日记详情HTML
     console.info('生成私密日记详情HTML开始', items);
-    const infoFile = await API.Common.writeHtmlofTpl('diaryinfo', undefined, QZone.Diaries.ROOT + "/info.html");
+    const infoFile = await API.Common.writeHtmlofTpl('diaryinfo', undefined, API.Common.getModuleRoot('Diaries') + "/info.html");
     console.info('生成私密日记详情HTML结束', infoFile, items);
 
     // 每篇日记生成单独的HTML
@@ -546,7 +546,7 @@ API.Diaries.exportToHtml = async(items) => {
         const blog = items[i];
         let orderNum = API.Utils.prefixNumber(i + 1, items.length.toString().length);
         console.info('生成单篇日记详情HTML开始', blog);
-        const blogFile = await API.Common.writeHtmlofTpl('diaryinfo_static', { blog: blog }, QZone.Diaries.ROOT + "/{0}_{1}.html".format(orderNum, API.Utils.filenameValidate(blog.title)));
+        const blogFile = await API.Common.writeHtmlofTpl('diaryinfo_static', { blog: blog }, API.Common.getModuleRoot('Diaries') + "/{0}_{1}.html".format(orderNum, API.Utils.filenameValidate(blog.title)));
         console.info('生成单篇日记详情HTML结束', blogFile, blog);
     }
 
@@ -574,7 +574,7 @@ API.Diaries.exportToMarkdown = async(items) => {
         let orderNum = API.Utils.prefixNumber(index + 1, QZone.Diaries.total.toString().length);
         let filename = API.Utils.filenameValidate(orderNum + "_" + date + "_【" + title + "】");
         // 文件夹路径
-        let categoryFolder = QZone.Diaries.ROOT + "/" + item.category;
+        let categoryFolder = API.Common.getModuleRoot('Diaries') + "/" + item.category;
         // 创建文件夹
         await API.Utils.createFolder(categoryFolder);
         // 私密日记文件路径
@@ -748,7 +748,7 @@ API.Diaries.exportToJson = async(items) => {
     const indicator = new StatusIndicator('Diaries_Export_Other');
     indicator.setIndex('JSON');
     let json = JSON.stringify(items);
-    await API.Utils.writeText(json, QZone.Diaries.ROOT + '/diaries.json');
+    await API.Utils.writeText(json, API.Common.getModuleRoot('Diaries') + '/diaries.json');
     indicator.complete();
     return items;
 }

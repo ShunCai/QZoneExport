@@ -144,8 +144,8 @@ API.Favorites.exportToHtml = async(favorites) => {
 
         // 基于JSON生成JS
         console.info('生成收藏夹JSON开始', favorites);
-        await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('favorites', favorites, QZone.Common.ROOT + '/json/favorites.js');
+        await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
+        const jsonFile = await API.Common.writeJsonToJs('favorites', favorites, API.Common.getModuleRoot('Common') + '/json/favorites.js');
         console.info('生成分享JSON结束', jsonFile, favorites);
 
         // 数据根据年份分组
@@ -161,7 +161,7 @@ API.Favorites.exportToHtml = async(favorites) => {
                 dataMaps: _dataMaps,
                 total: yearItems.length
             }
-            let yearFile = await API.Common.writeHtmlofTpl('favorites', params, QZone.Favorites.ROOT + "/" + year + ".html");
+            let yearFile = await API.Common.writeHtmlofTpl('favorites', params, API.Common.getModuleRoot('Favorites') + "/" + year + ".html");
             console.info('生成收藏夹年份HTML文件结束', year, yearItems, yearFile);
         }
 
@@ -171,7 +171,7 @@ API.Favorites.exportToHtml = async(favorites) => {
             dataMaps: API.Utils.groupedByTime(favorites, "create_time", 'all'),
             total: favorites.length
         }
-        let allFile = await API.Common.writeHtmlofTpl('favorites', params, QZone.Favorites.ROOT + "/index.html");
+        let allFile = await API.Common.writeHtmlofTpl('favorites', params, API.Common.getModuleRoot('Favorites') + "/index.html");
         console.info('生成收藏夹汇总HTML文件结束', allFile, favorites);
     } catch (error) {
         console.error('导出收藏夹到HTML异常', error, favorites);
@@ -212,7 +212,7 @@ API.Favorites.exportToMarkdown = async(favorites) => {
             // 汇总年份内容
             allYearContents.push(yearContent);
 
-            const yearFilePath = QZone.Favorites.ROOT + "/" + year + ".md";
+            const yearFilePath = API.Common.getModuleRoot('Favorites') + "/" + year + ".md";
             await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
                 console.info('备份收藏列表完成，当前年份=', year, fileEntry);
             }).catch(error => {
@@ -221,7 +221,7 @@ API.Favorites.exportToMarkdown = async(favorites) => {
         }
 
         // 生成汇总文件
-        await API.Utils.writeText(allYearContents.join('\r\n'), QZone.Favorites.ROOT + '/Favorites.md');
+        await API.Utils.writeText(allYearContents.join('\r\n'), API.Common.getModuleRoot('Favorites') + '/Favorites.md');
     } catch (error) {
         console.error('导出收藏夹到Markdown文件异常', error, videos);
     }
@@ -398,7 +398,7 @@ API.Favorites.exportToJson = async(favorites) => {
             yearItems = yearItems.concat(items);
         }
 
-        const yearFilePath = QZone.Favorites.ROOT + "/" + year + ".json";
+        const yearFilePath = API.Common.getModuleRoot('Favorites') + "/" + year + ".json";
         await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath).then(fileEntry => {
             console.info('备份收藏列表完成，当前年份=', year, yearItems, fileEntry);
         }).catch(error => {
@@ -407,7 +407,7 @@ API.Favorites.exportToJson = async(favorites) => {
     }
 
     let json = JSON.stringify(favorites);
-    await API.Utils.writeText(json, QZone.Favorites.ROOT + '/favorites.json').then(fileEntry => {
+    await API.Utils.writeText(json, API.Common.getModuleRoot('Favorites') + '/favorites.json').then(fileEntry => {
         console.info('备份收藏列表完成', favorites, fileEntry);
     }).catch(error => {
         console.error('备份收藏列表失败', favorites, error);

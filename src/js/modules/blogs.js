@@ -332,20 +332,20 @@ API.Blogs.exportToHtml = async(items) => {
     indicator.setIndex('HTML');
 
     // 基于JSON生成JS
-    await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-    await API.Common.writeJsonToJs('blogs', items, QZone.Common.ROOT + '/json/blogs.js');
+    await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
+    await API.Common.writeJsonToJs('blogs', items, API.Common.getModuleRoot('Common') + '/json/blogs.js');
 
     // 基于模板生成HTML
-    await API.Common.writeHtmlofTpl('blogs', undefined, QZone.Blogs.ROOT + "/index.html");
+    await API.Common.writeHtmlofTpl('blogs', undefined, API.Common.getModuleRoot('Blogs') + "/index.html");
 
     // 生成日志详情HTML
-    await API.Common.writeHtmlofTpl('bloginfo', undefined, QZone.Blogs.ROOT + "/info.html");
+    await API.Common.writeHtmlofTpl('bloginfo', undefined, API.Common.getModuleRoot('Blogs') + "/info.html");
 
     // 每篇日志生成单独的HTML
     for (let i = 0; i < items.length; i++) {
         const blog = items[i];
         let orderNum = API.Utils.prefixNumber(i + 1, items.length.toString().length);
-        await API.Common.writeHtmlofTpl('bloginfo_static', { blog: blog }, QZone.Blogs.ROOT + "/{0}_{1}.html".format(orderNum, API.Utils.filenameValidate(blog.title)));
+        await API.Common.writeHtmlofTpl('bloginfo_static', { blog: blog }, API.Common.getModuleRoot('Blogs') + "/{0}_{1}.html".format(orderNum, API.Utils.filenameValidate(blog.title)));
     }
     indicator.addSuccess(items);
     // 更新完成信息
@@ -408,7 +408,7 @@ API.Blogs.exportToMarkdown = async(items) => {
             filename = API.Utils.filenameValidate(orderNum + "_" + date + "_" + label + "【" + title + "】");
         }
         // 文件夹路径
-        const categoryFolder = QZone.Blogs.ROOT + "/" + item.category;
+        const categoryFolder = API.Common.getModuleRoot('Blogs') + "/" + item.category;
         // 创建文件夹
         await API.Utils.createFolder(categoryFolder);
         // 日志文件路径
@@ -583,7 +583,7 @@ API.Blogs.exportToJson = async(items) => {
     let indicator = new StatusIndicator('Blogs_Export_Other');
     indicator.setIndex('JSON');
     let json = JSON.stringify(items);
-    await API.Utils.writeText(json, QZone.Blogs.ROOT + '/blogs.json');
+    await API.Utils.writeText(json, API.Common.getModuleRoot('Blogs') + '/blogs.json');
     indicator.complete();
     return items;
 }

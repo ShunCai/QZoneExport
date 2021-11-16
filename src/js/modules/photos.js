@@ -786,7 +786,7 @@ API.Photos.exportAlbumsToHtml = async(albums) => {
         let params = {
             albumsMapping: albumsMapping
         }
-        let fileEntry = await API.Common.writeHtmlofTpl('albums', params, QZone.Photos.ROOT + "/index.html");
+        let fileEntry = await API.Common.writeHtmlofTpl('albums', params, API.Common.getModuleRoot('Photos') + "/index.html");
         console.info('生成汇总HTML文件结束', fileEntry, albumsMapping);
     } catch (error) {
         console.error('导出相册到HTML异常', error, albums);
@@ -816,7 +816,7 @@ API.Photos.exportAlbumsToMarkdown = async(albums) => {
 
         // 创建文件夹
         let categoryName = API.Utils.filenameValidate(className);
-        let folderName = QZone.Photos.ROOT + '/' + categoryName;
+        let folderName = API.Common.getModuleRoot('Photos') + '/' + categoryName;
         await API.Utils.createFolder(folderName);
 
         // 写入Markdown文件
@@ -913,7 +913,7 @@ API.Photos.exportAlbumsToJson = async(albums) => {
     const indicator = new StatusIndicator('Photos_Export');
     indicator.setIndex('JSON')
     let json = JSON.stringify(albums);
-    await API.Utils.writeText(json, QZone.Photos.ROOT + '/albums.json').then((fileEntry) => {
+    await API.Utils.writeText(json, API.Common.getModuleRoot('Photos') + '/albums.json').then((fileEntry) => {
         console.info('导出相册JSON文件到FileSystem完成', albums, fileEntry);
     }).catch((error) => {
         console.info('导出相册JSON文件到FileSystem异常', albums, error);
@@ -955,13 +955,13 @@ API.Photos.exportPhotosToHtml = async(albums) => {
     try {
         // 基于JSON生成JS
         console.info('生成相册JSON开始', albums);
-        await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('albums', albums, QZone.Common.ROOT + '/json/albums.js');
+        await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
+        const jsonFile = await API.Common.writeJsonToJs('albums', albums, API.Common.getModuleRoot('Common') + '/json/albums.js');
         console.info('生成相册JSON结束', jsonFile, albums);
 
         // 生成相片列表HTML
         console.info('生成相片列表HTML开始', albums);
-        const infoFile = await API.Common.writeHtmlofTpl('photos', null, QZone.Photos.ROOT + "/photos.html");
+        const infoFile = await API.Common.writeHtmlofTpl('photos', null, API.Common.getModuleRoot('Photos') + "/photos.html");
         console.info('生成相片列表HTML结束', infoFile, albums);
 
         for (const album of albums) {
@@ -969,7 +969,7 @@ API.Photos.exportPhotosToHtml = async(albums) => {
             console.info('生成相册的相片HTML开始', album);
 
             const name = API.Utils.filenameValidate(album.name);
-            const albumFile = await API.Common.writeHtmlofTpl('photos_static', { album: album }, QZone.Photos.ROOT + "/" + name + ".html");
+            const albumFile = await API.Common.writeHtmlofTpl('photos_static', { album: album }, API.Common.getModuleRoot('Photos') + "/" + name + ".html");
 
             console.info('生成相册的相片HTML结束', albumFile, album);
         }
@@ -998,7 +998,7 @@ API.Photos.exportPhotosToMarkdown = async(albums) => {
         indicator.setTotal(photos.length);
         indicator.addDownload(photos);
 
-        const folderName = QZone.Photos.ROOT + '/' + categoryName + '/' + albumName;
+        const folderName = API.Common.getModuleRoot('Photos') + '/' + categoryName + '/' + albumName;
         await API.Utils.createFolder(folderName);
 
         // 生成相片年份的MD文件
@@ -1103,7 +1103,7 @@ API.Photos.exportPhotosToJson = async(albums) => {
         const albumName = API.Utils.filenameValidate(album.name);
         const photos = album.photoList || [];
         const json = JSON.stringify(photos);
-        const folderName = QZone.Photos.ROOT + '/' + categoryName + '/' + albumName;
+        const folderName = API.Common.getModuleRoot('Photos') + '/' + categoryName + '/' + albumName;
         await API.Utils.createFolder(folderName);
         await API.Utils.writeText(json, folderName + "/" + albumName + '.json');
     }

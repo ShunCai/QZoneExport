@@ -3,7 +3,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title h5" id="exampleModalLongTitle">QQ空间导出助手</h5>
-                <div id="showAbout" class="mt-1" style="cursor: pointer;">
+                <div class="skipLink ml-2" data-link="html/about.html" style="cursor: pointer;margin-top: 6px">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-question-circle" viewBox="0 0 16 16">
 						<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"></path>
 						<path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"></path>
@@ -14,9 +14,18 @@
 				</button>
             </div>
             <div class="modal-body">
-                <h6 class="h6" id="backupStatus">正在收集QQ空间数据，请不要<span style="color:red">关闭或刷新</span>当前页面和<span style="color: red">打开</span>新的QQ空间页面。</h6>
+                <h6 class="h6" id="backupStatus">正在收集QQ空间数据，<span style="color:red">请不要关闭或刷新当前页面和打开新的QQ空间页面。</span></h6>
+                <h6 class="h6">如若初次使用，请先查看
+                    <a href="javascript:void(0)" class="skipLink" data-link="https://github.com/ShunCai/QZoneExport/wiki/Privacy-Policy">隐私政策</a>
+                    与
+                    <a class="skipLink" href="javascript:void(0)" data-link="https://github.com/ShunCai/QZoneExport/wiki/Question">常见问题</a>
+                    ！如遇长时间无动静、卡死等，可点击
+                    <a class="skipLink" href="javascript:void(0)" data-link="html/about.html">这里</a>
+                    反馈问题
+                </h6>
                 <hr />
                 <div class="container">
+                    <p id="InitIncrement_Tips" style="font-size: medium;"></p>
                     <p id="Messages_Tips" style="font-size: medium;"></p>
                     <p id="Messages_Filter_Tips" style="font-size: medium;"></p>
                     <p id="Messages_Full_Content_Tips" style="font-size: medium;"></p>

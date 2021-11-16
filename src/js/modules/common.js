@@ -17,6 +17,9 @@ API.Common.initUserInfo = async() => {
         // 用户信息
         userInfo = Object.assign(QZone.Common.Target, userInfo);
 
+        // 下载助手配置信息
+        await API.Common.exportConfigToJson();
+
         // 添加目标头像下载任务
         API.Common.downloadUserAvatars([QZone.Common.Target, QZone.Common.Owner, userInfo]);
 
@@ -72,7 +75,7 @@ API.Common.exportUser = async() => {
  */
 API.Common.exportUserToJson = async(userInfo) => {
     const json = JSON.stringify(userInfo);
-    const path = QZone.Common.ROOT + '/json';
+    const path = API.Common.getModuleRoot('Common') + '/json';
 
     // 创建JSON文件夹
     await API.Utils.createFolder(path);
@@ -133,7 +136,7 @@ API.Common.exportUserToMd = async(userInfo) => {
     contents.push('---|---|---|---|---|---|---|---');
     contents.push('{messages}|{blogs}|{diaries}|{photos}|{videos}|{boards}|{favorites}|{shares}|{visitors}|{friends}'.format(QZone.Common.Target));
 
-    await API.Utils.writeText(contents.join('\r\n'), FOLDER_ROOT + "index.md").then((fileEntry) => {
+    await API.Utils.writeText(contents.join('\r\n'), API.Common.getRootFolder() + "/index.md").then((fileEntry) => {
         console.info("导出空间预览到Markdown文件完成", fileEntry, userInfo);
     }).catch((error) => {
         console.error("导出空间预览到Markdown文件异常", error, userInfo);
@@ -174,7 +177,7 @@ API.Common.exportUserToHtml = async(userInfo) => {
     // 导出HTML依赖的JS、CSS
     for (let index = 0; index < QZone.Common.ExportFiles.length; index++) {
         const pathInfo = QZone.Common.ExportFiles[index];
-        let paths = pathInfo.target.split('/');
+        let paths = (API.Common.getRootFolder() + '/' + pathInfo.target).split('/');
         let filename = paths.pop();
         await API.Utils.createFolder(paths.join('/'));
         await API.Utils.downloadToFile(chrome.extension.getURL(pathInfo.original), paths.join('/') + '/' + filename);
@@ -182,7 +185,7 @@ API.Common.exportUserToHtml = async(userInfo) => {
 
     console.info('生成首页HTML文件开始', userInfo);
     // 基于模板生成HTML
-    let fileEntry = await API.Common.writeHtmlofTpl('index', { user: userInfo }, FOLDER_ROOT + "/index.html");
+    let fileEntry = await API.Common.writeHtmlofTpl('index', { user: userInfo }, API.Common.getRootFolder() + "/index.html");
     console.info('生成首页HTML文件结束', fileEntry, userInfo);
 }
 
@@ -337,7 +340,7 @@ API.Common.downloadsByAjax = async(tasks) => {
             const task = list[j];
 
             // 创建文件夹
-            const folderName = FOLDER_ROOT + '/' + task.dir;
+            const folderName = API.Common.getRootFolder() + '/' + task.dir;
             await API.Utils.createFolder(folderName);
 
             const filepath = folderName + '/' + task.name;
@@ -504,7 +507,7 @@ API.Common.writeThunderTaskToFile = async(thunderInfo) => {
 
         // 写入文件
         const json = 'thunderx://' + JSON.stringify(groupTask);
-        await API.Utils.writeText(json, FOLDER_ROOT + taskGroupName + '_迅雷下载链接.txt').then((fileEntry) => {
+        await API.Utils.writeText(json, API.Common.getRootFolder() + '/' + taskGroupName + '_迅雷下载链接.txt').then((fileEntry) => {
             console.info("导出迅雷下载链接完成", fileEntry);
         }).catch((error) => {
             console.error("导出迅雷下载链接异常", error);
@@ -747,6 +750,28 @@ API.Common.saveBackupItems = () => {
 }
 
 /**
+ * 是否存在增量备份需求的模块
+ */
+API.Common.hasIncrementBackup = () => {
+    let hasIncrementBackup = false;
+    for (let key in QZone_Config) {
+        let moduleCfg = QZone_Config[key];
+        if (!moduleCfg) {
+            continue;
+        }
+        let incrCfg = moduleCfg['IncrementType'] || moduleCfg['isIncrement'];
+        if (!incrCfg) {
+            continue;
+        }
+        if (incrCfg === true || ['LastTime', 'Custom'].indexOf(incrCfg) != -1) {
+            hasIncrementBackup = true;
+            break;
+        }
+    }
+    return hasIncrementBackup;
+}
+
+/**
  * 获取上次备份数据
  */
 API.Common.getBackupItems = () => {
@@ -836,6 +861,14 @@ API.Common.resetQzoneItems = () => {
  * 初始化已备份数据到全局变量
  */
 API.Common.initBackedUpItems = async() => {
+    if (!API.Common.hasIncrementBackup()) {
+        // 本次备份，不存在需要增量备份的模块，无需获取上次备份数据
+        return;
+    }
+    // 进度提示
+    const indicator = new StatusIndicator('InitIncrement');
+    indicator.print();
+
     // 获取已备份数据
     const Old_QZone = await API.Common.getBackupItems();
     if (!Old_QZone || Object.keys(Old_QZone).length == 0) {
@@ -873,6 +906,7 @@ API.Common.initBackedUpItems = async() => {
         total: 0,
         totalPage: 0
     };
+    indicator.complete();
 }
 
 /**
@@ -1001,7 +1035,7 @@ API.Common.downloadUserAvatar = (user) => {
         return;
     }
 
-    API.Utils.newDownloadTask('Friends',avatarUrl, 'Common/images', user.uin + '', user);
+    API.Utils.newDownloadTask('Friends', avatarUrl, 'Common/images', user.uin + '', user);
     user.avatar = API.Common.getUserLogoUrl(user.uin);
     user.custom_avatar = API.Common.getUserLogoLocalUrl(user.uin);
 
@@ -1021,4 +1055,19 @@ API.Common.downloadUserAvatars = (users) => {
     for (const user of users) {
         API.Common.downloadUserAvatar(user);
     }
+}
+
+/**
+ * 导出助手到JSON文件
+ * @param {Array} friends 好友列表
+ */
+API.Common.exportConfigToJson = async() => {
+    const path = API.Common.getModuleRoot('Common') + '/json';
+
+    console.info('生成助手配置JSON开始', QZone_Config);
+    // 创建JSON文件夹
+    await API.Utils.createFolder(path);
+    // 写入JOSN
+    const jsonFile = await API.Common.writeJsonToJs('QZone_Config', QZone_Config, API.Common.getModuleRoot('Common') + '/json/config.js');
+    console.info('生成助手配置JSON结束', jsonFile, QZone_Config);
 }

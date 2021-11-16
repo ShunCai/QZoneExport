@@ -228,7 +228,7 @@ const YEAR_ITEMS = `
             <%if (yearItems && yearItems.length > 0) {%>
                 <span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=year%>年"></span>
                 <%for (const message of yearItems) {%>
-                    `+ ITEM_TPL + `
+                    ` + ITEM_TPL + `
                 <%}%>  
             <%}%>       
         <%}%>
@@ -236,14 +236,17 @@ const YEAR_ITEMS = `
     <%}%>        
 `;
 
-$(function () {
+$(function() {
 
-    // 那年今日
-    const _yearMaps = API.Common.getOldYearData(messages, "created_time");
+    // 是否需要生成那年今日
+    if (QZone_Config.Messages.hasThatYearToday) {
+        // 那年今日
+        const _yearMaps = API.Common.getOldYearData(messages, "created_time");
 
-    // 那年今日HTML
-    const items_html = template(YEAR_ITEMS, { yearMaps: _yearMaps });
-    $('#messages_html').prepend(items_html);
+        // 那年今日HTML
+        const items_html = template(YEAR_ITEMS, { yearMaps: _yearMaps });
+        $('#messages_html').prepend(items_html);
+    }
 
     // 重新渲染左侧目录
     initSidebar();
@@ -260,12 +263,12 @@ $(function () {
     });
 
     // 点赞列表
-    $('.viewlikes').on('click', function () {
+    $('.viewlikes').on('click', function() {
         API.Common.showLikeWin(this, messages);
     });
 
     // 最近访问
-    $('.viewVisitors').on('click', function () {
+    $('.viewVisitors').on('click', function() {
         API.Common.showVisitorsWin(this, messages);
     });
 
@@ -273,13 +276,13 @@ $(function () {
     $(".readMore").unbind("click").click(function(e) {
         const text = $(this).attr('title');
         if (text == "展开全文") {
-            $(this).attr('title',"收起全文");
+            $(this).attr('title', "收起全文");
             $(this).removeClass("fa-angle-down");
             $(this).addClass("fa-angle-up");
             $(this).prev().addClass("more");
         }
         if (text == "收起全文") {
-            $(this).attr('title',"展开全文");
+            $(this).attr('title', "展开全文");
             $(this).removeClass("fa-angle-up");
             $(this).addClass("fa-angle-down");
             $(this).prev().removeClass("more");

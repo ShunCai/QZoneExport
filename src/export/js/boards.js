@@ -62,7 +62,7 @@ const YEAR_ITEMS = `
             <%if (yearItems && yearItems.length > 0) {%>
                 <span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=year%>年"></span>
                 <%for (const board of yearItems) {%>
-                    `+ ITEM_TPL + `
+                    ` + ITEM_TPL + `
                 <%}%>  
             <%}%>       
         <%}%>
@@ -70,14 +70,17 @@ const YEAR_ITEMS = `
     <%}%>        
 `;
 
-$(function () {
+$(function() {
 
-    // 那年今日
-    const _yearMaps = API.Common.getOldYearData(boardInfo.items, "pubtime");
+    // 是否需要生成那年今日
+    if (QZone_Config.Boards.hasThatYearToday) {
+        // 那年今日
+        const _yearMaps = API.Common.getOldYearData(boardInfo.items, "pubtime");
 
-    // 那年今日HTML
-    const items_html = template(YEAR_ITEMS, { yearMaps: _yearMaps });
-    $('#boards_html').prepend(items_html);
+        // 那年今日HTML
+        const items_html = template(YEAR_ITEMS, { yearMaps: _yearMaps });
+        $('#boards_html').prepend(items_html);
+    }
 
     // 重新渲染左侧目录
     initSidebar();

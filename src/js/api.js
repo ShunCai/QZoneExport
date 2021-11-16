@@ -385,7 +385,7 @@ API.Utils = {
                 QZone.Common.Filer.open(fullPath, (f) => {
                     let reader = new FileReader();
                     reader.onload = function(event) {
-                        QZone.Common.Zip.file(entry.fullPath, event.target.result, { binary: true });
+                        QZone.Common.Zip.file(entry.fullPath.startsWith('/') ? entry.fullPath.substr(1) : entry.fullPath, event.target.result, { binary: true });
                     }
                     reader.readAsArrayBuffer(f);
                 }, reject);
@@ -398,8 +398,8 @@ API.Utils = {
                     for (i = 0; i < entries.length; i++) {
                         var entry = entries[i];
                         if (entry.isDirectory) {
-                            QZone.Common.Zip.folder(entry.fullPath);
-                            cl(path + entry.name + '/');
+                            QZone.Common.Zip.folder(entry.fullPath.startsWith('/') ? entry.fullPath.substr(1) : entry.fullPath);
+                            cl(entry.fullPath);
                         } else {
                             zipOneFile(entry);
                         }
@@ -585,7 +585,7 @@ API.Utils = {
     /**
      * 从 HTML 页面找到 token 保存起来
      */
-    getQzoneToken() {
+    getQZoneToken() {
         $("script").each(function() {
             var t = $(this).text();
             t = t.replace(/\ /g, "");
@@ -1198,7 +1198,7 @@ API.Utils = {
                     ],
                     {
                         "referer": 'https://user.qzone.qq.com/',
-                        "out": QZone.Common.Config.ZIP_NAME + '/' + task.dir + "/" + task.name
+                        "out": API.Common.getRootFolderName() + '/' + task.dir + "/" + task.name
                     }
                 ]
             }
@@ -1388,7 +1388,7 @@ API.Common = {
             "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
             "param": 16,
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.USER_COUNT_URL, params);
     },
@@ -1403,7 +1403,7 @@ API.Common = {
             "fupdate": 1,
             "rd": Math.random(),
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.USER_INFO_URL, params);
     },
@@ -1435,7 +1435,7 @@ API.Common = {
             "query_count": 60,
             "if_first_page": begin_uin === 0 ? 1 : 0, //标识是否为首次请求 第一次请求为1，以后为0
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.LIKE_LIST_URL, params);
     },
@@ -1450,7 +1450,7 @@ API.Common = {
             "fupdate": 1,
             "rd": Math.random(),
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.SPECIAL_CARE_LIST_URL, params);
     },
@@ -1606,6 +1606,31 @@ API.Common = {
             }
         }
         return result.join('');
+    },
+
+    /**
+     * 获取备份QQ的FS根目录
+     * @returns /QQ空间备份_QQ号
+     */
+    getRootFolder() {
+        return FOLDER_ROOT + '_' + QZone.Common.Target.uin;
+    },
+
+    /**
+     * 获取备份QQ的FS根目录
+     * @returns /QQ空间备份_QQ号
+     */
+    getRootFolderName() {
+        return QZone.Common.Config.ZIP_NAME + '_' + QZone.Common.Target.uin;
+    },
+
+    /**
+     * 获取模块的FS根目录
+     * @param {string} module 模块名称
+     * @returns /QQ空间备份_QQ号/模块名称
+     */
+    getModuleRoot(module) {
+        return API.Common.getRootFolder() + '/' + QZone[module].ROOT;
     }
 }
 
@@ -1698,7 +1723,7 @@ API.Blogs = {
             "ref": "qzone",
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "verbose": "1",
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
         return API.Utils.get(QZone_URLS.BLOGS_LIST_URL, params);
     },
@@ -1770,7 +1795,7 @@ API.Blogs = {
             "format": "jsonp",
             "ref": "qzone",
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
         return API.Utils.get(QZone_URLS.BLOGS_COMMENTS_URL, params);
     },
@@ -1789,7 +1814,7 @@ API.Blogs = {
             "num": QZone_Config.Blogs.Visitor.pageSize,
             "needFriend": 1, // TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
     }
@@ -1821,7 +1846,7 @@ API.Diaries = {
             "format": "jsonp",
             "ref": "qzone",
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
         return API.Utils.get(QZone_URLS.DIARY_LIST_URL, params);
     },
@@ -1867,7 +1892,7 @@ API.Diaries = {
             "format": "jsonp",
             "ref": "qzone",
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
         return API.Utils.get(QZone_URLS.BLOGS_COMMENTS_URL, params);
     },
@@ -1886,7 +1911,7 @@ API.Diaries = {
             "num": QZone_Config.Diaries.Visitor.pageSize,
             "needFriend": 1, // TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
     },
@@ -1930,7 +1955,7 @@ API.Friends = {
             "groupface_flag": 0, //是否获取QQ群组信息
             "fupdate": 1,
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
         return API.Utils.get(QZone_URLS.FRIENDS_LIST_URL, params);
     },
@@ -1945,7 +1970,7 @@ API.Friends = {
             "fupdate": "1",
             "rd": Math.random(),
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
         // code = -3000 未登录
         // code = -4009 无权限
@@ -1963,7 +1988,7 @@ API.Friends = {
             "situation": 1,
             "isCalendar": 1,
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
         return API.Utils.get(QZone_URLS.USER_ADD_TIME_URL, params);
     },
@@ -1977,7 +2002,7 @@ API.Friends = {
             "uin": targetUin,
             "param": 15,
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
         return API.Utils.get(QZone_URLS.INTIMACY_URL, params);
     }
@@ -2013,7 +2038,7 @@ API.Messages = {
             "code_version": 1,
             "format": "jsonp",
             "need_private_comment": 1,
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
         return API.Utils.get(QZone_URLS.MESSAGES_LIST_URL, params);
     },
@@ -2048,7 +2073,7 @@ API.Messages = {
      */
     getFullContent(id) {
         let params = {
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken(),
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "tid": id,
             "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
@@ -2075,7 +2100,7 @@ API.Messages = {
             "t1_source": 1,
             "random": Math.random(),
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.MESSAGES_IMAGES_URL, params);
     },
@@ -2098,7 +2123,7 @@ API.Messages = {
             "code_version": 1,
             "format": "jsonp",
             "need_private_comment": 1,
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.MESSAGES_COMMONTS_URL, params);
     },
@@ -2140,7 +2165,7 @@ API.Messages = {
             "num": QZone_Config.Messages.Visitor.pageSize,
             "needFriend": 1, // TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
     },
@@ -2291,7 +2316,7 @@ API.Boards = {
             "inCharset": "utf-8",
             "outCharset": "utf-8",
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
         return API.Utils.get(QZone_URLS.BOARD_LIST_URL, params);
     },
@@ -2322,7 +2347,7 @@ API.Photos = {
             "version": 2,
             "json_esc": 1,
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         let data = await API.Utils.get(QZone_URLS.PHOTOS_ROUTE_URL, params);
         data = API.Utils.toJson(data, /^photoDomainNameCallback\(/);
@@ -2464,7 +2489,7 @@ API.Photos = {
             "source": "qzone",
             "random": Math.random(),
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
         return API.Utils.get(QZone_URLS.ALBUM_COMMENTS_URL, params);
     },
@@ -2565,7 +2590,7 @@ API.Photos = {
             "plat": "qzone",
             "random": Date.now(),
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
         return API.Utils.get(QZone_URLS.IMAGES_COMMENTS_URL, params);
     },
@@ -2584,7 +2609,7 @@ API.Photos = {
             "num": QZone_Config.Blogs.Visitor.pageSize,
             "needFriend": 1, // TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
     },
@@ -2602,7 +2627,7 @@ API.Photos = {
             "contentid": targeId,
             "fupdate": 1,
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.VISITOR_SIMPLE_LIST_URL, params);
     },
@@ -2813,7 +2838,7 @@ API.Videos = {
             "code_version": 1,
             "out_charset": "UTF-8",
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.VIDEO_COMMENTS_URL, params);
     },
@@ -3035,7 +3060,7 @@ API.Favorites = {
             "fupdate": 1,
             "random": Math.random(),
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.FAVORITE_LIST_URL, params);
     },
@@ -3167,8 +3192,14 @@ API.Shares = {
         }
         for (const sourceType of QZone_Config.Shares.SourceType) {
             const name = sourceType.name;
-            for (const reg of sourceType.regulars) {
-                if (url.match(new RegExp(reg))) {
+            if (Array.isArray(sourceType.regulars)) {
+                for (const reg of sourceType.regulars) {
+                    if (url.match(new RegExp(reg))) {
+                        return name;
+                    }
+                }
+            } else {
+                if (url.match(new RegExp(sourceType.regulars))) {
                     return name;
                 }
             }
@@ -3320,7 +3351,7 @@ API.Shares = {
             "ref": "",
             "random": Math.random(),
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.SHARE_COMMENTS_URL, params);
     },
@@ -3339,7 +3370,7 @@ API.Shares = {
             "num": QZone_Config.Shares.Visitor.pageSize,
             "needFriend": 1, // TODO 待确认，是否需要QQ好友还是仅仅包含QQ好友
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
     }
@@ -3363,7 +3394,7 @@ API.Visitors = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "page": page,
             "fupdate": 1,
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQzoneToken()
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         if (isOwner) {
             params.clear = 1;

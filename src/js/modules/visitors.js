@@ -194,8 +194,8 @@ API.Visitors.exportToHtml = async (visitorInfo) => {
     try {
         // 基于JSON生成JS
         console.info('生成访客JSON开始', visitorInfo);
-        await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('visitorInfo', visitorInfo, QZone.Common.ROOT + '/json/visitors.js');
+        await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
+        const jsonFile = await API.Common.writeJsonToJs('visitorInfo', visitorInfo, API.Common.getModuleRoot('Common') + '/json/visitors.js');
         console.info('生成访客JSON结束', jsonFile, visitorInfo);
 
         // 访客数据根据年份分组
@@ -207,7 +207,7 @@ API.Visitors.exportToHtml = async (visitorInfo) => {
                 visitors: yearItems,
                 total: yearItems.length
             }
-            let yearFile = await API.Common.writeHtmlofTpl('visitors', params, QZone.Visitors.ROOT + "/" + year + ".html");
+            let yearFile = await API.Common.writeHtmlofTpl('visitors', params, API.Common.getModuleRoot('Visitors') + "/" + year + ".html");
             console.info('生成访客年份HTML文件结束', year, yearItems, yearFile);
         }
 
@@ -217,7 +217,7 @@ API.Visitors.exportToHtml = async (visitorInfo) => {
             visitors: visitorInfo.items,
             total: visitorInfo.total
         }
-        let allFile = await API.Common.writeHtmlofTpl('visitors', params, QZone.Visitors.ROOT + "/index.html");
+        let allFile = await API.Common.writeHtmlofTpl('visitors', params, API.Common.getModuleRoot('Visitors') + "/index.html");
         console.info('生成访客汇总HTML文件结束', allFile, visitorInfo);
 
     } catch (error) {
@@ -330,7 +330,7 @@ API.Visitors.exportToMarkdown = async (visitorInfo) => {
             allYearContents.push(yearContent);
 
             // 生成年份文件
-            const yearFilePath = QZone.Visitors.ROOT + "/" + year + ".md";
+            const yearFilePath = API.Common.getModuleRoot('Visitors') + "/" + year + ".md";
             await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
                 console.info('备份访客列表到Markdown完成，当前年份=', year, fileEntry);
             }).catch(error => {
@@ -339,7 +339,7 @@ API.Visitors.exportToMarkdown = async (visitorInfo) => {
         }
 
         // 生成汇总文件
-        await API.Utils.writeText(allYearContents.join('\r\n'), QZone.Visitors.ROOT + '/Visitors.md').then((fileEntry) => {
+        await API.Utils.writeText(allYearContents.join('\r\n'), API.Common.getModuleRoot('Visitors') + '/Visitors.md').then((fileEntry) => {
             console.info('生成汇总访客Markdown文件完成', visitorInfo, fileEntry);
         }).catch((e) => {
             console.error("生成汇总访客Markdown文件异常", visitorInfo, e)
@@ -367,7 +367,7 @@ API.Visitors.exportToJson = async (visitorInfo) => {
     const yearDataMap = API.Utils.groupedByTime(visitorInfo, "time", "year");
     for (const [year, yearItems] of yearDataMap) {
         console.info('正在生成年份访客JSON文件', year);
-        const yearFilePath = QZone.Visitors.ROOT + "/" + year + ".json";
+        const yearFilePath = API.Common.getModuleRoot('Visitors') + "/" + year + ".json";
         const yearInfo = {
             total: yearItems.length,
             items: yearItems
@@ -381,7 +381,7 @@ API.Visitors.exportToJson = async (visitorInfo) => {
 
     // 生成汇总JSON
     const json = JSON.stringify(visitorInfo);
-    await API.Utils.writeText(json, QZone.Visitors.ROOT + '/visitors.json').then((fileEntry) => {
+    await API.Utils.writeText(json, API.Common.getModuleRoot('Visitors') + '/visitors.json').then((fileEntry) => {
         console.info('生成汇总访客JSON文件完成', visitorInfo, fileEntry);
     }).catch((e) => {
         console.error("生成汇总访客JSON文件异常", visitorInfo, e)

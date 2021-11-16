@@ -4,8 +4,11 @@
 <head>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
     <link rel="stylesheet" href="../vendor/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../vendor/bootstrap/css/bootstrap-table.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.1.2/build/css/tempusdominus-bootstrap-4.min.css" integrity="sha256-vi00YWza8MRCSI5GdsFLptAZIULny5MPn62PxEf/ZTY=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-resizable-columns@0.2.3/dist/jquery.resizableColumns.css" integrity="sha256-pnOeaniXq/EnY85GZ3NlDMmFN7eTJfc2MPpfO+UFN4w=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-table@1.19.1/dist/bootstrap-table.min.css" integrity="sha256-ZD9Tb2mCr01yh68j+JrUV91+SoL5xpUzChErCIHDCko=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/x-editable@1.5.1/dist/bootstrap3-editable/css/bootstrap-editable.css" integrity="sha256-YsJ7Lkc/YB0+ssBKz0c0GTx0RI+BnXcKH5SpnttERaY=" crossorigin="anonymous">
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.1.2/build/css/tempusdominus-bootstrap-4.min.css" integrity="sha256-vi00YWza8MRCSI5GdsFLptAZIULny5MPn62PxEf/ZTY=" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.39.0/build/css/tempusdominus-bootstrap-4.min.css" integrity="sha256-VL9T9QfjO/EGCzuu5CtTWWzIksAkGDTs+fO51ALqMjg=" crossorigin="anonymous">
     <link rel="stylesheet" href="../css/options.css">
     <link rel="icon" href="../img/icon-128.png">
     <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -14,11 +17,15 @@
     <script type="text/javascript" src="../vendor/jquery/jquery-3.3.1.min.js"></script>
     <script type="text/javascript" src="../vendor/popper/popper.min.js"></script>
     <script type="text/javascript" src="../vendor/bootstrap/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../vendor/bootstrap/js/bootstrap-table.min.js"></script>
-    <script type="text/javascript" src="../vendor/bootstrap/js/bootstrap-table-zh-CN.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-resizable-columns@0.2.3/dist/jquery.resizableColumns.min.js" integrity="sha256-1pxGs5I5g78tKMDCR19p7mVIZ8kVD0N6qqXeraiheSg=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.19.1/dist/bootstrap-table.min.js" integrity="sha256-BqVxqb61C9Xd1gUXFZd13+wfPnmP/zj7EXriNQ3Jup0=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.19.1/dist/locale/bootstrap-table-zh-CN.min.js" integrity="sha256-pE+tLWBaNzEJufpbligmXg6jcxEHGXrWjQe4rv3yUNY=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/min/moment.min.js" integrity="sha256-ZsWP0vT+akWmvEMkNYgZrPHKU9Ke8nYBPC3dqONp1mY=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/min/moment-with-locales.min.js" integrity="sha256-wdiCkHJlqyoIJxG49WbDO0D3/EnppQp6GVOGQA6PBkA=" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.1.2/build/js/tempusdominus-bootstrap-4.min.js" integrity="sha256-z0oKYg6xiLq3yJGsp/LsY9XykbweQlHl42jHv2XTBz4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/x-editable@1.5.1/dist/bootstrap3-editable/js/bootstrap-editable.min.js" integrity="sha256-+fnaOx6GCnrPNNkJicdgSX4Vtl5jpxdMGykaxRQjDi4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.19.1/dist/extensions/resizable/bootstrap-table-resizable.min.js" integrity="sha256-bnx3qhjwjuNaU+aDr622pnYc6QFjZ5fnpSqp6FWWhBs=" crossorigin="anonymous"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.1.2/build/js/tempusdominus-bootstrap-4.min.js" integrity="sha256-z0oKYg6xiLq3yJGsp/LsY9XykbweQlHl42jHv2XTBz4=" crossorigin="anonymous"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.39.0/build/js/tempusdominus-bootstrap-4.min.js" integrity="sha256-VpqYzVoiXWnJ6OWGzqbreWjWS5pu3mLoqyQSLyQD6aE=" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -209,6 +216,14 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-sm-1">那年今日：</div>
+                                    <div class="col-sm-2 custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" data-module="Messages" name="hasThatYearToday" id="messages_that_year_today">
+                                        <label style="margin-left: 14px;" class="custom-control-label" for="messages_that_year_today" aria-describedby="messages_that_year_today_help"></label>
+                                    </div>
+                                    <small id="messages_that_year_today_help" class="text-muted">是否生成那年今日，默认生成</small>
                                 </div>
                                 <h5 style="color:cadetblue">评论选项：</h5>
                                 <hr>
@@ -947,6 +962,14 @@
                                     </div>
                                     <small class="text-muted mt-2">请求每页条目数，一般保持默认即可，如遇获取失败，可做微调</small>
                                 </div>
+                                <div class="form-group row">
+                                    <div class="col-sm-1">那年今日：</div>
+                                    <div class="col-sm-2 custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" data-module="Boards" name="hasThatYearToday" id="boards_that_year_today">
+                                        <label style="margin-left: 14px;" class="custom-control-label" for="boards_that_year_today" aria-describedby="boards_that_year_today_help"></label>
+                                    </div>
+                                    <small id="boards_that_year_today_help" class="text-muted">是否生成那年今日，默认生成</small>
+                                </div>
                                 <div class="text-center">
                                     <button class="btn btn-primary submit" data-toggle="tooltip" title="保存所有模块设置项">保存</button>
                                     <button type="button" class="btn btn-secondary reset" data-toggle="tooltip" title="重置当前配置模块设置项">重置</button>
@@ -1129,38 +1152,39 @@
                                 <div class="form-group row">
                                     <label class="col-sm-1 col-form-label">来源管理：</label>
                                     <div class="col-sm-2">
-                                        <textarea class="form-control mt-2" id="sourceNames" rows="10"></textarea>
+                                        <button id="managerShareSource" type="button" class="btn btn-outline-primary" data-toggle="tooltip" title="管理分类来源" data-module="Shares">管理</button>
                                     </div>
                                     <small class="text-muted mt-2">
-										配置分享来源的显示名称，QQ空间默认显示来源的URL，为了开发方便^_^，本配置基于JSON配置，请参考默认配置格式维护，如若不会，不建议修改，不影响备份，来源与QQ空间显示保持一致！
-										<br>
-										<br>
-										默认配置无任何推广成分，仅收集于本人QQ部分好友供参考，可跟自身情况调整配置！
-										<br>
-										<br>
-										如果配置如下：
-										<code>
-											[{
-												"name": "QQ音乐",
-												"regulars": ["y.qq.com","music.qq.com"]
-											},
-											{
-												"name": "腾讯视频",
-												"regulars": ["v.qq.com"]
-											}]
-										</code>
-										<br>
-										<br>
-										且分享来源的源地址为：<span style="color: red;">https://v.qq.com/x/page/f08719wqfd0.html</span>
-										<br>
-										<br>
-										那么备份后则显示来自<span style="color: red;">腾讯视频</span>，而不是显示来自<span style="color: red;">v.qq.com</span>
-										<br>
-										<br>
-										匹配顺序：URL是否包含<span style="color: red;">y.qq.com</span>或<span style="color: red;">music.qq.com</span>，
-										包含则匹配到<span style="color: red;">QQ音乐</span>，
-										不包含继续匹配下一个<span style="color: red;">v.qq.com</span>，URL包含<span style="color: red;">v.qq.com</span>，则表示该分享源来自<span style="color: red;">腾讯视频</span>。
+										QQ空间默认显示来源的URL，基于正则表达式配置显示名称转换规则，也可直接来源URL，默认配置采集本人QQ好友常规分享来源
 									</small>
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="managerShareSourceModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="managerShareSourceLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="managerShareSourceLabel">分享来源管理</h5>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+														<span aria-hidden="true">&times;</span>
+													</button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <table id="shareSourceTable"></table>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button id="saveShareSource" type="button" class="btn btn-primary" data-dismiss="modal">确定</button>
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-sm-1">那年今日：</div>
+                                    <div class="col-sm-2 custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" data-module="Shares" name="hasThatYearToday" id="shares_that_year_today">
+                                        <label style="margin-left: 14px;" class="custom-control-label" for="shares_that_year_today" aria-describedby="shares_that_year_today_help"></label>
+                                    </div>
+                                    <small id="shares_that_year_today_help" class="text-muted">是否生成那年今日，默认生成</small>
                                 </div>
                                 <br>
                                 <h5 style="color:cadetblue">评论选项：</h5>
@@ -1255,14 +1279,14 @@
                                 <div class="form-group row">
                                     <label for="visitors_increment_type" class="col-sm-1 col-form-label">增量备份：</label>
                                     <div class="col-sm-2">
-                                        <select id="visitors_increment_type" class="custom-select increment_type" data-module="Shares" data-time="#visitors_increment_time" data-time-row="#visitors_increment_time_row">
+                                        <select id="visitors_increment_type" class="custom-select increment_type" data-module="Visitors" data-time="#visitors_increment_time" data-time-row="#visitors_increment_time_row">
 											<option value="Full" selected>全量</option>
 											<option value="LastTime">上次备份</option>
 											<option value="Custom">自定义</option>
 										</select>
                                     </div>
                                     <div>
-                                        <button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Shares">重置</button>
+                                        <button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Visitors">重置</button>
                                     </div>
                                     <small class="text-muted ml-2"><span class="text-danger">内容信息全量备份</span>，如HTML、Markdown、JSON的；<span class="text-danger">文件增量备份</span>，即访问内容的配图、表情<br><span class="text-danger">增量维度：</span>访客的发表时间，修改/删除访客、新增/删除评论、新增/删除评论回复均不识别！</small>
                                 </div>

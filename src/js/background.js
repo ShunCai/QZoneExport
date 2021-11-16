@@ -130,10 +130,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                     // 打开下载的ZIP文件
                     chrome.downloads.show(QZoneDownloadId);
                     break;
-                case 'showAbout':
-                    // 显示关于页面
+                case 'skipLink':
                     chrome.tabs.create({
-                        url: 'html/about.html'
+                        url: request.url
                     });
                     break;
                 default:

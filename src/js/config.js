@@ -86,6 +86,7 @@ const Default_Config = {
             '免费领取',
             '0元抢购'
         ],
+        hasThatYearToday: true,
         Like: {
             isGet: false, //是否获取赞
             randomSeconds: {
@@ -208,23 +209,23 @@ const Default_Config = {
             isGet: false, // 是否获取评论，默认不获取
             pageSize: 100,
             randomSeconds: {
-                min: 1,
-                max: 2
+                min: 2,
+                max: 3
             }
         },
         Images: {
             pageSize: 90,
             exifType: "raw",
             randomSeconds: {
-                min: 1,
-                max: 2
+                min: 2,
+                max: 4
             },
             Comments: {
                 isGet: false, // 是否获取评论，默认不获取
                 pageSize: 100,
                 randomSeconds: {
-                    min: 1,
-                    max: 2
+                    min: 2,
+                    max: 3
                 }
             },
             isGetPreview: false
@@ -303,7 +304,8 @@ const Default_Config = {
             exportType: undefined, // 备份类型
             field: "pubtime", // 比较字段
             time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
-        }
+        },
+        hasThatYearToday: true
     },
     // QQ好友模块
     Friends: {
@@ -360,6 +362,7 @@ const Default_Config = {
             field: "shareTime", // 比较字段
             time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
         },
+        hasThatYearToday: true,
         Like: {
             isGet: false, //是否获取赞
             randomSeconds: {
@@ -376,220 +379,188 @@ const Default_Config = {
             }
         },
         SourceType: [{
-            name: "QQ空间秘密",
-            regulars: [
-                'zone.qq.com/secret'
-            ]
+            "name": "QQ空间秘密",
+            "regulars": "zone.qq.com/secret"
         }, {
-            name: "手机QQ空间",
-            regulars: [
-                'mobile.qzone.qq.com'
-            ]
+            "name": "手机QQ空间",
+            "regulars": "mobile.qzone.qq.com"
         }, {
-            name: "QQ空间",
-            regulars: [
-                'qzone.qq.com'
-            ]
+            "name": "QQ空间",
+            "regulars": "qzone.qq.com"
         }, {
-            name: "QQ音乐",
-            regulars: [
-                'y.qq.com', 'i.y.qq.com', 'music.qq.com'
-            ]
+            "name": "QQ音乐",
+            "regulars": "y.qq.com"
         }, {
-            name: "网易云音乐",
-            regulars: [
-                'music.163.com', 'y.music.163.com'
-            ]
+            "name": "QQ音乐",
+            "regulars": "i.y.qq.com"
         }, {
-            name: "酷狗音乐",
-            regulars: [
-                'kugou.com', 'm.kugou.com', 't1.kugou.com'
-            ]
+            "name": "QQ音乐",
+            "regulars": "music.qq.com"
         }, {
-            name: "全民K歌",
-            regulars: [
-                'kg.qq.com', 'kg2.qq.com'
-            ]
+            "name": "网易云音乐",
+            "regulars": "music.163.com"
         }, {
-            name: "匿问我答",
-            regulars: [
-                'ti.qq.com'
-            ]
+            "name": "网易云音乐",
+            "regulars": "y.music.163.com"
         }, {
-            name: "微信公众号",
-            regulars: [
-                'mp.weixin.qq.com'
-            ]
+            "name": "酷狗音乐",
+            "regulars": "kugou.com"
         }, {
-            name: "天天爱消除",
-            regulars: [
-                'peng.qq.com'
-            ]
+            "name": "酷狗音乐",
+            "regulars": "m.kugou.com"
         }, {
-            name: "QQ手游中心",
-            regulars: [
-                'gamecenter.qq.com', 'youxi.vip.qq.com'
-            ]
+            "name": "酷狗音乐",
+            "regulars": "t1.kugou.com"
         }, {
-            name: "知乎",
-            regulars: [
-                'zhihu.com', 'm.zhihu.com'
-            ]
+            "name": "全民K歌",
+            "regulars": "kg.qq.com"
         }, {
-            name: "新浪微博",
-            regulars: [
-                'weibo.com', 'm.weibo.cn'
-            ]
+            "name": "全民K歌",
+            "regulars": "kg2.qq.com"
         }, {
-            name: "腾讯看点",
-            regulars: [
-                'post.mp.qq.com'
-            ]
+            "name": "匿问我答",
+            "regulars": "ti.qq.com"
         }, {
-            name: "腾讯视频",
-            regulars: [
-                'v.qq.com', 'm.v.qq.com'
-            ]
+            "name": "微信公众号",
+            "regulars": "mp.weixin.qq.com"
         }, {
-            name: "QQ小程序-腾讯视频",
-            regulars: [
-                'mqqapi://microapp/open\\?mini_appid=1109840991'
-            ]
+            "name": "天天爱消除",
+            "regulars": "peng.qq.com"
         }, {
-            name: "QQ小程序",
-            regulars: [
-                'mqqapi://microapp'
-            ]
+            "name": "QQ手游中心",
+            "regulars": "gamecenter.qq.com"
         }, {
-            name: "易企秀",
-            regulars: [
-                'i.eqxiu.com'
-            ]
+            "name": "QQ手游中心",
+            "regulars": "youxi.vip.qq.com"
         }, {
-            name: "爱奇艺",
-            regulars: [
-                'iqiyi.com', 'www.iqiyi.com', 'm.iqiyi.com'
-            ]
+            "name": "知乎",
+            "regulars": "zhihu.com"
         }, {
-            name: "IT之家",
-            regulars: [
-                'm.ithome.com', 'www.ithome.com'
-            ]
+            "name": "知乎",
+            "regulars": "m.zhihu.com"
         }, {
-            name: "中国联通",
-            regulars: [
-                '10010.com', 'm.10010.com'
-            ]
+            "name": "新浪微博",
+            "regulars": "weibo.com"
         }, {
-            name: "芒果TV",
-            regulars: [
-                'mgtv.com', 'm.mgtv.com'
-            ]
+            "name": "新浪微博",
+            "regulars": "m.weibo.cn"
         }, {
-            name: "乐视TV",
-            regulars: [
-                'letv.com', 'm.letv.com'
-            ]
+            "name": "腾讯看点",
+            "regulars": "post.mp.qq.com"
         }, {
-            name: "一点资讯",
-            regulars: [
-                'yidianzixun.com'
-            ]
+            "name": "腾讯视频",
+            "regulars": "v.qq.com"
         }, {
-            name: "哔哩哔哩",
-            regulars: [
-                'bilibili.com'
-            ]
+            "name": "腾讯视频",
+            "regulars": "m.v.qq.com"
         }, {
-            name: "百度贴吧",
-            regulars: [
-                'tieba.baidu.com'
-            ]
+            "name": "QQ小程序-腾讯视频",
+            "regulars": "mqqapi://microapp/open\\?mini_appid=1109840991"
         }, {
-            name: "水滴筹",
-            regulars: [
-                'shuidichou.com'
-            ]
+            "name": "QQ小程序",
+            "regulars": "mqqapi://microapp"
         }, {
-            name: "Reddit",
-            regulars: [
-                'reddit.com'
-            ]
+            "name": "易企秀",
+            "regulars": "i.eqxiu.com"
         }, {
-            name: "GitHub",
-            regulars: [
-                'github.com'
-            ]
+            "name": "爱奇艺",
+            "regulars": "iqiyi.com"
         }, {
-            name: "抖音",
-            regulars: [
-                'douyin.com'
-            ]
+            "name": "爱奇艺",
+            "regulars": "www.iqiyi.com"
         }, {
-            name: "今日头条",
-            regulars: [
-                'toutiao.com', 'toutiao.org'
-            ]
+            "name": "爱奇艺",
+            "regulars": "m.iqiyi.com"
         }, {
-            name: "酷我音乐",
-            regulars: [
-                'kuwo.cn'
-            ]
+            "name": "IT之家",
+            "regulars": "m.ithome.com"
         }, {
-            name: "火锅视频",
-            regulars: [
-                'yoo.qq.com'
-            ]
+            "name": "IT之家",
+            "regulars": "www.ithome.com"
         }, {
-            name: "全民小视频",
-            regulars: [
-                'quanmin.baidu.com'
-            ]
+            "name": "中国联通",
+            "regulars": "10010.com"
         }, {
-            name: "王者荣耀",
-            regulars: [
-                'svp.tencent-cloud.com', 'qt.qq.com'
-            ]
+            "name": "中国联通",
+            "regulars": "m.10010.com"
         }, {
-            name: "QQ飞车手游",
-            regulars: [
-                'speedm.qq.com'
-            ]
+            "name": "芒果TV",
+            "regulars": "mgtv.com"
         }, {
-            name: "QQ飞车",
-            regulars: [
-                'speed.qq.com'
-            ]
+            "name": "芒果TV",
+            "regulars": "m.mgtv.com"
         }, {
-            name: "QQ飞车",
-            regulars: [
-                'speed.qq.com'
-            ]
+            "name": "乐视TV",
+            "regulars": "letv.com"
         }, {
-            name: "英雄联盟",
-            regulars: [
-                'lol.qq.com'
-            ]
+            "name": "乐视TV",
+            "regulars": "m.letv.com"
         }, {
-            name: "看点快报",
-            regulars: [
-                'kuaibao.qq.com'
-            ]
+            "name": "一点资讯",
+            "regulars": "yidianzixun.com"
         }, {
-            name: "腾讯新闻",
-            regulars: [
-                'news.qq.com'
-            ]
+            "name": "哔哩哔哩",
+            "regulars": "bilibili.com"
         }, {
-            name: "51CTO 学院",
-            regulars: [
-                'edu.51cto.com'
-            ]
+            "name": "百度贴吧",
+            "regulars": "tieba.baidu.com"
         }, {
-            name: "轻松筹",
-            regulars: [
-                'qschou.com'
-            ]
+            "name": "水滴筹",
+            "regulars": "shuidichou.com"
+        }, {
+            "name": "Reddit",
+            "regulars": "reddit.com"
+        }, {
+            "name": "GitHub",
+            "regulars": "github.com"
+        }, {
+            "name": "抖音",
+            "regulars": "douyin.com"
+        }, {
+            "name": "今日头条",
+            "regulars": "toutiao.com"
+        }, {
+            "name": "今日头条",
+            "regulars": "toutiao.org"
+        }, {
+            "name": "酷我音乐",
+            "regulars": "kuwo.cn"
+        }, {
+            "name": "火锅视频",
+            "regulars": "yoo.qq.com"
+        }, {
+            "name": "全民小视频",
+            "regulars": "quanmin.baidu.com"
+        }, {
+            "name": "王者荣耀",
+            "regulars": "svp.tencent-cloud.com"
+        }, {
+            "name": "王者荣耀",
+            "regulars": "qt.qq.com"
+        }, {
+            "name": "QQ飞车手游",
+            "regulars": "speedm.qq.com"
+        }, {
+            "name": "QQ飞车",
+            "regulars": "speed.qq.com"
+        }, {
+            "name": "QQ飞车",
+            "regulars": "speed.qq.com"
+        }, {
+            "name": "英雄联盟",
+            "regulars": "lol.qq.com"
+        }, {
+            "name": "看点快报",
+            "regulars": "kuaibao.qq.com"
+        }, {
+            "name": "腾讯新闻",
+            "regulars": "news.qq.com"
+        }, {
+            "name": "51CTO 学院",
+            "regulars": "edu.51cto.com"
+        }, {
+            "name": "轻松筹",
+            "regulars": "qschou.com"
         }]
     },
     // 访客模块
@@ -619,71 +590,71 @@ var QZone_Config = Object.assign({}, Default_Config);
 /**
  * 备份文件夹根目录
  */
-const FOLDER_ROOT = '/QQ空间备份/';
+const FOLDER_ROOT = '/QQ空间备份';
 
 /**
  * HTML备份导出文件
  */
 const ExportFiles = [{
     original: 'export/css/common.css',
-    target: FOLDER_ROOT + 'Common/css/common.css'
+    target: 'Common/css/common.css'
 }, {
     original: 'export/js/sidebar.js',
-    target: FOLDER_ROOT + 'Common/js/sidebar.js'
+    target: 'Common/js/sidebar.js'
 }, {
     original: 'export/images/index.jpg',
-    target: FOLDER_ROOT + 'Common/images/index.jpg'
+    target: 'Common/images/index.jpg'
 }, {
     original: 'export/images/video-play.png',
-    target: FOLDER_ROOT + 'Common/images/video-play.png'
+    target: 'Common/images/video-play.png'
 }, {
     original: 'export/images/loading.gif',
-    target: FOLDER_ROOT + 'Common/images/loading.gif'
+    target: 'Common/images/loading.gif'
 }, {
     original: 'vendor/template/template.js',
-    target: FOLDER_ROOT + 'Common/js/template.js'
+    target: 'Common/js/template.js'
 }, {
     original: 'export/js/common.js',
-    target: FOLDER_ROOT + 'Common/js/common.js'
+    target: 'Common/js/common.js'
 }, {
     original: 'export/js/messages.js',
-    target: FOLDER_ROOT + 'Common/js/messages.js'
+    target: 'Common/js/messages.js'
 }, {
     original: 'export/js/blogs.js',
-    target: FOLDER_ROOT + 'Common/js/blogs.js'
+    target: 'Common/js/blogs.js'
 }, {
     original: 'export/js/bloginfo.js',
-    target: FOLDER_ROOT + 'Common/js/bloginfo.js'
+    target: 'Common/js/bloginfo.js'
 }, {
     original: 'export/js/diaries.js',
-    target: FOLDER_ROOT + 'Common/js/diaries.js'
+    target: 'Common/js/diaries.js'
 }, {
     original: 'export/js/diaryinfo.js',
-    target: FOLDER_ROOT + 'Common/js/diaryinfo.js'
+    target: 'Common/js/diaryinfo.js'
 }, {
     original: 'export/js/friends.js',
-    target: FOLDER_ROOT + 'Common/js/friends.js'
+    target: 'Common/js/friends.js'
 }, {
     original: 'export/js/photos.js',
-    target: FOLDER_ROOT + 'Common/js/photos.js'
+    target: 'Common/js/photos.js'
 }, {
     original: 'export/js/albums.js',
-    target: FOLDER_ROOT + 'Common/js/albums.js'
+    target: 'Common/js/albums.js'
 }, {
     original: 'export/js/videos.js',
-    target: FOLDER_ROOT + 'Common/js/videos.js'
+    target: 'Common/js/videos.js'
 }, {
     original: 'export/js/boards.js',
-    target: FOLDER_ROOT + 'Common/js/boards.js'
+    target: 'Common/js/boards.js'
 }, {
     original: 'export/js/favorites.js',
-    target: FOLDER_ROOT + 'Common/js/favorites.js'
+    target: 'Common/js/favorites.js'
 }, {
     original: 'export/js/shares.js',
-    target: FOLDER_ROOT + 'Common/js/shares.js'
+    target: 'Common/js/shares.js'
 }, {
     original: 'export/js/visitors.js',
-    target: FOLDER_ROOT + 'Common/js/visitors.js'
+    target: 'Common/js/visitors.js'
 }]
 
 /**
@@ -691,7 +662,7 @@ const ExportFiles = [{
  */
 var QZone = {
     Common: {
-        ROOT: FOLDER_ROOT + 'Common',
+        ROOT: 'Common',
         ExportType: {
             "Messages": true,
             "Blogs": true,
@@ -722,31 +693,31 @@ var QZone = {
     },
     // 说说模块
     Messages: {
-        ROOT: FOLDER_ROOT + 'Messages',
-        IMAGES_ROOT: FOLDER_ROOT + 'Messages/Images',
+        ROOT: 'Messages',
+        IMAGES_ROOT: 'Messages/Images',
         total: 0,
         Data: [],
         FILE_URLS: new Map()
     },
     // 日志模块
     Blogs: {
-        ROOT: FOLDER_ROOT + 'Blogs',
-        IMAGES_ROOT: FOLDER_ROOT + 'Blogs/Images',
+        ROOT: 'Blogs',
+        IMAGES_ROOT: 'Blogs/Images',
         total: 0,
         Data: [],
         FILE_URLS: new Map()
     },
     // 私密日记模块
     Diaries: {
-        ROOT: FOLDER_ROOT + 'Diaries',
-        IMAGES_ROOT: FOLDER_ROOT + 'Diaries/Images',
+        ROOT: 'Diaries',
+        IMAGES_ROOT: 'Diaries/Images',
         total: 0,
         Data: [],
         FILE_URLS: new Map()
     },
     // 相册模块
     Photos: {
-        ROOT: FOLDER_ROOT + 'Albums',
+        ROOT: 'Albums',
         Album: {
             total: 0,
             Data: [],
@@ -793,14 +764,14 @@ var QZone = {
     },
     // 视频模块
     Videos: {
-        ROOT: FOLDER_ROOT + 'Videos',
+        ROOT: 'Videos',
         total: 0,
         Data: [],
         FILE_URLS: new Map()
     },
     // 留言板模块
     Boards: {
-        ROOT: FOLDER_ROOT + 'Boards',
+        ROOT: 'Boards',
         Data: {
             items: [],
             authorInfo: {
@@ -813,22 +784,22 @@ var QZone = {
     },
     // QQ好友模块
     Friends: {
-        ROOT: FOLDER_ROOT + 'Friends',
+        ROOT: 'Friends',
         total: 0,
         Data: []
     },
     // 收藏夹模块
     Favorites: {
-        ROOT: FOLDER_ROOT + 'Favorites',
-        IMAGES_ROOT: FOLDER_ROOT + 'Favorites/Images',
+        ROOT: 'Favorites',
+        IMAGES_ROOT: 'Favorites/Images',
         total: 0,
         Data: [],
         FILE_URLS: new Map()
     },
     // 分享模块
     Shares: {
-        ROOT: FOLDER_ROOT + 'Shares',
-        IMAGES_ROOT: FOLDER_ROOT + 'Shares/Images',
+        ROOT: 'Shares',
+        IMAGES_ROOT: 'Shares/Images',
         total: 0,
         Data: [],
         FILE_URLS: new Map(),
@@ -847,8 +818,8 @@ var QZone = {
     },
     // 访客模块
     Visitors: {
-        ROOT: FOLDER_ROOT + 'Visitors',
-        IMAGES_ROOT: FOLDER_ROOT + 'Visitors/Images',
+        ROOT: 'Visitors',
+        IMAGES_ROOT: 'Visitors/Images',
         Data: {
             items: [],
             total: 0,

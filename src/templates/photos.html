@@ -46,6 +46,7 @@
 					<script id="photos_tpl" type="text/html">
 						<%/* 遍历相片 */%>
 						<%for (const photo of photos) {%>
+							<%photo.uid = API.Utils.newUid()%>
 							<div class="col-md-2 mb-2">
 								<div class="card thumbnail mb-2 shadow-sm">
 									<%if(photo.is_video){%>
@@ -68,7 +69,15 @@
 											<span class="text-light fa fa-comments-o cursor viewcomments" title="查看评论" data-field="uniKey" data-target="<%:=photo.uniKey%>"><%:=photo.comments ? photo.comments.length : 0%></span>
 										</span>
 									<%}else{%>
-										<a class="lightbox" href="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, 'Photos_HTML')%>" title="<%:=photo.desc || photo.name%>">
+										<div id="<%:=photo.uid%>" class='photo-detail' style="display:none">
+											<%if(photo.name){%>
+												<h6><%:=API.Common.formatContent(photo.name, "HTML", false, false)%></h6>
+											<%}%>
+											<%if(photo.desc){%>
+												<p class="text-white-50"><%:=API.Common.formatContent(photo.desc, "HTML", false, false)%></p>
+											<%}%>
+										</div>
+										<a class="lightbox" href="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, 'Photos_HTML')%>" title="<%:=photo.desc || photo.name%>" data-sub-html="#<%:=photo.uid%>">
 											<img class="lazyload card-img" height="225px" src="../Common/Images/loading.gif" data-src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath || photo.custom_filepath, 'Photos_HTML')%>">
 										</a>
 										<div class="card-body">

@@ -347,8 +347,8 @@ API.Messages.exportToHtml = async(messages) => {
 
         // 基于JSON生成JS
         console.info('生成说说JSON开始', messages);
-        await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('messages', messages, QZone.Common.ROOT + '/json/messages.js');
+        await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
+        const jsonFile = await API.Common.writeJsonToJs('messages', messages, API.Common.getModuleRoot('Common') + '/json/messages.js');
         console.info('生成说说JSON结束', jsonFile, messages);
 
         // 说说数据根据年份分组
@@ -365,7 +365,7 @@ API.Messages.exportToHtml = async(messages) => {
                 total: yearItems.length,
                 config: QZone_Config
             }
-            let yearFile = await API.Common.writeHtmlofTpl('messages', params, QZone.Messages.ROOT + "/" + year + ".html");
+            let yearFile = await API.Common.writeHtmlofTpl('messages', params, API.Common.getModuleRoot('Messages') + "/" + year + ".html");
             console.info('生成说说年份HTML文件结束', year, yearItems, yearFile);
         }
 
@@ -376,7 +376,7 @@ API.Messages.exportToHtml = async(messages) => {
             total: messages.length,
             config: QZone_Config
         }
-        let allFile = await API.Common.writeHtmlofTpl('messages', params, QZone.Messages.ROOT + "/index.html");
+        let allFile = await API.Common.writeHtmlofTpl('messages', params, API.Common.getModuleRoot('Messages') + "/index.html");
         console.info('生成说说汇总HTML文件结束', allFile, messages);
 
     } catch (error) {
@@ -419,7 +419,7 @@ API.Messages.exportToMarkdown = async(items) => {
             allYearContents.push(yearContent);
 
             // 生成年份文件
-            const yearFilePath = QZone.Messages.ROOT + "/" + year + ".md";
+            const yearFilePath = API.Common.getModuleRoot('Messages') + "/" + year + ".md";
             await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
                 console.info('备份说说列表到Markdown完成，当前年份=', year, fileEntry);
             }).catch(error => {
@@ -428,7 +428,7 @@ API.Messages.exportToMarkdown = async(items) => {
         }
 
         // 生成汇总文件
-        await API.Utils.writeText(allYearContents.join('\r\n'), QZone.Messages.ROOT + '/Messages.md').then((fileEntry) => {
+        await API.Utils.writeText(allYearContents.join('\r\n'), API.Common.getModuleRoot('Messages') + '/Messages.md').then((fileEntry) => {
             console.info('生成汇总说说Markdown文件完成', items, fileEntry);
         }).catch((e) => {
             console.error("生成汇总说说Markdown文件异常", items, e)
@@ -456,7 +456,7 @@ API.Messages.exportToJson = async(items) => {
     const yearDataMap = API.Utils.groupedByTime(items, "custom_create_time", "year");
     for (const [year, yearItems] of yearDataMap) {
         console.info('正在生成年份说说JSON文件', year);
-        const yearFilePath = QZone.Messages.ROOT + "/" + year + ".json";
+        const yearFilePath = API.Common.getModuleRoot('Messages') + "/" + year + ".json";
         await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath).then((fileEntry) => {
             console.info('生成年份说说JSON文件完成', year, fileEntry);
         }).catch((e) => {
@@ -466,7 +466,7 @@ API.Messages.exportToJson = async(items) => {
 
     // 生成汇总JSON
     const json = JSON.stringify(items);
-    await API.Utils.writeText(json, QZone.Messages.ROOT + '/messages.json').then((fileEntry) => {
+    await API.Utils.writeText(json, API.Common.getModuleRoot('Messages') + '/messages.json').then((fileEntry) => {
         console.info('生成汇总说说JSON文件完成', items, fileEntry);
     }).catch((e) => {
         console.error("生成汇总说说JSON文件异常", items, e)
