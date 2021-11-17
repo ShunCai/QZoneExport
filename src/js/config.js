@@ -611,9 +611,6 @@ const ExportFiles = [{
     original: 'export/images/loading.gif',
     target: 'Common/images/loading.gif'
 }, {
-    original: 'vendor/template/template.js',
-    target: 'Common/js/template.js'
-}, {
     original: 'export/js/common.js',
     target: 'Common/js/common.js'
 }, {
