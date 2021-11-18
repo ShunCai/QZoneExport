@@ -135,6 +135,14 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                         url: request.url
                     });
                     break;
+                case 'getMimeType':
+                    getMimeType(request.url, request.timeout).then((data) => {
+                        sendResponse(data);
+                    }).catch((e) => {
+                        console.error('文件识别异常，将默认不使用文件后缀！', e);
+                        sendResponse('');
+                    });
+                    break;
                 default:
                     console.warn('Background 接收到消息，但未识别类型！', request);
                     break;
@@ -222,3 +230,37 @@ chrome.runtime.onInstalled.addListener((details) => {
             break;
     }
 })
+
+/**
+ * 获取文件类型
+ * @param {string} url 文件地址
+ * @param {number} timeout 超时秒数
+ * @returns 
+ */
+const getMimeType = function(url, timeout) {
+    return new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        // 超时设置
+        xhr.timeout = timeout * 1000;
+        xhr.onreadystatechange = function() {
+            if (2 == xhr.readyState) {
+                const contentType = xhr.getResponseHeader('content-type') || xhr.getResponseHeader('Content-Type') || '';
+                let suffix = '';
+                if (contentType.indexOf('/') > -1) {
+                    suffix = contentType.split('/')[1];
+                }
+                this.abort();
+                resolve(suffix);
+            }
+        }
+        xhr.onerror = function(e) {
+            reject(e);
+        }
+        xhr.ontimeout = function(e) {
+            this.abort();
+            reject(e);
+        }
+        xhr.send();
+    });
+}

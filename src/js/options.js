@@ -430,12 +430,24 @@
             }
             const $targetField = $('input[data-module="' + module + '"][name="' + fieldName + '"]');
             if ($targetField.attr('type') === 'checkbox') {
-                $targetField.prop("checked", emoduleCfg[fieldName]);
+                $targetField.prop("checked", emoduleCfg[fieldName]).change();
             } else {
                 $targetField.val(emoduleCfg[fieldName]);
             }
         }
     }
+
+    // 监听类型识别开关改变事件
+    $('#common_file_suffix').change(function() {
+        let downloadType = $('#common_download_type').val();
+        let suffix_timeout = $('#common_file_suffix_timeout')[0].parentNode.parentNode;
+        let isChecked = $(this).prop("checked");
+        if (isChecked && 'QZone' !== downloadType) {
+            $(suffix_timeout).show();
+        } else {
+            $(suffix_timeout).hide();
+        }
+    })
 
     let loadOptions = (options) => {
 
@@ -625,6 +637,12 @@
 
         // 那年今日
         renderValueToDom(options, 'hasThatYearToday');
+
+        // 图片类型识别
+        renderValueToDom(options, 'isAutoFileSuffix');
+
+        // 图片类型识别超时时间
+        renderValueToDom(options, 'autoFileSuffixTimeOut');
     }
 
     // 读取数据，第一个参数是指定要读取的key以及设置默认值
@@ -667,8 +685,11 @@
             if (!moduleName) {
                 continue;
             }
-            if ($(item).attr('type') === 'checkbox') {
+            const inputType = $(item).attr('type');
+            if (inputType === 'checkbox') {
                 options[moduleName][field] = $(item).prop("checked");
+            } else if (inputType === 'number') {
+                options[moduleName][field] = $(item).val() * 1;
             } else {
                 options[moduleName][field] = $(item).val();
             }
@@ -864,6 +885,12 @@
 
         // 那年今日
         setValueByFrom(QZone_Config, 'hasThatYearToday');
+
+        // 图片类型识别
+        setValueByFrom(QZone_Config, 'isAutoFileSuffix');
+
+        // 图片类型识别超时时间
+        setValueByFrom(QZone_Config, 'autoFileSuffixTimeOut');
 
         chrome.storage.sync.set(QZone_Config, function() {
             console.info("保存成功！");

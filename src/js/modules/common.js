@@ -221,10 +221,9 @@ API.Common.getHtmlTemplate = async(name, params) => {
  * @param {string} path js文件路径
  */
 API.Common.writeJsonToJs = async(key, object, path) => {
-    let json = JSON.stringify(object);
-    let js = 'const ' + key + ' = ' + json;
-    let fileEntry = await API.Utils.writeText(js, path);
-    return fileEntry;
+    const json = JSON.stringify(object);
+    const js = 'window.' + key + ' = ' + json;
+    return await API.Utils.writeText(js, path);
 }
 
 /**

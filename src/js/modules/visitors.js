@@ -3,7 +3,7 @@
  * @author https://lvshuncai.com
  */
 
-API.Visitors.export = async () => {
+API.Visitors.export = async() => {
     try {
         // 获取所有的访客列表
         const visitorInfo = await API.Visitors.getAllList();
@@ -25,7 +25,7 @@ API.Visitors.export = async () => {
 /**
  * 获取所有访客列表
  */
-API.Visitors.getAllList = async () => {
+API.Visitors.getAllList = async() => {
     // 初始化数据
     QZone.Visitors.Data = {
         items: [],
@@ -41,13 +41,13 @@ API.Visitors.getAllList = async () => {
 
     const CONFIG = QZone_Config.Visitors;
 
-    const nextPage = async function (pageIndex) {
+    const nextPage = async function(pageIndex) {
 
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
         indicator.setIndex(nextPageIndex);
 
-        return await API.Visitors.getList(nextPageIndex).then(async (data) => {
+        return await API.Visitors.getList(nextPageIndex).then(async(data) => {
 
             // 页面转数据
             data = API.Utils.toJson(data, /^_Callback\(/) || {};
@@ -88,7 +88,7 @@ API.Visitors.getAllList = async () => {
             const seconds = API.Utils.randomSeconds(min, max);
             await API.Utils.sleep(seconds * 1000);
             return await arguments.callee.apply(undefined, [nextPageIndex]);
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取访客列表异常，当前页：", nextPageIndex, e);
             // 当前页失败后，跳过继续请求下一页
             // 递归获取下一页
@@ -116,7 +116,7 @@ API.Visitors.getAllList = async () => {
  * 添加多媒体下载任务
  * @param {Array} item
  */
-API.Visitors.addMediaToTasks = async (visitorInfo) => {
+API.Visitors.addMediaToTasks = async(visitorInfo) => {
     // 下载相对目录
     const module_dir = 'Visitors/Images';
 
@@ -165,7 +165,7 @@ API.Visitors.addMediaToTasks = async (visitorInfo) => {
  * 所有访客转换成导出文件
  * @param {Array} visitorInfo 访客列表
  */
-API.Visitors.exportAllListToFiles = async (visitorInfo) => {
+API.Visitors.exportAllListToFiles = async(visitorInfo) => {
     // 获取用户配置
     const exportType = QZone_Config.Visitors.exportType;
     switch (exportType) {
@@ -188,41 +188,44 @@ API.Visitors.exportAllListToFiles = async (visitorInfo) => {
  * 导出访客到HTML文件
  * @param {Array} visitorInfo 数据
  */
-API.Visitors.exportToHtml = async (visitorInfo) => {
+API.Visitors.exportToHtml = async(visitorInfo) => {
+    // 进度更新器
     const indicator = new StatusIndicator('Visitors_Export_Other');
     indicator.setIndex('HTML');
+
     try {
+
+        // 模块文件夹路径
+        const moduleFolder = API.Common.getModuleRoot('Visitors');
+        // 创建模块文件夹
+        await API.Utils.createFolder(moduleFolder + '/json');
+
         // 基于JSON生成JS
-        console.info('生成访客JSON开始', visitorInfo);
-        await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('visitorInfo', visitorInfo, API.Common.getModuleRoot('Common') + '/json/visitors.js');
-        console.info('生成访客JSON结束', jsonFile, visitorInfo);
+        await API.Utils.createFolder(moduleFolder + '/json');
+        await API.Common.writeJsonToJs('visitorInfo', visitorInfo, moduleFolder + '/json/visitors.js');
 
         // 访客数据根据年份分组
         let yearMaps = API.Utils.groupedByTime(visitorInfo.items, "time", 'year');
         // 基于模板生成年份访客HTML
         for (const [year, yearItems] of yearMaps) {
-            console.info('生成访客年份HTML文件开始', year, yearItems);
             let params = {
                 visitors: yearItems,
                 total: yearItems.length
             }
-            let yearFile = await API.Common.writeHtmlofTpl('visitors', params, API.Common.getModuleRoot('Visitors') + "/" + year + ".html");
-            console.info('生成访客年份HTML文件结束', year, yearItems, yearFile);
+            await API.Common.writeHtmlofTpl('visitors', params, moduleFolder + "/" + year + ".html");
         }
 
-        console.info('生成访客汇总HTML文件开始', visitorInfo);
         // 基于模板生成汇总访客HTML
         let params = {
             visitors: visitorInfo.items,
             total: visitorInfo.total
         }
-        let allFile = await API.Common.writeHtmlofTpl('visitors', params, API.Common.getModuleRoot('Visitors') + "/index.html");
-        console.info('生成访客汇总HTML文件结束', allFile, visitorInfo);
+        await API.Common.writeHtmlofTpl('visitors', params, moduleFolder + "/index.html");
 
     } catch (error) {
         console.error('导出访客到HTML异常', error, visitorInfo);
     }
+
     // 完成
     indicator.complete();
     return visitorInfo;
@@ -303,7 +306,7 @@ API.Visitors.getMarkdown = (item) => {
  * 导出访客到Markdown文件
  * @param {Array} visitorInfo 数据
  */
-API.Visitors.exportToMarkdown = async (visitorInfo) => {
+API.Visitors.exportToMarkdown = async(visitorInfo) => {
     // 进度更新器
     const indicator = new StatusIndicator('Visitors_Export_Other');
     indicator.setIndex('Markdown');
@@ -357,7 +360,7 @@ API.Visitors.exportToMarkdown = async (visitorInfo) => {
  * 导出访客到JSON文件
  * @param {Array} visitorInfo 数据
  */
-API.Visitors.exportToJson = async (visitorInfo) => {
+API.Visitors.exportToJson = async(visitorInfo) => {
     // 进度功能性期
     const indicator = new StatusIndicator('Visitors_Export_Other');
     indicator.setIndex('JSON');

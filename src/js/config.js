@@ -14,6 +14,10 @@ const Default_Config = {
             rpc: 'http://localhost:6800/jsonrpc',
             token: undefined
         },
+        // 自动识别文件后缀
+        isAutoFileSuffix: false,
+        // 后缀识别超时秒数
+        autoFileSuffixTimeOut: 30,
         // 迅雷任务数        
         thunderTaskNum: 3000,
         // 唤起迅雷间隔        
@@ -561,6 +565,9 @@ const Default_Config = {
         }, {
             "name": "轻松筹",
             "regulars": "qschou.com"
+        }, {
+            "name": "搜狐视频",
+            "regulars": "tv.sohu.com"
         }]
     },
     // 访客模块
@@ -615,43 +622,43 @@ const ExportFiles = [{
     target: 'Common/js/common.js'
 }, {
     original: 'export/js/messages.js',
-    target: 'Common/js/messages.js'
+    target: 'Messages/js/messages.js'
 }, {
     original: 'export/js/blogs.js',
-    target: 'Common/js/blogs.js'
+    target: 'Blogs/js/blogs.js'
 }, {
     original: 'export/js/bloginfo.js',
-    target: 'Common/js/bloginfo.js'
+    target: 'Blogs/js/bloginfo.js'
 }, {
     original: 'export/js/diaries.js',
-    target: 'Common/js/diaries.js'
+    target: 'Diaries/js/diaries.js'
 }, {
     original: 'export/js/diaryinfo.js',
-    target: 'Common/js/diaryinfo.js'
+    target: 'Diaries/js/diaryinfo.js'
 }, {
     original: 'export/js/friends.js',
-    target: 'Common/js/friends.js'
+    target: 'Friends/js/friends.js'
 }, {
     original: 'export/js/photos.js',
-    target: 'Common/js/photos.js'
+    target: 'Albums/js/photos.js'
 }, {
     original: 'export/js/albums.js',
-    target: 'Common/js/albums.js'
+    target: 'Albums/js/albums.js'
 }, {
     original: 'export/js/videos.js',
-    target: 'Common/js/videos.js'
+    target: 'Videos/js/videos.js'
 }, {
     original: 'export/js/boards.js',
-    target: 'Common/js/boards.js'
+    target: 'Boards/js/boards.js'
 }, {
     original: 'export/js/favorites.js',
-    target: 'Common/js/favorites.js'
+    target: 'Favorites/js/favorites.js'
 }, {
     original: 'export/js/shares.js',
-    target: 'Common/js/shares.js'
+    target: 'Shares/js/shares.js'
 }, {
     original: 'export/js/visitors.js',
-    target: 'Common/js/visitors.js'
+    target: 'Visitors/js/visitors.js'
 }]
 
 /**

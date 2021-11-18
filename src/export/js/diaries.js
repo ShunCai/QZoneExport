@@ -8,7 +8,7 @@ $(function () {
         field: 'title',
         title: '标题',
         align: 'left',
-        width: "60",
+        width: "30",
         widthUnit: "%",
         sortable: true,
         formatter: (value, row) => {

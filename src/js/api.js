@@ -290,6 +290,60 @@ API.Utils = {
     },
 
     /**
+     * 获取文件类型
+     * @param {string} url 文件URL
+     * @param {funcation} doneFun 回调函数
+     */
+    getMimeTypeOnContent(url) {
+        return new Promise(function(resolve, reject) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            // 超时设置
+            xhr.timeout = (QZone_Config.Common.autoFileSuffixTimeOut || 20) * 1000;
+            xhr.onreadystatechange = function() {
+                if (2 == xhr.readyState) {
+                    let contentType = xhr.getResponseHeader('content-type') || xhr.getResponseHeader('Content-Type') || '';
+                    let suffix = '';
+                    if (contentType.indexOf('/') > -1) {
+                        suffix = contentType.split('/')[1];
+                    }
+                    this.abort();
+                    resolve(suffix);
+                }
+            }
+            xhr.onerror = function(e) {
+                reject(e);
+            }
+            xhr.ontimeout = function(e) {
+                this.abort();
+                reject(e);
+            }
+            xhr.send();
+        });
+    },
+
+    /**
+     * 获取文件类型
+     * @param {string} url 文件URL
+     */
+    getMimeType(url) {
+        return new Promise(function(resolve, reject) {
+            chrome.runtime.sendMessage({
+                from: 'content',
+                type: 'getMimeType',
+                url: url,
+                timeout: QZone_Config.Common.autoFileSuffixTimeOut
+            }, function(data) {
+                if (chrome.runtime.lastError) {
+                    reject('');
+                    return;
+                }
+                resolve(data);
+            })
+        });
+    },
+
+    /**
      * 通过URL直接匹配文件后缀名
      * @param {string} url 文件地址
      */
@@ -305,6 +359,34 @@ API.Utils = {
             return '.' + res[2];
         }
         return res || defaultSuffix || '';
+    },
+
+    /**
+     * 通过URL请求文件识别后缀名
+     * @param {string} url 文件地址
+     */
+    async getFileSuffix(url) {
+        let viewUrl = API.Utils.makeViewUrl(url);
+        return await API.Utils.getMimeType(viewUrl).then((data) => {
+            return '.' + data;
+        }).catch((e) => {
+            console.error('获取文件类型异常', viewUrl, e);
+            return '';
+        });
+    },
+
+    /**
+     * 根据配置获取文件后缀名
+     * @param {string} url 文件地址
+     */
+    async autoFileSuffix(url) {
+        let suffix = API.Utils.getFileSuffixByUrl(url);
+        if (!QZone_Config.Common.isAutoFileSuffix) {
+            return suffix;
+        }
+        // 转换HTTPS
+        url = API.Utils.makeDownloadUrl(url, true);
+        return API.Utils.getFileSuffix(this.toHttps(url));
     },
 
     /**
@@ -935,15 +1017,18 @@ API.Utils = {
     },
 
     /**
-     * 字节转换大小
-     * @param {byte} bytes 
+     * 格式化文件大小, 输出成带单位的字符串
+     * @param {Number} size 文件大小
+     * @param {Number} [pointLength=2] 精确到的小数点数。
+     * @param {Array} [units=["Bytes","KB","MB","GB","TB","PB","EB","ZB","YB" ]] 单位数组。
      */
-    bytesToSize(bytes) {
-        var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-        if (bytes == 0) return 'n/a';
-        var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-        if (i == 0) return bytes + ' ' + sizes[i];
-        return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
+    formatFileSize(size, pointLength, units) {
+        var unit;
+        units = units || ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+        while ((unit = units.shift()) && size > 1024) {
+            size = size / 1024;
+        }
+        return (unit === 'Bytes' ? size : size.toFixed(pointLength === undefined ? 2 : pointLength)) + unit;
     },
 
     /**
@@ -2338,6 +2423,34 @@ API.Boards = {
 API.Photos = {
 
     /**
+     * 获取相片类型
+     * @param {string} photo 相片对象
+     */
+    getPhotoType(photo) {
+        const type = photo.phototype || 1;
+        // 默认类型
+        let photoType = "JPEG";
+        switch (type) {
+            case 1:
+                photoType = "JPEG";
+                break;
+            case 2:
+                photoType = "GIF";
+                break;
+            case 3:
+                photoType = "PND";
+                break;
+            case 4:
+                photoType = "BMP";
+                break;
+            case 5:
+                photoType = "JPEG";
+                break;
+        }
+        return photoType;
+    },
+
+    /**
      * 获取相册路由
      */
     async getRoute() {
@@ -2709,7 +2822,7 @@ API.Photos = {
      * 获取相片类型
      * @param {string} photo 相片对象
      */
-    getPhotoType(photo) {
+    getPhotoSuffix(photo) {
         const type = photo.phototype;
         // 默认类型
         let extName = ".jpeg";
@@ -2746,6 +2859,15 @@ API.Photos = {
         } else {
             return Math.round(t / 1024 / 1024 * 10) / 10 + " T"
         }
+    },
+
+    /**
+     * 获取相片LBS位置
+     * @param {Object} photo 相片
+     */
+    getPhotoLbs(photo) {
+        photo = photo || {};
+        return photo.shootGeo && photo.shootGeo.idname ? photo.shootGeo : photo.lbs;
     }
 
 };
@@ -3293,7 +3415,7 @@ API.Shares = {
             // 配图
             const images = [];
             // 左图右文的图
-            const $normal_images = $($contentDiv.find('div.mod_details.lbor > div.layout_s > a.img_wrap > img')) || [];
+            const $normal_images = $($contentDiv.find('div.mod_details.lbor > div.layout_s img')) || [];
             if ($normal_images) {
                 $normal_images.each(function() {
                     images.push({
@@ -3302,7 +3424,7 @@ API.Shares = {
                 });
             }
             // 相册、相片的图
-            const $album_images = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > div.mod_list > ul > li > a.img_wrap > img')) || [];
+            const $album_images = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > div.mod_list > ul > li img')) || [];
             if ($album_images) {
                 $album_images.each(function() {
                     images.push({

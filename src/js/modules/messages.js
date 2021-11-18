@@ -345,17 +345,18 @@ API.Messages.exportToHtml = async(messages) => {
 
     try {
 
+        // 模块文件夹路径
+        const moduleFolder = API.Common.getModuleRoot('Messages');
+        // 创建模块文件夹
+        await API.Utils.createFolder(moduleFolder + '/json');
+
         // 基于JSON生成JS
-        console.info('生成说说JSON开始', messages);
-        await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('messages', messages, API.Common.getModuleRoot('Common') + '/json/messages.js');
-        console.info('生成说说JSON结束', jsonFile, messages);
+        await API.Common.writeJsonToJs('messages', messages, moduleFolder + '/json/messages.js');
 
         // 说说数据根据年份分组
         let yearMaps = API.Utils.groupedByTime(messages, "custom_create_time", 'year');
         // 基于模板生成年份说说HTML
         for (const [year, yearItems] of yearMaps) {
-            console.info('生成说说年份HTML文件开始', year, yearItems);
             // 基于模板生成所有说说HTML
             let _messageMaps = new Map();
             const monthMaps = API.Utils.groupedByTime(yearItems, "custom_create_time", 'month');
@@ -365,19 +366,16 @@ API.Messages.exportToHtml = async(messages) => {
                 total: yearItems.length,
                 config: QZone_Config
             }
-            let yearFile = await API.Common.writeHtmlofTpl('messages', params, API.Common.getModuleRoot('Messages') + "/" + year + ".html");
-            console.info('生成说说年份HTML文件结束', year, yearItems, yearFile);
+            await API.Common.writeHtmlofTpl('messages', params, moduleFolder + "/" + year + ".html");
         }
 
-        console.info('生成说说汇总HTML文件开始', messages);
         // 基于模板生成汇总说说HTML
         let params = {
             messageMaps: API.Utils.groupedByTime(messages, "custom_create_time", 'all'),
             total: messages.length,
             config: QZone_Config
         }
-        let allFile = await API.Common.writeHtmlofTpl('messages', params, API.Common.getModuleRoot('Messages') + "/index.html");
-        console.info('生成说说汇总HTML文件结束', allFile, messages);
+        await API.Common.writeHtmlofTpl('messages', params, moduleFolder + "/index.html");
 
     } catch (error) {
         console.error('导出说说到HTML异常', error, messages);
@@ -577,7 +575,7 @@ API.Messages.addMediaToTasks = async(dataList) => {
         return dataList;
     }
     // 进度更新器
-    let indicator = new StatusIndicator('Messages_Images_Mime');
+    const indicator = new StatusIndicator('Messages_Images_Mime');
 
     // 下载相对目录
     let module_dir = 'Messages/Images';

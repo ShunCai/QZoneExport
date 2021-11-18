@@ -142,17 +142,18 @@ API.Favorites.exportToHtml = async(favorites) => {
 
     try {
 
+        // 模块文件夹路径
+        const moduleFolder = API.Common.getModuleRoot('Favorites');
+        // 创建模块文件夹
+        await API.Utils.createFolder(moduleFolder + '/json');
+
         // 基于JSON生成JS
-        console.info('生成收藏夹JSON开始', favorites);
-        await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('favorites', favorites, API.Common.getModuleRoot('Common') + '/json/favorites.js');
-        console.info('生成分享JSON结束', jsonFile, favorites);
+        await API.Common.writeJsonToJs('favorites', favorites, moduleFolder + '/json/favorites.js');
 
         // 数据根据年份分组
         let yearMaps = API.Utils.groupedByTime(favorites, "create_time", 'year');
         // 基于模板生成年份说说HTML
         for (const [year, yearItems] of yearMaps) {
-            console.info('生成收藏夹年份HTML文件开始', year, yearItems);
             // 基于模板生成所有说说HTML
             let _dataMaps = new Map();
             const monthMaps = API.Utils.groupedByTime(yearItems, "create_time", 'month');
@@ -161,21 +162,20 @@ API.Favorites.exportToHtml = async(favorites) => {
                 dataMaps: _dataMaps,
                 total: yearItems.length
             }
-            let yearFile = await API.Common.writeHtmlofTpl('favorites', params, API.Common.getModuleRoot('Favorites') + "/" + year + ".html");
-            console.info('生成收藏夹年份HTML文件结束', year, yearItems, yearFile);
+            await API.Common.writeHtmlofTpl('favorites', params, moduleFolder + "/" + year + ".html");
         }
 
-        console.info('生成汇总HTML文件开始', favorites);
         // 基于模板生成汇总说说HTML
         let params = {
             dataMaps: API.Utils.groupedByTime(favorites, "create_time", 'all'),
             total: favorites.length
         }
-        let allFile = await API.Common.writeHtmlofTpl('favorites', params, API.Common.getModuleRoot('Favorites') + "/index.html");
-        console.info('生成收藏夹汇总HTML文件结束', allFile, favorites);
+        await API.Common.writeHtmlofTpl('favorites', params, moduleFolder + "/index.html");
     } catch (error) {
         console.error('导出收藏夹到HTML异常', error, favorites);
     }
+
+    // 更新进度信息
     indicator.complete();
     return favorites;
 }

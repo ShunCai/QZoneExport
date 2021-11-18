@@ -5,3 +5,7 @@
 #progressModal{
     color: #333;
 }
+
+#progressModal a {
+    color: rgb(0, 123, 255) !important;
+}

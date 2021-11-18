@@ -198,7 +198,7 @@ API.Diaries.getAllList = async() => {
  * 获取所有日志的评论列表
  * @param {string} item 日志
  */
- API.Diaries.getItemsAllCommentList = async(items) => {
+API.Diaries.getItemsAllCommentList = async(items) => {
     if (!QZone_Config.Diaries.Comments.isFull) {
         // 不获取全部评论时，跳过
         return items;
@@ -297,7 +297,7 @@ API.Diaries.getItemAllCommentList = async(item) => {
  * 获取日志赞记录
  * @param {Array} items 日志列表
  */
- API.Diaries.getAllLikeList = async(items) => {
+API.Diaries.getAllLikeList = async(items) => {
 
     if (!API.Common.isGetLike(QZone_Config.Diaries)) {
         // 不获取赞
@@ -524,30 +524,32 @@ API.Diaries.exportToHtml = async(items) => {
     const indicator = new StatusIndicator('Diaries_Export_Other');
     indicator.setIndex('HTML');
 
-    // 基于JSON生成JS
-    console.info('生成私密日记JSON开始', items);
-    await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
-    const jsonFile = await API.Common.writeJsonToJs('diaries', items, API.Common.getModuleRoot('Common') + '/json/diaries.js');
-    console.info('生成私密日记JSON结束', jsonFile, items);
+    try {
+
+        // 模块文件夹路径
+        const moduleFolder = API.Common.getModuleRoot('Diaries');
+        // 创建模块文件夹
+        await API.Utils.createFolder(moduleFolder + '/json');
+
+        // 基于JSON生成JS
+        await API.Common.writeJsonToJs('diaries', items, moduleFolder + '/json/diaries.js');
 
 
-    // 基于模板生成HTML
-    console.info('生成私密日记列表HTML开始', items);
-    const listFile = await API.Common.writeHtmlofTpl('diaries', undefined, API.Common.getModuleRoot('Diaries') + "/index.html");
-    console.info('生成私密日记列表HTML结束', listFile, items);
+        // 基于模板生成HTML
+        await API.Common.writeHtmlofTpl('diaries', undefined, moduleFolder + "/index.html");
 
-    // 生成私密日记详情HTML
-    console.info('生成私密日记详情HTML开始', items);
-    const infoFile = await API.Common.writeHtmlofTpl('diaryinfo', undefined, API.Common.getModuleRoot('Diaries') + "/info.html");
-    console.info('生成私密日记详情HTML结束', infoFile, items);
+        // 生成私密日记详情HTML
+        await API.Common.writeHtmlofTpl('diaryinfo', undefined, moduleFolder + "/info.html");
 
-    // 每篇日记生成单独的HTML
-    for (let i = 0; i < items.length; i++) {
-        const blog = items[i];
-        let orderNum = API.Utils.prefixNumber(i + 1, items.length.toString().length);
-        console.info('生成单篇日记详情HTML开始', blog);
-        const blogFile = await API.Common.writeHtmlofTpl('diaryinfo_static', { blog: blog }, API.Common.getModuleRoot('Diaries') + "/{0}_{1}.html".format(orderNum, API.Utils.filenameValidate(blog.title)));
-        console.info('生成单篇日记详情HTML结束', blogFile, blog);
+        // 每篇日记生成单独的HTML
+        for (let i = 0; i < items.length; i++) {
+            const blog = items[i];
+            let orderNum = API.Utils.prefixNumber(i + 1, items.length.toString().length);
+            await API.Common.writeHtmlofTpl('diaryinfo_static', { blog: blog }, moduleFolder + "/{0}_{1}.html".format(orderNum, API.Utils.filenameValidate(blog.title)));
+        }
+
+    } catch (error) {
+        console.error('导出私密日记到HTML异常', error, boardInfo);
     }
 
     // 更新完成信息
@@ -656,31 +658,45 @@ API.Diaries.handerImages = async(item, images) => {
     if (!images) {
         return item;
     }
+
+    // 导出类型
+    const exportType = QZone_Config.Diaries.exportType;
     for (let i = 0; i < images.length; i++) {
         const $img = $(images[i]);
         // 处理相对协议
         let url = $img.attr('orgsrc') || $img.attr('src');
         url = API.Utils.toHttp(url);
-        $img.attr('src', url);
 
         // 添加下载任务
-        if (API.Common.isQzoneUrl()) {
-            // QQ空间外链不处理
-            continue;
+        if (!API.Common.isQzoneUrl()) {
+            // 非QQ空间外链
+            let uid = API.Utils.newSimpleUid(8, 16);
+            let suffix = await API.Utils.autoFileSuffix(url);
+            const custom_filename = uid + suffix;
+            // 添加下载任务
+            API.Utils.newDownloadTask('Diaries', url, 'Diaries/Images', custom_filename, item);
+
+            // 新的图片离线地址
+            url = 'MarkDown' === exportType ? '../Images/' + custom_filename : 'Images/' + custom_filename;
         }
-        let uid = API.Utils.newSimpleUid(8, 16);
-        const custom_filename = uid + API.Utils.getFileSuffixByUrl(url);
-        // 添加下载任务
-        API.Utils.newDownloadTask('Diaries', url, 'Diaries/Images', custom_filename, item);
+        
+        // 修改日志中的图片链接
+        $img.attr('src', url);
+        // 更改图片索引
+        $img.attr('data-idx', i);
 
-        let exportType = QZone_Config.Diaries.exportType;
-        switch (exportType) {
-            case 'MarkDown':
-                $img.attr('src', '../images/' + custom_filename);
-                break;
-            default:
-                $img.attr('src', 'images/' + custom_filename);
-                break;
+        // 图片上层的超链接
+        const $imageLink = $img.parent('a');
+
+        // 修改图片点击事件
+        if ($imageLink && $imageLink.length > 0) {
+            // 更改图片地址
+            $imageLink.attr('href', url);
+            // 画廊查看大图
+            $imageLink.addClass('lightgallery');
+        } else {
+            // 没有超链接的，需要添加超链接，用于生成画廊
+            $img.wrap('<a class="lightgallery" href="' + url + '"></a>');
         }
     }
     return item;

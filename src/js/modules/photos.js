@@ -613,7 +613,9 @@ API.Photos.addCommentDownloadTasks = async(item, dir) => {
                 continue;
             }
             image.custom_filename = API.Utils.newSimpleUid(8, 16);
-            image.custom_filename = image.custom_filename + API.Utils.getFileSuffixByUrl(image.custom_url);
+            // 获取图片类型
+            let suffix = await API.Utils.autoFileSuffix(image.custom_url);
+            image.custom_filename = image.custom_filename + suffix;
             image.custom_filepath = 'Images/' + image.custom_filename;
             // 添加下载任务
             API.Utils.newDownloadTask('Photos', image.custom_url, dir, image.custom_filename, item);
@@ -673,7 +675,7 @@ API.Photos.addPhotosDownloadTasks = async(album, photos) => {
                 // 根据配置的清晰度匹配图片，默认高清
                 photo.custom_url = API.Photos.getDownloadUrl(photo, QZone_Config.Photos.Images.exifType);
                 // 获取图片类型
-                const suffix = API.Photos.getPhotoType(photo);
+                const suffix = API.Photos.getPhotoSuffix(photo);
                 photo.custom_pre_filename = filename + suffix;
                 photo.custom_pre_filepath = albumFolder + '/' + photo.custom_pre_filename;
                 // 添加下载任务
@@ -697,7 +699,7 @@ API.Photos.addPhotosDownloadTasks = async(album, photos) => {
                 photo.custom_filename = QZone.Photos.FILE_URLS.get(photo.custom_url);
                 if (!photo.custom_filename) {
                     // 获取图片类型
-                    const suffix = API.Photos.getPhotoType(photo);
+                    const suffix = API.Photos.getPhotoSuffix(photo);
                     photo.custom_filename = API.Utils.filenameValidate(orderNumber + '_' + photo.name + '_' + API.Utils.newSimpleUid(8, 16));
                     photo.custom_filename = photo.custom_filename + suffix;
                     // 添加下载任务
@@ -953,25 +955,22 @@ API.Photos.exportPhotosToHtml = async(albums) => {
     let indicator = new StatusIndicator('Photos_Images_Export_Other');
     indicator.setIndex('HTML');
     try {
+
+        // 模块文件夹路径
+        const moduleFolder = API.Common.getModuleRoot('Photos');
+        // 创建模块文件夹
+        await API.Utils.createFolder(moduleFolder + '/json');
+
         // 基于JSON生成JS
-        console.info('生成相册JSON开始', albums);
-        await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('albums', albums, API.Common.getModuleRoot('Common') + '/json/albums.js');
-        console.info('生成相册JSON结束', jsonFile, albums);
+        await API.Common.writeJsonToJs('albums', albums, moduleFolder + '/json/albums.js');
 
         // 生成相片列表HTML
-        console.info('生成相片列表HTML开始', albums);
-        const infoFile = await API.Common.writeHtmlofTpl('photos', null, API.Common.getModuleRoot('Photos') + "/photos.html");
-        console.info('生成相片列表HTML结束', infoFile, albums);
+        await API.Common.writeHtmlofTpl('photos', null, moduleFolder + "/photos.html");
 
         for (const album of albums) {
-            // 生成相片列表HTML
-            console.info('生成相册的相片HTML开始', album);
-
+            // 生成静态相册文件
             const name = API.Utils.filenameValidate(album.name);
-            const albumFile = await API.Common.writeHtmlofTpl('photos_static', { album: album }, API.Common.getModuleRoot('Photos') + "/" + name + ".html");
-
-            console.info('生成相册的相片HTML结束', albumFile, album);
+            await API.Common.writeHtmlofTpl('photos', { album: album, albumId: album.id }, moduleFolder + "/" + name + ".html");
         }
 
     } catch (error) {
@@ -1246,7 +1245,6 @@ API.Photos.getAlbumsLikeList = async(items) => {
 
             indicator.setIndex(++count);
             tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Photos).then((likes) => {
-                console.info('获取相册点赞完成', likes);
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {

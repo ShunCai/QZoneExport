@@ -6,7 +6,7 @@
 /**
  * 导出QQ空间好友
  */
-API.Friends.export = async () => {
+API.Friends.export = async() => {
     try {
         // 获取所有的QQ好友
         let friends = await API.Friends.getAllList();
@@ -29,7 +29,7 @@ API.Friends.export = async () => {
 /**
  * 获取所有好友列表
  */
-API.Friends.getAllList = async () => {
+API.Friends.getAllList = async() => {
     // 重置数据
     QZone.Friends.Data = [];
 
@@ -39,7 +39,7 @@ API.Friends.getAllList = async () => {
     // 开始
     indicator.print();
 
-    await API.Friends.getFriends().then(async (data) => {
+    await API.Friends.getFriends().then(async(data) => {
         data = API.Utils.toJson(data, /^_Callback\(/);
         data = data.data;
 
@@ -73,7 +73,7 @@ API.Friends.getAllList = async () => {
 /**
  * 获取好友添加时间
  */
-API.Friends.getFriendsTime = async (data, friends) => {
+API.Friends.getFriendsTime = async(data, friends) => {
     if (!QZone_Config.Friends.hasAddTime || QZone_Config.Friends.exportType === 'MarkDown') {
         // 不获取好友添加时间或导出类型为Markdown，则跳过不处理
         return friends;
@@ -147,7 +147,7 @@ API.Friends.isNewItem = (item) => {
  * 导出好友
  * @param {Array} friends 好友列表
  */
-API.Friends.exportAllToFiles = async (friends) => {
+API.Friends.exportAllToFiles = async(friends) => {
     // 获取用户配置
     let exportType = QZone_Config.Friends.exportType;
     switch (exportType) {
@@ -173,7 +173,7 @@ API.Friends.exportAllToFiles = async (friends) => {
  * 导出QQ好友到Excel
  * @param {Array} friends 好友列表
  */
-API.Friends.exportToExcel = async (friends) => {
+API.Friends.exportToExcel = async(friends) => {
     // 进度更新器
     const indicator = new StatusIndicator('Friends_Export');
     indicator.setIndex('Excel');
@@ -198,15 +198,15 @@ API.Friends.exportToExcel = async (friends) => {
             groups.push(group.name);
         }
         const rowData = [
-            friend.uin, 
-            friend.remark, 
-            friend.name, 
-            friend.groupName, 
-            friend.addFriendTime, 
-            friend.intimacyScore, 
-            friend.common.friend.length, 
-            groups.join('\n'), 
-            user_qzone_url, 
+            friend.uin,
+            friend.remark,
+            friend.name,
+            friend.groupName,
+            friend.addFriendTime,
+            friend.intimacyScore,
+            friend.common.friend.length,
+            groups.join('\n'),
+            user_qzone_url,
             user_message_url
         ];
         ws_data.push(rowData);
@@ -235,21 +235,27 @@ API.Friends.exportToExcel = async (friends) => {
  * 导出QQ好友到HTML
  * @param {Array} friends 好友列表
  */
-API.Friends.exportToHtml = async (friends) => {
+API.Friends.exportToHtml = async(friends) => {
     // 进度更新器
     const indicator = new StatusIndicator('Friends_Export');
     indicator.setIndex('HTML');
 
-    // 基于JSON生成JS
-    console.info('生成好友JSON开始', friends);
-    await API.Utils.createFolder(API.Common.getModuleRoot('Common') + '/json');
-    const jsonFile = await API.Common.writeJsonToJs('friends', friends, API.Common.getModuleRoot('Common') + '/json/friends.js');
-    console.info('生成好友JSON结束', jsonFile, friends);
+    try {
 
-    // 基于模板生成HTML
-    console.info('生成好友列表HTML开始', friends);
-    const listFile = await API.Common.writeHtmlofTpl('friends', null, API.Common.getModuleRoot('Friends') + "/index.html");
-    console.info('生成好友列表HTML结束', listFile, friends);
+        // 模块文件夹路径
+        const moduleFolder = API.Common.getModuleRoot('Friends');
+        // 创建模块文件夹
+        await API.Utils.createFolder(moduleFolder + '/json');
+
+        // 基于JSON生成JS
+        await API.Common.writeJsonToJs('friends', friends, moduleFolder + '/json/friends.js');
+
+        // 基于模板生成HTML
+        await API.Common.writeHtmlofTpl('friends', null, moduleFolder + "/index.html");
+
+    } catch (error) {
+        console.error('导出收藏夹到HTML异常', error, favorites);
+    }
 
     // 更新完成信息
     indicator.complete();
@@ -261,7 +267,7 @@ API.Friends.exportToHtml = async (friends) => {
  * 导出QQ好友到MarkDown
  * @param {Array} friends 好友列表
  */
-API.Friends.exportToMarkDown = async (friends) => {
+API.Friends.exportToMarkDown = async(friends) => {
     // 进度更新器
     const indicator = new StatusIndicator('Friends_Export');
     indicator.setIndex('Markdown');
@@ -305,7 +311,7 @@ API.Friends.exportToMarkDown = async (friends) => {
  * 导出QQ好友到JSON
  * @param {Array} friends 好友列表
  */
-API.Friends.exportToJson = async (friends) => {
+API.Friends.exportToJson = async(friends) => {
     // 状态更新器
     const indicator = new StatusIndicator('Friends_Export');
     indicator.setIndex('JSON');

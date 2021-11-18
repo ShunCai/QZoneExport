@@ -1271,7 +1271,7 @@ class QZoneOperator {
                     break;
                 case 'Thunder':
                     // 下载方式为迅雷下载时
-                    const newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, QZone_Config.Common.downloadThread, tasks);
+                    const newThunderInfo = new ThunderInfo(API.Common.getRootFolderName(), QZone_Config.Common.downloadThread, tasks);
                     await API.Common.invokeThunder(newThunderInfo);
                     break;
                 default:
@@ -1282,7 +1282,7 @@ class QZoneOperator {
         // 【迅雷下载】点击事件
         $("#thunderDownload").click(async function() {
             let tasks = $('#table').bootstrapTable('getSelections');
-            let newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, QZone_Config.Common.downloadThread);
+            let newThunderInfo = new ThunderInfo(API.Common.getRootFolderName(), QZone_Config.Common.downloadThread);
             for (const task of tasks) {
                 newThunderInfo.tasks.push(new ThunderTask(task.module, task.dir, task.name, API.Utils.toHttp(task.url)));
                 task.setState('complete');
@@ -1399,7 +1399,7 @@ const operator = new QZoneOperator();
 // Ajax下载任务
 const downloadTasks = new Array();
 // 迅雷下载信息
-const thunderInfo = new ThunderInfo(API.Common.getRootFolderName());
+const thunderInfo = new ThunderInfo();
 // 浏览器下载信息
 const browserTasks = new Array();
 
@@ -1484,9 +1484,14 @@ API.Utils.addDownloadTasks = async(module, item, url, module_dir, source, FILE_U
     let filename = FILE_URLS.get(url);
     if (!filename) {
         filename = API.Utils.newSimpleUid(8, 16);
-        suffix = API.Utils.getFileSuffixByUrl(url, suffix);
-        filename = filename + suffix;
-        item.custom_mimeType = suffix;
+        if (suffix) {
+            filename = filename + suffix;
+            item.custom_mimeType = suffix;
+        } else {
+            let autoSuffix = await API.Utils.autoFileSuffix(url);
+            filename = filename + autoSuffix;
+            item.custom_mimeType = autoSuffix;
+        }
     }
     item.custom_filename = filename;
     item.custom_filepath = 'Images/' + filename;
@@ -1516,6 +1521,7 @@ API.Utils.newDownloadTask = (module, url, folder, name, source, makeOrg) => {
     // 添加浏览器下载任务
     const browser_down = new BrowserTask(module, url, API.Common.getRootFolderName(), folder, name, source);
     // 添加迅雷下载任务
+    thunderInfo.taskGroupName = API.Common.getRootFolderName();
     const thunder_down = new ThunderTask(module, folder, name, url, source);
 
     // 因为视频存在有效期，所以尽量将MP4文件前置，尽早下载

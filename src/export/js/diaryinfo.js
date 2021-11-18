@@ -1,6 +1,6 @@
-$(function () {
+$(function() {
     let blogId = API.Utils.getUrlParam('blogId');
-    
+
     // 获取指定ID的日志
     const blogIndex = diaries.getIndex(blogId * 1, 'blogid');
     const blog = diaries[blogIndex];
@@ -20,13 +20,41 @@ $(function () {
     // 渲染模板到页面
     $("#comments_html").html(comments_html);
 
-    // 查看赞
-    $('.viewlikes').on('click', function () {
-        API.Common.showLikeWin(this, diaries);
-    });
+    // 日志中的图片
+    $('#blog_content img').on('click', function() {
+        // 画廊相册DOM
+        const $galleryDom = $('#blog_content').get(0);
+        // 点击的图片的索引位置
+        const imgIdx = $(this).attr('data-idx');
+
+        if ($galleryDom.galleryIns) {
+            $galleryDom.galleryIns.openGallery(imgIdx * 1);
+            return;
+        }
+
+        // 实例化画廊相册
+        const galleryIns = lightGallery($galleryDom, {
+            plugins: [
+                lgZoom,
+                lgFullscreen,
+                lgThumbnail,
+                lgRotate
+            ],
+            mode: 'lg-fade',
+            selector: '.lightgallery',
+            download: false,
+            thumbnail: true,
+            loop: false
+        });
+        $galleryDom.galleryIns = galleryIns;
+
+        // 打开画廊
+        galleryIns.openGallery(imgIdx * 1);
+    })
+
+    // 点赞列表
+    API.Common.registerShowVisitorsWin(diaries);
 
     // 最近访问
-    $('.viewVisitors').on('click', function () {
-        API.Common.showVisitorsWin(this, diaries);
-    });
+    API.Common.registerShowLikeWin(diaries);
 });
