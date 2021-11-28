@@ -6,15 +6,6 @@ const initSidebar = function () {
     if (haders.length == 0) {
         return;
     }
-    const newUid = function () {
-        var s4 = function () {
-            return Math.floor((1 + Math.random()) * 0x10000)
-                .toString(16)
-                .substring(1);
-        }
-        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-            s4() + '-' + s4() + s4() + s4();
-    }
 
     var links = document.links;
     for (var i = 0; i < links.length; i++) {
@@ -35,7 +26,7 @@ const initSidebar = function () {
 
     haders.each(function (i, item) {
         const tag = $(this).attr('data-tag') || $(item).get(0).tagName.toLowerCase();
-        var id = newUid();
+        var id = API.Utils.newUid();
         var className = 'item_' + tag;
         $(item).attr("id", "wow" + id);
         $(item).addClass("wow_head");

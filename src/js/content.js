@@ -169,6 +169,11 @@ class PageInfo {
  * 提示信息
  */
 const MAX_MSG = {
+    InitIncrement: [
+        '存在需要增量备份的模块',
+        '正在获取上次备份的数据',
+        '请稍后...'
+    ],
     Messages: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的说说列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
@@ -300,6 +305,27 @@ const MAX_MSG = {
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+        '请稍后...'
+    ],
+    Diaries_Comments: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇私密日记的评论列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+        '请稍后...'
+    ],
+    Diaries_Like: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇私密日记的点赞列表',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
+        '请稍后...'
+    ],
+    Diaries_Visitor: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇私密日记的最近访问',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
         '请稍后...'
     ],
@@ -956,7 +982,7 @@ class QZoneOperator {
             case OperatorType.ZIP:
                 await API.Utils.sleep(1000);
                 // 压缩
-                await API.Utils.Zip(FOLDER_ROOT);
+                await API.Utils.Zip(API.Common.getRootFolder());
                 operator.next(OperatorType.COMPLETE);
                 break;
             case OperatorType.COMPLETE:
@@ -983,7 +1009,7 @@ class QZoneOperator {
         // 获取gtk
         API.Utils.initGtk();
         // 获取Token
-        API.Utils.getQzoneToken();
+        API.Utils.getQZoneToken();
         // 获取QQ号
         API.Utils.initUin();
         // 获取相册路由
@@ -996,6 +1022,14 @@ class QZoneOperator {
 
         // 初始化文件夹
         QZone.Common.Filer.init({ persistent: false, size: 10 * 1024 * 1024 * 1024 }, function(fs) {
+            QZone.Common.Filer.ls(API.Common.getRootFolder(), function(entries) {
+                console.info('当前子目录：', entries);
+                QZone.Common.Filer.rm(API.Common.getRootFolder(), function() {
+                    console.info('清除历史数据成功！');
+                });
+            });
+
+            // 移除历史不带QQ号的文件夹
             QZone.Common.Filer.ls(FOLDER_ROOT, function(entries) {
                 console.info('当前子目录：', entries);
                 QZone.Common.Filer.rm(FOLDER_ROOT, function() {
@@ -1022,11 +1056,11 @@ class QZoneOperator {
                 if (typeof(obj) !== "object") {
                     continue;
                 }
-                let rootPath = obj['IMAGES_ROOT'] || obj['ROOT'];
-                if (!rootPath) {
+                let moduleRoot = obj['IMAGES_ROOT'] || obj['ROOT'];
+                if (!moduleRoot) {
                     continue;
                 }
-                let entry = await API.Utils.createFolder(rootPath);
+                let entry = await API.Utils.createFolder(API.Common.getRootFolder() + '/' + moduleRoot);
                 console.info('创建目录成功', entry);
             }
         }
@@ -1036,7 +1070,7 @@ class QZoneOperator {
 
         // 创建说明文件
         let res = await API.Utils.get(chrome.runtime.getURL('others/README.md'));
-        let fileEntry = await API.Utils.writeText(res, FOLDER_ROOT + "README.md");
+        let fileEntry = await API.Utils.writeText(res, API.Common.getRootFolder() + "/README.md");
         console.info('生成说明文件完成', fileEntry);
         console.info('初始化模块文件夹结束', QZone);
     }
@@ -1107,14 +1141,12 @@ class QZoneOperator {
             $downloadBtn.attr('disabled', true);
             $downloadBtn.text('正在下载');
 
-            let zipName = QZone.Common.Config.ZIP_NAME + "_" + QZone.Common.Target.uin + ".zip";
-
             QZone.Common.Zip.generateAsync({ type: "blob" }, (metadata) => {
                 $progressbar.css("width", metadata.percent.toFixed(2) + "%");
                 $progressbar.attr("aria-valuenow", metadata.percent.toFixed(2));
                 $progressbar.text('已下载' + metadata.percent.toFixed(2) + '%');
             }).then(function(content) {
-                saveAs(content, zipName);
+                saveAs(content, API.Common.getRootFolderName() + '.zip');
                 $progressbar.css("width", "100%");
                 $progressbar.attr("aria-valuenow", 100);
                 $progressbar.text('已下载' + '100%');
@@ -1142,11 +1174,13 @@ class QZoneOperator {
             $("#modalTable").remove();
         })
 
-        // 关于按钮点击后
-        $('#showAbout').on('click', function() {
+        // 链接调整
+        $('.skipLink').on('click', function() {
+            const link = $(this).attr('data-link');
             chrome.runtime.sendMessage({
                 from: 'content',
-                type: 'showAbout'
+                type: 'skipLink',
+                url: link
             });
         })
 
@@ -1237,7 +1271,7 @@ class QZoneOperator {
                     break;
                 case 'Thunder':
                     // 下载方式为迅雷下载时
-                    const newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, QZone_Config.Common.downloadThread, tasks);
+                    const newThunderInfo = new ThunderInfo(API.Common.getRootFolderName(), QZone_Config.Common.downloadThread, tasks);
                     await API.Common.invokeThunder(newThunderInfo);
                     break;
                 default:
@@ -1248,7 +1282,7 @@ class QZoneOperator {
         // 【迅雷下载】点击事件
         $("#thunderDownload").click(async function() {
             let tasks = $('#table').bootstrapTable('getSelections');
-            let newThunderInfo = new ThunderInfo(thunderInfo.taskGroupName, QZone_Config.Common.downloadThread);
+            let newThunderInfo = new ThunderInfo(API.Common.getRootFolderName(), QZone_Config.Common.downloadThread);
             for (const task of tasks) {
                 newThunderInfo.tasks.push(new ThunderTask(task.module, task.dir, task.name, API.Utils.toHttp(task.url)));
                 task.setState('complete');
@@ -1365,7 +1399,7 @@ const operator = new QZoneOperator();
 // Ajax下载任务
 const downloadTasks = new Array();
 // 迅雷下载信息
-const thunderInfo = new ThunderInfo(QZone.Common.Config.ZIP_NAME);
+const thunderInfo = new ThunderInfo();
 // 浏览器下载信息
 const browserTasks = new Array();
 
@@ -1450,9 +1484,14 @@ API.Utils.addDownloadTasks = async(module, item, url, module_dir, source, FILE_U
     let filename = FILE_URLS.get(url);
     if (!filename) {
         filename = API.Utils.newSimpleUid(8, 16);
-        suffix = API.Utils.getFileSuffixByUrl(url, suffix);
-        filename = filename + suffix;
-        item.custom_mimeType = suffix;
+        if (suffix) {
+            filename = filename + suffix;
+            item.custom_mimeType = suffix;
+        } else {
+            let autoSuffix = await API.Utils.autoFileSuffix(url);
+            filename = filename + autoSuffix;
+            item.custom_mimeType = autoSuffix;
+        }
     }
     item.custom_filename = filename;
     item.custom_filepath = 'Images/' + filename;
@@ -1480,8 +1519,9 @@ API.Utils.newDownloadTask = (module, url, folder, name, source, makeOrg) => {
     // 添加Ajax请求下载任务
     const ajax_down = new DownloadTask(module, folder, name, API.Common.isFile() ? API.Utils.toHttps(url) : url, source);
     // 添加浏览器下载任务
-    const browser_down = new BrowserTask(module, url, QZone.Common.Config.ZIP_NAME, folder, name, source);
+    const browser_down = new BrowserTask(module, url, API.Common.getRootFolderName(), folder, name, source);
     // 添加迅雷下载任务
+    thunderInfo.taskGroupName = API.Common.getRootFolderName();
     const thunder_down = new ThunderTask(module, folder, name, url, source);
 
     // 因为视频存在有效期，所以尽量将MP4文件前置，尽早下载

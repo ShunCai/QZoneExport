@@ -1,4 +1,4 @@
-$(function () {
+$(function() {
     let blogId = API.Utils.getUrlParam('blogId');
 
     // 获取指定ID的日志
@@ -20,14 +20,43 @@ $(function () {
     // 渲染模板到页面
     $("#comments_html").html(comments_html);
 
-    // 查看赞
-    $('.viewlikes').on('click', function () {
-        API.Common.showLikeWin(this, blogs);
-    });
+    // 日志中的图片
+    $('#blog_content .QZBLOG_IMG_LOADING').on('click', function() {
+        // 画廊相册DOM
+        const $galleryDom = $('#blog_content').get(0);
+        // 点击的图片的索引位置
+        const imgIdx = $(this).attr('data-idx');
+
+        if ($galleryDom.galleryIns) {
+            $galleryDom.galleryIns.openGallery(imgIdx * 1);
+            return;
+        }
+
+        // 实例化画廊相册
+        const galleryIns = lightGallery($galleryDom, {
+            plugins: [
+                lgZoom,
+                lgFullscreen,
+                lgThumbnail,
+                lgRotate
+            ],
+            mode: 'lg-fade',
+            selector: '.lightgallery',
+            download: false,
+            thumbnail: true,
+            loop: false
+        });
+        $galleryDom.galleryIns = galleryIns;
+
+        // 打开画廊
+        galleryIns.openGallery(imgIdx * 1);
+    })
+
+    // 点赞列表
+    API.Common.registerShowVisitorsWin(blogs);
 
     // 最近访问
-    $('.viewVisitors').on('click', function () {
-        API.Common.showVisitorsWin(this, blogs);
-    });
+    API.Common.registerShowLikeWin(blogs);
+
 
 });

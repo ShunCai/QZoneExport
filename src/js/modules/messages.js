@@ -37,6 +37,9 @@ API.Messages.export = async() => {
         // 添加说说多媒体下载任务
         items = await API.Messages.addMediaToTasks(items);
 
+        // 处理特殊坐标数据，避免地图跳转错误
+        API.Messages.dealLbs(items);
+
         // 根据导出类型导出数据    
         await API.Messages.exportAllListToFiles(items);
 
@@ -342,37 +345,37 @@ API.Messages.exportToHtml = async(messages) => {
 
     try {
 
+        // 模块文件夹路径
+        const moduleFolder = API.Common.getModuleRoot('Messages');
+        // 创建模块文件夹
+        await API.Utils.createFolder(moduleFolder + '/json');
+
         // 基于JSON生成JS
-        console.info('生成说说JSON开始', messages);
-        await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('messages', messages, QZone.Common.ROOT + '/json/messages.js');
-        console.info('生成说说JSON结束', jsonFile, messages);
+        await API.Common.writeJsonToJs('messages', messages, moduleFolder + '/json/messages.js');
 
         // 说说数据根据年份分组
         let yearMaps = API.Utils.groupedByTime(messages, "custom_create_time", 'year');
         // 基于模板生成年份说说HTML
         for (const [year, yearItems] of yearMaps) {
-            console.info('生成说说年份HTML文件开始', year, yearItems);
             // 基于模板生成所有说说HTML
             let _messageMaps = new Map();
             const monthMaps = API.Utils.groupedByTime(yearItems, "custom_create_time", 'month');
             _messageMaps.set(year, monthMaps);
             let params = {
                 messageMaps: _messageMaps,
-                total: yearItems.length
+                total: yearItems.length,
+                config: QZone_Config
             }
-            let yearFile = await API.Common.writeHtmlofTpl('messages', params, QZone.Messages.ROOT + "/" + year + ".html");
-            console.info('生成说说年份HTML文件结束', year, yearItems, yearFile);
+            await API.Common.writeHtmlofTpl('messages', params, moduleFolder + "/" + year + ".html");
         }
 
-        console.info('生成说说汇总HTML文件开始', messages);
         // 基于模板生成汇总说说HTML
         let params = {
             messageMaps: API.Utils.groupedByTime(messages, "custom_create_time", 'all'),
-            total: messages.length
+            total: messages.length,
+            config: QZone_Config
         }
-        let allFile = await API.Common.writeHtmlofTpl('messages', params, QZone.Messages.ROOT + "/index.html");
-        console.info('生成说说汇总HTML文件结束', allFile, messages);
+        await API.Common.writeHtmlofTpl('messages', params, moduleFolder + "/index.html");
 
     } catch (error) {
         console.error('导出说说到HTML异常', error, messages);
@@ -414,7 +417,7 @@ API.Messages.exportToMarkdown = async(items) => {
             allYearContents.push(yearContent);
 
             // 生成年份文件
-            const yearFilePath = QZone.Messages.ROOT + "/" + year + ".md";
+            const yearFilePath = API.Common.getModuleRoot('Messages') + "/" + year + ".md";
             await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
                 console.info('备份说说列表到Markdown完成，当前年份=', year, fileEntry);
             }).catch(error => {
@@ -423,7 +426,7 @@ API.Messages.exportToMarkdown = async(items) => {
         }
 
         // 生成汇总文件
-        await API.Utils.writeText(allYearContents.join('\r\n'), QZone.Messages.ROOT + '/Messages.md').then((fileEntry) => {
+        await API.Utils.writeText(allYearContents.join('\r\n'), API.Common.getModuleRoot('Messages') + '/Messages.md').then((fileEntry) => {
             console.info('生成汇总说说Markdown文件完成', items, fileEntry);
         }).catch((e) => {
             console.error("生成汇总说说Markdown文件异常", items, e)
@@ -451,7 +454,7 @@ API.Messages.exportToJson = async(items) => {
     const yearDataMap = API.Utils.groupedByTime(items, "custom_create_time", "year");
     for (const [year, yearItems] of yearDataMap) {
         console.info('正在生成年份说说JSON文件', year);
-        const yearFilePath = QZone.Messages.ROOT + "/" + year + ".json";
+        const yearFilePath = API.Common.getModuleRoot('Messages') + "/" + year + ".json";
         await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath).then((fileEntry) => {
             console.info('生成年份说说JSON文件完成', year, fileEntry);
         }).catch((e) => {
@@ -461,7 +464,7 @@ API.Messages.exportToJson = async(items) => {
 
     // 生成汇总JSON
     const json = JSON.stringify(items);
-    await API.Utils.writeText(json, QZone.Messages.ROOT + '/messages.json').then((fileEntry) => {
+    await API.Utils.writeText(json, API.Common.getModuleRoot('Messages') + '/messages.json').then((fileEntry) => {
         console.info('生成汇总说说JSON文件完成', items, fileEntry);
     }).catch((e) => {
         console.error("生成汇总说说JSON文件异常", items, e)
@@ -572,7 +575,7 @@ API.Messages.addMediaToTasks = async(dataList) => {
         return dataList;
     }
     // 进度更新器
-    let indicator = new StatusIndicator('Messages_Images_Mime');
+    const indicator = new StatusIndicator('Messages_Images_Mime');
 
     // 下载相对目录
     let module_dir = 'Messages/Images';
@@ -1034,4 +1037,27 @@ API.Messages.getAllVisitorList = async(items) => {
     indicator.complete();
 
     return items;
+}
+
+/**
+ * 处理特殊坐标
+ * @param {Array} items 说说列表
+ */
+API.Messages.dealLbs = function(items) {
+    for (const item of items) {
+        const lbs = item.lbs;
+        if (!lbs || !lbs.pos_x || !lbs.pos_y) {
+            continue;
+        }
+        // 特殊坐标处理
+        if (Number.parseInt(lbs.pos_x) > 1000000) {
+            lbs.pos_x = lbs.pos_x / 1000000
+        }
+        if (Number.parseInt(lbs.pos_y) > 1000000) {
+            lbs.pos_y = lbs.pos_y / 1000000
+        }
+        // 科学计算法处理
+        lbs.pos_x = Number.parseFloat(lbs.pos_x).toString();
+        lbs.pos_y = Number.parseFloat(lbs.pos_y).toString();
+    }
 }

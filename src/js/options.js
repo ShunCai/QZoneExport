@@ -1,20 +1,24 @@
 (function() {
+
+    //turn to inline mode BootstrapTable行内编辑
+    $.fn.editable.defaults.mode = 'inline';
+
     $(window.location.hash).tab('show');
 
     // 初始化提示
     $('[data-toggle="tooltip"]').tooltip({
         placement: 'auto'
-    });
+    })
 
     // 屏蔽词管理点击事件
     $('#managerKeywords').click(function() {
         $('#managerKeywordsModal').modal('show');
-    });
+    })
 
     // 添加默认屏蔽词
     $('#defaultFilterKeyword').click(function() {
         $('#filterKeywords').val(Default_Config.Messages.FilterKeyWords.join('\n'));
-    });
+    })
 
     // 添加屏蔽词
     $('#addFilterKeyword').click(function() {
@@ -32,7 +36,7 @@
         }
         filterKeywordValues.unshift(addValue);
         $('#filterKeywords').val(filterKeywordValues.join('\n'));
-    });
+    })
 
     // 屏蔽开关监听事件
     $('#message_is_filter').change(function() {
@@ -42,6 +46,97 @@
         }
         $('.managerKeywordsDiv').hide();
     })
+
+    // 分享来源管理
+    $('#managerShareSource').click(function() {
+        // 初始化表格
+        let tableOptions = {
+            undefinedText: '',
+            toggle: 'shareSourceTable',
+            locale: 'zh-CN',
+            height: '500',
+            resizable: true,
+            columns: [{
+                field: 'name',
+                title: '显示名称',
+                align: 'left',
+                sortable: true,
+                formatter: (value, row, index, field) => {
+                    return '<a href="#" data-type="text" data-title="请输入名称" data-name="name" data-pk="' + index + '">' + value + '</a>';
+                }
+            }, {
+                field: 'regulars',
+                title: '匹配规则',
+                align: 'left',
+                formatter: (value, row, index, field) => {
+                    return '<a href="#" data-type="text" data-title="请输入规则" data-name="regulars" data-pk="' + index + '">' + value + '</a>';
+                }
+            }, {
+                field: 'action',
+                title: '操作',
+                align: 'left',
+                events: {
+                    'click .addRow': function(e, value, row, index) {
+                        $("#shareSourceTable").bootstrapTable('insertRow', {
+                            index: index + 1,
+                            row: {
+                                name: '',
+                                regulars: ''
+                            }
+                        });
+                    },
+                    'click .delRow': function(e, value, row, index) {
+                        const $table = $("#shareSourceTable");
+                        $table.bootstrapTable('remove', { field: '$index', values: [index] })
+                    }
+                },
+                formatter: (value, row, index, field) => {
+                    return [
+                        '<a class="addRow" href="javascript:void(0)" title="添加行">',
+                        '<i class="fa fa-plus"></i>',
+                        '</a>  ',
+                        '<a class="delRow ml-3" href="javascript:void(0)" title="移除行">',
+                        '<i class="fa fa-trash"></i>',
+                        '</a>'
+                    ].join('')
+                }
+            }],
+            data: API.Utils.sort(QZone_Config.Shares.SourceType, 'name'),
+            onResetView: function(arg1, arg2) {
+
+                // 初始化规则编辑
+                $('a[data-name="regulars"]').editable({
+                    emptytext: "请输入规则",
+                    success: function(response, newValue) {
+                        // 不知道为什么还要自己更新，可能是用法不对，不纠结了
+                        const index = $(this).attr('data-pk');
+                        $("#shareSourceTable").bootstrapTable('updateCell', { index: index, field: 'regulars', value: newValue });
+                    }
+                });
+
+                // 初始化名称编辑
+                $('a[data-name="name"]').editable({
+                    emptytext: "请输入名称",
+                    success: function(response, newValue) {
+                        // 不知道为什么还要自己更新，可能是用法不对，不纠结了
+                        const index = $(this).attr('data-pk');
+                        $("#shareSourceTable").bootstrapTable('updateCell', { index: index, field: 'name', value: newValue });
+                    }
+                });
+            }
+        };
+
+        const $shareSourceTable = $("#shareSourceTable");
+
+        // 初始化表格
+        $shareSourceTable.bootstrapTable(tableOptions);
+
+        $('#managerShareSourceModal').modal('show');
+
+        $('#saveShareSource').on('click', function(event) {
+            QZone_Config.Shares.SourceType = $('#shareSourceTable').bootstrapTable('getData');
+        })
+    });
 
     // 提示信息
     const tips = (message) => {
@@ -280,7 +375,7 @@
                 $common_aria2_rpc_row.hide();
                 $common_aria2_token_row.hide();
 
-                $download_type_help.text('不下载图片，直接使用QQ空间的图片地址，不推荐使用，可能会存在图片过期、禁止访问等问题');
+                $download_type_help.html('不下载图片，直接使用QQ空间的图片地址，<span style="color:red">不推荐使用，可能会存在图片过期、禁止访问等问题</span>');
                 break;
             default:
                 break;
@@ -316,6 +411,44 @@
         }
     })
 
+    /**
+     * 渲染显示值到表单
+     * @param {string} options 模块配置项
+     * @param {string} fieldName 表单元素名称，必须与配置属性名称一致
+     */
+    const renderValueToDom = (options, fieldName) => {
+        if (!fieldName) {
+            return;
+        }
+        for (const module in options) {
+            if (!Object.hasOwnProperty.call(options, module)) {
+                continue;
+            }
+            const emoduleCfg = options[module];
+            if (!emoduleCfg.hasOwnProperty(fieldName)) {
+                continue;
+            }
+            const $targetField = $('input[data-module="' + module + '"][name="' + fieldName + '"]');
+            if ($targetField.attr('type') === 'checkbox') {
+                $targetField.prop("checked", emoduleCfg[fieldName]).change();
+            } else {
+                $targetField.val(emoduleCfg[fieldName]);
+            }
+        }
+    }
+
+    // 监听类型识别开关改变事件
+    $('#common_file_suffix').change(function() {
+        let downloadType = $('#common_download_type').val();
+        let suffix_timeout = $('#common_file_suffix_timeout')[0].parentNode.parentNode;
+        let isChecked = $(this).prop("checked");
+        if (isChecked && 'QZone' !== downloadType) {
+            $(suffix_timeout).show();
+        } else {
+            $(suffix_timeout).hide();
+        }
+    })
+
     let loadOptions = (options) => {
 
         // 说说模块赋值
@@ -326,6 +459,7 @@
         $("#messages_list_cost_max").val(options.Messages.randomSeconds.max);
         $("#messages_list_limit").val(options.Messages.pageSize);
         $("#messages_full").prop("checked", options.Messages.isFull);
+        $("#messages_full_show").prop("checked", options.Messages.isShowMore);
         $("#message_is_filter").prop("checked", options.Messages.isFilterKeyword).change();
         $("#filterKeywords").val(options.Messages.FilterKeyWords.join('\n'));
         // 评论列表
@@ -375,6 +509,19 @@
         $("#diaries_info_cost_min").val(options.Diaries.Info.randomSeconds.min);
         $("#diaries_info_cost_max").val(options.Diaries.Info.randomSeconds.max);
         $("#diaries_list_limit").val(options.Diaries.pageSize);
+        // 评论列表
+        $("#diaries_download_full_comments").prop("checked", options.Diaries.Comments.isFull).change();
+        $("#diaries_comments_min").val(options.Diaries.Comments.randomSeconds.min);
+        $("#diaries_comments_max").val(options.Diaries.Comments.randomSeconds.max);
+        $("#diaries_comments_limit").val(options.Diaries.Comments.pageSize);
+        // 点赞列表
+        $("#diaries_has_like").prop("checked", options.Diaries.Like.isGet).change();
+        $("#diaries_like_min").val(options.Diaries.Like.randomSeconds.min);
+        $("#diaries_like_max").val(options.Diaries.Like.randomSeconds.max);
+        // 最近访问
+        $("#diaries_has_visitor").prop("checked", options.Diaries.Visitor.isGet).change();
+        $("#diaries_visitor_min").val(options.Diaries.Visitor.randomSeconds.min);
+        $("#diaries_visitor_max").val(options.Diaries.Visitor.randomSeconds.max);
 
         // 相册模块赋值
         $("#photos_exportFormat").val(options.Photos.exportType).change();
@@ -454,8 +601,6 @@
         $("#shares_info_cost_min").val(options.Shares.Info.randomSeconds.min);
         $("#shares_info_cost_max").val(options.Shares.Info.randomSeconds.max);
         $("#shares_list_limit").val(options.Shares.pageSize);
-        // 分享来源显示名称
-        $('#sourceNames').val(JSON.stringify(options.Shares.SourceType, null, 4));
         // 评论列表
         $("#shares_download_full_comments").prop("checked", options.Shares.Comments.isFull).change();
         $("#shares_comments_min").val(options.Shares.Comments.randomSeconds.min);
@@ -490,14 +635,66 @@
         $("#common_aria2_token").val(options.Common.Aria2.token || '');
         $('#common_user_link').prop("checked", options.Common.hasUserLink);
 
+        // 那年今日
+        renderValueToDom(options, 'hasThatYearToday');
+
+        // 图片类型识别
+        renderValueToDom(options, 'isAutoFileSuffix');
+
+        // 图片类型识别超时时间
+        renderValueToDom(options, 'autoFileSuffixTimeOut');
     }
 
     // 读取数据，第一个参数是指定要读取的key以及设置默认值
     chrome.storage.sync.get(Default_Config, function(options) {
+
         console.info('读取配置完成！', options);
-        QZone_Config = options;
+        QZone_Config = Object.assign({}, options);
+
+        // 处理旧版本的分享源
+        const newSourceType = [];
+        if (QZone_Config.Shares.SourceType) {
+            for (const source of QZone_Config.Shares.SourceType) {
+                if (!Array.isArray(source.regulars)) {
+                    newSourceType.push(source);
+                    continue;
+                }
+                for (const regular of source.regulars) {
+                    newSourceType.push(Object.assign({}, {
+                        name: source.name,
+                        regulars: regular
+                    }));
+                }
+            }
+        }
+        QZone_Config.Shares.SourceType = newSourceType;
+
+        // 填充数据
         loadOptions(options);
     });
+
+    /**
+     * 根据表单设置更新配置项
+     * @param {Object} options 配置项
+     * @param {string} field 属性名称
+     */
+    const setValueByFrom = (options, field) => {
+        const $hasThatYearTodayFields = $('input[name="' + field + '"]');
+        for (const item of $hasThatYearTodayFields) {
+            const moduleName = $(item).attr('data-module');
+            if (!moduleName) {
+                continue;
+            }
+            const inputType = $(item).attr('type');
+            if (inputType === 'checkbox') {
+                options[moduleName][field] = $(item).prop("checked");
+            } else if (inputType === 'number') {
+                options[moduleName][field] = $(item).val() * 1;
+            } else {
+                options[moduleName][field] = $(item).val();
+            }
+        }
+    }
 
     let setOptions = () => {
 
@@ -509,6 +706,7 @@
         QZone_Config.Messages.randomSeconds.max = $("#messages_list_cost_max").val() * 1;
         QZone_Config.Messages.pageSize = $("#messages_list_limit").val() * 1;
         QZone_Config.Messages.isFull = $("#messages_full").prop("checked");
+        QZone_Config.Messages.isShowMore = $("#messages_full_show").prop("checked");
         QZone_Config.Messages.isFilterKeyword = $("#message_is_filter").prop("checked");
         QZone_Config.Messages.FilterKeyWords = $("#filterKeywords").val().split('\n');
         // 评论列表
@@ -557,6 +755,19 @@
         QZone_Config.Diaries.Info.randomSeconds.min = $("#diaries_info_cost_min").val() * 1;
         QZone_Config.Diaries.Info.randomSeconds.max = $("#diaries_info_cost_max").val() * 1;
         QZone_Config.Diaries.pageSize = $("#diaries_list_limit").val() * 1;
+        // 评论列表
+        QZone_Config.Diaries.Comments.isFull = $("#diaries_download_full_comments").prop("checked");
+        QZone_Config.Diaries.Comments.randomSeconds.min = $("#diaries_comments_min").val() * 1;
+        QZone_Config.Diaries.Comments.randomSeconds.max = $("#diaries_comments_max").val() * 1;
+        QZone_Config.Diaries.Comments.pageSize = $("#diaries_comments_limit").val() * 1;
+        // 点赞列表
+        QZone_Config.Diaries.Like.isGet = $("#diaries_has_like").prop("checked");
+        QZone_Config.Diaries.Like.randomSeconds.min = $("#diaries_like_min").val() * 1;
+        QZone_Config.Diaries.Like.randomSeconds.max = $("#diaries_like_max").val() * 1;
+        // 最近访问
+        QZone_Config.Diaries.Visitor.isGet = $("#diaries_has_visitor").prop("checked");
+        QZone_Config.Diaries.Visitor.randomSeconds.min = $("#diaries_visitor_min").val() * 1;
+        QZone_Config.Diaries.Visitor.randomSeconds.max = $("#diaries_visitor_max").val() * 1;
 
         // 相册模块赋值
         QZone_Config.Photos.exportType = $("#photos_exportFormat").val();
@@ -637,12 +848,6 @@
         QZone_Config.Shares.Info.randomSeconds.min = $("#shares_info_cost_min").val() * 1;
         QZone_Config.Shares.Info.randomSeconds.max = $("#shares_info_cost_max").val() * 1;
         QZone_Config.Shares.pageSize = $("#shares_list_limit").val() * 1;
-        try {
-            QZone_Config.Shares.SourceType = JSON.parse($("#sourceNames").val());
-        } catch (error) {
-            alert('来源管理JSON错误：' + error);
-            return false;
-        }
         // 评论列表
         QZone_Config.Shares.Comments.isFull = $("#shares_download_full_comments").prop("checked");
         QZone_Config.Shares.Comments.randomSeconds.min = $("#shares_comments_min").val() * 1;
@@ -677,6 +882,15 @@
         QZone_Config.Common.Aria2.token = $("#common_aria2_token").val();
 
         QZone_Config.Common.hasUserLink = $('#common_user_link').prop("checked");
+
+        // 那年今日
+        setValueByFrom(QZone_Config, 'hasThatYearToday');
+
+        // 图片类型识别
+        setValueByFrom(QZone_Config, 'isAutoFileSuffix');
+
+        // 图片类型识别超时时间
+        setValueByFrom(QZone_Config, 'autoFileSuffixTimeOut');
 
         chrome.storage.sync.set(QZone_Config, function() {
             console.info("保存成功！");

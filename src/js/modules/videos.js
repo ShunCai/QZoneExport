@@ -299,24 +299,23 @@ API.Videos.exportToHtml = async(videos) => {
     indicator.setIndex('HTML');
 
     try {
+
+        // 模块文件夹路径
+        const moduleFolder = API.Common.getModuleRoot('Videos');
+        // 创建模块文件夹
+        await API.Utils.createFolder(moduleFolder + '/json');
+
         // 基于JSON生成JS
-        console.info('生成视频JSON开始', videos);
-        await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('videos', videos, QZone.Common.ROOT + '/json/videos.js');
-        console.info('生成视频JSON结束', jsonFile, videos);
+        await API.Common.writeJsonToJs('videos', videos, moduleFolder + '/json/videos.js');
 
         // 生成视频汇总列表HTML
-        console.info('生成视频列表HTML开始', videos);
-        const infoFile = await API.Common.writeHtmlofTpl('videos', null, QZone.Videos.ROOT + "/index.html");
-        console.info('生成视频列表HTML结束', infoFile, videos);
+        await API.Common.writeHtmlofTpl('videos', null, moduleFolder + "/index.html");
 
         // 根据年份分组
         const year_maps = API.Utils.groupedByTime(videos, 'uploadTime', 'year');
         for (const [year, year_items] of year_maps) {
             // 生成视频年份列表HTML
-            console.info('生成视频年份列表HTML开始', year, year_items);
-            const yearFile = await API.Common.writeHtmlofTpl('videos_static', { videos: year_items }, QZone.Videos.ROOT + "/" + year + ".html");
-            console.info('生成视频年份列表HTML结束', year, yearFile, year_items);
+            await API.Common.writeHtmlofTpl('videos', { videos: year_items }, moduleFolder + "/" + year + ".html");
         }
 
     } catch (error) {
@@ -366,7 +365,7 @@ API.Videos.exportToMarkdown = async(videos) => {
             allYearContents.push(yearContent);
 
             // 生成年份文件
-            const yearFilePath = QZone.Videos.ROOT + "/" + year + '.md';
+            const yearFilePath = API.Common.getModuleRoot('Videos') + "/" + year + '.md';
             await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
                 console.info('备份视频列表完成，当前年份=', year, fileEntry);
             }).catch(error => {
@@ -376,7 +375,7 @@ API.Videos.exportToMarkdown = async(videos) => {
         }
 
         // 生成汇总文件
-        await API.Utils.writeText(allYearContents.join('\r\n'), QZone.Videos.ROOT + '/Videos.md');
+        await API.Utils.writeText(allYearContents.join('\r\n'), API.Common.getModuleRoot('Videos') + '/Videos.md');
 
     } catch (error) {
         console.error('导出视频到Markdown文件异常', error, videos);
@@ -471,7 +470,7 @@ API.Videos.exportToLink = async(videos) => {
     for (const video of videos) {
         videoUrls.push(API.Utils.makeDownloadUrl(video.url, true));
     }
-    let filepath = QZone.Videos.ROOT + '/videos.downlist';
+    let filepath = API.Common.getModuleRoot('Videos') + '/videos.downlist';
     await API.Utils.writeText(videoUrls.join('\r\n'), filepath).then((file) => {
         console.info('导出视频下载链接成功', file);
     }).catch((e) => {
@@ -493,7 +492,7 @@ API.Videos.exportToJson = async(videos) => {
     indicator.setIndex('JSON');
 
     let json = JSON.stringify(videos);
-    await API.Utils.writeText(json, QZone.Videos.ROOT + '/videos.json').then((file) => {
+    await API.Utils.writeText(json, API.Common.getModuleRoot('Videos') + '/videos.json').then((file) => {
         console.info('导出视频到JSON成功', file);
     }).catch((e) => {
         console.error('导出视频到JSON异常', e);
@@ -631,7 +630,6 @@ API.Videos.getAllLikeList = async(items) => {
 
             indicator.setIndex(++count);
             tasks.push(API.Common.getModulesLikeList(item, QZone_Config.Videos).then((likes) => {
-                console.info('获取视频点赞完成', likes);
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {

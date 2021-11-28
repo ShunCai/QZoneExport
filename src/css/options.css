@@ -38,6 +38,22 @@ table td {
     white-space: nowrap;
 }
 
-#about .list-group-item{
+#about .list-group-item {
     padding: .5rem!important
+}
+
+.glyphicon {
+    display: inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+    font-size: inherit;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+}
+
+.glyphicon-ok:before {
+    content: "\f0c7"
+}
+
+.glyphicon-remove:before {
+    content: "\f00d"
 }

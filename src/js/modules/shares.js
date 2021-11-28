@@ -3,7 +3,7 @@
  * @author https://lvshuncai.com
  */
 
-API.Shares.export = async () => {
+API.Shares.export = async() => {
     try {
         // 获取所有的分享列表
         let items = await API.Shares.getAllList();
@@ -34,7 +34,7 @@ API.Shares.export = async () => {
 /**
  * 获取所有分享列表
  */
-API.Shares.getAllList = async () => {
+API.Shares.getAllList = async() => {
 
     // 分享状态更新器
     const indicator = new StatusIndicator('Shares');
@@ -44,7 +44,7 @@ API.Shares.getAllList = async () => {
 
     const CONFIG = QZone_Config.Shares;
 
-    const nextPage = async function (pageIndex, indicator) {
+    const nextPage = async function(pageIndex, indicator) {
 
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
@@ -53,7 +53,7 @@ API.Shares.getAllList = async () => {
         // 更新状态-下载中的数量
         indicator.addDownload(QZone_Config.Shares.pageSize);
 
-        return await API.Shares.getList(nextPageIndex, indicator).then(async (html) => {
+        return await API.Shares.getList(nextPageIndex, indicator).then(async(html) => {
             // 页面转数据
             const shareInfo = API.Shares.convert(html);
             const dataList = shareInfo.list || [];
@@ -74,7 +74,7 @@ API.Shares.getAllList = async () => {
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Shares.total, QZone.Shares.Data, arguments.callee, nextPageIndex, indicator);
 
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取分享列表异常，当前页：", nextPageIndex, e);
             indicator.addFailed(new PageInfo(nextPageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
@@ -99,7 +99,7 @@ API.Shares.getAllList = async () => {
  * @param {object} item 分享
  * @param {StatusIndicator} indicator 状态更新器
  */
-API.Shares.getItemAllCommentList = async (item) => {
+API.Shares.getItemAllCommentList = async(item) => {
 
     // 清空原有的评论列表
     item.comments = [];
@@ -110,12 +110,12 @@ API.Shares.getItemAllCommentList = async (item) => {
     // 更新总数
     const total = item.commentTotal || 0;
 
-    const nextPage = async function (item, pageIndex) {
+    const nextPage = async function(item, pageIndex) {
 
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
-        return await API.Shares.getComments(item.id, pageIndex).then(async (data) => {
+        return await API.Shares.getComments(item.id, pageIndex).then(async(data) => {
 
             // JSON转换
             data = API.Utils.toJson(data, /^_Callback\(/).data || {};
@@ -137,7 +137,7 @@ API.Shares.getItemAllCommentList = async (item) => {
 
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, total, item.comments, arguments.callee, item, nextPageIndex);
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取分享评论列表异常，当前页：", pageIndex + 1, item, e);
             // 当前页失败后，跳过继续请求下一页
             // 递归获取下一页
@@ -154,7 +154,7 @@ API.Shares.getItemAllCommentList = async (item) => {
  * 获取所有分享的评论列表
  * @param {Array} items 分享
  */
-API.Shares.getItemsAllCommentList = async (items) => {
+API.Shares.getItemsAllCommentList = async(items) => {
     if (!QZone_Config.Shares.Comments.isFull) {
         // 不获取全部评论时，跳过
         return items;
@@ -195,7 +195,7 @@ API.Shares.getItemsAllCommentList = async (items) => {
  * 获取分享赞记录
  * @param {Array} items 分享列表
  */
-API.Shares.getAllLikeList = async (items) => {
+API.Shares.getAllLikeList = async(items) => {
 
     if (!API.Common.isGetLike(QZone_Config.Shares)) {
         // 不获取赞
@@ -254,7 +254,7 @@ API.Shares.getAllLikeList = async (items) => {
  * 获取单条分享的全部最近访问
  * @param {object} item 分享
  */
-API.Shares.getItemAllVisitorsList = async (item) => {
+API.Shares.getItemAllVisitorsList = async(item) => {
     // 清空原有的最近访问信息
     item.custom_visitor = {
         viewCount: 0,
@@ -265,11 +265,11 @@ API.Shares.getItemAllVisitorsList = async (item) => {
     // 最近访问配置
     const CONFIG = QZone_Config.Shares.Visitor;
 
-    const nextPage = async function (item, pageIndex) {
+    const nextPage = async function(item, pageIndex) {
         // 下一页索引
         const nextPageIndex = pageIndex + 1;
 
-        return await API.Shares.getVisitors(item.id, pageIndex).then(async (data) => {
+        return await API.Shares.getVisitors(item.id, pageIndex).then(async(data) => {
             data = API.Utils.toJson(data, /^_Callback\(/).data || {};
 
             // 合并
@@ -279,7 +279,7 @@ API.Shares.getItemAllVisitorsList = async (item) => {
 
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, item.custom_visitor.totalNum, item.custom_visitor.list, arguments.callee, item, nextPageIndex);
-        }).catch(async (e) => {
+        }).catch(async(e) => {
             console.error("获取分享最近访问列表异常，当前页：", pageIndex + 1, item, e);
 
             // 当前页失败后，跳过继续请求下一页
@@ -297,7 +297,7 @@ API.Shares.getItemAllVisitorsList = async (item) => {
  * 获取分享最近访问
  * @param {Array} items 分享列表
  */
-API.Shares.getAllVisitorList = async (items) => {
+API.Shares.getAllVisitorList = async(items) => {
     if (!API.Common.isGetVisitor(QZone_Config.Shares)) {
         // 不获取最近访问
         return items;
@@ -350,7 +350,7 @@ API.Shares.getAllVisitorList = async (items) => {
  * 添加多媒体下载任务
  * @param {Array} dataList
  */
-API.Shares.addMediaToTasks = async (dataList) => {
+API.Shares.addMediaToTasks = async(dataList) => {
     // 下载相对目录
     const module_dir = 'Shares/Images';
 
@@ -394,7 +394,7 @@ API.Shares.addMediaToTasks = async (dataList) => {
  * 所有分享转换成导出文件
  * @param {Array} items 分享列表
  */
-API.Shares.exportAllListToFiles = async (items) => {
+API.Shares.exportAllListToFiles = async(items) => {
     // 获取用户配置
     const exportType = QZone_Config.Shares.exportType;
     switch (exportType) {
@@ -417,21 +417,23 @@ API.Shares.exportAllListToFiles = async (items) => {
  * 导出分享到HTML文件
  * @param {Array} shares 数据
  */
-API.Shares.exportToHtml = async (shares) => {
+API.Shares.exportToHtml = async(shares) => {
     const indicator = new StatusIndicator('Shares_Export_Other');
     indicator.setIndex('HTML');
+
     try {
+        // 模块文件夹路径
+        const moduleFolder = API.Common.getModuleRoot('Shares');
+        // 创建模块文件夹
+        await API.Utils.createFolder(moduleFolder + '/json');
+
         // 基于JSON生成JS
-        console.info('生成分享JSON开始', shares);
-        await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-        const jsonFile = await API.Common.writeJsonToJs('shares', shares, QZone.Common.ROOT + '/json/shares.js');
-        console.info('生成分享JSON结束', jsonFile, shares);
+        await API.Common.writeJsonToJs('shares', shares, moduleFolder + '/json/shares.js');
 
         // 分享数据根据年份分组
         let yearMaps = API.Utils.groupedByTime(shares, "shareTime", 'year');
         // 基于模板生成年份分享HTML
         for (const [year, yearItems] of yearMaps) {
-            console.info('生成分享年份HTML文件开始', year, yearItems);
             // 基于模板生成所有分享HTML
             let _sharesMaps = new Map();
             const monthMaps = API.Utils.groupedByTime(yearItems, "shareTime", 'month');
@@ -440,22 +442,20 @@ API.Shares.exportToHtml = async (shares) => {
                 sharesMaps: _sharesMaps,
                 total: yearItems.length
             }
-            let yearFile = await API.Common.writeHtmlofTpl('shares', params, QZone.Shares.ROOT + "/" + year + ".html");
-            console.info('生成分享年份HTML文件结束', year, yearItems, yearFile);
+            await API.Common.writeHtmlofTpl('shares', params, moduleFolder + "/" + year + ".html");
         }
 
-        console.info('生成分享汇总HTML文件开始', shares);
         // 基于模板生成汇总分享HTML
         let params = {
             sharesMaps: API.Utils.groupedByTime(shares, "shareTime", 'all'),
             total: shares.length
         }
-        let allFile = await API.Common.writeHtmlofTpl('shares', params, QZone.Shares.ROOT + "/index.html");
-        console.info('生成分享汇总HTML文件结束', allFile, shares);
+        await API.Common.writeHtmlofTpl('shares', params, moduleFolder + "/index.html");
 
     } catch (error) {
         console.error('导出分享到HTML异常', error, shares);
     }
+
     // 完成
     indicator.complete();
     return shares;
@@ -538,7 +538,7 @@ API.Shares.getMarkdown = (share) => {
  * 导出分享到Markdown文件
  * @param {Array} items 数据
  */
-API.Shares.exportToMarkdown = async (items) => {
+API.Shares.exportToMarkdown = async(items) => {
     // 进度更新器
     const indicator = new StatusIndicator('Shares_Export_Other');
     indicator.setIndex('Markdown');
@@ -565,7 +565,7 @@ API.Shares.exportToMarkdown = async (items) => {
             allYearContents.push(yearContent);
 
             // 生成年份文件
-            const yearFilePath = QZone.Shares.ROOT + "/" + year + ".md";
+            const yearFilePath = API.Common.getModuleRoot('Shares') + "/" + year + ".md";
             await API.Utils.writeText(yearContent, yearFilePath).then(fileEntry => {
                 console.info('备份分享列表到Markdown完成，当前年份=', year, fileEntry);
             }).catch(error => {
@@ -574,7 +574,7 @@ API.Shares.exportToMarkdown = async (items) => {
         }
 
         // 生成汇总文件
-        await API.Utils.writeText(allYearContents.join('\r\n'), QZone.Shares.ROOT + '/Shares.md').then((fileEntry) => {
+        await API.Utils.writeText(allYearContents.join('\r\n'), API.Common.getModuleRoot('Shares') + '/Shares.md').then((fileEntry) => {
             console.info('生成汇总分享Markdown文件完成', items, fileEntry);
         }).catch((e) => {
             console.error("生成汇总分享Markdown文件异常", items, e)
@@ -592,7 +592,7 @@ API.Shares.exportToMarkdown = async (items) => {
  * 导出分享到JSON文件
  * @param {Array} items 数据
  */
-API.Shares.exportToJson = async (items) => {
+API.Shares.exportToJson = async(items) => {
     // 进度功能性期
     const indicator = new StatusIndicator('Shares_Export_Other');
     indicator.setIndex('JSON');
@@ -602,7 +602,7 @@ API.Shares.exportToJson = async (items) => {
     const yearDataMap = API.Utils.groupedByTime(items, "shareTime", "year");
     for (const [year, yearItems] of yearDataMap) {
         console.info('正在生成年份分享JSON文件', year);
-        const yearFilePath = QZone.Shares.ROOT + "/" + year + ".json";
+        const yearFilePath = API.Common.getModuleRoot('Shares') + "/" + year + ".json";
         await API.Utils.writeText(JSON.stringify(yearItems), yearFilePath).then((fileEntry) => {
             console.info('生成年份分享JSON文件完成', year, fileEntry);
         }).catch((e) => {
@@ -612,7 +612,7 @@ API.Shares.exportToJson = async (items) => {
 
     // 生成汇总JSON
     const json = JSON.stringify(items);
-    await API.Utils.writeText(json, QZone.Shares.ROOT + '/shares.json').then((fileEntry) => {
+    await API.Utils.writeText(json, API.Common.getModuleRoot('Shares') + '/shares.json').then((fileEntry) => {
         console.info('生成汇总分享JSON文件完成', items, fileEntry);
     }).catch((e) => {
         console.error("生成汇总分享JSON文件异常", items, e)

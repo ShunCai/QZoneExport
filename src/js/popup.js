@@ -76,7 +76,7 @@
             switch (config.Common.downloadType) {
                 case 'File':
                     $download_help_reson.text('内部下载，限制较多已淘汰');
-                    $download_help_suggestion.text('点击更换下载工具');
+                    $download_help_suggestion.text('点击这里更换下载工具');
                     break;
                 case 'Browser':
                     $download_help_reson.text('调用浏览器自带工具下载文件');
@@ -96,7 +96,7 @@
                     break;
                 case 'QZone':
                     $download_help_reson.text('不下载文件，直接使用QQ空间在线文件地址');
-                    $download_help_suggestion.text('可能存在有效期，点击更换下载工具');
+                    $download_help_suggestion.text('可能存在有效期，点击这里更换下载工具');
                     break;
                 default:
                     break;

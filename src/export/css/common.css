@@ -142,7 +142,8 @@ body {
     position: relative;
 }
 
-.boards h1, .boards h2 {
+.boards h1,
+.boards h2 {
     border-bottom: 1px solid #eaecef;
     padding-bottom: .3em;
 }
@@ -161,11 +162,6 @@ body {
 
 .border {
     border-radius: 15px;
-}
-
-.messages {
-    top: 57px;
-    position: relative;
 }
 
 .favorites {
@@ -195,7 +191,7 @@ body {
 }
 
 .medias-item:nth-last-child(1):first-child {
-    flex: 0 0 30%;
+    flex: 0 0 40%;
 }
 
 .content a {
@@ -225,6 +221,7 @@ body {
     cursor: pointer;
     position: absolute;
 }
+
 
 /*markdown_box*/
 
@@ -327,6 +324,7 @@ body {
     }
 }
 
+
 /*scroll_style*/
 
 .AnchorContent {
@@ -368,6 +366,7 @@ body {
 .AnchorContent::-webkit-scrollbar-thumb:hover {
     background-color: #c0c2c4 !important
 }
+
 
 /*导航*/
 
@@ -509,7 +508,7 @@ body {
 
 .pic-num-wrap {
     position: absolute;
-    top: 175px;
+    top: 10.4vw;
     left: 0;
     bottom: 0px;
     width: 100%;
@@ -533,7 +532,7 @@ body {
 }
 
 .lightbox {
-    height: 225px;
+    height: 13vw;
     cursor: pointer;
     overflow-x: hidden;
     text-align: center;
@@ -554,6 +553,8 @@ body {
 .comment-img {
     height: 100px !important;
     width: 100px!important;
+    cursor: pointer;
+    text-decoration: none;
 }
 
 .cursor {
@@ -576,7 +577,8 @@ pre {
     margin-bottom: 30px;
 }
 
-.timeline2-centered:before, .timeline2-centered:after {
+.timeline2-centered:before,
+.timeline2-centered:after {
     content: " ";
     display: table;
 }
@@ -585,7 +587,8 @@ pre {
     clear: both;
 }
 
-.timeline2-centered:before, .timeline2-centered:after {
+.timeline2-centered:before,
+.timeline2-centered:after {
     content: " ";
     display: table;
 }
@@ -616,7 +619,8 @@ pre {
     clear: both;
 }
 
-.timeline2-centered .timeline2-entry:before, .timeline2-centered .timeline2-entry:after {
+.timeline2-centered .timeline2-entry:before,
+.timeline2-centered .timeline2-entry:after {
     content: " ";
     display: table;
 }
@@ -625,7 +629,8 @@ pre {
     clear: both;
 }
 
-.timeline2-centered .timeline2-entry:before, .timeline2-centered .timeline2-entry:after {
+.timeline2-centered .timeline2-entry:before,
+.timeline2-centered .timeline2-entry:after {
     content: " ";
     display: table;
 }
@@ -669,7 +674,8 @@ pre {
     margin-left: 35px;
 }
 
-.timeline2-centered .timeline2-entry .timeline2-entry-inner:before, .timeline2-centered .timeline2-entry .timeline2-entry-inner:after {
+.timeline2-centered .timeline2-entry .timeline2-entry-inner:before,
+.timeline2-centered .timeline2-entry .timeline2-entry-inner:after {
     content: " ";
     display: table;
 }
@@ -678,7 +684,8 @@ pre {
     clear: both;
 }
 
-.timeline2-centered .timeline2-entry .timeline2-entry-inner:before, .timeline2-centered .timeline2-entry .timeline2-entry-inner:after {
+.timeline2-centered .timeline2-entry .timeline2-entry-inner:before,
+.timeline2-centered .timeline2-entry .timeline2-entry-inner:after {
     content: " ";
     display: table;
 }
@@ -788,7 +795,8 @@ pre {
     margin-left: -9px;
 }
 
-.timeline2-centered .timeline2-entry .timeline2-entry-inner .timeline2-label h2, .timeline2-centered .timeline2-entry .timeline2-entry-inner .timeline2-label p {
+.timeline2-centered .timeline2-entry .timeline2-entry-inner .timeline2-label h2,
+.timeline2-centered .timeline2-entry .timeline2-entry-inner .timeline2-label p {
     margin: 0;
 }
 
@@ -860,13 +868,200 @@ pre {
     }
 }
 
+
+/* 相册相片列表赞、评论、浏览按钮样式 */
+
+.photos .thumbnail .viewlikes {
+    position: absolute;
+    top: 25px;
+    left: 10px;
+    font-size: 20px;
+}
+
+.photos .thumbnail .viewcomments {
+    position: absolute;
+    top: 25px;
+    left: 50px;
+    font-size: 20px;
+}
+
+
+/* 说说图片左右上下居中 */
+
+.message-lightbox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.message-lightbox-external {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.medias-item img {
+    object-fit: cover;
+}
+
+.two {
+    /* max-width: 600px; */
+    max-width: 30vw;
+    overflow: hidden;
+}
+
+.two .message-lightbox {
+    /* width: 279px;
+    height: 279px; */
+    width: 12vw;
+    height: 12vw;
+    overflow: hidden;
+}
+
+.two .message-lightbox-external {
+    /* width: 279px;
+    height: 279px; */
+    width: 12vw;
+    height: 12vw;
+    overflow: hidden;
+}
+
+.three {
+    max-width: 40vw;
+    overflow: hidden;
+}
+
+.three .message-lightbox {
+    width: 12vw;
+    height: 12vw;
+    overflow: hidden;
+}
+
+.three .message-lightbox-external {
+    width: 12vw;
+    height: 12vw9vw;
+    overflow: hidden;
+}
+
+.message-infos>.list-group-item {
+    padding: .25rem 1.25rem;
+}
+
+
+/* 有全文时，限制高度 */
+
+.messageText pre.hasMore {
+    height: 13rem !important;
+    overflow: hidden;
+}
+
+
+/* 查看全文时，不限制高度 */
+
+.messageText pre.more {
+    height: auto !important;
+}
+
+
+/* 查看全文图标样式 */
+
+.readMore {
+    display: block;
+    text-align: center;
+}
+
+
+/* 画廊相册自定义样式 */
+
+
+/* 相册右侧评论样式 */
+
+.lg-outer.lg-comment-active {
+    width: auto;
+    right: 20%;
+    left: 10px;
+}
+
+.lg-outer.lg-comment-active .lg-comment-box {
+    left: auto;
+    top: 0;
+    width: 20%;
+    bottom: 0;
+    position: fixed;
+    right: 0;
+    max-height: none;
+}
+
+.lg-outer.lg-comment-active .lg-comment-overlay {
+    visibility: hidden;
+}
+
+.lg-comment-toggle.lg-icon.has-comments {
+    color: #007bff!important;
+}
+
+.lg-comment-box {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.empty-comments {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.lg-comment-box .empty-comments .content {
+    top: 50%;
+    position: fixed;
+}
+
+.lg-comment-box .comments.border-top {
+    border-top: none !important;
+    border-bottom: 1px solid #dee2e6!important;
+}
+
+
+/* 画廊相册视频预览图不拉伸 */
+
+.lg-outer .lg-video-cont .lg-object {
+    width: auto!important;
+    height: 100%!important;
+}
+
+.lg-outer .lg-object.lg-video-poster {
+    width: auto!important;
+    height: 100%!important;
+}
+
+
+/* 懒加载样式 */
+
+.lazyload.loading {
+    width: 100% !important;
+}
+
+.messages {
+    top: 57px;
+    position: relative;
+}
+
+@media (min-width: 1200px) {
+    .messages {
+        max-width: 60vw;
+    }
+}
+
+
+/* 相册样式 */
+
 #albums_html .card-img {
     width: inherit;
-    height: 225px;
+    height: 13vw;
 }
 
 #albums_html .thumbnail {
-    width: 225px;
+    width: 13vw;
 }
 
 #albums_html .thumbnail a {
@@ -878,6 +1073,7 @@ pre {
     border-top-left-radius: calc(1rem - 1px);
     border-top-right-radius: calc(1rem - 1px);
 }
+
 
 /* 相册赞、评论、浏览按钮样式 */
 
@@ -902,77 +1098,89 @@ pre {
     font-size: 17px;
 }
 
-/* 相册相片列表赞、评论、浏览按钮样式 */
-
-.photos .thumbnail .viewlikes {
-    position: absolute;
-    top: 25px;
-    left: 10px;
-    font-size: 20px;
+@media screen and (max-width: 1990px) {
+    .albums .pic-num-wrap {
+        top: 10.4vw;
+    }
 }
 
-.photos .thumbnail .viewcomments {
-    position: absolute;
-    top: 25px;
-    left: 50px;
-    font-size: 20px;
+@media screen and (max-width: 1680px) {
+    .albums .pic-num-wrap {
+        top: 10vw;
+    }
 }
 
-/* 说说图片左右上下居中 */
-
-.message-lightbox {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+@media screen and (max-width: 1600px) {
+    .albums .pic-num-wrap {
+        top: 9.9vw;
+    }
 }
 
-.message-lightbox-external {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+@media screen and (max-width: 1440px) {
+    #albums_html {
+        max-width: 65vw;
+    }
+    .albums .pic-num-wrap {
+        top: 9.5vw;
+    }
 }
 
-.medias-item img {
-    object-fit: cover;
+@media screen and (max-width: 1400px) {
+    .albums .pic-num-wrap {
+        top: 9.5vw;
+    }
 }
 
-.two {
-    max-width: 600px;
-    overflow: hidden;
+@media screen and (max-width: 1366px) {
+    .albums .pic-num-wrap {
+        top: 9.4vw;
+    }
 }
 
-.two .message-lightbox {
-    width: 279px;
-    height: 279px;
-    overflow: hidden;
+@media screen and (max-width: 1280px) {
+    #albums_html {
+        max-width: 65vw;
+    }
+    .albums .pic-num-wrap {
+        top: 9.1vw;
+    }
 }
 
-.two .message-lightbox-external {
-    width: 279px;
-    height: 279px;
-    overflow: hidden;
+@media screen and (max-width: 1152px) {
+    .albums .pic-num-wrap {
+        top: 8.8vw;
+    }
 }
 
-.three {
-    max-width: 600px;
-    overflow: hidden;
+@media screen and (max-width: 1024px) {
+    .albums .pic-num-wrap {
+        top: 8vw;
+    }
 }
 
-.three .message-lightbox {
-    width: 185px;
-    height: 185px;
-    overflow: hidden;
+@media screen and (max-width: 800px) {
+    #albums_html {
+        max-width: 55vw;
+    }
+    .albums .pic-num-wrap {
+        top: 6.7vw;
+    }
 }
 
-.three .message-lightbox-external {
-    width: 185px;
-    height: 185px;
-    overflow: hidden;
+
+/* 留言板样式 */
+
+@media (min-width: 1200px) {
+    #boards_html {
+        max-width: 60vw;
+    }
 }
 
-.lg-outer .lg-video .lg-object {
-    left: 50%;
-    width: auto!important;
-    height: 100%!important;
-    transform: translate(-50%, 0) !important;
+
+/* 收藏夹样式 */
+
+@media (min-width: 1200px) {
+    #favorites_html {
+        max-width: 60vw;
+    }
 }

@@ -331,25 +331,36 @@ API.Blogs.exportToHtml = async(items) => {
     const indicator = new StatusIndicator('Blogs_Export_Other');
     indicator.setIndex('HTML');
 
-    // 基于JSON生成JS
-    await API.Utils.createFolder(QZone.Common.ROOT + '/json');
-    await API.Common.writeJsonToJs('blogs', items, QZone.Common.ROOT + '/json/blogs.js');
+    try {
 
-    // 基于模板生成HTML
-    await API.Common.writeHtmlofTpl('blogs', undefined, QZone.Blogs.ROOT + "/index.html");
+        // 模块文件夹路径
+        const moduleFolder = API.Common.getModuleRoot('Blogs');
+        // 创建模块文件夹
+        await API.Utils.createFolder(moduleFolder + '/json');
 
-    // 生成日志详情HTML
-    await API.Common.writeHtmlofTpl('bloginfo', undefined, QZone.Blogs.ROOT + "/info.html");
+        // 基于JSON生成JS
+        await API.Common.writeJsonToJs('blogs', items, moduleFolder + '/json/blogs.js');
 
-    // 每篇日志生成单独的HTML
-    for (let i = 0; i < items.length; i++) {
-        const blog = items[i];
-        let orderNum = API.Utils.prefixNumber(i + 1, items.length.toString().length);
-        await API.Common.writeHtmlofTpl('bloginfo_static', { blog: blog }, QZone.Blogs.ROOT + "/{0}_{1}.html".format(orderNum, API.Utils.filenameValidate(blog.title)));
+        // 基于模板生成HTML
+        await API.Common.writeHtmlofTpl('blogs', undefined, moduleFolder + "/index.html");
+
+        // 生成日志详情HTML
+        await API.Common.writeHtmlofTpl('bloginfo', undefined, moduleFolder + "/info.html");
+
+        // 每篇日志生成单独的HTML
+        for (let i = 0; i < items.length; i++) {
+            const blog = items[i];
+            const orderNum = API.Utils.prefixNumber(i + 1, items.length.toString().length);
+            await API.Common.writeHtmlofTpl('bloginfo_static', { blog: blog }, moduleFolder + "/{0}_{1}.html".format(orderNum, API.Utils.filenameValidate(blog.title)));
+        }
+
+    } catch (error) {
+        console.error('导出私密日记到HTML异常', error, boardInfo);
     }
-    indicator.addSuccess(items);
-    // 更新完成信息
+
+    // 更新进度信息
     indicator.complete();
+
     return items;
 }
 
@@ -408,7 +419,7 @@ API.Blogs.exportToMarkdown = async(items) => {
             filename = API.Utils.filenameValidate(orderNum + "_" + date + "_" + label + "【" + title + "】");
         }
         // 文件夹路径
-        const categoryFolder = QZone.Blogs.ROOT + "/" + item.category;
+        const categoryFolder = API.Common.getModuleRoot('Blogs') + "/" + item.category;
         // 创建文件夹
         await API.Utils.createFolder(categoryFolder);
         // 日志文件路径
@@ -487,35 +498,49 @@ API.Blogs.getMarkdown = async(item) => {
  * @param {Array} images 图片元素列表
  */
 API.Blogs.handerImages = async(item, images) => {
-    let exportType = QZone_Config.Blogs.exportType;
     if (!images) {
         // 无图片不处理
         return item;
     }
+    // 导出类型
+    let exportType = QZone_Config.Blogs.exportType;
     for (let i = 0; i < images.length; i++) {
         const $img = $(images[i]);
         // 处理相对协议
         let url = $img.attr('orgsrc') || $img.attr('src');
         url = API.Utils.toHttp(url);
-        $img.attr('src', url);
 
         // 添加下载任务
-        if (API.Common.isQzoneUrl()) {
-            // QQ空间外链不处理
-            continue;
+        if (!API.Common.isQzoneUrl()) {
+            // 非QQ空间外链
+            const uid = API.Utils.newSimpleUid(8, 16);
+            const suffix = await API.Utils.autoFileSuffix(url);
+            const custom_filename = uid + suffix;
+
+            // 添加下载任务
+            API.Utils.newDownloadTask('Blogs', url, 'Blogs/Images', custom_filename, item);
+
+            // 新的图片离线地址
+            url = 'MarkDown' === exportType ? '../Images/' + custom_filename : 'Images/' + custom_filename;
         }
-        let uid = API.Utils.newSimpleUid(8, 16);
-        const custom_filename = uid + API.Utils.getFileSuffixByUrl(url);
-        // 添加下载任务
-        API.Utils.newDownloadTask('Blogs', url, 'Blogs/Images', custom_filename, item);
 
-        switch (exportType) {
-            case 'MarkDown':
-                $img.attr('src', '../images/' + custom_filename);
-                break;
-            default:
-                $img.attr('src', 'images/' + custom_filename);
-                break;
+        // 修改日志中的图片链接
+        $img.attr('src', url);
+        // 更改图片索引
+        $img.attr('data-idx', i);
+
+        // 图片上层的超链接
+        const $imageLink = $img.parent('a');
+
+        // 修改图片点击事件
+        if ($imageLink && $imageLink.length > 0) {
+            // 更改图片地址
+            $imageLink.attr('href', url);
+            // 画廊查看大图
+            $imageLink.addClass('lightgallery');
+        } else {
+            // 没有超链接的，需要添加超链接，用于生成画廊
+            $img.wrap('<a class="lightgallery" href="' + url + '"></a>');
         }
     }
     return item;
@@ -583,7 +608,7 @@ API.Blogs.exportToJson = async(items) => {
     let indicator = new StatusIndicator('Blogs_Export_Other');
     indicator.setIndex('JSON');
     let json = JSON.stringify(items);
-    await API.Utils.writeText(json, QZone.Blogs.ROOT + '/blogs.json');
+    await API.Utils.writeText(json, API.Common.getModuleRoot('Blogs') + '/blogs.json');
     indicator.complete();
     return items;
 }
