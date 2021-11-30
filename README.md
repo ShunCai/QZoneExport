@@ -175,7 +175,6 @@
 ![赞赏码-微信](https://s1.ax1x.com/2020/05/16/YcePUI.png)
 ![付款码-QQ](https://s1.ax1x.com/2020/05/16/Ycei5t.png)
 ![付款码-支付宝](https://s1.ax1x.com/2020/05/16/YceCVA.png)
-![支付宝-红包](https://z3.ax1x.com/2021/11/28/ouAlJf.png)
 
 ## 交流群
 QQ群：959828088
