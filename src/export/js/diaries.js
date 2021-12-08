@@ -1,4 +1,4 @@
-$(function () {
+$(function() {
     // 初始化日志表格
     API.Utils.initTable("diaries-table", [{
         checkbox: true,
@@ -12,7 +12,7 @@ $(function () {
         widthUnit: "%",
         sortable: true,
         formatter: (value, row) => {
-            return '<a href="info.html?blogId={0}" >{1}</a> '.format(row.blogid, value);
+            return '<a href="info.html?blogId={0}" >{1}</a> '.format(row.blogid || row.blogId, value);
         }
     }, {
         field: 'category',

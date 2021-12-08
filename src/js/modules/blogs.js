@@ -59,24 +59,23 @@ API.Blogs.getAllContents = async(items) => {
         await API.Blogs.getInfo(item.blogId).then(async(data) => {
                 // 添加成功提示
                 indicator.addSuccess(data);
-                let blogPage = jQuery(data);
-                let blogData = null;
-                // 获得网页中的日志JSON数据
-                blogPage.find('script').each(function() {
-                    let t = $(this).text();
-                    if (t.indexOf('g_oBlogData') !== -1) {
-                        let dataM = /var g_oBlogData\s+=\s+({[\s\S]+});\s/;
-                        blogData = dataM.exec(t);
-                        if (blogData != null) {
-                            return false;
-                        }
-                    }
-                })
-                if (blogData != null) {
-                    item = JSON.parse(blogData[1]).data;
-                }
+                // 加载日志页面
+                // const blogPage = await API.Utils.loadPage(jQuery(data)).catch((e) => console.error('读取日志内容失败', item, e));
+                const blogPage = jQuery(data);
+
+                // 基于DOM获取详细信息
+                item = API.Blogs.readDetailInfo(blogPage) || item;
+
                 // 获得网页中的日志正文
                 const $detailBlog = blogPage.find("#blogDetailDiv:first");
+
+                // 是否为模板日志
+                if (API.Blogs.isTemplateBlog(item)) {
+                    // 模板日志，日志内容在变量中
+                    const reg_res = API.Utils.readScriptVar(blogPage, /var g_oBlogContent\s+=\s+'([\s\S]+\/div>)';/);
+                    eval((reg_res && reg_res[0] || '').replace('var g_oBlogContent', 'window.g_oBlogContent'))
+                    $detailBlog.html(window.g_oBlogContent);
+                }
 
                 // 添加原始HTML
                 item.html = API.Utils.utf8ToBase64($detailBlog.html());

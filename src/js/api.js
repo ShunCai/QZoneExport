@@ -1441,6 +1441,44 @@ API.Utils = {
         items_a = items_a || [];
         items_b = items_b || [];
         return items_a.concat(items_b);
+    },
+
+    /**
+     * 加载页面
+     * @param {Object} pageDom 页面DOM
+     * @returns 
+     */
+    loadPage(pageDom) {
+        return new Promise(function(resolve, reject) {
+            pageDom.ready(function() {
+                resolve(pageDom);
+            });
+        });
+    },
+
+    /**
+     * 读取页面DOM变量的值
+     * @param {Object} jqPageDom 页面DOM元素
+     * @param {RegExp} regexp 正则
+     * @returns 
+     */
+    readScriptVar(jqPageDom, regexp) {
+        let targetVarValue = null;
+        if (!jqPageDom) {
+            return null;
+        }
+        // 获得网页中的指定脚本中变量的值
+        const scripts = [];
+        scripts.push(...jqPageDom.filter('script'));
+        scripts.push(...jqPageDom.find('script'));
+        for (const domScript of scripts) {
+            const text = $(domScript).text();
+            targetVarValue = regexp.exec(text);
+            if (targetVarValue != null) {
+                break;
+            }
+        }
+        return targetVarValue;
     }
 };
 
@@ -1902,6 +1940,25 @@ API.Blogs = {
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
         return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
+    },
+
+    /**
+     * 读取日志DOM读取详细信息
+     * @param {Object} jqPageDom 
+     */
+    readDetailInfo(jqPageDom) {
+        // 获得网页中的日志JSON数据
+        const blogData = API.Utils.readScriptVar(jqPageDom, /var g_oBlogData\s+=\s+({[\s\S]+});\s/);
+        return blogData && JSON.parse(blogData[1]).data || null;
+    },
+
+    /**
+     * 是否为模板日志
+     * @param {Object} item 日志信息
+     * @returns 
+     */
+    isTemplateBlog(item) {
+        return item.exblogtype == 2 || item.blogType;
     }
 
 };
@@ -3377,13 +3434,13 @@ API.Shares = {
                 continue;
             }
             $li.find('script').each(function() {
-                    const text = $(this).text();
-                    if (text.indexOf('shareInfos.push') > -1) {
-                        eval('window.infoJson=' + /[\s\S]+shareInfos.push\((\{[\s\S]+\})\);[\s\S]+/.exec(text)[1]);
-                        return false;
-                    }
-                })
-                // 分享显示区
+                const text = $(this).text();
+                if (text.indexOf('shareInfos.push') > -1) {
+                    eval('window.infoJson=' + /[\s\S]+shareInfos.push\((\{[\s\S]+\})\);[\s\S]+/.exec(text)[1]);
+                    return false;
+                }
+            })
+            // 分享显示区
             const $contentDiv = $($infoDiv.find('div.mod_conts._share_desc_cont'));
             // 分享描述
             const $temp_desc = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > p.c_tx3.comming'));
