@@ -131,11 +131,34 @@ body {
     margin-top: 30px;
 }
 
+
+/* 通用样式 */
+
+
+/* 头像 */
+
+.avatar {
+    display: block;
+    width: 50px;
+    height: 50px;
+    float: left;
+    margin: .2em 0 0;
+}
+
+
+/* 日志样式 */
+
 #blog_content {
     border: solid #e9ecef 1px;
-    padding: 20px;
     border-radius: 10px;
 }
+
+#blog_content img {
+    max-width: 100%;
+}
+
+
+/* 留言板样式 */
 
 .boards {
     top: 40px;
@@ -150,14 +173,6 @@ body {
 
 .boards .card {
     border-radius: 15px;
-}
-
-.avatar {
-    display: block;
-    width: 50px;
-    height: 50px;
-    float: left;
-    margin: .2em 0 0;
 }
 
 .border {

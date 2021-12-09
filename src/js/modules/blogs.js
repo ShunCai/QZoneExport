@@ -60,7 +60,6 @@ API.Blogs.getAllContents = async(items) => {
                 // 添加成功提示
                 indicator.addSuccess(data);
                 // 加载日志页面
-                // const blogPage = await API.Utils.loadPage(jQuery(data)).catch((e) => console.error('读取日志内容失败', item, e));
                 const blogPage = jQuery(data);
 
                 // 基于DOM获取详细信息

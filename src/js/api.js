@@ -1444,19 +1444,6 @@ API.Utils = {
     },
 
     /**
-     * 加载页面
-     * @param {Object} pageDom 页面DOM
-     * @returns 
-     */
-    loadPage(pageDom) {
-        return new Promise(function(resolve, reject) {
-            pageDom.ready(function() {
-                resolve(pageDom);
-            });
-        });
-    },
-
-    /**
      * 读取页面DOM变量的值
      * @param {Object} jqPageDom 页面DOM元素
      * @param {RegExp} regexp 正则
