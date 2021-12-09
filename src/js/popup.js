@@ -1,8 +1,8 @@
-(function () {
+(function() {
 
     // 获取当前选项卡ID
     function getCurrentTabId(callback) {
-        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             if (callback) callback(tabs.length ? tabs[0].id : null);
         });
     }
@@ -14,7 +14,7 @@
                 name: 'popup'
             });
             port.postMessage(message);
-            port.onMessage.addListener(function (response) {
+            port.onMessage.addListener(function(response) {
                 if (callback) callback(response);
             });
         });
@@ -181,7 +181,7 @@
     });
 
     // 相册选择事件
-    $("#Photos").change(function () {
+    $("#Photos").change(function() {
         let isCheck = $(this).prop('checked');
         let $export_albums_div = $('#export_albums_div');
         if (isCheck) {
@@ -194,10 +194,9 @@
 
     // 绑定备份按钮事件
     $('#backup').click(() => {
-        let exportType = {};
-        let $exportType = $("input[name='exportType']");
-        $exportType.each(function () {
-            exportType[$(this).val()] = $(this).prop("checked");
+        const ExportTypes = [];
+        $("input[name='exportType']:checked").each(function() {
+            ExportTypes.push(this.value);
         });
 
         // 获取选中的相册
@@ -215,16 +214,33 @@
         let message = {
             from: 'popup',
             subject: 'startBackup',
-            exportType: exportType,
+            exportType: ExportTypes,
             albums: _albums
         };
         sendMessage(message, (res) => {
             console.info("开始备份！", res);
         });
+
+        // 保存当前备份类型
+        localStorage.setItem('PreExportTypes', JSON.stringify(ExportTypes));
     });
 
     // 打开选项页
     $("#openOptions").click(() => {
         chrome.runtime.openOptionsPage();
     });
+
+    // 上次备份类型
+    let PreExportTypes = localStorage.getItem('PreExportTypes') || '[]';
+    PreExportTypes = JSON.parse(PreExportTypes);
+
+    // 如果存在上次选中，则默认选中上次选择的类型
+    if (PreExportTypes.length > 0) {
+        // 取消全部选中
+        $("input[name='exportType']").prop('checked', false).change();
+        for (const preType of PreExportTypes) {
+            // 选中上次选中
+            $("#" + preType).prop("checked", true).change();
+        }
+    }
 })();

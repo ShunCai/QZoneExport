@@ -21,7 +21,7 @@ $(function() {
     $("#comments_html").html(comments_html);
 
     // 日志中的图片
-    $('#blog_content .QZBLOG_IMG_LOADING').on('click', function() {
+    $('#blog_content img').on('click', function() {
         // 画廊相册DOM
         const $galleryDom = $('#blog_content').get(0);
         // 点击的图片的索引位置

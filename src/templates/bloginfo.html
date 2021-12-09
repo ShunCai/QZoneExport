@@ -60,59 +60,61 @@
 			<div id="comments_html">
 				<script id="comments_tpl" type="text/html">
 					<h5 class="mt-3">评论
-						<span class="badge badge-primary badge-pill"><%:=blog.comments.length%></span>
+						<span class="badge badge-primary badge-pill"><%:=blog.comments && blog.comments.length || 0%></span>
 						<span class="text-primary p-1 float-right fa fa-thumbs-up mr-2 cursor viewlikes" title="查看点赞" data-field="blogid" data-target="<%:=blog.blogid%>"><%:=blog.likeTotal || 0 %></span>
 						<span class="text-primary p-1 float-right fa fa-eye mr-2 cursor viewVisitors" title="最近访问" data-field="blogid" data-target="<%:=blog.blogid%>"><%:=blog.custom_visitor && blog.custom_visitor.viewCount || 0 %></span>
 					</h5>
 					<%/* 评论 */%>
 					<%/* 遍历评论 */%>
-					<%for (let index = 0; index < blog.comments.length; index++) {%>
-						<%const comment = blog.comments[index];%>
-						<div class="p-1 border-top comments mt-3">
-							<div class="container comment  m-1 p-0">
-								<a class="me-a avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(comment.poster.id)%>">
-									<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(comment.poster.id)%>">
-								</a>
-								<div class="ml-4">
-									<%/* 评论 */%>
-									<div class="container ml-4">
-										<a class="author">
-											<a target="_blank" href="<%:=API.Common.getUserUrl(comment.poster.id)%>">
-												<span><%:=API.Common.formatContent(comment.poster.name)%></span>
+					<%if(blog.comments){%>
+						<%for (let index = 0; index < blog.comments.length; index++) {%>
+							<%const comment = blog.comments[index];%>
+							<div class="p-1 border-top comments mt-3">
+								<div class="container comment  m-1 p-0">
+									<a class="me-a avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(comment.poster.id)%>">
+										<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(comment.poster.id)%>">
+									</a>
+									<div class="ml-4">
+										<%/* 评论 */%>
+										<div class="container ml-4">
+											<a class="author">
+												<a target="_blank" href="<%:=API.Common.getUserUrl(comment.poster.id)%>">
+													<span><%:=API.Common.formatContent(comment.poster.name)%></span>
+												</a>
+												<span class="text-muted small"><%:=API.Utils.formatDate(comment.postTime)%></span>
+												<span class="border-warning border rounded text-warning small p-1">#<%:=index + 1 %></span>
 											</a>
-											<span class="text-muted small"><%:=API.Utils.formatDate(comment.postTime)%></span>
-											<span class="border-warning border rounded text-warning small p-1">#<%:=index + 1 %></span>
-										</a>
-									</div>
-									<div class="messageText ml-4 container m-3">
-										<%:=API.Common.formatContent(comment.content)%>
-									</div>
-									<%/* 评论回复 */%>
-									<%if(comment.replyNum > 0 && comment.replies){%>
-										<%for(let reply of comment.replies){%>
-											<div class="comments m-1">
-												<div class="container border-top comment p-1">
-													<a class="me-a avatar p-0 m-0 " target="_blank" href="<%:=API.Common.getUserUrl(reply.poster.id)%>">
-														<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(reply.poster.id)%>">
-													</a>
-													<div class=" ml-4  ">
-														<div class="container ml-4">
-															<a class="author">
-																<a target="_blank" href="<%:=API.Common.getUserUrl(reply.poster.id)%>">
-																	<span class="text-info"><%:=API.Common.formatContent(reply.poster.name)%></span>
+										</div>
+										<div class="messageText ml-4 container m-3">
+											<%:=API.Common.formatContent(comment.content)%>
+										</div>
+										<%/* 评论回复 */%>
+										<%if(comment.replyNum > 0 && comment.replies){%>
+											<%for(let reply of comment.replies){%>
+												<div class="comments m-1">
+													<div class="container border-top comment p-1">
+														<a class="me-a avatar p-0 m-0 " target="_blank" href="<%:=API.Common.getUserUrl(reply.poster.id)%>">
+															<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(reply.poster.id)%>">
+														</a>
+														<div class=" ml-4  ">
+															<div class="container ml-4">
+																<a class="author">
+																	<a target="_blank" href="<%:=API.Common.getUserUrl(reply.poster.id)%>">
+																		<span class="text-info"><%:=API.Common.formatContent(reply.poster.name)%></span>
+																	</a>
+																	<span class="text-muted small"><%:=API.Utils.formatDate(reply.postTime)%></span>
 																</a>
-																<span class="text-muted small"><%:=API.Utils.formatDate(reply.postTime)%></span>
-															</a>
+															</div>
+															<div class="messageText ml-4 container m-1"><%:=API.Common.formatContent(reply.content)%></div>
 														</div>
-														<div class="messageText ml-4 container m-1"><%:=API.Common.formatContent(reply.content)%></div>
 													</div>
 												</div>
-											</div>
+											<%}%>
 										<%}%>
-									<%}%>
+									</div>
 								</div>
 							</div>
-						</div>
+						<%}%>
 					<%}%>
 				</script>
 			</div>
