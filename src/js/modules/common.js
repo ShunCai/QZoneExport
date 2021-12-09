@@ -12,7 +12,11 @@ API.Common.initUserInfo = async() => {
         // 获取所有的QQ好友
         let userInfo = await API.Common.getUserInfos();
         userInfo = API.Utils.toJson(userInfo, /^_Callback\(/);
-        userInfo = userInfo.data;
+        if (userInfo.code < 0) {
+            // 获取异常
+            console.warn('初始化用户信息异常：', userInfo);
+        }
+        userInfo = userInfo.data || {};
 
         // 用户信息
         userInfo = Object.assign(QZone.Common.Target, userInfo);
@@ -947,7 +951,7 @@ API.Common.callNextPage = async(pageIndex, moduleConfig, total, items, call, ...
  * @param {string} moduleType 导出模块类型值
  */
 API.Common.isExport = (moduleType) => {
-    return QZone.Common.ExportType[moduleType];
+    return QZone.Common.ExportTypes.indexOf(moduleType) > -1;
 }
 
 /**
@@ -994,7 +998,12 @@ API.Common.getModulesLikeList = async(item, moduleConfig) => {
     while (hasNext) {
         await API.Common.getLikeList(item.uniKey, nextUin).then(async(data) => {
             data = API.Utils.toJson(data, /^_Callback\(/);
+            if (data.code < 0) {
+                // 获取异常
+                console.warn('获取模块点赞记录异常：', data);
+            }
             data = data.data || {};
+
             data.like_uin_info = data.like_uin_info || [];
             if (_.isEmpty(data.like_uin_info)) {
                 hasNext = false;

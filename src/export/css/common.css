@@ -131,11 +131,100 @@ body {
     margin-top: 30px;
 }
 
+
+/* 通用样式 */
+
+
+/* 头像 */
+
+.avatar {
+    display: block;
+    width: 50px;
+    height: 50px;
+    float: left;
+    margin: .2em 0 0;
+}
+
+
+/* 日志列表 */
+
+#blogs-list .list-group-item {
+    border-radius: 15px;
+}
+
+#blogs-list img {
+    max-width: 10vw;
+    max-height: 225px;
+}
+
+#blogs-list .fa {
+    line-height: inherit;
+}
+
+#blogs-types {
+    max-height: 90%;
+    overflow: auto;
+    position: fixed;
+    top: 60px;
+    right: 0;
+    left: 0;
+    z-index: 1030;
+}
+
+@media screen and (max-width: 820px) {
+    #blogs-types {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    #blogs-types {
+        display: none;
+    }
+}
+
+#blogs-type-list {
+    left: 18%;
+}
+
+@media screen and (max-width: 820px) {
+    #blogs-type-list {
+        left: 0;
+        flex: 0 0 auto;
+        width: auto;
+        max-width: 100%;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    #blogs-type-list {
+        left: 0;
+        flex: 0 0 auto;
+        width: auto;
+        max-width: 100%;
+    }
+}
+
+
+/* 日志样式 */
+
 #blog_content {
     border: solid #e9ecef 1px;
-    padding: 20px;
     border-radius: 10px;
 }
+
+
+/* 日志图片等比缩放 */
+
+#blog_content img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+}
+
+
+/* 留言板样式 */
 
 .boards {
     top: 40px;
@@ -150,14 +239,6 @@ body {
 
 .boards .card {
     border-radius: 15px;
-}
-
-.avatar {
-    display: block;
-    width: 50px;
-    height: 50px;
-    float: left;
-    margin: .2em 0 0;
 }
 
 .border {
@@ -209,8 +290,6 @@ body {
     opacity: .8;
     cursor: pointer;
     position: absolute;
-    top: 85px;
-    left: 115px;
 }
 
 .message-video {
@@ -532,6 +611,9 @@ body {
 }
 
 .lightbox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     height: 13vw;
     cursor: pointer;
     overflow-x: hidden;
@@ -564,12 +646,6 @@ body {
 pre {
     font: inherit !important;
     white-space: pre-wrap;
-}
-
-#friends-table img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50px;
 }
 
 .timeline2-centered {
@@ -1182,5 +1258,77 @@ pre {
 @media (min-width: 1200px) {
     #favorites_html {
         max-width: 60vw;
+    }
+}
+
+
+/* 好友列表样式 */
+
+#friends-table img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50px;
+}
+
+#friends-list img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50px;
+}
+
+#friends-list .list-group-item {
+    border-radius: 15px;
+}
+
+#friends-list img {
+    max-width: 10vw;
+    max-height: 225px;
+}
+
+#friends-list .fa {
+    line-height: inherit;
+}
+
+#friends-types {
+    max-height: 90%;
+    overflow: auto;
+    position: fixed;
+    top: 60px;
+    right: 0;
+    left: 0;
+    z-index: 1030;
+}
+
+@media screen and (max-width: 820px) {
+    #friends-types {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    #friends-types {
+        display: none;
+    }
+}
+
+#friends-type-list {
+    left: 25%;
+}
+
+@media screen and (max-width: 820px) {
+    #friends-type-list {
+        left: 0;
+        flex: 0 0 auto;
+        width: auto;
+        max-width: 100%;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    #friends-type-list {
+        left: 0;
+        flex: 0 0 auto;
+        width: auto;
+        max-width: 100%;
     }
 }

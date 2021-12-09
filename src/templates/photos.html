@@ -61,35 +61,33 @@
 								<div class="card thumbnail mb-2 shadow-sm">
 									<%if(!photo.isLocal){%>
 										<div id="<%:=photo.uid%>" class='photo-detail' style="display:none">
-											<div class="container">
-												<div class="row">
-													<div class="col-sm text-white-50 text-left">
-														<p>
-															<i title="相片尺寸（非原图尺寸，仅供参考）"><%:=(photo.video_info && photo.video_info.cover_width || photo.width)+ " * " + (photo.video_info && photo.video_info.cover_height || photo.height)%></i>
-															<i title="相片大小（非原图尺寸，仅供参考）" class="ml-2"><%:=API.Utils.formatFileSize(photo.video_info && photo.video_info.size || photo.photocubage || 0)%></i>
-															<i title="相片类型" class="ml-2"><%:=photo.is_video ? 'MP4' : API.Photos.getPhotoType(photo)%></i>
-														</p>
-														<p>
-															<i title="拍摄/上传时间" class="fa fa-clock-o text-primary"><%:=photo.shootTime ? API.Utils.formatDate(photo.shootTime) : photo.uploadTime%></i>
-															<%if(photo.custom_lbs && photo.custom_lbs.idname){%>
-																<a title="拍摄/上传地点" class="ml-2 text-primary" href="<%:=API.Messages.getMapUrl(photo.custom_lbs)%>" target="_blank"><i class="fa fa-map-marker"></i><%:=photo.custom_lbs.idname || photo.custom_lbs.name%></a>
-															<%}%>
-														</p>
-													</div>
-													<div class="col-sm">
-														<%if(photo.name){%>
-															<h6><%:=API.Common.formatContent(photo.name, "HTML", false, false)%></h6>
+											<div class="d-flex justify-content-between">
+												<div class="col text-white-50 text-left">
+													<p>
+														<i title="相片尺寸（非原图尺寸，仅供参考）"><%:=(photo.video_info && photo.video_info.cover_width || photo.width)+ " * " + (photo.video_info && photo.video_info.cover_height || photo.height)%></i>
+														<i title="相片大小（非原图尺寸，仅供参考）" class="ml-2"><%:=API.Utils.formatFileSize(photo.video_info && photo.video_info.size || photo.photocubage || 0)%></i>
+														<i title="相片类型" class="ml-2"><%:=photo.is_video ? 'MP4' : API.Photos.getPhotoType(photo)%></i>
+													</p>
+													<p>
+														<i title="拍摄/上传时间" class="fa fa-clock-o text-primary"><%:=API.Utils.formatDate((photo.rawshoottime || photo.shootTime) || (photo.uploadtime || photo.uploadTime))%></i>
+														<%if(photo.custom_lbs && photo.custom_lbs.name){%>
+															<a title="拍摄/上传地点" class="ml-2 text-primary" href="<%:=API.Messages.getMapUrl(photo.custom_lbs)%>" target="_blank"><i class="fa fa-map-marker"></i><%:=photo.custom_lbs.idname || photo.custom_lbs.name%></a>
 														<%}%>
-														<%if(photo.desc){%>
-															<span class="text-white-50"><%:=API.Common.formatContent(photo.desc, "HTML", false, false)%></span>
-														<%}%>
-													</div>
-													<div class="col-sm"></div>
+													</p>
 												</div>
+												<div class="col text-center">
+													<%if(photo.name){%>
+														<h6><%:=API.Common.formatContent(photo.name, "HTML", false, false)%></h6>
+													<%}%>
+													<%if(photo.desc){%>
+														<span class="text-white-50"><%:=API.Common.formatContent(photo.desc, "HTML", false, false)%></span>
+													<%}%>
+												</div>
+												<div class="col"></div>
 											</div>
 										</div>
 									<%}%>
-									<%if(photo.is_video){%>
+									<%if(photo.is_video && photo.video_info){%>
 										<a class="lightbox" data-video='{"source": [{"src":"<%:=API.Common.getMediaPath(photo.video_info.video_url, photo.custom_filepath, "Photos_HTML")%>", "type":"video/mp4"}],"attributes": {"preload": false, "controls": true}}' 
 											data-poster="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath, 'Photos_HTML')%>" title="<%:=photo.desc || photo.name%>" data-sub-html="#<%:=photo.uid%>">
 											<span class="photo-video"></span>
@@ -100,7 +98,7 @@
 											<%}%>
 										</a>
 										<div class="card-body">
-											<span class="card-title"><%:=(photo.name || photo.uploadTime)%></span>
+											<span class="card-title"><%:=(photo.name || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%></span>
 										</div>
 										<span class="pic-num-wrap">
 											<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="uniKey" data-target="<%:=photo.uniKey%>"><%:=photo.likes ? photo.likes.length : 0%></span>
@@ -111,7 +109,7 @@
 											<img class="lazyload loading card-img" height="225px" src="../Common/Images/loading.gif" data-src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath || photo.custom_filepath, 'Photos_HTML')%>">
 										</a>
 										<div class="card-body">
-											<span class="card-title"><%:=(photo.name || photo.uploadTime)%></span>
+											<span class="card-title"><%:=(photo.name || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%></span>
 										</div>
 										<span class="pic-num-wrap">
 											<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="uniKey" data-target="<%:=photo.uniKey%>"><%:=photo.likes ? photo.likes.length : 0%></span>

@@ -51,9 +51,9 @@ API.Visitors.getAllList = async() => {
 
             // 页面转数据
             data = API.Utils.toJson(data, /^_Callback\(/) || {};
-            if (data.code === -99996) {
-                // 无权限查看访客
-                console.warn('无权限查看访客！');
+            if (data.code < 0) {
+                // 获取异常
+                console.warn('获取一页的视频列表异常：', data);
             }
             data = data.data || {};
             const items = data.items || [];

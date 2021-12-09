@@ -41,7 +41,11 @@ API.Friends.getAllList = async() => {
 
     await API.Friends.getFriends().then(async(data) => {
         data = API.Utils.toJson(data, /^_Callback\(/);
-        data = data.data;
+        if (data.code < 0) {
+            // 获取异常
+            console.warn('获取所有好友列表异常：', data);
+        }
+        data = data.data || {};
 
         QZone.Friends.Data = data.items || [];
 
@@ -50,8 +54,17 @@ API.Friends.getAllList = async() => {
 
         indicator.addSuccess(QZone.Friends.Data);
 
+        // 初始化分组名称
+        API.Friends.initGroupName(data, QZone.Friends.Data);
+
         // 获取好友成立时间
         QZone.Friends.Data = await API.Friends.getFriendsTime(data, QZone.Friends.Data);
+
+        // 获取好友空间权限
+        await API.Friends.getZoneAccessList(QZone.Friends.Data);
+
+        // 获取特别关心好友
+        await API.Friends.getCareFriendList(QZone.Friends.Data);
 
         return QZone.Friends.Data;
     }).catch((e) => {
@@ -71,11 +84,31 @@ API.Friends.getAllList = async() => {
 }
 
 /**
+ * 基于分组信息初始化分组名称
+ * @param {Object} data 好友信息，含分组信息
+ * @param {Array} friends 好友列表，不含分组名称
+ */
+API.Friends.initGroupName = (data, friends) => {
+    // 将QQ分组进行分组
+    const groups = data.gpnames;
+    const groupMap = new Map();
+    for (const group of groups) {
+        groupMap.set(group.gpid, group.gpname);
+    }
+
+    // 遍历好友
+    for (const friend of friends) {
+        // 设置默认值
+        friend.groupName = groupMap.get(friend.groupid) || "默认分组";
+    }
+}
+
+/**
  * 获取好友添加时间
  */
 API.Friends.getFriendsTime = async(data, friends) => {
-    if (!QZone_Config.Friends.hasAddTime || QZone_Config.Friends.exportType === 'MarkDown') {
-        // 不获取好友添加时间或导出类型为Markdown，则跳过不处理
+    if (!QZone_Config.Friends.Interactive) {
+        // 不获取好友添加时间，则跳过不处理
         return friends;
     }
 
@@ -92,32 +125,37 @@ API.Friends.getFriendsTime = async(data, friends) => {
     // 遍历
     for (const friend of friends) {
         // 设置默认值
-        friend.groupName = groupMap.get(friend.groupid) || "默认分组";
-        const isMe = friend.uin === QZone.Common.Owner.uin;
-        if (isMe || !API.Friends.isNewItem(friend)) {
+        friend.isMe = friend.uin === QZone.Common.Owner.uin;
+        if (friend.isMe || !API.Friends.isNewItem(friend)) {
             // 好友号为自己号或非新好友，跳过
-            if (isMe) {
-                friend.addFriendTime = "自己啦";
-                friend.intimacyScore = "这要看您多爱护自己啦";
+            if (friend.isMe) {
+                friend.addFriendTime = 0;
+                friend.intimacyScore = 0;
                 friend.common = {};
             }
             indicator.addSkip(friend);
             continue;
         }
-        await API.Friends.getFriendshipTime(friend.uin).then((time_data) => {
-            time_data = API.Utils.toJson(time_data, /^_Callback\(/);
-            time_data = time_data.data;
+        await API.Friends.getFriendshipTime(friend.uin).then((data) => {
+            // JSON转换
+            data = API.Utils.toJson(data, /^_Callback\(/);
+            if (data.code < 0) {
+                console.warn('获取互动信息异常：', friend, data);
+                indicator.addFailed(friend);
+            }
+
+            // 互动信息
+            const infoData = data = data.data || {};
 
             // 添加时间
-            let addTime = time_data.addFriendTime || 0;
-            addTime = addTime == 0 ? "老朋友啦" : API.Utils.formatDate(addTime);
-            friend.addFriendTime = addTime;
-
+            friend.addFriendTime = infoData['addFriendTime'] || 0;
+            // 好友类型
+            friend.isFriend = infoData['isFriend'] || -1;
             // 亲密度
-            friend.intimacyScore = time_data.intimacyScore || 0;
+            friend.intimacyScore = infoData['intimacyScore'] || 0;
 
             // 共同信息(共同好友，共同群组)
-            friend.common = time_data.common || {};
+            friend.common = infoData['common'] || {};
 
             // 成功
             indicator.addSuccess(friend);
@@ -126,6 +164,12 @@ API.Friends.getFriendsTime = async(data, friends) => {
             indicator.addFailed(friend);
             console.error("获取好友添加时间异常", friend, e);
         })
+
+        // 等待一下再请求
+        const min = QZone_Config.Friends.randomSeconds.min;
+        const max = QZone_Config.Friends.randomSeconds.max;
+        const seconds = API.Utils.randomSeconds(min, max);
+        await API.Utils.sleep(seconds * 1000);
     }
     // 完成
     indicator.complete();
@@ -180,7 +224,7 @@ API.Friends.exportToExcel = async(friends) => {
 
     // Excel数据
     let ws_data = [
-        ["QQ号", "备注名称", "QQ昵称", "所在分组", "相识时间", "亲密度", "共同好友", "共同群组", "用户主页", "即时消息"]
+        ["QQ", "QQ昵称", "QQ备注", "QQ分组", "特别关心", "相识时间", "空间权限", "好友关系", "亲密度", "共同好友", "共同群组", "QQ空间", "QQ通讯"]
     ];
 
     for (const friend of friends) {
@@ -189,23 +233,19 @@ API.Friends.exportToExcel = async(friends) => {
         // QQ聊天超链接
         const user_message_url = { t: 's', v: "QQ聊天", l: { Target: API.Common.getMessageUrl(friend.uin), Tooltip: "QQ聊天" } };
 
-        // 共同信息
-        friend.common = friend.common || {};
-        friend.common.friend = friend.common.friend || [];
-        friend.common.group = friend.common.group || [];
-        const groups = [];
-        for (const group of friend.common.group) {
-            groups.push(group.name);
-        }
+        // 行信息
         const rowData = [
             friend.uin,
             friend.remark,
             friend.name,
             friend.groupName,
-            friend.addFriendTime,
-            friend.intimacyScore,
-            friend.common.friend.length,
-            groups.join('\n'),
+            API.Friends.getShowCare(friend),
+            API.Friends.getShowFriendTime(friend, 0),
+            API.Friends.getShowAccessType(friend),
+            API.Friends.getShowFriendType(friend),
+            API.Friends.getShowIntimacyScore(friend),
+            API.Friends.getShowCommonFriend(friend),
+            API.Friends.getShowCommonGroup(friend, '\n'),
             user_qzone_url,
             user_message_url
         ];
@@ -254,7 +294,7 @@ API.Friends.exportToHtml = async(friends) => {
         await API.Common.writeHtmlofTpl('friends', null, moduleFolder + "/index.html");
 
     } catch (error) {
-        console.error('导出收藏夹到HTML异常', error, favorites);
+        console.error('导出好友到HTML异常', error, favorites);
     }
 
     // 更新完成信息
@@ -272,24 +312,36 @@ API.Friends.exportToMarkDown = async(friends) => {
     const indicator = new StatusIndicator('Friends_Export');
     indicator.setIndex('Markdown');
 
-    let groupMap = new Map();
-    for (const friend of friends) {
-        let groupName = friend.groupName;
-        let groupItems = groupMap.get(groupName) || [];
-        groupItems.push(friend);
-        groupMap.set(groupName, groupItems);
-    }
+    // 群组分组
+    const groupMaps = API.Utils.groupedByField(friends, 'groupName');
 
+    // MD内容
     const contents = [];
-    for (const groupEntry of groupMap) {
-        let groupName = groupEntry[0];
-        let groupItems = groupEntry[1];
-        contents.push('###### ' + groupName);
+    for (const [groupName, groupItems] of groupMaps) {
+        contents.push('###### ' + groupName + "(" + groupItems.length + ")");
         for (const item of groupItems) {
             let nickname = item.remark || item.name;
+            // 备份/昵称
             contents.push('\r\n');
             contents.push('- {0}'.format(API.Common.getUserLink(item.uin, nickname, "MD")));
             contents.push('\r\n');
+
+            // 其它信息
+            if (QZone_Config.Friends.SpecialCare) {
+                contents.push('\t- 特别关心：{0}\r\n'.format(API.Friends.getShowCare(item)));
+            }
+            if (QZone_Config.Friends.Interactive) {
+                contents.push('\t- 相识时间：{0}\r\n'.format(API.Friends.getShowFriendTime(item, 0)));
+            }
+            if (QZone_Config.Friends.ZoneAccess) {
+                contents.push('\t- 空间权限：{0}\r\n'.format(API.Friends.getShowAccessType(item)));
+            }
+            if (QZone_Config.Friends.Interactive) {
+                contents.push('\t- 好友类型：{0}\r\n'.format(API.Friends.getShowFriendType(item)));
+                contents.push('\t- 亲密度：{0}\r\n'.format(API.Friends.getShowIntimacyScore(item)));
+                contents.push('\t- 共同好友：{0}\r\n'.format(API.Friends.getShowCommonFriend(item)));
+                contents.push('\t- 共同群组：{0}\r\n'.format(API.Friends.getShowCommonGroup(item, ',')));
+            }
         }
         contents.push('\r\n');
         contents.push('---');
@@ -326,4 +378,96 @@ API.Friends.exportToJson = async(friends) => {
     // 完成
     indicator.complete();
     return friends;
+}
+
+/**
+ * 获取好友空间访问权限
+ * @param {Array} friends 好友列表
+ * @returns 
+ */
+API.Friends.getZoneAccessList = async(friends) => {
+    if (!QZone_Config.Friends.ZoneAccess) {
+        // 不获取好友空间访问权限，则跳过不处理
+        return friends;
+    }
+
+    // 进度更新器
+    const indicator = new StatusIndicator('Friends_Access');
+    indicator.setTotal(friends.length);
+
+    // 遍历
+    for (const friend of friends) {
+        if (friend.isMe) {
+            indicator.addSkip(friend);
+            continue;
+        }
+        // 设置默认值
+        await API.Friends.getZoneAccess(friend.uin).then((data) => {
+            // 转换JSON
+            data = API.Utils.toJson(data, /^_Callback\(/);
+            if (data.code < 0) {
+                // 获取异常
+                console.warn('获取好友空间访问权限异常：', data);
+            }
+
+            // 状态码慰-4009表示无权限
+            friend.access = data.code !== -4009;
+
+            // 成功
+            indicator.addSuccess(friend);
+        }).catch((e) => {
+            // 失败
+            indicator.addFailed(friend);
+            console.error("获取好友空间权限异常", friend, e);
+        })
+    }
+    // 完成
+    indicator.complete();
+    return friends;
+}
+
+/**
+ * 获取特别关心好友列表
+ * @param {Array} friends 好友列表
+ * @returns 
+ */
+API.Friends.getCareFriendList = async(friends) => {
+    if (!QZone_Config.Friends.SpecialCare) {
+        // 不获取特别关心的好友，则跳过
+        return;
+    }
+
+    // 进度更新器
+    const indicator = new StatusIndicator('Friends_Care');
+
+    // 查询
+    await API.Friends.getSpecialCare().then((data) => {
+        // 转换JSON
+        data = API.Utils.toJson(data, /^_Callback\(/);
+        if (data.code < 0) {
+            // 获取异常
+            console.warn('获取特别关心好友列表异常：', data);
+        }
+        data = data.data || {};
+
+        // 关心的好友列表
+        const items = data.items_special || [];
+
+        // 总数
+        indicator.setTotal(items.length);
+
+        for (const item of items) {
+            const friend = _.find(friends, (friend) => friend.uin === item.uin);
+            friend.care = friend !== undefined;
+        }
+
+        // 成功
+        indicator.addSuccess(items);
+    }).catch((e) => {
+        // 失败
+        console.error("获取特别关心好友列表异常：", e);
+    })
+
+    // 完成
+    indicator.complete();
 }

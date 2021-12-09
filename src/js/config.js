@@ -110,6 +110,8 @@ const Default_Config = {
     // 日志模块
     Blogs: {
         exportType: "HTML", // 内容备份类型
+        showType: '1', // HTML查看方式，0:表格视图，1:列表视图
+        viewType: '1', // 视图类型，0:列表视图，1:摘要视图
         pageSize: 50,
         randomSeconds: {
             min: 1,
@@ -157,6 +159,7 @@ const Default_Config = {
     // 私密日记模块
     Diaries: {
         exportType: "HTML", // 内容备份类型
+        showType: '1', // HTML查看方式，0:表格视图，1:列表视图
         pageSize: 50,
         randomSeconds: {
             min: 1,
@@ -219,7 +222,7 @@ const Default_Config = {
         },
         Images: {
             pageSize: 90,
-            exifType: "raw",
+            listType: 'Default', // 默认为列表详情
             randomSeconds: {
                 min: 2,
                 max: 4
@@ -232,6 +235,16 @@ const Default_Config = {
                     max: 3
                 }
             },
+            exifType: "raw",
+            Info: {
+                isGet: true, // 是否获取详情
+                pageSize: 1000,
+                randomSeconds: {
+                    min: 1,
+                    max: 2
+                }
+            },
+            isGetVideo: true, // 是否获取相片关联的视频
             isGetPreview: false
         },
         IncrementType: "Full", // 增量备份类型
@@ -314,7 +327,14 @@ const Default_Config = {
     // QQ好友模块
     Friends: {
         exportType: "HTML", // 导出类型
-        hasAddTime: true, // 是否获取好友添加时间
+        randomSeconds: {
+            min: 1,
+            max: 2
+        },
+        showType: '1', // HTML查看方式，0:表格视图，1:列表视图
+        Interactive: true, // 是否获取好友互动信息，如亲密度、添加时间、共同好友、共同群组等
+        ZoneAccess: true, // 是否判断空间权限
+        SpecialCare: true, // 是否获取特别关心
         isIncrement: false // 是否增量备份
     },
     // 收藏夹模块
@@ -586,6 +606,11 @@ const Default_Config = {
             field: "time", // 比较字段
             time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
         }
+    },
+
+    // 访客模块
+    Statistics: {
+        exportType: "HTML" // 内容备份类型
     }
 };
 
@@ -659,6 +684,9 @@ const ExportFiles = [{
 }, {
     original: 'export/js/visitors.js',
     target: 'Visitors/js/visitors.js'
+}, {
+    original: 'export/js/statistics.js',
+    target: 'Statistics/js/statistics.js'
 }]
 
 /**
@@ -667,18 +695,19 @@ const ExportFiles = [{
 var QZone = {
     Common: {
         ROOT: 'Common',
-        ExportType: {
-            "Messages": true,
-            "Blogs": true,
-            "Diaries": true,
-            "Photos": true,
-            "Videos": true,
-            "Boards": true,
-            "Friends": true,
-            "Favorites": true,
-            "Shares": true,
-            "Visitors": true
-        },
+        ExportTypes: [
+            "Messages",
+            "Blogs",
+            "Diaries",
+            "Photos",
+            "Videos",
+            "Boards",
+            "Friends",
+            "Favorites",
+            "Shares",
+            "Visitors",
+            "Statistics"
+        ],
         Owner: {
             uin: undefined
         },
@@ -828,6 +857,15 @@ var QZone = {
             items: [],
             total: 0,
             totalPage: 0
+        },
+        FILE_URLS: new Map()
+    },
+    // 数据统计模板
+    Statistics: {
+        ROOT: 'Statistics',
+        IMAGES_ROOT: 'Statistics/Images',
+        Data: {
+
         },
         FILE_URLS: new Map()
     }

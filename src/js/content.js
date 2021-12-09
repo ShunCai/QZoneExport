@@ -51,7 +51,6 @@ class ThunderTask {
         this.url = url
         this.downloadState = 'in_progress'
         this.source = source
-        this.referer = 'https://user.qzone.qq.com/'
     }
 
     /**
@@ -78,6 +77,8 @@ class ThunderInfo {
         this.taskGroupName = taskGroupName
         this.tasks = tasks || []
         this.threadCount = threadCount
+        this.hideYunPan = '1'
+        this.referer = 'https://user.qzone.qq.com/'
     }
 
     /**
@@ -371,9 +372,23 @@ const MAX_MSG = {
         '请稍后...'
     ],
     Friends_Time: [
-        '正在获取好友详细信息',
+        '正在获取好友互动信息',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Friends_Access: [
+        '正在获取好友空间权限',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
+        '已失败 <span style="color: red;">{downloadFailed}</span> 个',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 个',
+        '请稍后...'
+    ],
+    Friends_Care: [
+        '正在获取特别关心好友',
+        '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
         '请稍后...'
     ],
@@ -1348,8 +1363,8 @@ class QZoneOperator {
                     }
                 }, {
                     field: 'source',
-                    title: '来源（<span style="color:red">打包下载前请勿点击访问</span>）',
-                    titleTooltip: '来源，未打包下载前，请勿点击超链接访问，否则将清理已收集的数据。',
+                    title: '来源',
+                    titleTooltip: '文件的来源，如说说的配置，点击时将跳转到说说',
                     align: 'left',
                     visible: true,
                     formatter: (value, row, index, field) => {
@@ -1416,13 +1431,13 @@ const browserTasks = new Array();
                 port.onMessage.addListener(function(request) {
                     switch (request.subject) {
                         case 'startBackup':
-                            QZone.Common.ExportType = request.exportType;
+                            QZone.Common.ExportTypes = request.exportType;
                             // 清空之前选择的相册
                             QZone.Photos.Album.Select = [];
                             QZone.Photos.Album.Select = request.albums || [];
                             // 显示进度窗口
                             operator.next(OperatorType.SHOW);
-                            port.postMessage(QZone.Common.ExportType);
+                            port.postMessage(QZone.Common.ExportTypes);
                             break;
                         case 'initUin':
                             // 获取QQ号

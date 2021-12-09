@@ -1,4 +1,21 @@
-$(function () {
+/**
+ * 列表方式显示日志列表
+ */
+ API.Blogs.showList = function() {
+    // 日志分类清单
+    const categoryMaps = API.Utils.groupedByField(blogs, 'category');
+
+    // 基于模板渲染列表
+    const list_html = template(TPL.BLOGS_TYPE_LIST, { blogs: blogs, categoryMaps: categoryMaps });
+
+    // 渲染
+    $('#blogs-list').html(list_html);
+}
+
+/**
+ * 表格方式显示日志列表
+ */
+API.Blogs.showTableList = function() {
     // 初始化日志表格
     API.Utils.initTable("blogs-table", [{
         checkbox: true,
@@ -27,7 +44,7 @@ $(function () {
         width: "50",
         sortable: true,
         formatter: (value, row, index, field) => {
-            return API.Blogs.getBlogLabel(row) || '原创';
+            return API.Blogs.getBlogLabel(row).join(',');
         }
     }, {
         field: 'pubtime',
@@ -51,5 +68,19 @@ $(function () {
         width: "20",
         sortable: true
     }], blogs);
+}
 
+$(function() {
+
+    // 显示日志列表
+    switch (QZone_Config.Blogs.showType) {
+        case '0':
+            // 表格方式展示
+            API.Blogs.showTableList();
+            break;
+        default:
+            // HTML方式展示
+            API.Blogs.showList();
+            break;
+    }
 });
