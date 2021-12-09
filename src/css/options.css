@@ -57,3 +57,14 @@ table td {
 .glyphicon-remove:before {
     content: "\f00d"
 }
+
+
+/* 帮助图标 */
+
+.fa-question-circle-o {
+    cursor: pointer;
+}
+
+.tooltip-inner {
+    max-width: 600px !important;
+}

@@ -51,6 +51,10 @@ API.Videos.getPageList = async(pageIndex, indicator) => {
     return await API.Videos.getVideos(pageIndex).then(data => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^shine0_Callback\(/);
+        if (data.code < 0) {
+            // 获取异常
+            console.warn('获取一页的视频列表异常：', data);
+        }
         data = data.data || {};
 
         // 更新总数
@@ -168,7 +172,11 @@ API.Videos.getAllComments = async(videos) => {
 
                 // 去掉函数，保留json
                 data = API.Utils.toJson(data, /^_Callback\(/);
-                data = data.data;
+                if (data.code < 0) {
+                    // 获取异常
+                    console.warn('获取视频评论异常：', data);
+                }
+                data = data.data || {};
                 data.comments = data.comments || [];
 
                 // 添加评论数到视频
