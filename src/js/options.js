@@ -7,7 +7,9 @@
 
     // 初始化提示
     $('[data-toggle="tooltip"]').tooltip({
-        placement: 'auto'
+        placement: 'auto',
+        container: 'body',
+        boundary: 'window'
     })
 
     // 屏蔽词管理点击事件
@@ -382,6 +384,79 @@
         }
     })
 
+    // 说说备份类型改变事件
+    $('#messages_exportFormat').change(function() {
+        let value = $(this).val();
+        switch (value) {
+            case 'HTML':
+                $('#messages_that_year_today').parents('.row').show();
+                $('#messages_full_show').parents('.row').show();
+                $('#message_other_options').show();
+                break;
+            case 'MarkDown':
+                $('#messages_that_year_today').parents('.row').hide();
+                $('#messages_full_show').parents('.row').hide();
+                $('#message_other_options').hide();
+                break;
+            default:
+                $('#messages_that_year_today').parents('.row').hide();
+                $('#messages_full_show').parents('.row').hide();
+                $('#message_other_options').show();
+                break;
+        }
+    })
+
+    // 监听日志备份类型选择事件
+    $('#blogs_exportFormat').change(function() {
+        let value = $(this).val();
+        switch (value) {
+            case 'HTML':
+                $('#blogs_showType').parents('.row').show();
+                $('#blogs_viewType').parents('.row').show();
+                break;
+            case 'MarkDown':
+                $('#blogs_showType').parents('.row').hide();
+                $('#blogs_viewType').parents('.row').hide();
+                $('#blogs_other_options').hide();
+                break;
+            default:
+                $('#blogs_showType').parents('.row').hide();
+                $('#blogs_viewType').parents('.row').hide();
+                break;
+        }
+    })
+
+    // 监听日志展示方式选择事件
+    $('#blogs_showType').change(function() {
+        switch (this.value) {
+            case '1':
+                $('#blogs_viewType').parents('.row').show();
+                break;
+            default:
+                $('#blogs_viewType').parents('.row').hide();
+                break;
+        }
+    })
+
+    // 监听日记备份类型选择事件
+    $('#diaries_exportFormat').change(function() {
+        let value = $(this).val();
+        switch (value) {
+            case 'HTML':
+                $('#diaries_showType').parents('.row').show();
+                $('#diaries_other_options').show();
+                break;
+            case 'MarkDown':
+                $('#diaries_showType').parents('.row').hide();
+                $('#diaries_other_options').hide();
+                break;
+            default:
+                $('#diaries_showType').parents('.row').hide();
+                $('#diaries_other_options').show();
+                break;
+        }
+    })
+
     // 监听相册备份类型选择事件
     $('#photos_exportFormat').change(function() {
         let value = $(this).val();
@@ -391,22 +466,141 @@
                 $('#photos_albums_comments_panel').hide();
                 // 隐藏相片评论模块
                 $('#photos_images_comments_panel').hide();
+                // 隐藏相片预览图
+                $('#photos_images_preview').hide();
+                // 隐藏相片点赞模块
+                $('#photos_others_panel').hide();
                 break;
-            case 'JSON':
-                // 显示相册评论模块
+            case 'MarkDown':
+                // 显示相片评论模块
                 $('#photos_albums_comments_panel').show();
                 // 显示相片评论模块
                 $('#photos_images_comments_panel').show();
-                // 隐藏相片清晰度
-                $('#photos_exifType_panel').hide();
+                // 隐藏相片预览图
+                $('#photos_images_preview').show();
+                // 显示相片点赞模块
+                $('#photos_others_panel').hide();
+                // 显示相片清晰度
+                $('#photos_exifType_panel').show();
                 break;
             default:
                 // 显示相片评论模块
                 $('#photos_albums_comments_panel').show();
                 // 显示相片评论模块
                 $('#photos_images_comments_panel').show();
+                // 隐藏相片预览图
+                $('#photos_images_preview').show();
+                // 显示相片点赞模块
+                $('#photos_others_panel').show();
                 // 显示相片清晰度
                 $('#photos_exifType_panel').show();
+                break;
+        }
+    })
+
+    // 监听相片列表类型更改事件
+    $('#photos_images_list_type').change(function() {
+        switch (this.value) {
+            case 'Detail':
+                $('#photos_images_cost_min').parents('.row').hide();
+                $('#photos_images_limit').parents('.row').hide();
+                $("#photos_isGetDetail").prop("checked", true).change();
+                $('#photos_isGetDetail').attr('disabled', true);
+                $('#photos_images_video').hide();
+                break;
+            default:
+                $('#photos_images_cost_min').parents('.row').show();
+                $('#photos_images_limit').parents('.row').show();
+                $("#photos_isGetDetail").prop("checked", false).change();
+                $('#photos_isGetDetail').attr('disabled', false);
+                $('#photos_images_video').show();
+                break;
+        }
+    })
+
+    // 监听相片详情更改事件
+    $('#photos_isGetDetail').change(function() {
+        let isChecked = $(this).prop("checked");
+        // 相片列表类型
+        const listType = $('#photos_images_list_type').val();
+        if(listType === 'Detail'){
+            $('#photos_images_video').hide();
+            return;
+        }
+        if (isChecked === false) {
+            $('#photos_images_video').show();
+        } else {
+            $('#photos_images_video').hide();
+        }
+    })
+
+    // 监听视频备份类型选择事件
+    $('#videos_exportFormat').change(function() {
+        let value = $(this).val();
+        switch (value) {
+            case 'File':
+            case 'Link':
+                // 隐藏视频评论模块
+                $('#videos_comments_panel').hide();
+                // 隐藏视频点赞模块
+                $('#videos_others_panel').hide();
+                break;
+            case 'MarkDown':
+                // 显示视频评论模块
+                $('#videos_comments_panel').show();
+                // 隐藏视频点赞模块
+                $('#videos_others_panel').hide();
+                break;
+            default:
+                // 显示视频评论模块
+                $('#videos_comments_panel').show();
+                // 隐藏视频点赞模块
+                $('#videos_others_panel').show();
+                break;
+        }
+    })
+
+    // 监听留言板备份类型选择事件
+    $('#boards_exportFormat').change(function() {
+        let value = $(this).val();
+        switch (value) {
+            case 'HTML':
+                $('#boards_that_year_today').parents('.row').show();
+                break;
+            default:
+                $('#boards_that_year_today').parents('.row').hide();
+                break;
+        }
+    })
+
+    // 监听好友备份类型选择事件
+    $('#friends_exportFormat').change(function() {
+        let value = $(this).val();
+        switch (value) {
+            case 'HTML':
+                $('#friends_showType').parents('.row').show();
+                break;
+            default:
+                $('#friends_showType').parents('.row').hide();
+                break;
+        }
+    })
+
+    // 监听分享备份类型选择事件
+    $('#shares_exportFormat').change(function() {
+        let value = $(this).val();
+        switch (value) {
+            case 'HTML':
+                $('#shares_that_year_today').parents('.row').show();
+                $('#shares_other_options').show();
+                break;
+            case 'JSON':
+                $('#shares_that_year_today').parents('.row').hide();
+                $('#shares_other_options').show();
+                break;
+            default:
+                $('#shares_that_year_today').parents('.row').hide();
+                $('#shares_other_options').hide();
                 break;
         }
     })
@@ -428,7 +622,7 @@
             if (!emoduleCfg.hasOwnProperty(fieldName)) {
                 continue;
             }
-            const $targetField = $('input[data-module="' + module + '"][name="' + fieldName + '"]');
+            const $targetField = $('input[data-module="' + module + '"][name="' + fieldName + '"],select[data-module="' + module + '"][name="' + fieldName + '"]');
             if ($targetField.attr('type') === 'checkbox') {
                 $targetField.prop("checked", emoduleCfg[fieldName]).change();
             } else {
@@ -452,7 +646,7 @@
     let loadOptions = (options) => {
 
         // 说说模块赋值
-        $("#messages_exportFormat").val(options.Messages.exportType);
+        $("#messages_exportFormat").val(options.Messages.exportType).change();
         $("#messages_increment_type").val(options.Messages.IncrementType).change();
         $("#messages_increment_time").val(options.Messages.IncrementTime);
         $("#messages_list_cost_min").val(options.Messages.randomSeconds.min);
@@ -478,7 +672,7 @@
         $("#messages_visitor_max").val(options.Messages.Visitor.randomSeconds.max);
 
         // 日志模块赋值
-        $("#blogs_exportFormat").val(options.Blogs.exportType);
+        $("#blogs_exportFormat").val(options.Blogs.exportType).change();
         $("#blogs_increment_type").val(options.Blogs.IncrementType).change();
         $("#blogs_increment_time").val(options.Blogs.IncrementTime);
         $("#blogs_list_cost_min").val(options.Blogs.randomSeconds.min);
@@ -501,7 +695,7 @@
         $("#blogs_visitor_max").val(options.Blogs.Visitor.randomSeconds.max);
 
         // 私密日志赋值
-        $("#diaries_exportFormat").val(options.Diaries.exportType);
+        $("#diaries_exportFormat").val(options.Diaries.exportType).change();
         $("#diaries_increment_type").val(options.Diaries.IncrementType).change();
         $("#diaries_increment_time").val(options.Diaries.IncrementTime);
         $("#diaries_list_cost_min").val(options.Diaries.randomSeconds.min);
@@ -535,6 +729,7 @@
         $("#photos_albums_comments_cost_max").val(options.Photos.Comments.randomSeconds.max);
         $("#photos_albums_comments_limit").val(options.Photos.Comments.pageSize);
         // 相片列表
+        $("#photos_images_list_type").val(options.Photos.Images.listType).change();
         $("#photos_images_cost_min").val(options.Photos.Images.randomSeconds.min);
         $("#photos_images_cost_max").val(options.Photos.Images.randomSeconds.max);
         $("#photos_images_limit").val(options.Photos.Images.pageSize);
@@ -543,6 +738,11 @@
         $("#photos_images_comments_cost_max").val(options.Photos.Images.Comments.randomSeconds.max);
         $("#photos_images_comments_limit").val(options.Photos.Images.Comments.pageSize);
         $("#photos_exifType").val(options.Photos.Images.exifType);
+        $("#photos_isGetDetail").prop("checked", options.Photos.Images.Info.isGet).change();
+        $("#photos_images_detail_cost_min").val(options.Photos.Images.Info.randomSeconds.min);
+        $("#photos_images_detail_cost_max").val(options.Photos.Images.Info.randomSeconds.max);
+        $("#photos_images_detail_limit").val(options.Photos.Images.Info.pageSize);
+        $("#photos_isGetVideo").prop("checked", options.Photos.Images.isGetVideo).change();
         $("#photos_isGetPreview").prop("checked", options.Photos.Images.isGetPreview).change();
         // 点赞列表
         $("#photos_has_like").prop("checked", options.Photos.Like.isGet).change();
@@ -554,7 +754,7 @@
         $("#albums_visitor_max").val(options.Photos.Visitor.randomSeconds.max);
 
         // 视频模块赋值
-        $("#videos_exportFormat").val(options.Videos.exportType);
+        $("#videos_exportFormat").val(options.Videos.exportType).change();
         $("#videos_increment_type").val(options.Videos.IncrementType).change();
         $("#videos_increment_time").val(options.Videos.IncrementTime);
         $("#videos_list_cost_min").val(options.Videos.randomSeconds.min);
@@ -571,7 +771,7 @@
         $("#videos_like_max").val(options.Videos.Like.randomSeconds.max);
 
         // 留言板模块赋值
-        $("#boards_exportFormat").val(options.Boards.exportType);
+        $("#boards_exportFormat").val(options.Boards.exportType).change();
         $("#boards_increment_type").val(options.Boards.IncrementType).change();
         $("#boards_increment_time").val(options.Boards.IncrementTime);
         $("#boards_list_cost_min").val(options.Boards.randomSeconds.min);
@@ -580,8 +780,11 @@
         $("#boards_list_limit").val(options.Boards.pageSize);
 
         // 好友模块赋值
-        $("#friends_exportFormat").val(options.Friends.exportType);
-        $("#friends_has_add_time").prop("checked", options.Friends.hasAddTime);
+        $("#friends_exportFormat").val(options.Friends.exportType).change();
+        $("#friends_list_min").val(options.Friends.randomSeconds.min);
+        $("#friends_list_max").val(options.Friends.randomSeconds.max);
+        $("#friends_interactive_info").prop("checked", options.Friends.Interactive);
+        $("#friends_care_list").prop("checked", options.Friends.SpecialCare);
         $("#friends_is_increment").prop("checked", options.Friends.isIncrement);
 
         // 收藏夹模块赋值
@@ -593,7 +796,7 @@
         $("#favorites_list_limit").val(options.Favorites.pageSize);
 
         // 分享模块赋值
-        $("#shares_exportFormat").val(options.Shares.exportType);
+        $("#shares_exportFormat").val(options.Shares.exportType).change();
         $("#shares_increment_type").val(options.Shares.IncrementType).change();
         $("#shares_increment_time").val(options.Shares.IncrementTime);
         $("#shares_list_cost_min").val(options.Shares.randomSeconds.min);
@@ -643,6 +846,15 @@
 
         // 图片类型识别超时时间
         renderValueToDom(options, 'autoFileSuffixTimeOut');
+
+        // 显示方式
+        renderValueToDom(options, 'showType');
+
+        // 视图类型
+        renderValueToDom(options, 'viewType');
+
+        // 空间权限
+        renderValueToDom(options, 'ZoneAccess');
     }
 
     // 读取数据，第一个参数是指定要读取的key以及设置默认值
@@ -679,7 +891,7 @@
      * @param {string} field 属性名称
      */
     const setValueByFrom = (options, field) => {
-        const $hasThatYearTodayFields = $('input[name="' + field + '"]');
+        const $hasThatYearTodayFields = $('input[name="' + field + '"],select[name="' + field + '"]');
         for (const item of $hasThatYearTodayFields) {
             const moduleName = $(item).attr('data-module');
             if (!moduleName) {
@@ -781,6 +993,7 @@
         QZone_Config.Photos.Comments.randomSeconds.max = $("#photos_albums_comments_cost_max").val() * 1;
         QZone_Config.Photos.Comments.pageSize = $("#photos_albums_comments_limit").val() * 1;
 
+        QZone_Config.Photos.Images.listType = $("#photos_images_list_type").val();
         QZone_Config.Photos.Images.randomSeconds.min = $("#photos_images_cost_min").val() * 1;
         QZone_Config.Photos.Images.randomSeconds.max = $("#photos_images_cost_max").val() * 1;
         QZone_Config.Photos.Images.pageSize = $("#photos_images_limit").val() * 1;
@@ -789,6 +1002,11 @@
         QZone_Config.Photos.Images.Comments.randomSeconds.max = $("#photos_images_comments_cost_max").val() * 1;
         QZone_Config.Photos.Images.Comments.pageSize = $("#photos_images_comments_limit").val() * 1;
         QZone_Config.Photos.Images.exifType = $("#photos_exifType").val();
+        QZone_Config.Photos.Images.Info.isGet = $("#photos_isGetDetail").prop("checked");
+        QZone_Config.Photos.Images.Info.randomSeconds.min = $("#photos_images_detail_cost_min").val() * 1;
+        QZone_Config.Photos.Images.Info.randomSeconds.max = $("#photos_images_detail_cost_max").val() * 1;
+        QZone_Config.Photos.Images.Info.pageSize = $("#photos_images_detail_limit").val() * 1;
+        QZone_Config.Photos.Images.isGetVideo = $("#photos_isGetVideo").prop("checked");
         QZone_Config.Photos.Images.isGetPreview = $("#photos_isGetPreview").prop("checked");
 
         // 点赞列表
@@ -828,7 +1046,10 @@
 
         // 好友模块赋值
         QZone_Config.Friends.exportType = $("#friends_exportFormat").val();
-        QZone_Config.Friends.hasAddTime = $("#friends_has_add_time").prop("checked");
+        QZone_Config.Friends.randomSeconds.min = $("#friends_list_min").val() * 1;
+        QZone_Config.Friends.randomSeconds.max = $("#friends_list_max").val() * 1;
+        QZone_Config.Friends.Interactive = $("#friends_interactive_info").prop("checked");
+        QZone_Config.Friends.SpecialCare = $("#friends_care_list").prop("checked");
         QZone_Config.Friends.isIncrement = $("#friends_is_increment").prop("checked");
 
         // 收藏夹模块赋值
@@ -891,6 +1112,15 @@
 
         // 图片类型识别超时时间
         setValueByFrom(QZone_Config, 'autoFileSuffixTimeOut');
+
+        // 显示方式
+        setValueByFrom(QZone_Config, 'showType');
+
+        // 视图类型
+        setValueByFrom(QZone_Config, 'viewType');
+
+        // 空间权限
+        setValueByFrom(QZone_Config, 'ZoneAccess');
 
         chrome.storage.sync.set(QZone_Config, function() {
             console.info("保存成功！");

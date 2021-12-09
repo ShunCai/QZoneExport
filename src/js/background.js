@@ -143,6 +143,13 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                         sendResponse('');
                     });
                     break;
+                case 'getMapJson':
+                    getMapJson(request.url).then((data) => {
+                        sendResponse(data);
+                    }).catch((e) => {
+                        sendResponse(e);
+                    });
+                    break;
                 default:
                     console.warn('Background 接收到消息，但未识别类型！', request);
                     break;
@@ -193,31 +200,16 @@ chrome.runtime.onInstalled.addListener((details) => {
         case chrome.runtime.OnInstalledReason.UPDATE:
             switch (previousVersion) {
                 case '1.0.0':
-                    // 上一个版本为1.0.0时，重置配置项
-                    chrome.storage.sync.clear(function() {
-                        console.info('清空配置完成');
-                    });
-                    break;
                 case '1.0.1':
-                    // 上一个版本为1.0.1时，重置配置项
-                    chrome.storage.sync.clear(function() {
-                        console.info('清空配置完成');
-                    });
-                    break;
                 case '1.0.2':
-                    // 上一个版本为1.0.2时，重置配置项
-                    chrome.storage.sync.clear(function() {
-                        console.info('清空配置完成');
-                    });
-                    break;
                 case '1.0.5':
-                    // 上一个版本为1.0.5时，重置配置项
+                    // 重置配置项
                     chrome.storage.sync.clear(function() {
                         console.info('清空配置完成');
                     });
                     break;
                 case '1.1.1':
-                    // 上一个版本为1.1.1时，重置备份数据
+                    // 重置备份数据
                     chrome.storage.local.clear(function() {
                         console.info('重置备份数据完成');
                     });
@@ -253,6 +245,35 @@ const getMimeType = function(url, timeout) {
                 this.abort();
                 resolve(suffix);
             }
+        }
+        xhr.onerror = function(e) {
+            reject(e);
+        }
+        xhr.ontimeout = function(e) {
+            this.abort();
+            reject(e);
+        }
+        xhr.send();
+    });
+}
+
+/**
+ * 获取GeoJson
+ * @param {string} url 文件地址
+ * @returns 
+ */
+const getMapJson = function(url) {
+    return new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onload = function() {
+            var data = {};
+            try {
+                data = JSON.parse(this.responseText);
+            } catch (error) {
+
+            }
+            resolve(data);
         }
         xhr.onerror = function(e) {
             reject(e);

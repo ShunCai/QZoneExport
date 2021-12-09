@@ -62,6 +62,10 @@ API.Messages.getList = async(pageIndex, indicator) => {
     return await API.Messages.getMessages(pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_preloadCallback\(/);
+        if (data.code < 0) {
+            // 获取异常
+            console.warn('获取单页的说说列表异常：', data);
+        }
 
         // 更新状态-下载中的数量
         indicator.addDownload(QZone_Config.Messages.pageSize);
@@ -174,6 +178,11 @@ API.Messages.getAllFullContent = async(items) => {
             // 更新状态-下载成功数
             indicator.addSuccess(item);
             data = API.Utils.toJson(data, /^_Callback\(/);
+            if (data.code < 0) {
+                // 获取异常
+                console.warn('获取所有说说的全文内容异常：', data);
+            }
+
             // 自身全文
             item.content = data.content;
             item.conlist = data.conlist || [];
@@ -203,6 +212,10 @@ API.Messages.getItemCommentList = async(item, pageIndex) => {
     return await API.Messages.getComments(item.tid, pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_preloadCallback\(/);
+        if (data.code < 0) {
+            // 获取异常
+            console.warn('获取单条说说的单页评论列表异常：', data);
+        }
 
         // 下载相对目录
         let module_dir = 'Messages/Images';
@@ -380,8 +393,10 @@ API.Messages.exportToHtml = async(messages) => {
     } catch (error) {
         console.error('导出说说到HTML异常', error, messages);
     }
+    
     // 完成
     indicator.complete();
+
     return messages;
 }
 
@@ -692,6 +707,11 @@ API.Messages.getAllImages = async(items) => {
         }
         await API.Messages.getImageInfos(item.tid).then((data) => {
             data = API.Utils.toJson(data, /^_Callback\(/);
+            if (data.code < 0) {
+                // 获取异常
+                console.warn('获取所有图片异常：', data);
+            }
+
             const imageUrls = data.imageUrls || [];
             for (let index = 0; index < imageUrls.length; index++) {
                 // 返回的图片URL
@@ -759,6 +779,11 @@ API.Messages.getAllVoices = async(items) => {
         for (const voice of voices) {
             await API.Messages.getVoiceInfo(voice).then((voiceInfo) => {
                 voiceInfo = API.Utils.toJson(voiceInfo, /^_Callback\(/);
+                if (voiceInfo.code < 0) {
+                    // 获取异常
+                    console.warn('获取语音说说的实际地址异常：', voiceInfo);
+                }
+                voiceInfo.data = voiceInfo.data || {};
                 voice.custom_url = voiceInfo.data.url;
             }).catch((error) => {
                 console.error('获取说说语音失败', item, error);
@@ -962,7 +987,12 @@ API.Messages.getItemAllVisitorsList = async(item) => {
         const nextPageIndex = pageIndex + 1;
 
         return await API.Messages.getVisitors(item.tid, pageIndex).then(async(data) => {
-            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
+            data = API.Utils.toJson(data, /^_Callback\(/);
+            if (data.code < 0) {
+                // 获取异常
+                console.warn('获取单条说说的全部最近访问异常：', data);
+            }
+            data = data.data || {};
 
             // 合并
             item.custom_visitor.viewCount = data.viewCount || 0;

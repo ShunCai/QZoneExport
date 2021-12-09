@@ -54,13 +54,12 @@
 				</div>
 			</div>
 			<h4 class="sidebar-h1 mt-3 boards-items" data-tag="h1" data-sidebar="留言板">留言板(<%:=total%>)</h4>
-			<%/* 遍历年份 */%>
-			<%for (var yearMap of boardMaps) {%>
-				<span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=yearMap[0]%>年"></span>
-				<%for (var monthMap of yearMap[1]) {%>
-					<span class="sidebar-h3" data-tag="h3" data-sidebar="<%:=monthMap[0]%>月"></span>
-					<%for (let index = 0; index < monthMap[1].length; index++) {%>
-						<%const board = monthMap[1][index]%>
+			<%for (const [year, yearMap] of boardMaps) {%>
+				<span class="sidebar-h1" data-tag="h1" data-sidebar='<%:=year%>年<span class="badge badge-primary badge-pill itemSize"><%:=API.Utils.sumYearItemSize(yearMap)%><span>'></span>
+				<%for (const [month, monthItems] of yearMap) {%>
+					<span class="sidebar-h2" data-tag="h2" data-sidebar='<%:=month%>月<span class="badge badge-primary badge-pill itemSize"><%:=monthItems.length%><span>'></span>
+					<%for (let index = 0; index < monthItems.length; index++) {%>
+						<%const board = monthItems[index]%>
 						<%total = total -1%>
 						<div class="card border p-2 mt-1">
 							<div class="card-body">

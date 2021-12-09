@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "QQ空间导出助手",
     "description": "QQ空间导出助手，用于导出备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友、收藏夹、分享、访客为文件，便于迁移与保存",
-    "version": "1.1.4",
+    "version": "1.1.5",
     "icons": {
         "128": "img/icon-128.png"
     },
@@ -62,9 +62,8 @@
         "default_popup": "html/popup.html"
     },
     "options_page": "html/options.html",
-    "content_security_policy": "script-src 'self' 'unsafe-eval' https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/ https://cdn.jsdelivr.net/; frame-src 'self' https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/ https://cdn.jsdelivr.net/; object-src 'self'",
+    "content_security_policy": "script-src 'self' 'unsafe-eval' https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/ https://cdn.jsdelivr.net/ http://127.0.0.1; frame-src 'self' https://open.thunderurl.com/ https://res-etl-ssl.xunlei.com/ https://cdn.jsdelivr.net/; object-src 'self'",
     "web_accessible_resources": [
-        "others/README.md",
         "html/indicator.html",
         "export/*.*",
         "templates/*.*",
