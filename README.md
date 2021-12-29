@@ -67,7 +67,7 @@
 2. 安装完成后，根据个人情况先进行助手的配置，详情请访问：[配置](https://github.com/ShunCai/QZoneExport/wiki/Configuration)
 3. [登录需要备份的QQ空间](https://i.qq.com/)  
 4. 插件栏点击插件图标  
-[![hSDvRA.png](https://z3.ax1x.com/2021/08/22/hSDvRA.png)](https://imgtu.com/i/hSDvRA)
+[![T2Z19e.md.png](https://s4.ax1x.com/2021/12/30/T2Z19e.md.png)](https://imgtu.com/i/T2Z19e)
 5. 根据个人情况，勾选需要备份的QQ空间数据，默认为全部备份  
 [![hSg5xH.png](https://z3.ax1x.com/2021/08/22/hSg5xH.png)](https://imgtu.com/i/hSg5xH)
 6. 点击开始备份，助手开始收集QQ空间数据，等待数据收集完成
