@@ -64,7 +64,8 @@
 
 ## 使用
 1. 先进行安装，可[在线安装](#在线安装)或[离线安装](#离线安装)
-2. 安装完成后，根据个人情况先进行助手的配置，详情请访问：[配置](https://github.com/ShunCai/QZoneExport/wiki/Configuration)
+2. 安装完成后，根据个人情况先进行助手的配置，详情请访问：[配置](https://github.com/ShunCai/QZoneExport/wiki/Configuration)   
+[![hSDvRA.png](https://z3.ax1x.com/2021/08/22/hSDvRA.png)](https://imgtu.com/i/hSDvRA)
 3. [登录需要备份的QQ空间](https://i.qq.com/)  
 4. 插件栏点击插件图标  
 [![T2Z19e.md.png](https://s4.ax1x.com/2021/12/30/T2Z19e.md.png)](https://imgtu.com/i/T2Z19e)
