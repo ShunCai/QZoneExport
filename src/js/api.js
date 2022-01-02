@@ -1,7 +1,7 @@
 /**
  * QQ空间Rest API配置
  */
-const QZone_URLS = {
+const REST_URLS = {
 
     /** 个人统计 */
     USER_COUNT_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/main_page_cgi",
@@ -66,11 +66,11 @@ const QZone_URLS = {
     /** 好友资料 */
     QZONE_USER_INFO_URL: "https://user.qzone.qq.com/proxy/domain/base.qzone.qq.com/cgi-bin/user/cgi_userinfo_get_all",
 
-    /** 好友添加时间 */
-    USER_ADD_TIME_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/friendship/cgi_friendship",
+    /** 好友互动信息 */
+    FRIENDSHIP_INFO_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/friendship/cgi_friendship",
 
-    /** 好友亲密度 */
-    INTIMACY_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/main_page_cgi",
+    /** 主页基本信息，可用于判断权限 */
+    MAIN_PAGE_URL: "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/main_page_cgi",
 
     /** 留言板列表URL */
     BOARD_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/m.qzone.qq.com/cgi-bin/new/get_msgb',
@@ -115,7 +115,10 @@ const QZone_URLS = {
     VISITOR_MORE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/g.qzone.qq.com/cgi-bin/friendshow/cgi_get_visitor_more',
 
     /** 特别关心列表（含被关心个数） */
-    SPECIAL_CARE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/tfriend/specialcare_get.cgi'
+    SPECIAL_CARE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/tfriend/specialcare_get.cgi',
+
+    /** 好友/用户名片（含昵称、备注、智能备注、是否特别关心、亲密度、共同好友、是否好友，是否开通空间，性别，城市） */
+    USER_CARD_URL: 'https://h5.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/user/cgi_personal_card'
 
 };
 
@@ -196,7 +199,8 @@ const API = {
     Videos: {}, // 视频模块
     Favorites: {}, // 收藏模块
     Shares: {}, // 分享模块
-    Visitors: {} // 访问模块
+    Visitors: {}, // 访问模块
+    Statistics: {}, // 数据统计模块
 };
 
 /**
@@ -817,19 +821,19 @@ API.Utils = {
     /**
      * 获取超链接
      */
-    getLink(url, title, type) {
+    getLink(url, text, type) {
         // 默认HTML超链接
-        let res = "<a href='{url}' target='_blank'>{title}</a>";
+        let res = "<a href='{url}' target='_blank'>{text}</a>";
         switch (type) {
             case 'MD':
-                res = '[{title}]({url})';
+                res = '[{text}]({url})';
                 break;
             default:
                 break;
         }
         return res.format({
             url: url,
-            title: title
+            text: text
         });
     },
 
@@ -1075,6 +1079,9 @@ API.Utils = {
      *  @param {integer} time 
      */
     formatDate(time, str) {
+        if (!Number.isInteger(time)) {
+            return time;
+        }
         str = str || 'yyyy-MM-dd hh:mm:ss';
         return new Date(time * 1000).format(str);
     },
@@ -1274,20 +1281,21 @@ API.Utils = {
         const Aria2Setting = QZone_Config.Common.Aria2;
         const token = "token:" + Aria2Setting.token;
         const data = {
-                "jsonrpc": "2.0",
-                "method": "aria2.addUri",
-                "id": Date.now(),
-                "params": [
-                    token, [
-                        task.url
-                    ],
-                    {
-                        "referer": 'https://user.qzone.qq.com/',
-                        "out": API.Common.getRootFolderName() + '/' + task.dir + "/" + task.name
-                    }
-                ]
-            }
-            // 添加下载任务到Aria2
+            "jsonrpc": "2.0",
+            "method": "aria2.addUri",
+            "id": Date.now(),
+            "params": [
+                token, [
+                    task.url
+                ],
+                {
+                    "referer": 'https://user.qzone.qq.com/',
+                    'header': ['Cookie: ' + document.cookie],
+                    "out": API.Common.getRootFolderName() + '/' + task.dir + "/" + task.name
+                }
+            ]
+        };
+        // 添加下载任务到Aria2
         return API.Utils.post(Aria2Setting.rpc, JSON.stringify(data));
     },
 
@@ -1500,7 +1508,7 @@ API.Common = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.USER_COUNT_URL, params);
+        return API.Utils.get(REST_URLS.USER_COUNT_URL, params);
     },
 
     /**
@@ -1515,7 +1523,7 @@ API.Common = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.USER_INFO_URL, params);
+        return API.Utils.get(REST_URLS.USER_INFO_URL, params);
     },
 
     /**
@@ -1547,22 +1555,20 @@ API.Common = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.LIKE_LIST_URL, params);
+        return API.Utils.get(REST_URLS.LIKE_LIST_URL, params);
     },
 
     /**
-     * 获取特别关心列表
+     * 获取用户名片
      */
-    getSpecialCare() {
-        let params = {
-            "uin": QZone.Common.Owner.uin,
-            "do": 3,
+    getUserCardInfo(uin) {
+        const params = {
+            "uin": uin,
             "fupdate": 1,
             "rd": Math.random(),
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
-            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.SPECIAL_CARE_LIST_URL, params);
+        return API.Utils.get(REST_URLS.USER_CARD_URL, params);
     },
 
     /**
@@ -1762,29 +1768,40 @@ API.Blogs = {
         return null;
     },
 
-    getBlogLabel(e) {
-        var t = [
+    /**
+     * 获取日志标签
+     * @param {Object} item 日志详情
+     * @returns 
+     */
+    getBlogLabel(item) {
+        const allLabelCfg = [
             ["8", "审核不通过"],
             ["22", "审核中"],
-            ["4", "顶"],
-            ["21", "荐"],
-            ["3", "转"],
-            ["28", "转"],
-            ["35", "转"],
-            ["36", "转"]
+            ["4", "置顶"],
+            ["21", "推荐"],
+            ["3", "转载"],
+            ["28", "转载"],
+            ["35", "转载"],
+            ["36", "转载"]
         ];
-        var a = '';
-        for (var o = 0; o < t.length; o++) {
-            var n = t[o][0];
-            if (n == 22) {
+        const labels = [];
+        for (let i = 0; i < allLabelCfg.length; i++) {
+            const bit = allLabelCfg[i][0];
+            if (bit == 22) {
                 continue;
             }
-            if (API.Blogs.getEffectBit(e, n)) {
-                a += '[{0}]'.format(t[o][1]);
-                break;
+            if (API.Blogs.getEffectBit(item, bit)) {
+                let label = allLabelCfg[i][1];
+                if (labels.indexOf(label) > -1) {
+                    continue;
+                }
+                labels.push(label);
             }
         }
-        return a;
+        if (labels.length === 0) {
+            labels.push('原创');
+        }
+        return labels;
     },
 
     getEffectBit(e, t) {
@@ -1828,6 +1845,7 @@ API.Blogs = {
             "pos": page * QZone_Config.Blogs.pageSize,
             "num": QZone_Config.Blogs.pageSize,
             "sortType": "0",
+            "absType": QZone_Config.Blogs.viewType || '0', // 视图类型，0:列表视图，1:摘要视图
             "source": "0",
             "rand": Math.random(),
             "ref": "qzone",
@@ -1835,7 +1853,7 @@ API.Blogs = {
             "verbose": "1",
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
-        return API.Utils.get(QZone_URLS.BLOGS_LIST_URL, params);
+        return API.Utils.get(REST_URLS.BLOGS_LIST_URL, params);
     },
 
     /**
@@ -1857,7 +1875,7 @@ API.Blogs = {
             "ref": "qzone",
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk()
         };
-        return API.Utils.get(QZone_URLS.BLOGS_READ_COUNT_URL, params);
+        return API.Utils.get(REST_URLS.BLOGS_READ_COUNT_URL, params);
     },
 
     /**
@@ -1882,7 +1900,7 @@ API.Blogs = {
             "page": "1",
             "refererurl": "https://qzs.qq.com/qzone/app/blog/v6/bloglist.html#nojump=1&page=1&catalog=list"
         };
-        return API.Utils.get(QZone_URLS.BLOGS_INFO_URL, params);
+        return API.Utils.get(REST_URLS.BLOGS_INFO_URL, params);
     },
 
 
@@ -1907,7 +1925,7 @@ API.Blogs = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
-        return API.Utils.get(QZone_URLS.BLOGS_COMMENTS_URL, params);
+        return API.Utils.get(REST_URLS.BLOGS_COMMENTS_URL, params);
     },
 
     /**
@@ -1926,7 +1944,7 @@ API.Blogs = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
+        return API.Utils.get(REST_URLS.VISITOR_SINGLE_LIST_URL, params);
     },
 
     /**
@@ -1946,8 +1964,18 @@ API.Blogs = {
      */
     isTemplateBlog(item) {
         return item.exblogtype == 2 || item.blogType;
-    }
+    },
 
+    /**
+     * 读取模板日志内容
+     * @param {Object} item 日志
+     * @param {Object} blogPage DOM对象
+     */
+    readTemplateContent(blogPage) {
+        const reg_res = API.Utils.readScriptVar(blogPage, /var g_oBlogContent\s+=\s+'([\s\S]+\/div>)';/);
+        eval((reg_res && reg_res[0] || '').replace('var g_oBlogContent', 'window.g_oBlogContent'))
+        return window.g_oBlogContent;
+    }
 };
 
 /**
@@ -1977,7 +2005,7 @@ API.Diaries = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
-        return API.Utils.get(QZone_URLS.DIARY_LIST_URL, params);
+        return API.Utils.get(REST_URLS.DIARY_LIST_URL, params);
     },
 
     /**
@@ -1999,7 +2027,7 @@ API.Diaries = {
             "ref": "qzone",
             "refererurl": "https://qzs.qq.com/qzone/app/blog/v6/bloglist.html#nojump=1&catalog=private&page=1"
         };
-        return API.Utils.get(QZone_URLS.DIARY_INFO_URL, params);
+        return API.Utils.get(REST_URLS.DIARY_INFO_URL, params);
     },
 
     /**
@@ -2023,7 +2051,7 @@ API.Diaries = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
-        return API.Utils.get(QZone_URLS.BLOGS_COMMENTS_URL, params);
+        return API.Utils.get(REST_URLS.BLOGS_COMMENTS_URL, params);
     },
 
     /**
@@ -2042,7 +2070,7 @@ API.Diaries = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
+        return API.Utils.get(REST_URLS.VISITOR_SINGLE_LIST_URL, params);
     },
 
     /**
@@ -2064,7 +2092,7 @@ API.Diaries = {
             "ref": "qzone",
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk()
         };
-        return API.Utils.get(QZone_URLS.BLOGS_READ_COUNT_URL, params);
+        return API.Utils.get(REST_URLS.BLOGS_READ_COUNT_URL, params);
     }
 };
 
@@ -2086,13 +2114,13 @@ API.Friends = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
-        return API.Utils.get(QZone_URLS.FRIENDS_LIST_URL, params);
+        return API.Utils.get(REST_URLS.FRIENDS_LIST_URL, params);
     },
 
     /**
      * 获取QQ好友详情
      */
-    getQzoneUserInfo() {
+    getQZoneUserInfo() {
         let params = {
             "uin": QZone.Common.Target.uin || API.Utils.initUin().Target.uin,
             "vuin": QZone.Common.Owner.uin || API.Utils.initUin().Owner.uin,
@@ -2103,7 +2131,7 @@ API.Friends = {
         };
         // code = -3000 未登录
         // code = -4009 无权限
-        return API.Utils.get(QZone_URLS.QZONE_USER_INFO_URL, params);
+        return API.Utils.get(REST_URLS.QZONE_USER_INFO_URL, params);
     },
 
     /**
@@ -2119,21 +2147,185 @@ API.Friends = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
-        return API.Utils.get(QZone_URLS.USER_ADD_TIME_URL, params);
+        return API.Utils.get(REST_URLS.FRIENDSHIP_INFO_URL, params);
     },
 
     /**
-     * 获取好友亲密度
+     * 获取首页基本信息
      * @param {string} 目标QQ号
      */
-    getIntimacy(targetUin) {
+    getZoneAccess(targetUin) {
         let params = {
             "uin": targetUin,
-            "param": 15,
+            "param": '3_' + targetUin + '_0|8_8_' + targetUin + '_1_1_0_0_1|15|16',
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
-        return API.Utils.get(QZone_URLS.INTIMACY_URL, params);
+        return API.Utils.get(REST_URLS.MAIN_PAGE_URL, params);
+    },
+
+    /**
+     * 获取特别关心列表
+     */
+    getSpecialCare() {
+        const params = {
+            "uin": QZone.Common.Owner.uin,
+            "do": 3,
+            "fupdate": 1,
+            "rd": Math.random(),
+            "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
+            "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
+        }
+        return API.Utils.get(REST_URLS.SPECIAL_CARE_LIST_URL, params);
+    },
+
+    /**
+     * 获取共同好友
+     * @param {Object} friend 好友
+     */
+    getCommonFriend(friend) {
+        const list = [];
+        if (!friend || !friend.common || !friend.common.friend) {
+            return list;
+        }
+        return friend.common.friend;
+    },
+
+    /**
+     * 获取共同好友
+     * @param {Object} friend 好友
+     */
+    getShowCommonFriend(friend) {
+        if (friend.isMe) {
+            return '本人';
+        }
+        const friends = API.Friends.getCommonFriend(friend);
+        return friends.length;
+    },
+
+    /**
+     * 获取共同群组
+     * @param {Object} friend 好友
+     */
+    getCommonGroup(friend) {
+        const list = [];
+        if (!friend || !friend.common || !friend.common.group) {
+            return list;
+        }
+        for (const item of friend.common.group) {
+            list.push(item['name'] || item);
+        }
+        friend.common.group = list;
+        return list;
+    },
+
+    /**
+     * 获取共同群组
+     * @param {Object} friend 好友
+     */
+    getShowCommonGroup(friend, joinStr) {
+        if (friend.isMe) {
+            return '本人';
+        }
+        const groups = API.Friends.getCommonGroup(friend);
+        return groups.length == 0 ? '无' : groups.join(joinStr);
+    },
+
+    /**
+     * 获取相识显示时间
+     * @param {Object} friend 好友
+     */
+    getShowFriendTime(friend, showType) {
+        if (friend.isMe) {
+            return '本人';
+        }
+        if (!friend.addFriendTime || friend.addFriendTime === 0) {
+            return '老友';
+        }
+        if (0 === showType) {
+            return API.Utils.formatDate(friend.addFriendTime);
+        }
+        return moment().from(moment(friend.addFriendTime * 1000), true);
+    },
+
+    /**
+     * 获取QQ好友关系类型
+     * @param {Object} friend 好友信息
+     */
+    getShowFriendType(friend, showType) {
+        let showText = '未知';
+        let showClass = 'fa-user-times text-danger';
+        if (friend.isMe) {
+            showText = '本人';
+            showClass = 'fa-user';
+        }
+        if (friend.isFriend === 2) {
+            showText = '单向好友';
+        } else if (friend.isFriend === 1) {
+            showText = '双向好友';
+            showClass = 'fa-user';
+        }
+        if (showType === 'HTML') {
+            return `<span title="好友关系：{0}" class="fa {1}"></span>`.format(showText, showClass);
+        }
+        return showText;
+    },
+
+    /**
+     * 获取空间权限
+     * @param {Object} friend 好友信息
+     */
+    getShowAccessType(friend, showType) {
+        let showText = '未知';
+        let showClass = 'fa-lock text-danger';
+        if (friend.isMe) {
+            showText = '本人';
+            showClass = 'fa-unlock';
+        }
+        if (friend.access === false) {
+            showText = '无权限';
+        } else if (friend.access === true) {
+            showText = '有权限';
+            showClass = 'fa-unlock';
+        }
+        if (showType === 'HTML') {
+            return `<span title="QQ空间访问权限：{0}" class="fa {1}"></span>`.format(showText, showClass);
+        }
+        return showText;
+    },
+
+    /**
+     * 获取特别关心显示值
+     * @param {Object} friend 好友信息
+     */
+    getShowCare(friend, showType) {
+        const showText = friend.isMe ? '本人' : friend.care ? '已关心' : '未关心'
+        if (showType === 'HTML') {
+            return `<span title="{0}" class="fa {1}"></span>`.format(showText, friend.care ? 'fa-heartbeat text-danger' : 'fa-heart-o');
+        }
+        return showText;
+    },
+
+    /**
+     * 亲密度显示
+     * @param {Object} friend 好友信息
+     */
+    getShowIntimacyScore(friend) {
+        if (friend.isMe) {
+            return '本人';
+        }
+        return friend.intimacyScore || 0;
+    },
+
+    /**
+     * QQ通讯显示值
+     * @param {Object} friend 好友信息
+     */
+    getShowMessage(friend) {
+        return `<a href="{0}" target="_blank">
+                    <span title="与TA聊天" class="fa fa-qq"></span>
+                </a>`
+        .format(API.Common.getMessageUrl(friend.uin));
     }
 };
 
@@ -2169,7 +2361,7 @@ API.Messages = {
             "need_private_comment": 1,
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
-        return API.Utils.get(QZone_URLS.MESSAGES_LIST_URL, params);
+        return API.Utils.get(REST_URLS.MESSAGES_LIST_URL, params);
     },
 
     /**
@@ -2213,7 +2405,7 @@ API.Messages = {
             "format": "jsonp",
             "qzreferrer": 'https://user.qzone.qq.com'
         }
-        return API.Utils.get(QZone_URLS.MESSAGES_DETAIL_URL, params);
+        return API.Utils.get(REST_URLS.MESSAGES_DETAIL_URL, params);
     },
 
 
@@ -2231,7 +2423,7 @@ API.Messages = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.MESSAGES_IMAGES_URL, params);
+        return API.Utils.get(REST_URLS.MESSAGES_IMAGES_URL, params);
     },
 
     /**
@@ -2254,7 +2446,7 @@ API.Messages = {
             "need_private_comment": 1,
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.MESSAGES_COMMONTS_URL, params);
+        return API.Utils.get(REST_URLS.MESSAGES_COMMONTS_URL, params);
     },
 
     /**
@@ -2263,7 +2455,7 @@ API.Messages = {
      */
     getVoiceInfo(voice) {
         const params = API.Utils.toParams(voice.url);
-        return API.Utils.get(QZone_URLS.MESSAGES_VOICE_INFO_URL, params);
+        return API.Utils.get(REST_URLS.MESSAGES_VOICE_INFO_URL, params);
     },
 
     /**
@@ -2296,7 +2488,7 @@ API.Messages = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
+        return API.Utils.get(REST_URLS.VISITOR_SINGLE_LIST_URL, params);
     },
 
     /**
@@ -2447,7 +2639,7 @@ API.Boards = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
-        return API.Utils.get(QZone_URLS.BOARD_LIST_URL, params);
+        return API.Utils.get(REST_URLS.BOARD_LIST_URL, params);
     },
 
     /**
@@ -2506,7 +2698,7 @@ API.Photos = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        let data = await API.Utils.get(QZone_URLS.PHOTOS_ROUTE_URL, params);
+        let data = await API.Utils.get(REST_URLS.PHOTOS_ROUTE_URL, params);
         data = API.Utils.toJson(data, /^photoDomainNameCallback\(/);
 
         var e = new RegExp("^domain_\\d$"),
@@ -2587,7 +2779,7 @@ API.Photos = {
      * @param {object} photo 相片对象
      */
     getImageKey(photo) {
-        return photo.lloc || photo.sloc;
+        return photo.picKey || photo.lloc || photo.sloc;
     },
 
     /**
@@ -2620,7 +2812,7 @@ API.Photos = {
             "callbackFun": "shine0",
             "_": Date.now()
         }
-        return API.Utils.get(QZone_URLS.ALBUM_LIST_URL, params);
+        return API.Utils.get(REST_URLS.ALBUM_LIST_URL, params);
     },
 
     /**
@@ -2648,7 +2840,7 @@ API.Photos = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
-        return API.Utils.get(QZone_URLS.ALBUM_COMMENTS_URL, params);
+        return API.Utils.get(REST_URLS.ALBUM_COMMENTS_URL, params);
     },
 
     /**
@@ -2684,7 +2876,7 @@ API.Photos = {
             "callbackFun": "shine0",
             "_": Date.now()
         };
-        return API.Utils.get(QZone_URLS.IMAGES_LIST_URL, params);
+        return API.Utils.get(REST_URLS.IMAGES_LIST_URL, params);
     },
 
 
@@ -2718,10 +2910,10 @@ API.Photos = {
             "showMode": 1,
             "need_private_comment": 1,
             "prevNum": 0, // 前序的照片数量
-            "postNum": 0, // 后续的照片数量
+            "postNum": QZone_Config.Photos.Images.Info.pageSize || 0, // 后续的照片数量
             "_": Date.now()
         }
-        return API.Utils.get(QZone_URLS.IMAGES_INFO_URL, params);
+        return API.Utils.get(REST_URLS.IMAGES_INFO_URL, params);
     },
 
     /**
@@ -2749,7 +2941,7 @@ API.Photos = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         };
-        return API.Utils.get(QZone_URLS.IMAGES_COMMENTS_URL, params);
+        return API.Utils.get(REST_URLS.IMAGES_COMMENTS_URL, params);
     },
 
     /**
@@ -2768,7 +2960,7 @@ API.Photos = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
+        return API.Utils.get(REST_URLS.VISITOR_SINGLE_LIST_URL, params);
     },
 
     /**
@@ -2786,7 +2978,7 @@ API.Photos = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.VISITOR_SIMPLE_LIST_URL, params);
+        return API.Utils.get(REST_URLS.VISITOR_SIMPLE_LIST_URL, params);
     },
 
     /**
@@ -2821,7 +3013,7 @@ API.Photos = {
         // 原图
         let raw_url = photo.raw_upload === 1 ? photo.raw : undefined;
         // 高清原图
-        let origin_url = photo.origin || photo.origin_url;
+        let origin_url = photo.origin_url;
         // 常规
         let normal_url = photo.downloadUrl || photo.url;
         switch (type) {
@@ -2945,7 +3137,7 @@ API.Videos = {
             "callbackFun": "shine0",
             "_": Date.now()
         }
-        return API.Utils.get(QZone_URLS.VIDEO_LIST_URL, params);
+        return API.Utils.get(REST_URLS.VIDEO_LIST_URL, params);
     },
 
     /**
@@ -2980,7 +3172,7 @@ API.Videos = {
             "getMethod": 3,
             "_": Date.now()
         }
-        return API.Utils.get(QZone_URLS.VIDEO_INFO_URL, params);
+        return API.Utils.get(REST_URLS.VIDEO_INFO_URL, params);
     },
 
     /**
@@ -3006,7 +3198,7 @@ API.Videos = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.VIDEO_COMMENTS_URL, params);
+        return API.Utils.get(REST_URLS.VIDEO_COMMENTS_URL, params);
     },
 
     /**
@@ -3228,7 +3420,7 @@ API.Favorites = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.FAVORITE_LIST_URL, params);
+        return API.Utils.get(REST_URLS.FAVORITE_LIST_URL, params);
     },
 
     /**
@@ -3390,7 +3582,7 @@ API.Shares = {
             "isfriend": 0,
             "ttype": 0 // 全部分享类型
         }
-        return API.Utils.get(QZone_URLS.SHARE_LIST_URL, params);
+        return API.Utils.get(REST_URLS.SHARE_LIST_URL, params);
     },
 
     /**
@@ -3421,13 +3613,13 @@ API.Shares = {
                 continue;
             }
             $li.find('script').each(function() {
-                const text = $(this).text();
-                if (text.indexOf('shareInfos.push') > -1) {
-                    eval('window.infoJson=' + /[\s\S]+shareInfos.push\((\{[\s\S]+\})\);[\s\S]+/.exec(text)[1]);
-                    return false;
-                }
-            })
-            // 分享显示区
+                    const text = $(this).text();
+                    if (text.indexOf('shareInfos.push') > -1) {
+                        eval('window.infoJson=' + /[\s\S]+shareInfos.push\((\{[\s\S]+\})\);[\s\S]+/.exec(text)[1]);
+                        return false;
+                    }
+                })
+                // 分享显示区
             const $contentDiv = $($infoDiv.find('div.mod_conts._share_desc_cont'));
             // 分享描述
             const $temp_desc = $($contentDiv.find('div.mod_details.lbor > div.mod_brief > p.c_tx3.comming'));
@@ -3519,7 +3711,7 @@ API.Shares = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.SHARE_COMMENTS_URL, params);
+        return API.Utils.get(REST_URLS.SHARE_COMMENTS_URL, params);
     },
 
     /**
@@ -3538,7 +3730,7 @@ API.Shares = {
             "g_tk": QZone.Common.Config.gtk || API.Utils.initGtk(),
             "qzonetoken": QZone.Common.Config.token || API.Utils.getQZoneToken()
         }
-        return API.Utils.get(QZone_URLS.VISITOR_SINGLE_LIST_URL, params);
+        return API.Utils.get(REST_URLS.VISITOR_SINGLE_LIST_URL, params);
     }
 
 }
@@ -3566,7 +3758,7 @@ API.Visitors = {
             params.clear = 1;
             params.sd = Math.random()
         }
-        return API.Utils.get(isOwner ? QZone_URLS.VISITOR_MORE_LIST_URL : QZone_URLS.VISITOR_SIMPLE_LIST_URL, params);
+        return API.Utils.get(isOwner ? REST_URLS.VISITOR_MORE_LIST_URL : REST_URLS.VISITOR_SIMPLE_LIST_URL, params);
     },
 
     /**
@@ -3612,5 +3804,63 @@ API.Visitors = {
             titles.push('分享');
         }
         return '查看了' + titles.join('、');
+    }
+}
+
+/**
+ * 数据统计模块API
+ */
+API.Statistics = {
+
+    /**
+     * 获取GeoJson
+     * @param {string} code 文件URL
+     */
+    getMapJson(code) {
+        return new Promise(function(resolve, reject) {
+            chrome.runtime.sendMessage({
+                from: 'content',
+                type: 'getMapJson',
+                url: 'https://geo.datav.aliyun.com/areas_v3/bound/' + code + '_full.json'
+            }, function(data) {
+                if (chrome.runtime.lastError) {
+                    reject(null);
+                    return;
+                }
+                resolve(data);
+            })
+        });
+    },
+
+    /**
+     * 基于阿里云递归获取所有地图的JSON
+     * @param {String}} code 编码
+     */
+    async getAllMapJson(code) {
+        // 所有的地图的GeoJson，key为编码
+        window.mapGeoJson = window.mapGeoJson || {};
+        if (!code) {
+            return window.mapGeoJson;
+        }
+        // 发送请求，存在跨域问题，在背景页发送
+        await API.Statistics.getMapJson(code).then(async(data) => {
+
+            // 指定编码的GeoJson
+            window.mapGeoJson[code] = data;
+            // 递归获取
+            const features = data.features || [];
+            for (const feature of features) {
+                const properties = feature.properties || {};
+                if (properties.level === 'district' || properties.childrenNum === 0) {
+                    continue;
+                }
+                await API.Statistics.getAllMapJson(properties.adcode);
+            }
+
+        }).catch((e) => {
+            console.error(code, e)
+        })
+
+        return window.mapGeoJson;
     }
 }

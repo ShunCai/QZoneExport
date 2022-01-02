@@ -246,6 +246,9 @@ API.Utils = {
      *  @param {integer} time 
      */
     formatDate(time, str) {
+        if (!Number.isInteger(time)) {
+            return time;
+        }
         str = str || 'yyyy-MM-dd hh:mm:ss';
         return new Date(time * 1000).format(str);
     },
@@ -294,19 +297,19 @@ API.Utils = {
     /**
      * 获取超链接
      */
-    getLink(url, title, type) {
+    getLink(url, text, type) {
         // 默认HTML超链接
-        let res = "<a href='{url}' target='_blank'>{title}</a>";
+        let res = "<a href='{url}' target='_blank'>{text}</a>";
         switch (type) {
             case 'MD':
-                res = '[{title}]({url})'.format(title, url);
+                res = '[{text}]({url})'.format(text, url);
                 break;
             default:
                 break;
         }
         return res.format({
             url: url,
-            title: title
+            text: text
         });
     },
 
@@ -397,6 +400,23 @@ API.Utils = {
             }
         }
         return resMaps;
+    },
+
+    /**
+     * 根据指定字段分组
+     * @param {array} data 数据集合
+     * @param {string} field 字段名
+     */
+    groupedByField(data, field) {
+        data = data || [];
+        const groupData = new Map();
+        for (const item of data) {
+            const targetVal = item[field];
+            const targetList = groupData.get(targetVal) || [];
+            targetList.push(item);
+            groupData.set(targetVal, targetList);
+        }
+        return groupData;
     },
 
     /**
@@ -698,16 +718,6 @@ API.Common = {
      */
     getUserLink(uin, nickName, type) {
         return API.Utils.getLink(this.getUserUrl(uin), nickName, type);
-    },
-
-    /**
-     * 获取用户头像超链接
-     * @param {string} uin 目标QQ号
-     * @param {string} nickName 目标昵称
-     * @param {string} type 类型
-     */
-    getUserImageLink(uin) {
-        return API.Utils.getImageHTML(API.Common.getUserLogoLocalUrl(uin));
     },
 
     /**
@@ -1256,29 +1266,40 @@ API.Blogs = {
         }
     },
 
-    getBlogLabel(e) {
-        var t = [
+    /**
+     * 获取日志标签
+     * @param {Object} item 日志详情
+     * @returns 
+     */
+    getBlogLabel(item) {
+        const allLabelCfg = [
             ["8", "审核不通过"],
             ["22", "审核中"],
-            ["4", "顶"],
-            ["21", "荐"],
-            ["3", "转"],
-            ["28", "转"],
-            ["35", "转"],
-            ["36", "转"]
+            ["4", "置顶"],
+            ["21", "推荐"],
+            ["3", "转载"],
+            ["28", "转载"],
+            ["35", "转载"],
+            ["36", "转载"]
         ];
-        var a = '';
-        for (var o = 0; o < t.length; o++) {
-            var n = t[o][0];
-            if (n == 22) {
+        const labels = [];
+        for (let i = 0; i < allLabelCfg.length; i++) {
+            const bit = allLabelCfg[i][0];
+            if (bit == 22) {
                 continue;
             }
-            if (API.Blogs.getEffectBit(e, n)) {
-                a += '[{0}]'.format(t[o][1]);
-                break;
+            if (API.Blogs.getEffectBit(item, bit)) {
+                let label = allLabelCfg[i][1];
+                if (labels.indexOf(label) > -1) {
+                    continue;
+                }
+                labels.push(label);
             }
         }
-        return a;
+        if (labels.length === 0) {
+            labels.push('原创');
+        }
+        return labels;
     }
 }
 
@@ -1520,6 +1541,158 @@ API.Videos = {
             "isDebugIframe": false
         }
         return API.Utils.toUrl('https://v.qq.com/txp/iframe/player.html', params);
+    }
+}
+
+API.Friends = {
+
+    /**
+     * 获取共同好友
+     * @param {Object} friend 好友
+     */
+    getCommonFriend(friend) {
+        const list = [];
+        if (!friend || !friend.common || !friend.common.friend) {
+            return list;
+        }
+        return friend.common.friend;
+    },
+
+    /**
+     * 获取共同好友
+     * @param {Object} friend 好友
+     */
+    getShowCommonFriend(friend) {
+        if (friend.isMe) {
+            return '本人';
+        }
+        const friends = API.Friends.getCommonFriend(friend);
+        return friends.length;
+    },
+
+    /**
+     * 获取共同群组
+     * @param {Object} friend 好友
+     */
+    getCommonGroup(friend) {
+        const list = [];
+        if (!friend || !friend.common || !friend.common.group) {
+            return list;
+        }
+        for (const item of friend.common.group) {
+            list.push(item['name'] || item);
+        }
+        friend.common.group = list;
+        return list;
+    },
+
+    /**
+     * 获取共同群组
+     * @param {Object} friend 好友
+     */
+    getShowCommonGroup(friend, joinStr) {
+        if (friend.isMe) {
+            return '本人';
+        }
+        const groups = API.Friends.getCommonGroup(friend);
+        return groups.length == 0 ? '无' : groups.join(joinStr);
+    },
+
+    /**
+     * 获取相识显示时间
+     * @param {Object} friend 好友
+     */
+    getShowFriendTime(friend, showType) {
+        if (friend.isMe) {
+            return '本人';
+        }
+        if (!friend.addFriendTime || friend.addFriendTime === 0) {
+            return '老友';
+        }
+        if (0 === showType) {
+            return API.Utils.formatDate(friend.addFriendTime);
+        }
+        return moment().from(moment(friend.addFriendTime * 1000), true);
+    },
+
+    /**
+     * 获取QQ好友关系类型
+     * @param {Object} friend 好友信息
+     */
+    getShowFriendType(friend, showType) {
+        let showText = '未知';
+        let showClass = 'fa-user-times text-danger';
+        if (friend.isMe) {
+            showText = '本人';
+            showClass = 'fa-user';
+        }
+        if (friend.isFriend === 2) {
+            showText = '单向好友';
+        } else if (friend.isFriend === 1) {
+            showText = '双向好友';
+            showClass = 'fa-user';
+        }
+        if (showType === 'HTML') {
+            return `<span title="好友关系：{0}" class="fa {1}"></span>`.format(showText, showClass);
+        }
+        return showText;
+    },
+
+    /**
+     * 获取空间权限
+     * @param {Object} friend 好友信息
+     */
+    getShowAccessType(friend, showType) {
+        let showText = '未知';
+        let showClass = 'fa-lock text-danger';
+        if (friend.isMe) {
+            showText = '本人';
+            showClass = 'fa-unlock';
+        }
+        if (friend.access === false) {
+            showText = '无权限';
+        } else if (friend.access === true) {
+            showText = '有权限';
+            showClass = 'fa-unlock';
+        }
+        if (showType === 'HTML') {
+            return `<span title="QQ空间访问权限：{0}" class="fa {1}"></span>`.format(showText, showClass);
+        }
+        return showText;
+    },
+
+    /**
+     * 获取特别关心显示值
+     * @param {Object} friend 好友信息
+     */
+    getShowCare(friend, showType) {
+        const showText = friend.isMe ? '本人' : friend.care ? '已关心' : '未关心'
+        if (showType === 'HTML') {
+            return `<span title="{0}" class="fa {1}"></span>`.format(showText, friend.care ? 'fa-heartbeat text-danger' : 'fa-heart-o');
+        }
+        return showText;
+    },
+
+    /**
+     * 亲密度显示
+     * @param {Object} friend 好友信息
+     */
+    getShowIntimacyScore(friend) {
+        if (friend.isMe) {
+            return '本人';
+        }
+        return friend.intimacyScore || 0;
+    },
+
+    /**
+     * QQ通讯显示值
+     * @param {Object} friend 好友信息
+     */
+    getShowMessage(friend) {
+        return `<a href="{0}" target="_blank">
+                    <span title="与TA聊天" class="fa fa-qq"></span>
+                </a>`
+            .format(API.Common.getMessageUrl(friend.uin));
     }
 }
 
@@ -2073,4 +2246,203 @@ TPL.SHARES_YEAR_ITEMS = `
     <%}%>
     <hr>
 <%}%>        
+`
+
+/**
+ * 日志列表单篇日志模板
+ */
+TPL.BLOGS_LIST_ITEM = `
+    <a href="./info.html?blogId=<%:=blog.blogid || blog.blogId%>" class="list-group-item list-group-item-action mb-2">
+        <div class="d-flex w-100 justify-content-start">
+            <h6 class="mb-2">
+                <%let labels = API.Blogs.getBlogLabel(blog)%>
+                <%for (const label of labels) {%>
+                    <%if (label === '置顶') {%>
+                        <span class="badge badge-warning badge-pill">置顶</span>
+                    <%}else if (label === '原创'){%>
+                        <span class="badge badge-primary badge-pill">原创</span>
+                    <%}else{%>
+                        <span class="badge badge-secondary badge-pill"><%:=label%></span>
+                    <%}%>
+                <%}%>
+                <%:=blog.title%>
+            </h6>
+        </div>
+        <%if (blog.img && blog.img.length > 0) {%>
+            <div class="d-flex w-100 justify-content-start mb-2">
+                <%for (const image of blog.img) {%>
+                    <img class="rounded mr-1" src="<%:=image.custom_url || image.url%>">
+                <%}%>
+            </div>
+        <%}%>
+        <p class="mb-2"><%:=blog.abstract || '' %></p>
+        <div class="d-flex w-100 justify-content-start mt-2 mb-2 small">
+            <span class="mr-2 text-wrap" title="发表时间"><%:=API.Utils.formatDate(blog.pubtime)%></span>
+            <span class="text-primary fa fa-thumbs-up ml-2 mr-2 viewlikes" title="点赞数"><%:=blog.likeTotal%></span>
+            <span class="text-primary fa fa-comments-o mr-2 viewcomments" title="评论数"><%:=blog.replynum%></span>
+            <span class="text-primary fa fa-eye mr-2 viewVisitors" title="阅读数"><%:=blog.custom_visitor && blog.custom_visitor.viewCount || 0%></span>
+        </div>
+    </a>
+`
+
+/**
+ * 所有日志列表模板
+ */
+TPL.BLOGS_LIST = `
+    <%for (const blog of blogs) {%>
+        ` + TPL.BLOGS_LIST_ITEM + `
+    <%}%> 
+`
+
+/**
+ * 分类日志列表模板
+ */
+TPL.BLOGS_LIST_TYPE = `
+    <%for (const blog of categoryItems) {%>
+        ` + TPL.BLOGS_LIST_ITEM + `
+    <%}%> 
+`
+
+/**
+ * 日志列表模板
+ */
+TPL.BLOGS_TYPE_LIST = `
+<div class="row">
+    <%const cateHexMaps = new Map()%>
+    <%for (const [category, categoryItems] of categoryMaps) {%>
+        <%let cateHex = categoryItems[0].cateHex || API.Utils.newUid()%>
+        <%cateHexMaps.set(category,cateHex)%>
+    <%}%> 
+    <div class="col-2" id="blogs-types">
+        <div class="list-group" id="list-tab" role="tablist">
+            <a class="list-group-item list-group-item-action active" id="list-all-list" data-toggle="list" href="#list-all" role="tab">
+                全部日志
+                <span class="badge badge-warning badge-pill float-right"><%:=blogs.length%></span>
+            </a>
+            <%for (const [category, categoryItems] of categoryMaps) {%>
+                <a class="list-group-item list-group-item-action" id="list-<%:=cateHexMaps.get(category)%>-list" data-category="<%:=category%>" data-toggle="list" href="#list-<%:=cateHexMaps.get(category)%>" role="tab">
+                    <%:=category%>
+                    <span class="badge badge-warning badge-pill float-right"><%:=categoryItems.length%></span>
+                </a>
+            <%}%> 
+        </div>
+    </div>
+    <div class="col-8" id="blogs-type-list">
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="list-all" role="tabpanel" aria-labelledby="list-all-list">
+                <div class="list-group">
+                    ` + TPL.BLOGS_LIST + `
+                </div>
+            </div>
+            <%for (const [category, categoryItems] of categoryMaps) {%>
+                <div class="tab-pane fade" id="list-<%:=cateHexMaps.get(category)%>" data-category="<%:=category%>" role="tabpanel" aria-labelledby="list-<%:=cateHexMaps.get(category)%>-list">
+                    <div class="list-group">
+                        ` + TPL.BLOGS_LIST_TYPE + `
+                    </div>
+                </div>
+            <%}%> 
+        </div>
+    </div>
+</div>
+`
+
+/**
+ * 好友列表单个好友模板
+ */
+TPL.FRIENDS_LIST_ITEM = `
+ <div class="list-group-item list-group-item-action mb-2">
+     <div class="align-middle mb-3">
+        <a href="<%:=API.Common.getUserUrl(friend.uin)%>" target="_blank" title="访问TA的QQ空间">
+            <img src="<%:=API.Common.getMediaPath(API.Common.getUserLogoUrl(friend.uin), friend.custom_avatar, "Friends_HTML")%>">
+        </a>
+        <span title="备注/昵称" class="ml-2"><%:=friend.remark || friend.name%></span>
+     </div>
+     <ul class="list-inline">
+        <li class="list-inline-item qq-message">
+            <%:=API.Friends.getShowMessage(friend)%>
+        </li>
+        <li class="list-inline-item care">
+            <%:=API.Friends.getShowCare(friend, 'HTML')%>
+        </li>
+        <li class="list-inline-item access">
+            <%:=API.Friends.getShowAccessType(friend, 'HTML')%>
+        </li>
+        <li class="list-inline-item oneWay">
+            <%:=API.Friends.getShowFriendType(friend, 'HTML')%>
+        </li>
+        <li class="list-inline-item addFriendTime">
+            <span class="badge badge-primary badge-pill" title="好友成立时间：<%:=API.Friends.getShowFriendTime(friend, 0)%>" >相识：<%:=API.Friends.getShowFriendTime(friend, 1)%></small>
+        </li>
+        <li class="list-inline-item intimacyScore">
+            <span title="亲密度" class="badge badge-success badge-pill">亲密：<%:=API.Friends.getShowIntimacyScore(friend)%></span>
+        </li>
+        <li class="list-inline-item commonFriend ">
+            <span title="共同好友" class="badge badge-info badge-pill">好友：<%:=API.Friends.getShowCommonFriend(friend)%></span>
+        </li>
+        <li class="list-inline-item commonGroup">
+            <span title="共同群组：<%:=API.Friends.getShowCommonGroup(friend, '，')%>" class="badge badge-secondary badge-pill">群组：<%:=API.Friends.getCommonGroup(friend).length%></span>
+        </li>
+    </ul>
+ </div>
+`
+
+/**
+ * 所有日志列表模板
+ */
+TPL.FRIENDS_LIST = `
+ <%for (const friend of friends) {%>
+     ` + TPL.FRIENDS_LIST_ITEM + `
+ <%}%> 
+`
+
+/**
+ * 分类日志列表模板
+ */
+TPL.FRIENDS_LIST_GROUP = `
+ <%for (const friend of groupNameItems) {%>
+     ` + TPL.FRIENDS_LIST_ITEM + `
+ <%}%> 
+`
+
+/**
+ * 好友列表模板
+ */
+TPL.FRIENDS_GROUP_LIST = `
+<div class="row">
+    <%const groupKeyMaps = new Map()%>
+    <%for (const [groupName, groupNameItems] of groupMaps) {%>
+        <%let groupKey = groupName ==groupNameItems[0] && groupNameItems[0].groupName && groupNameItems[0].groupid || API.Utils.newUid()%>
+        <%groupKeyMaps.set(groupName,groupKey)%>
+    <%}%> 
+    <div class="col-3" id="friends-types">
+        <div class="list-group" id="list-tab" role="tablist">
+            <a class="list-group-item list-group-item-action active" id="list-all-list" data-toggle="list" href="#list-all" role="tab">
+                全部好友
+                <span class="badge badge-warning badge-pill float-right"><%:=friends.length%></span>
+            </a>
+            <%for (const [groupName, groupNameItems] of groupMaps) {%>
+                <a class="list-group-item list-group-item-action" id="list-<%:=groupKeyMaps.get(groupName)%>-list" data-toggle="list" href="#list-<%:=groupKeyMaps.get(groupName)%>" role="tab">
+                    <%:=groupName%>
+                    <span class="badge badge-warning badge-pill float-right"><%:=groupNameItems.length%></span>
+                </a>
+            <%}%> 
+        </div>
+    </div>
+    <div class="col-7" id="friends-type-list">
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="list-all" role="tabpanel" aria-labelledby="list-all-list">
+                <div class="list-group">
+                    ` + TPL.FRIENDS_LIST + `
+                </div>
+            </div>
+            <%for (const [groupName, groupNameItems] of groupMaps) {%>
+                <div class="tab-pane fade" id="list-<%:=groupKeyMaps.get(groupName)%>" role="tabpanel" aria-labelledby="list-<%:=groupKeyMaps.get(groupName)%>-list">
+                    <div class="list-group">
+                        ` + TPL.FRIENDS_LIST_GROUP + `
+                    </div>
+                </div>
+            <%}%> 
+        </div>
+    </div>
+</div>
 `

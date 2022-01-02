@@ -42,6 +42,10 @@ API.Boards.getPageList = async(pageIndex, indicator) => {
     return await API.Boards.getBoards(pageIndex).then(data => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
+        if (data.code < 0) {
+            // 获取异常
+            console.warn('获取一页的留言列表异常：', data);
+        }
         data = data.data || {};
 
         // 更新总数

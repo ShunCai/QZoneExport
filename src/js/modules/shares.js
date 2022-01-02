@@ -118,7 +118,12 @@ API.Shares.getItemAllCommentList = async(item) => {
         return await API.Shares.getComments(item.id, pageIndex).then(async(data) => {
 
             // JSON转换
-            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
+            data = API.Utils.toJson(data, /^_Callback\(/);
+            if (data.code < 0) {
+                // 获取异常
+                console.warn('获取单条分享的全部评论列表异常：', data);
+            }
+            data = data.data || {};
 
             item.commentTotal = item.commentTotal || data.total || 0;
 
@@ -270,7 +275,12 @@ API.Shares.getItemAllVisitorsList = async(item) => {
         const nextPageIndex = pageIndex + 1;
 
         return await API.Shares.getVisitors(item.id, pageIndex).then(async(data) => {
-            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
+            data = API.Utils.toJson(data, /^_Callback\(/);
+            if (data.code < 0) {
+                // 获取异常
+                console.warn('获取单条分享的全部最近访问异常：', data);
+            }
+            data = data.data || {};
 
             // 合并
             item.custom_visitor.viewCount = data.viewCount || 0;

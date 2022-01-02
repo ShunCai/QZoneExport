@@ -12,6 +12,9 @@ API.Blogs.export = async() => {
         let items = await API.Blogs.getAllList();
         console.info('日志列表获取完成', items);
 
+        // 添加下载任务
+        API.Blogs.handerListImages(items);
+
         // 获取日志内容
         items = await API.Blogs.getAllContents(items);
         console.info('日志内容获取完成', items);
@@ -63,7 +66,8 @@ API.Blogs.getAllContents = async(items) => {
                 const blogPage = jQuery(data);
 
                 // 基于DOM获取详细信息
-                item = API.Blogs.readDetailInfo(blogPage) || item;
+                const detailItem = API.Blogs.readDetailInfo(blogPage);
+                item = detailItem && Object.assign(item, detailItem);
 
                 // 获得网页中的日志正文
                 const $detailBlog = blogPage.find("#blogDetailDiv:first");
@@ -71,16 +75,14 @@ API.Blogs.getAllContents = async(items) => {
                 // 是否为模板日志
                 if (API.Blogs.isTemplateBlog(item)) {
                     // 模板日志，日志内容在变量中
-                    const reg_res = API.Utils.readScriptVar(blogPage, /var g_oBlogContent\s+=\s+'([\s\S]+\/div>)';/);
-                    eval((reg_res && reg_res[0] || '').replace('var g_oBlogContent', 'window.g_oBlogContent'))
-                    $detailBlog.html(window.g_oBlogContent);
+                    $detailBlog.html(API.Blogs.readTemplateContent(blogPage));
                 }
 
                 // 添加原始HTML
                 item.html = API.Utils.utf8ToBase64($detailBlog.html());
 
                 // 处理图片信息
-                await API.Blogs.handerImages(item, $detailBlog.find("img"));
+                await API.Blogs.handerContentImages(item, $detailBlog.find("img"));
 
                 // 处理视频信息
                 await API.Blogs.handerMedias(item, $detailBlog.find("embed"));
@@ -121,15 +123,20 @@ API.Blogs.getList = async(pageIndex, indicator) => {
     return await API.Blogs.getBlogs(pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
+        if (data.code < 0) {
+            // 获取异常
+            console.warn('获取日志列表异常：', data);
+        }
+        data = data.data || {};
 
         // 更新状态-下载中的数量
         indicator.addDownload(QZone_Config.Blogs.pageSize);
 
         // 更新状态-总数
-        QZone.Blogs.total = data.data.totalNum || QZone.Blogs.total || 0;
+        QZone.Blogs.total = data.totalNum || QZone.Blogs.total || 0;
         indicator.setTotal(QZone.Blogs.total);
 
-        let dataList = data.data.list || [];
+        let dataList = data.list || [];
 
         // 更新状态-下载成功数
         indicator.addSuccess(dataList);
@@ -245,7 +252,11 @@ API.Blogs.getItemCommentList = async(item, pageIndex) => {
     return await API.Blogs.getComments(item.blogid, pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
-        data = data.data;
+        if (data.code < 0) {
+            // 获取异常
+            console.warn('获取单条日志的单页评论列表异常：', data);
+        }
+        data = data.data || {};
         return data.comments || [];
     });
 }
@@ -408,13 +419,15 @@ API.Blogs.exportToMarkdown = async(items) => {
         // 获取日志MD内容
         const content = await API.Blogs.getMarkdown(item);
         // 写入内容到文件
-        const label = API.Blogs.getBlogLabel(item);
-        const title = item.title;
+        // 标签
+        const labels = API.Blogs.getBlogLabel(item);
         const date = new Date(item.pubtime * 1000).format('yyyyMMddhhmmss');
+        // 序号
         const orderNum = API.Utils.prefixNumber(index + 1, QZone.Blogs.total.toString().length);
-        let filename = API.Utils.filenameValidate(orderNum + "_" + date + "_【" + title + "】");
-        if (label) {
-            filename = API.Utils.filenameValidate(orderNum + "_" + date + "_" + label + "【" + title + "】");
+        // 文件名
+        let filename = API.Utils.filenameValidate(orderNum + "_" + date + "_【" + item.title + "】");
+        if (labels && labels.length > 0) {
+            filename = API.Utils.filenameValidate(orderNum + "_" + date + "_" + labels.join("_") + "【" + item.title + "】");
         }
         // 文件夹路径
         const categoryFolder = API.Common.getModuleRoot('Blogs') + "/" + item.category;
@@ -491,11 +504,39 @@ API.Blogs.getMarkdown = async(item) => {
 }
 
 /**
- * 处理日志的图片
+ * 处理日志列表的图片
+ * @param {Array} items 日志列表
+ */
+API.Blogs.handerListImages = async(items) => {
+    if (QZone_Config.Blogs.exportType !== 'HTML' || QZone_Config.Blogs.viewType !== '1' || API.Common.isQzoneUrl()) {
+        // 非HTMl备份、非摘要模式、QQ空间外链，无需处理列表图片
+        return;
+    }
+    for (const item of items) {
+        const images = item.img || [];
+        for (const image of images) {
+            // 图片地址
+            const url = API.Utils.toHttp(image.url);
+
+            // 添加下载任务
+            const uid = API.Utils.newSimpleUid(8, 16);
+            const suffix = await API.Utils.autoFileSuffix(url);
+            image.custom_url = uid + suffix;
+
+            API.Utils.newDownloadTask('Blogs', url, 'Blogs/Images', image.custom_url, item);
+
+            // 备份的显示地址
+            image.custom_url = 'Images/' + image.custom_url;
+        }
+    }
+}
+
+/**
+ * 处理日志内容的图片
  * @param {object} item 日志
  * @param {Array} images 图片元素列表
  */
-API.Blogs.handerImages = async(item, images) => {
+API.Blogs.handerContentImages = async(item, images) => {
     if (!images) {
         // 无图片不处理
         return item;
@@ -617,8 +658,8 @@ API.Blogs.exportToJson = async(items) => {
  */
 API.Blogs.sort = (items) => {
     const compare = function(obj1, obj2) {
-        const isTop1 = API.Blogs.getBlogLabel(obj1).indexOf('顶') > -1;
-        const isTop2 = API.Blogs.getBlogLabel(obj2).indexOf('顶') > -1;
+        const isTop1 = API.Blogs.getBlogLabel(obj1).indexOf('置顶') > -1;
+        const isTop2 = API.Blogs.getBlogLabel(obj2).indexOf('置顶') > -1;
         const res = obj1.pubtime > obj2.pubtime ? 1 : -1;
         if (isTop1 !== isTop2) {
             if (isTop1) {
@@ -716,7 +757,12 @@ API.Blogs.getItemAllVisitorsList = async(item) => {
         const nextPageIndex = pageIndex + 1;
 
         return await API.Blogs.getVisitors(item.blogid, pageIndex).then(async(data) => {
-            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
+            data = API.Utils.toJson(data, /^_Callback\(/);
+            if (data.code < 0) {
+                // 获取异常
+                console.warn('获取单条日志的全部最近访问异常：', data);
+            }
+            data = data.data || {};
 
             // 合并
             item.custom_visitor.viewCount = data.viewCount || 0;
@@ -818,9 +864,16 @@ API.Blogs.getAllReadCount = async(items) => {
                 }
                 blogIds.push(item.blogid);
             }
+
             // 单独获取日志的阅读数
             let data = await API.Blogs.getReadCount(blogIds);
-            data = API.Utils.toJson(data, /^_Callback\(/).data || {};
+            data = API.Utils.toJson(data, /^_Callback\(/);
+            if (data.code < 0) {
+                // 获取异常
+                console.warn('获取日志阅读数异常：', data);
+            }
+            data = data.data || {};
+
             const readList = data.itemList || [];
             const idMaps = API.Utils.groupedByField(readList, "id");
             for (const item of list) {
