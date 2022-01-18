@@ -1117,11 +1117,14 @@ API.Utils = {
      *  @param {string} jsonpKey 
      */
     toJson(json, jsonpKey) {
+
+        // JSONP的函数部分仍使用正则替换
         json = json.replace(jsonpKey, "");
-        json = json.replace(/\);\s+$/, "");
-        json = json.replace(/\);$/, "");
-        json = json.replace(/\)\s+$/, "");
-        json = json.replace(/\)$/, "");
+
+        // 不基于正则替换，如果JSON本身有这些字符，会被替换掉
+        // 懒得折腾了，还是直接截取简单
+        json = json.substring(0, json.lastIndexOf(')'));
+
         return JSON.parse(json);
     },
 
@@ -2325,7 +2328,7 @@ API.Friends = {
         return `<a href="{0}" target="_blank">
                     <span title="与TA聊天" class="fa fa-qq"></span>
                 </a>`
-        .format(API.Common.getMessageUrl(friend.uin));
+            .format(API.Common.getMessageUrl(friend.uin));
     }
 };
 
