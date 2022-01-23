@@ -264,7 +264,7 @@ API.Common.handerContentImages = (module, content, type) => {
     if ("MD" === type) {
         content.replace(/!\[.*?\]\((.+?)\)/g, function(linkmd, url) {
             let custom_filename = API.Common.addDownloadTask(module, url, content);
-            return linkmd.replace(url, API.Common.getMediaPath(url, 'Common/images/' + custom_filename, "Messages_HTML"));
+            return linkmd.replace(url, API.Common.getMediaPath(url, 'Common/Images/' + custom_filename, "Messages_HTML"));
         })
         return content;
     }
@@ -275,7 +275,7 @@ API.Common.handerContentImages = (module, content, type) => {
         const $img = $(images[i]);
         let url = $img.attr('orgsrc') || $img.attr('src') || '';
         let custom_filename = API.Common.addDownloadTask(module, url, content);
-        $img.attr('src', API.Common.getMediaPath(url, 'Common/images/' + custom_filename, "Messages_HTML"));
+        $img.attr('src', API.Common.getMediaPath(url, 'Common/Images/' + custom_filename, "Messages_HTML"));
     }
     return _html.html();
 }
@@ -291,7 +291,7 @@ API.Common.addDownloadTask = (module, url, content) => {
     if (!custom_filename) {
         custom_filename = API.Utils.newSimpleUid(8, 16);
         // 添加下载任务
-        API.Utils.newDownloadTask(module, url, 'Common/images', custom_filename, content);
+        API.Utils.newDownloadTask(module, url, 'Common/Images', custom_filename, content);
         QZone.Common.FILE_URLS.set(url, custom_filename);
     }
     return custom_filename;
@@ -1043,7 +1043,7 @@ API.Common.downloadUserAvatar = (user) => {
         return;
     }
 
-    API.Utils.newDownloadTask('Friends', avatarUrl, 'Common/images', user.uin + '', user);
+    API.Utils.newDownloadTask('Friends', avatarUrl, 'Common/Images', user.uin + '', user);
     user.avatar = API.Common.getUserLogoUrl(user.uin);
     user.custom_avatar = API.Common.getUserLogoLocalUrl(user.uin);
 
