@@ -1129,8 +1129,14 @@ API.Utils = {
             json = json.substring(0, json.lastIndexOf(')'));
         }
 
-        // 不使用JSON.parse，文案中有特殊字符时会异常，比如有[没有]，或者有反斜杠\
-        return eval("(" + json + ")");
+        try {
+            // 使用默认JSON转换器
+            return JSON.parse(json);
+        } catch (error) {
+            // 如果异常了再使用eval转换
+            // 不使用JSON.parse，文案中有特殊字符时会异常，比如有反斜杠\
+            return eval("(" + json + ")");
+        }
     },
 
     /**
@@ -1698,7 +1704,7 @@ API.Common = {
      */
     getUserLogoLocalUrl(uin) {
         // 头像默认PNG格式
-        return "Common/images/{uin}".format({
+        return "Common/Images/{uin}".format({
             uin: uin
         });
     },
