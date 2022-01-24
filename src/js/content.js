@@ -1083,10 +1083,6 @@ class QZoneOperator {
         // 创建模块文件夹
         await createModuleFolder();
 
-        // 创建说明文件
-        let res = await API.Utils.get(chrome.runtime.getURL('others/README.md'));
-        let fileEntry = await API.Utils.writeText(res, API.Common.getRootFolder() + "/README.md");
-        console.info('生成说明文件完成', fileEntry);
         console.info('初始化模块文件夹结束', QZone);
     }
 

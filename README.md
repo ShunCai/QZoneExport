@@ -6,155 +6,135 @@
 
 落叶随风，青春，稍纵即逝，QQ空间，一个承载了很多人的青春的地方。
 
-然而，新浪博客相册宣布停止运营，网易相册关闭，QQ账号支持注销等等，无不意味着，互联网产品都有着自己的生命周期，但生命周期到了尽头，记录着我们的青春的数据怎么办？
+或许，是遗憾，毕竟，谁的青春没留遗憾呢，[《曾经沧海无限感慨，唯愿往事随风》](https://user.qzone.qq.com/20050606/blog/1559786793)。
 
-个人数据，还是掌握到自己手里的好，QQ空间导出助手，可以导出备份QQ空间的日志、私密日志、说说、相册、留言板、QQ好友、视频、收藏夹为文件，便于永久保存与迁移。
+或许，是害怕，曾经的青春变得不可控，毕竟，博客相册、网易相册、腾讯微博等相继停运，无不意味着，互联网产品都有着自己的生命周期。
 
-## 前言
-作为一个QQ空间曾经的重度用户，QQ空间是一个承载了我整个青春的地方，在看到QQ空间官方文章[《曾经沧海无限感慨，唯愿往事随风》](https://user.qzone.qq.com/20050606/blog/1559786793)之后，萌生了备份QQ空间的念头，在互联网的巨浪上逛了一遍后，找到了一些工具或者脚本，要么收费，要么操作复杂，要么备份类型单一、于是乎，免费、简单、全类型备份的QQ空间导出助手诞生了。
+于是，萌生了备份QQ空间的念头，也在互联网上找到一些工具与脚本，要么操作复杂、要么备份类型单一，于是乎，简单易用全类型备份的QQ空间导出助手诞生了。
 
 [![我是往事随风。你好，我是轻舞飞扬。](https://s1.ax1x.com/2020/05/16/YcekPP.gif)](https://v.qq.com/x/page/f08719wqfd0.html)
 
-## 功能
-1. 支持QQ空间说说备份与导出，包括点赞、评论、最近访问
-2. 支持QQ空间日志备份与导出，包括点赞、评论、最近访问
-3. 支持QQ空间私密日记备份与导出，包括点赞、评论、最近访问
-4. 支持QQ空间相册备份与导出，包括点赞、评论、最近访问
-5. 支持QQ空间视频备份与导出，包括点赞、评论、最近访问
-6. 支持QQ空间留言板备份与导出
-7. 支持QQ空间收藏夹备份与导出
-8. 支持QQ空间分享备份与导出
-9. 支持QQ空间好友备份与导出
-10. 支持QQ空间访客备份与导出
+# 功能清单
+- 支持备份QQ空间文字说说、图文说说、语音说说、长说说，以及评论、点赞、最近访问
+- 支持备份QQ空间文字日志、图文日志、模板日志，以及评论、点赞、最近访问
+- 支持备份QQ空间文字私密日记、图文私密日记，以及评论、点赞、最近访问
+- 支持备份QQ空间相册/相片，以及相册/相片的评论、相册/相片的点赞、相册的最近访问
+- 支持备份QQ空间视频，以及评论、点赞、最近访问
+- 支持备份QQ空间留言板的寄语与留言、以及留言回复
+- 支持备份QQ好友、含好友成立时间、单向好友检测、空间访问权限检测、特别关心的好友等
+- 支持备份QQ空间分享内容，以及评论、点赞、最近访问
+- 支持备份QQ空间收藏夹内容
+- 支持备份QQ空间访客
 
 ## 安装
-
 #### 在线安装
 - [Chrome浏览器](https://chrome.google.com/webstore/detail/aofadimegphfgllgjblddapiaojbglhf)
-
 - [Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/djfalpkpjgpkfnkfmnegbalnicdoljcn)
-
 - [360极速浏览器](https://ext.chrome.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
-
 - [360安全浏览器](https://ext.se.360.cn/webstore/detail/dboplopmhoafmbcbmcecapkmcodhcegh)
-
 - 其他[Chromium内核浏览器](https://baidu.lvshuncai.com/?q=Q2hyb21pdW3lhoXmoLjmtY/op4jlmag=)请移步->[离线安装](#离线安装)。
 
 #### 离线安装
 ##### 方式①：源码安装
-1. [下载ZIP包](https://github.com/ShunCai/QZoneExport/releases/latest)
-2. 解压ZIP包
-3. 打开[扩展中心](chrome://extensions)
-4. 勾选开发者模式
-5. 点击[加载已解压的扩展程序]按钮
-6. 选择ZIP包解压文件夹
-7. 更多问题点击[这里](https://baidu.lvshuncai.com/?q=Q2hyb21lIOWuieijhSDnprvnur/lronoo4Ug5omp5bGVIENSWA==)
+1. [下载源码Zip包](https://github.com/ShunCai/QZoneExport/releases/latest)
+2. 解压源码Zip包
+3. 打开【浏览器扩展管理】
+4. 打开【开发者模式】
+5. 点击【加载已解压的扩展程序】按钮
+6. 选择源码包(ZIP)的解压文件夹
+7. 安装完成
+8. 更多问题点击[这里](https://baidu.lvshuncai.com/?q=Q2hyb21lIOWuieijhSDnprvnur/lronoo4Ug5omp5bGVIENSWA==)
 
 ##### 方式②：CRX安装
 1. [下载CRX包](https://github.com/ShunCai/QZoneExport/releases/latest)
-2. 打开[扩展中心](chrome://extensions)
-3. 拖拽下载好的CRX包到扩展中
-4. 更多问题点击[这里](https://baidu.lvshuncai.com/?q=Q2hyb21lIOWuieijhSDnprvnur/lronoo4Ug5omp5bGVIENSWA==)
+2. 打开【浏览器扩展管理】
+3. 打开【开发者模式】
+4. 拖拽下载好的CRX包到扩展中
+5. 安装完成
+6. 更多问题点击[这里](https://baidu.lvshuncai.com/?q=Q2hyb21lIOWuieijhSDnprvnur/lronoo4Ug5omp5bGVIENSWA==)
 
 #### 版本要求
-1. 未测试，建议Chromium内核版本在70以上。  
-2. 理论上基于Chromium内核版本的浏览器均可正常使用
-3. [查看当前浏览器内核版本](https://liulanmi.com/labs/core.html)
+- Chromium内核版本70以上
+- 理论上基于Chromium内核版本的浏览器均可正常使用
+   - [Edge浏览器](https://www.microsoft.com/zh-cn/edge)
+   - [Chrome浏览器](https://www.google.cn/chrome/)
+   - [360极速浏览器](http://browser.360.cn/ee)
+   - [360安全浏览器](https://browser.360.cn/)
+- [点击这里查看当前浏览器内核版本](https://liulanmi.com/labs/core.html)
 
-
-## 使用
-1. 先进行安装，可[在线安装](#在线安装)或[离线安装](#离线安装)
-2. 安装完成后，根据个人情况先进行助手的配置，详情请访问：[配置](https://github.com/ShunCai/QZoneExport/wiki/Configuration)   
-[![hSDvRA.png](https://z3.ax1x.com/2021/08/22/hSDvRA.png)](https://imgtu.com/i/hSDvRA)
-3. [登录需要备份的QQ空间](https://i.qq.com/)  
-4. 插件栏点击插件图标  
-[![T2Z19e.md.png](https://s4.ax1x.com/2021/12/30/T2Z19e.md.png)](https://imgtu.com/i/T2Z19e)
-5. 根据个人情况，勾选需要备份的QQ空间数据，默认为全部备份  
-[![hSg5xH.png](https://z3.ax1x.com/2021/08/22/hSg5xH.png)](https://imgtu.com/i/hSg5xH)
-6. 点击开始备份，助手开始收集QQ空间数据，等待数据收集完成
-[![hScJAK.md.png](https://z3.ax1x.com/2021/08/22/hScJAK.md.png)](https://imgtu.com/i/hScJAK)
-7. 收集完成后，点击【打包下载】按钮，下载QQ空间备份的ZIP包，等待下载完成
-[![hS2FoV.md.png](https://z3.ax1x.com/2021/08/22/hS2FoV.md.png)](https://imgtu.com/i/hS2FoV)
-[![hS2uLR.md.png](https://z3.ax1x.com/2021/08/22/hS2uLR.md.png)](https://imgtu.com/i/hS2uLR)
-8. 如果未关闭了【下载前询问每个文件的保存位置】，将提示下载位置，关闭了则直接保存到浏览器设置的下载文件夹中
-[![hSgiCD.md.png](https://z3.ax1x.com/2021/08/22/hSgiCD.md.png)](https://imgtu.com/i/hSgiCD)
-9. 点击【查看备份】按钮，将打开ZIP包所在的目录
-[![hS2YSe.md.png](https://z3.ax1x.com/2021/08/22/hS2YSe.md.png)](https://imgtu.com/i/hS2YSe)
-[![hS22Os.md.png](https://z3.ax1x.com/2021/08/22/hS22Os.md.png)](https://imgtu.com/i/hS22Os)
-10. [进行QQ空间备份文件夹的合并](https://github.com/ShunCai/QZoneExport/wiki/Help#QQ空间备份合并)
-11. [查看QQ空间备份内容](https://github.com/ShunCai/QZoneExport/wiki/Help#查看QQ空间备份)
-12. 更多使用说明请访问：[使用说明](https://github.com/ShunCai/QZoneExport/wiki/Help)
-
+## 使用说明
+1. 进行助手的安装，参考[在线安装](#在线安装)或[离线安装](#离线安装)进行助手安装
+2. 助手安装完成后，可进行助手的配置，可参考[配置说明](https://lvshuncai.com/qzone-export.html#配置说明)
+3. 助手配置完成后，先登录自己的[QQ空间](https://i.qq.com/)
+4. 进入需要备份的QQ空间，如若备份自己的[QQ空间](https://i.qq.com/)，可跳过
+5. 刷新QQ空间使助手配置生效，如若是保存配置后再打开的QQ空间页面，可跳过
+6. 插件栏点击插件图标
+   [![75EXvj.png](https://s4.ax1x.com/2022/01/23/75EXvj.png)](https://imgtu.com/i/75EXvj)
+7. 选择要备份的QQ空间内容，点击【开始备份】
+   [![7TIqG8.png](https://s4.ax1x.com/2022/01/24/7TIqG8.png)](https://imgtu.com/i/7TIqG8)
+8. 助手将开始收集QQ空间的数据，请耐心等待数据收集完成
+   [![75eUC8.png](https://s4.ax1x.com/2022/01/23/75eUC8.png)](https://imgtu.com/i/75eUC8)
+9.  采集完成后，助手自动添加[多媒体文件](https://lvshuncai.com/qzone-export.html#多媒体文件)的下载任务到[文件下载工具](https://lvshuncai.com/qzone-export.html#文件下载工具)
+   [![75mZrj.png](https://s4.ax1x.com/2022/01/23/75mZrj.png)](https://imgtu.com/i/75mZrj)
+10. 下载任务添加完成后，备份界面下方将出现【打包下载】按钮
+   [![75mbes.png](https://s4.ax1x.com/2022/01/23/75mbes.png)](https://imgtu.com/i/75mbes)
+11. 点击【打包下载】按钮时，助手自动打包[文案内容](https://lvshuncai.com/qzone-export.html#文案内容)到ZIP包中并下载ZIP包
+   [![75nAFx.png](https://s4.ax1x.com/2022/01/23/75nAFx.png)](https://imgtu.com/i/75nAFx)
+12. ZIP包下载完成后，点击【查看备份】按钮查看ZIP包，或自行打开[文案内容下载文件夹](https://lvshuncai.com/qzone-export.html#文案内容下载文件夹)查看[备份压缩包](https://lvshuncai.com/qzone-export.html#备份压缩包)
+   [![75neSO.png](https://s4.ax1x.com/2022/01/23/75neSO.png)](https://imgtu.com/i/75neSO)
+13. 再进行[文案内容备份文件夹](https://lvshuncai.com/qzone-export.html#文案内容备份文件夹)与[多媒体文件备份文件夹](https://lvshuncai.com/qzone-export.html#多媒体文件备份文件夹)进行合并，详情参考：[备份文件夹合并](https://lvshuncai.com/qzone-export.html#备份文件夹合并)
+14. 合并完成后，根据备份类型的不同，自行[查看备份内容](https://lvshuncai.com/qzone-export.html#查看备份内容)
+   [![7T4kxH.png](https://s4.ax1x.com/2022/01/24/7T4kxH.png)](https://imgtu.com/i/7T4kxH)
+15. [点击这里查看更多说明](https://lvshuncai.com/qzone-export.html#使用说明)
 
 ## 常见问题    
-#### 是否会导致QQ空间账号被冻结
-1. 一般情况下不会，但如果助手采集速度过快时，偶尔会造成 QQ 空间短暂的冻结，如造成相册访问空白等。
-2. 过段时间会自动解冻，如若介意，请勿使用，否则，后果自负。
-3. 可通过调整相应模块的数据采集时间
-
+是否会导致QQ空间账号被冻结
+- 一般情况下不会，但如果助手采集速度过快时，偶尔会造成QQ空间短暂的冻结，如造成相册访问空白等。
+- 过段时间会自动解冻，如若介意，请勿使用，否则，后果自负。
+- 如遇冻结，建议上调相应模块的数据采集时间
 ---
-#### 是否会导致QQ空间账号被封号
-1. 理论上不会，但不承诺一定不会封号
-2. 至少目前为止，本人没有遭遇封号
-3. 曾有用户反馈遭遇封号，如若介意，请勿使用，否则，后果自负。
-
+是否会导致QQ空间账号被封号
+- 理论上不会，但不承诺一定不会封号
+- 至少目前为止，本人没有遭遇封号
+- 曾有用户反馈遭遇封号，如若介意，请勿使用，否则，后果自负。
 ---
-#### 是否会导致个人隐私的泄露
-1. 助手承诺不泄露个人隐私，第三方修改版除外
-2. 如因个人原因导致备份文件丢失与泄露，本助手概不负责。
-3. 更多详情请访问[隐私政策](https://github.com/ShunCai/QZoneExport/wiki/Privacy-Policy)
+是否会导致个人隐私的泄露
+- 助手承诺不泄露个人隐私，第三方修改版除外
+- 如因个人原因导致备份文件丢失与泄露，本助手概不负责。
+- 更多详情请访问[隐私政策](https://github.com/ShunCai/QZoneExport/wiki/Privacy-Policy)
 
----
-#### 是否可以导出他人空间的数据
-1. 可以，但仅支持导出有权限访问或公开的数据
-2. 建议先征求他人同意后备份，避免造成误会或造成他人信息泄露
-3. 如果造成他人信息泄露，本助手概不负责
-4. 更多详情请访问[隐私政策](https://github.com/ShunCai/QZoneExport/wiki/Privacy-Policy)
+助手是否安全，是否会泄露个人隐私
+- 安全，如果开源都不安全，那我也不知道怎么才算安全了
+- 官方版保证安全，第三方修改版除外。
+- 更多详情请访问[隐私政策](https://github.com/ShunCai/QZoneExport/wiki/Privacy-Policy)
 
----
-#### 是否可以导出他人空间加密相册
-1. 不可以，如有大神可以破解，请联系本人！^_^
-2. 更多详情参考[是否可以导出他人空间的数据](https://github.com/ShunCai/QZoneExport/wiki/Question#是否可以导出他人空间的数据)
+> 更多问题请访问：[常见问题](https://lvshuncai.com/qzone-export.html#常见问题)
 
----
-#### 无法进入QQ空间能否备份QQ空间内容
-1. 不能，助手是模拟用户访问QQ空间进行备份，无法进入时无法备份
-2. 比如QQ被封号、没有权限访问他人空间等等
-2. 更多详情参考[是否可以导出他人空间加密相册](https://github.com/ShunCai/QZoneExport/wiki/Question#是否可以导出他人空间加密相册)
-
-#### 更多问题请访问：[常见问题](https://github.com/ShunCai/QZoneExport/wiki/Question)
-
-## 配置
-- 插件栏右键插件图标
-- 弹出菜单选择【选项】  
-- 根据个人情况设置配置项
-- 点击保存
-- 刷新QQ空间页面
-- 详细配置项请查看助手选项页
-- 更多配置说明请访问：[配置说明](https://github.com/ShunCai/QZoneExport/wiki/Configuration)
+## 配置说明
+1. 浏览器插件栏右键助手图标，选择【选项】菜单后，将进入助手配置页   
+[![75Fc4g.png](https://s4.ax1x.com/2022/01/23/75Fc4g.png)](https://imgtu.com/i/75Fc4g)
+3. 【注意事项】：助手更新配置后，需要点击下方配置页的保存按钮
+4. 【注意事项】：保存后，需要刷新QQ空间页面才能使最新的配置在备份页面生效。
+5. 更多配置说明请访问：[配置说明](https://lvshuncai.com/qzone-export.html#配置说明)
 
 
 ## 预览
-#### 首页
-[![首页](https://z3.ax1x.com/2021/08/22/hSIABQ.png)](https://imgtu.com/i/hSIABQ)
+#### 首页概要
+![说说](https://s1.ax1x.com/2020/05/16/YcVx7n.png)
 #### 说说列表
 ![说说](https://s1.ax1x.com/2020/05/16/YcVx7n.png)
 #### 日志列表
-![Q日志详情](https://s1.ax1x.com/2020/05/16/YcZ9hV.png)
+![日志详情](https://s1.ax1x.com/2020/05/16/YcZ9hV.png)
+#### 日志详情
+![日志详情](https://s1.ax1x.com/2020/05/16/YcZ9hV.png)
 #### 相册列表
 [![相册列表](https://z3.ax1x.com/2021/08/22/hSI3B4.png)](https://imgtu.com/i/hSI3B4)
 #### 相片列表
 ![相片](https://s1.ax1x.com/2020/05/16/YcZi1U.png)
 #### 相片详情
 ![相片详情](https://s1.ax1x.com/2020/05/16/YcZFcF.png)
-#### 留言板
-![留言板](https://s1.ax1x.com/2020/05/16/YcZSkq.png)
-#### 收藏夹
-![收藏夹](https://s1.ax1x.com/2020/05/16/YcZpt0.png)
-#### 分享
-[![分享](https://z3.ax1x.com/2021/08/22/hSTSQf.png)](https://imgtu.com/i/hSTSQf)
-#### 访客
-[![访客](https://z3.ax1x.com/2021/08/22/hSo6LF.png)](https://imgtu.com/i/hSo6LF)
+#### 更多
+[在线预览](https://demo.lvshuncai.com/qzone-export/index.html)
 
 ## 依赖
 - [Blob.js](https://note.youdao.com/)

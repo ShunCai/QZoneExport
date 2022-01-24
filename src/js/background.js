@@ -189,11 +189,18 @@ chrome.runtime.onInstalled.addListener((details) => {
     console.info('QQ空间导出助手安装中...', details);
     let reason = details.reason;
     let previousVersion = details.previousVersion;
+
+    // 打开更新日志
+    chrome.tabs.create({
+        url: 'https://github.com/ShunCai/QZoneExport/releases/latest'
+    });
+
     switch (reason) {
         // 安装
         case chrome.runtime.OnInstalledReason.INSTALL:
+            // 打开官网说明文档
             chrome.tabs.create({
-                url: 'html/options.html'
+                url: 'https://lvshuncai.com/qzone-export.html'
             });
             break;
             // 更新
@@ -212,6 +219,12 @@ chrome.runtime.onInstalled.addListener((details) => {
                     // 重置备份数据
                     chrome.storage.local.clear(function() {
                         console.info('重置备份数据完成');
+                    });
+                    break;
+                case '1.1.4':
+                    // 打开官网说明文档
+                    chrome.tabs.create({
+                        url: 'https://lvshuncai.com/qzone-export.html'
                     });
                     break;
                 default:

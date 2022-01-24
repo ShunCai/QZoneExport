@@ -471,6 +471,25 @@ API.Utils = {
             size = size / 1024;
         }
         return (unit === 'Bytes' ? size : size.toFixed(pointLength === undefined ? 2 : pointLength)) + unit;
+    },
+
+    /**
+     * 计算年份条目数量
+     * @param {Map} yearMaps 
+     */
+    sumYearItemSize(yearMaps) {
+        let i = 0;
+        for (const [year, yearMap] of yearMaps) {
+            // 如果是Map
+            if (yearMap instanceof Map) {
+                i += this.sumYearItemSize(yearMap);
+            }
+            // 如果是数组
+            if (Array.isArray(yearMap)) {
+                i += yearMap.length;
+            }
+        }
+        return i;
     }
 
 }
@@ -2075,16 +2094,16 @@ TPL.MESSAGES_ITEM = `
  */
 TPL.MESSAGES_YEAR_ITEMS = `
 <%if (yearMaps && yearMaps.size > 0) {%>
-    <h3 class="sidebar-h1" data-tag="h1" data-sidebar="那年今日">那年今日</h3>
+    <h5 class="sidebar-h1" data-tag="h1">那年今日</h5>
     <%for (const [year, yearItems] of yearMaps) {%>
         <%if (yearItems && yearItems.length > 0) {%>
-            <span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=year%>年"></span>
+            <h6 class="sidebar-h2" data-tag="h2"><%:=year%>年<span class="badge badge-primary badge-pill itemSize"><%:=yearItems.length%><span></h6>
             <%for (const message of yearItems) {%>
                 ` + TPL.MESSAGES_ITEM + `
             <%}%>  
         <%}%>       
     <%}%>
-    <hr>
+    <div class="text-center text-black-50 mt-3">回忆有底线<i class="fa fa-heart text-danger m-2"></i>未来无限量</div>
 <%}%>        
 `
 
@@ -2147,21 +2166,22 @@ TPL.BOARDS_ITEM = `
  */
 TPL.BOARDS_YEAR_ITEMS = `
 <%if (yearMaps && yearMaps.size > 0) {%>
-    <h3 class="sidebar-h1" data-tag="h1" data-sidebar="那年今日">那年今日</h3>
+    <h5 class="sidebar-h1" data-tag="h1">那年今日</h5>
     <%for (const [year, yearItems] of yearMaps) {%>
         <%if (yearItems && yearItems.length > 0) {%>
-            <span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=year%>年"></span>
+            <h6 class="sidebar-h2" data-tag="h2"><%:=year%>年<span class="badge badge-primary badge-pill itemSize"><%:=yearItems.length%><span></h6>
             <%for (const board of yearItems) {%>
                 ` + TPL.BOARDS_ITEM + `
             <%}%>  
         <%}%>       
     <%}%>
-    <hr>
+    <div class="text-center text-black-50 mt-3">回忆有底线<i class="fa fa-heart text-danger m-2"></i>未来无限量</div>
 <%}%>        
 `
-    /**
-     * 那年今日的分享的评论模板
-     */
+
+/**
+ * 那年今日的分享的评论模板
+ */
 TPL.SHARES_COMMENTS = `
  <%if(share.comments && share.comments.length > 0){%>
      <%/* 遍历评论 */%>
@@ -2235,16 +2255,16 @@ TPL.SHARES_ITEM = `
  */
 TPL.SHARES_YEAR_ITEMS = `
 <%if (yearMaps && yearMaps.size > 0) {%>
-    <h3 class="sidebar-h1" data-tag="h1" data-sidebar="那年今日">那年今日</h3>
+    <h5 class="sidebar-h1" data-tag="h1">那年今日</h5>
     <%for (const [year, yearItems] of yearMaps) {%>
         <%if (yearItems && yearItems.length > 0) {%>
-            <span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=year%>年"></span>
+            <h6 class="sidebar-h2" data-tag="h2"><%:=year%>年<span class="badge badge-primary badge-pill itemSize"><%:=yearItems.length%><span></h6>
             <%for (const share of yearItems) {%>
                 ` + TPL.SHARES_ITEM + `
             <%}%>  
         <%}%>       
     <%}%>
-    <hr>
+    <div class="text-center text-black-50 mt-3">回忆有底线<i class="fa fa-heart text-danger m-2"></i>未来无限量</div>
 <%}%>        
 `
 

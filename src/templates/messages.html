@@ -51,16 +51,12 @@
 	</header>
 	<main role="main" class="flex-shrink-0">
 		<div id="messages_html" class="container messages">
-			<%/* 遍历年份 */%>
-			<%for (var yearMap of messageMaps) {%>
-				<%/* 年份 */%>
-				<span class="sidebar-h1" data-tag="h1" data-sidebar="<%:=yearMap[0]%>年"></span>
-				<%for (var monthMap of yearMap[1]) {%>
-					<%/* 月份 */%>
-					<span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=monthMap[0]%>月"></span>
-					<%/* 月份数据 */%>
-					<%for (let index = 0; index < monthMap[1].length; index++) {%>
-						<%const message = monthMap[1][index]%>
+			<%for (const [year, yearMap] of messageMaps) {%>
+				<span class="sidebar-h1" data-tag="h1" data-sidebar='<%:=year%>年<span class="badge badge-primary badge-pill itemSize"><%:=API.Utils.sumYearItemSize(yearMap)%><span>'></span>
+				<%for (const [month, monthItems] of yearMap) {%>
+					<span class="sidebar-h2" data-tag="h2" data-sidebar='<%:=month%>月<span class="badge badge-primary badge-pill itemSize"><%:=monthItems.length%><span>'></span>
+					<%for (let index = 0; index < monthItems.length; index++) {%>
+						<%const message = monthItems[index]%>
 						<%total = total -1%>
 						<div class="card w-70 mt-3 border">
 							<div class="card-body">

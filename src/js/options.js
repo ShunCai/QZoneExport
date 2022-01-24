@@ -426,6 +426,18 @@
         }
     })
 
+    // 监听日志展示方式选择事件
+    $('#blogs_showType').change(function() {
+        switch (this.value) {
+            case '1':
+                $('#blogs_viewType').parents('.row').show();
+                break;
+            default:
+                $('#blogs_viewType').parents('.row').hide();
+                break;
+        }
+    })
+
     // 监听日记备份类型选择事件
     $('#diaries_exportFormat').change(function() {
         let value = $(this).val();
@@ -492,12 +504,16 @@
             case 'Detail':
                 $('#photos_images_cost_min').parents('.row').hide();
                 $('#photos_images_limit').parents('.row').hide();
+                $("#photos_isGetDetail").prop("checked", true).change();
                 $('#photos_isGetDetail').attr('disabled', true);
+                $('#photos_images_video').hide();
                 break;
             default:
                 $('#photos_images_cost_min').parents('.row').show();
                 $('#photos_images_limit').parents('.row').show();
+                $("#photos_isGetDetail").prop("checked", false).change();
                 $('#photos_isGetDetail').attr('disabled', false);
+                $('#photos_images_video').show();
                 break;
         }
     })
@@ -505,6 +521,12 @@
     // 监听相片详情更改事件
     $('#photos_isGetDetail').change(function() {
         let isChecked = $(this).prop("checked");
+        // 相片列表类型
+        const listType = $('#photos_images_list_type').val();
+        if(listType === 'Detail'){
+            $('#photos_images_video').hide();
+            return;
+        }
         if (isChecked === false) {
             $('#photos_images_video').show();
         } else {

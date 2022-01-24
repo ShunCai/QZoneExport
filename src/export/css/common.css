@@ -512,6 +512,13 @@ body {
     font-weight: bold;
 }
 
+/* 左侧导航徽章数 */
+.BlogAnchor li .nav_item .itemSize {
+    text-indent: 0px;
+    float: right;
+    margin-top: 6px;
+}
+
 #AnchorContentToggle {
     font-size: 13px;
     font-weight: normal;

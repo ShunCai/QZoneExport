@@ -1,4 +1,4 @@
-const initSidebar = function () {
+const initSidebar = function() {
     // 清空目录
     $("#BlogAnchor").remove();
     // 重新生成
@@ -24,26 +24,36 @@ const initSidebar = function () {
         '</div>');
 
 
-    haders.each(function (i, item) {
+    haders.each(function(i, item) {
         const tag = $(this).attr('data-tag') || $(item).get(0).tagName.toLowerCase();
         var id = API.Utils.newUid();
         var className = 'item_' + tag;
         $(item).attr("id", "wow" + id);
         $(item).addClass("wow_head");
-        const title = $(this).attr('data-sidebar') || $(this).text();
+        // 显示的内容
+        const html = $(this).attr('data-sidebar') || $(this).html();
         $("#AnchorContent").css('max-height', ($(window).height() - 80) + 'px');
-        $("#AnchorContent").append('<li><a class="nav_item ' + className + ' anchor-link text-truncate" onclick="return false;" title=' + title + ' href="#" link="#wow' + id + '">' + "" + "" + title + '</a></li>');
+        $("#AnchorContent").append('<li><a class="nav_item ' + className + ' anchor-link text-truncate" title=' + $('<div>' + html + '</div>').text() + ' href="#wow' + id + '">' + "" + "" + html + '</a></li>');
     });
 
-    $(".anchor-link").click(function () {
+    $(".anchor-link").click(function() {
         $(".BlogAnchor li .nav_item.current").removeClass('current');
-        $("html,body").animate({ scrollTop: $($(this).attr("link")).offset().top - 56 });
         $(this).addClass('current');
     });
+
+    // hash发生变化
+    window.onhashchange = function() {
+        // 减去头部高度，便于精确定位
+        const $hashDom = $(location.hash);
+        if ($hashDom) {
+            $("html,body").animate({ scrollTop: $hashDom.offset().top - 58 });
+        }
+    }
+
 }
 
 $(document).ready(initSidebar);
 
-$(window).resize(function () {
+$(window).resize(function() {
     $("#AnchorContent").css('max-height', ($(window).height() - 80) + 'px');
 });

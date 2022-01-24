@@ -1118,14 +1118,25 @@ API.Utils = {
      */
     toJson(json, jsonpKey) {
 
-        // JSONP的函数部分仍使用正则替换
-        json = json.replace(jsonpKey, "");
+        if (jsonpKey) {
+            //JSONP转换
 
-        // 不基于正则替换，如果JSON本身有这些字符，会被替换掉
-        // 懒得折腾了，还是直接截取简单
-        json = json.substring(0, json.lastIndexOf(')'));
+            // JSONP的函数部分仍使用正则替换
+            json = json.replace(jsonpKey, "");
 
-        return JSON.parse(json);
+            // 不基于正则替换，如果JSON本身有这些字符，会被替换掉
+            // 懒得折腾了，还是直接截取简单
+            json = json.substring(0, json.lastIndexOf(')'));
+        }
+
+        try {
+            // 使用默认JSON转换器
+            return JSON.parse(json);
+        } catch (error) {
+            // 如果异常了再使用eval转换
+            // 不使用JSON.parse，文案中有特殊字符时会异常，比如有反斜杠\
+            return eval("(" + json + ")");
+        }
     },
 
     /**
@@ -1477,6 +1488,25 @@ API.Utils = {
             }
         }
         return targetVarValue;
+    },
+
+    /**
+     * 计算年份条目数量
+     * @param {Map} yearMaps 
+     */
+    sumYearItemSize(yearMaps) {
+        let i = 0;
+        for (const [year, yearMap] of yearMaps) {
+            // 如果是Map
+            if (yearMap instanceof Map) {
+                i += this.sumYearItemSize(yearMap);
+            }
+            // 如果是数组
+            if (Array.isArray(yearMap)) {
+                i += yearMap.length;
+            }
+        }
+        return i;
     }
 };
 
@@ -2869,8 +2899,8 @@ API.Photos = {
             "batchId": "",
             "notice": 0,
             "appid": 4,
-            "inCharset": "gb2312",
-            "outCharset": "gb2312",
+            "inCharset": "utf-8",
+            "outCharset": "utf-8",
             "source": "qzone",
             "plat": "qzone",
             "outstyle": "json",

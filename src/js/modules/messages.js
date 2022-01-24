@@ -393,8 +393,10 @@ API.Messages.exportToHtml = async(messages) => {
     } catch (error) {
         console.error('导出说说到HTML异常', error, messages);
     }
+    
     // 完成
     indicator.complete();
+
     return messages;
 }
 

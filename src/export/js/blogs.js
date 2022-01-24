@@ -33,7 +33,7 @@ API.Blogs.showTableList = function() {
         }
     }, {
         field: 'category',
-        title: '类别',
+        title: '分类',
         align: 'center',
         width: "150",
         sortable: true
