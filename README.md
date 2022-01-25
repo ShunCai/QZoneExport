@@ -119,21 +119,6 @@
 
 
 ## 预览
-#### 首页概要
-![说说](https://s1.ax1x.com/2020/05/16/YcVx7n.png)
-#### 说说列表
-![说说](https://s1.ax1x.com/2020/05/16/YcVx7n.png)
-#### 日志列表
-![日志详情](https://s1.ax1x.com/2020/05/16/YcZ9hV.png)
-#### 日志详情
-![日志详情](https://s1.ax1x.com/2020/05/16/YcZ9hV.png)
-#### 相册列表
-[![相册列表](https://z3.ax1x.com/2021/08/22/hSI3B4.png)](https://imgtu.com/i/hSI3B4)
-#### 相片列表
-![相片](https://s1.ax1x.com/2020/05/16/YcZi1U.png)
-#### 相片详情
-![相片详情](https://s1.ax1x.com/2020/05/16/YcZFcF.png)
-#### 更多
 [在线预览](https://demo.lvshuncai.com/qzone-export/index.html)
 
 ## 依赖
