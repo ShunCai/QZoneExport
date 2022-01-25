@@ -635,13 +635,13 @@ const ExportFiles = [{
     target: 'Common/js/sidebar.js'
 }, {
     original: 'export/images/index.jpg',
-    target: 'Common/images/index.jpg'
+    target: 'Common/Images/index.jpg'
 }, {
     original: 'export/images/video-play.png',
-    target: 'Common/images/video-play.png'
+    target: 'Common/Images/video-play.png'
 }, {
     original: 'export/images/loading.gif',
-    target: 'Common/images/loading.gif'
+    target: 'Common/Images/loading.gif'
 }, {
     original: 'export/js/common.js',
     target: 'Common/js/common.js'

@@ -1704,7 +1704,7 @@ API.Common = {
      */
     getUserLogoLocalUrl(uin) {
         // 头像默认PNG格式
-        return "Common/images/{uin}".format({
+        return "Common/Images/{uin}".format({
             uin: uin
         });
     },
