@@ -1,3 +1,6 @@
+// 默认增量备份时间
+const Default_IncrementTime = "2005-06-06 00:00:00";
+
 /**
  * 默认配置
  */
@@ -5,7 +8,7 @@ const Default_Config = {
     // 公共配置
     Common: {
         // 重试次数
-        listRetryCount: 3,
+        listRetryCount: 5,
         // 重试间隔
         listRetrySleep: 2,
         // 文件下载类型
@@ -15,17 +18,17 @@ const Default_Config = {
             token: undefined
         },
         // 自动识别文件后缀
-        isAutoFileSuffix: false,
+        isAutoFileSuffix: true,
         // 后缀识别超时秒数
         autoFileSuffixTimeOut: 30,
         // 迅雷任务数        
-        thunderTaskNum: 3000,
+        thunderTaskNum: 1500,
         // 唤起迅雷间隔        
         thunderTaskSleep: 60,
         // 文件下载并发数        
         downloadThread: 10,
-        // 是否启用下载状态栏提醒
-        enabledShelf: true,
+        // 是否禁用下载状态栏提醒
+        disabledShelf: false,
         // 生成内容是否包含其他空间用户链接
         hasUserLink: true
     },
@@ -48,14 +51,8 @@ const Default_Config = {
             }
         },
         IncrementType: "Full", // 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00", // 增量时间
-        PreBackup: {
-            uin: 0, // 备份QQ
-            downloadType: undefined, // 下载方式
-            exportType: undefined, // 备份类型
-            field: "created_time", // 比较字段
-            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
-        },
+        IncrementTime: Default_IncrementTime, // 增量时间
+        IncrementField: "created_time", // 增量字段
         isFilterKeyword: false, // 是否过滤关键字
         FilterKeyWords: [
             '促销',
@@ -132,14 +129,8 @@ const Default_Config = {
             }
         },
         IncrementType: "Full", // 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00", // 增量时间
-        PreBackup: {
-            uin: 0, // 备份QQ
-            downloadType: undefined, // 下载方式
-            exportType: undefined, // 备份类型
-            field: "pubtime", // 比较字段
-            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
-        },
+        IncrementTime: Default_IncrementTime, // 增量时间
+        IncrementField: "pubtime", // 增量字段
         Like: {
             isGet: false, //是否获取赞
             randomSeconds: {
@@ -180,14 +171,8 @@ const Default_Config = {
             }
         },
         IncrementType: "Full", // 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00", // 增量时间
-        PreBackup: {
-            uin: 0, // 备份QQ
-            downloadType: undefined, // 下载方式
-            exportType: undefined, // 备份类型
-            field: "pubtime", // 比较字段
-            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
-        },
+        IncrementTime: Default_IncrementTime, // 增量时间
+        IncrementField: "pubtime", // 增量字段
         Like: {
             isGet: false, //是否获取赞
             randomSeconds: {
@@ -220,9 +205,11 @@ const Default_Config = {
                 max: 3
             }
         },
+        SortType: "4", // 相册排序方式
+        RenameType: "Default", // 相册命名规则
         Images: {
             pageSize: 90,
-            listType: 'Default', // 默认为列表详情
+            listType: 'Detail', // 默认为列表详情
             randomSeconds: {
                 min: 2,
                 max: 4
@@ -245,17 +232,12 @@ const Default_Config = {
                 }
             },
             isGetVideo: true, // 是否获取相片关联的视频
-            isGetPreview: false
+            isGetPreview: false, // 是否获取预览图
+            fileStructureType: 'File' // 文件夹结构类型
         },
         IncrementType: "Full", // 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00", // 增量时间
-        PreBackup: {
-            uin: 0, // 备份QQ
-            downloadType: undefined, // 下载方式
-            exportType: undefined, // 备份类型
-            field: "uploadTime", // 比较字段
-            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
-        },
+        IncrementTime: Default_IncrementTime, // 增量时间
+        IncrementField: "uploadTime", // 增量字段
         Like: {
             isGet: false, //是否获取赞
             randomSeconds: {
@@ -275,6 +257,7 @@ const Default_Config = {
     // 视频模块
     Videos: {
         exportType: "HTML",
+        fileStructureType: 'File', // 文件夹结构类型
         randomSeconds: {
             min: 1,
             max: 2
@@ -289,14 +272,8 @@ const Default_Config = {
             }
         },
         IncrementType: "Full", // 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00", // 增量时间
-        PreBackup: {
-            uin: 0, // 备份QQ
-            downloadType: undefined, // 下载方式
-            exportType: undefined, // 备份类型
-            field: "uploadTime", // 比较字段
-            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
-        },
+        IncrementTime: Default_IncrementTime, // 增量时间
+        IncrementField: "uploadTime", // 增量字段
         Like: {
             isGet: false, //是否获取赞
             randomSeconds: {
@@ -314,14 +291,8 @@ const Default_Config = {
         },
         pageSize: 20,
         IncrementType: "Full", // 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00", // 增量时间
-        PreBackup: {
-            uin: 0, // 备份QQ
-            downloadType: undefined, // 下载方式
-            exportType: undefined, // 备份类型
-            field: "pubtime", // 比较字段
-            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
-        },
+        IncrementTime: Default_IncrementTime, // 增量时间
+        IncrementField: "pubtime", // 增量字段
         hasThatYearToday: true
     },
     // QQ好友模块
@@ -346,14 +317,8 @@ const Default_Config = {
         },
         pageSize: 30,
         IncrementType: "Full", // 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00", // 增量时间
-        PreBackup: {
-            uin: 0, // 备份QQ
-            downloadType: undefined, // 下载方式
-            exportType: undefined, // 备份类型
-            field: "create_time", // 比较字段
-            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
-        }
+        IncrementTime: Default_IncrementTime, // 增量时间
+        IncrementField: "create_time" // 增量字段
     },
     // 分享模块
     Shares: {
@@ -378,14 +343,8 @@ const Default_Config = {
             }
         },
         IncrementType: "Full", // 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00", // 增量时间
-        PreBackup: {
-            uin: 0, // 备份QQ
-            downloadType: undefined, // 下载方式
-            exportType: undefined, // 备份类型
-            field: "shareTime", // 比较字段
-            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
-        },
+        IncrementTime: Default_IncrementTime, // 增量时间
+        IncrementField: "shareTime", // 增量字段
         hasThatYearToday: true,
         Like: {
             isGet: false, //是否获取赞
@@ -598,14 +557,8 @@ const Default_Config = {
             max: 2
         },
         IncrementType: "Full", // 增量备份类型
-        IncrementTime: "2005-06-06 00:00:00", // 增量时间
-        PreBackup: {
-            uin: 0, // 备份QQ
-            downloadType: undefined, // 下载方式
-            exportType: undefined, // 备份类型
-            field: "time", // 比较字段
-            time: "2005-06-06 00:00:00" // 上次备份时间，用于增量数据识别
-        }
+        IncrementTime: Default_IncrementTime, // 增量时间
+        IncrementField: "time" // 增量字段
     },
 
     // 访客模块
@@ -623,6 +576,27 @@ var QZone_Config = Object.assign({}, Default_Config);
  * 备份文件夹根目录
  */
 const FOLDER_ROOT = '/QQ空间备份';
+
+/**
+ * 支持备份的模块名称 
+ */
+const MODULE_NAME_LIST = ['Messages', 'Blogs', 'Diaries', 'Photos', 'Videos', 'Boards', 'Friends', 'Favorites', 'Shares', 'Visitors'];
+
+/**
+ * 支持备份的模块名称 
+ */
+const MODULE_NAME_MAPS = {
+    Messages: '说说',
+    Blogs: '日志',
+    Diaries: '私密日记',
+    Photos: '相册',
+    Videos: '视频',
+    Boards: '留言板',
+    Friends: '好友',
+    Favorites: '收藏夹',
+    Shares: '分享',
+    Visitors: '访客'
+};
 
 /**
  * HTML备份导出文件
@@ -759,7 +733,7 @@ var QZone = {
         Images: {
 
         },
-        // 相册分类
+        // 默认相册分类
         Class: {
             100: "最爱",
             101: "人物",

@@ -1,17 +1,9 @@
 $(function() {
 
     // 指定年份的页面
-    const isYearPage = yearItems !== '<%:=JSON.stringify(videos)%>';
-    if (isYearPage) {
-        videos = JSON.parse(yearItems);
+    if (targetYear !== 'ALL') {
+        videos = videos.filter(item => new Date((item.uploadtime || item.uploadTime) * 1000).getFullYear() == targetYear);
     }
-
-    // 获取模板元素
-    const videos_tpl = document.getElementById('videos_tpl').innerHTML;
-    // 生成模板
-    const videos_html = template(videos_tpl, { videos: videos || [] });
-    // 渲染模板到页面
-    $("#lightgallery").html(videos_html);
 
     // 图片懒加载
     lazyload();
@@ -42,7 +34,7 @@ $(function() {
         thumbnail: true,
         commentBox: true,
         loop: false,
-        autoplayVideoOnSlide: true,
+        autoplayVideoOnSlide: false,
         commentsMarkup: '<div id="lg-comment-box" class="lg-comment-box lg-fb-comment-box"><div class="lg-comment-header"><h3 class="lg-comment-title">评论</h3><span class="lg-comment-close lg-icon"></span></div><div class="lg-comment-body"></div></div>'
     });
     $gallery.galleryIns = galleryIns;
@@ -59,5 +51,8 @@ $(function() {
 
     // 取消懒加载样式
     API.Common.registerImageLoadedEvent();
+
+    // 初始化提示
+    $('[data-toggle="tooltip"]').tooltip();
 
 });

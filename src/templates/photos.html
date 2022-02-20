@@ -13,6 +13,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/jquery-mousewheel@3.1.13/jquery.mousewheel.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" integrity="sha256-qXBd/EfAdjOA2FGrGAG+b3YBn2tn5A6bhz+LSgYD96k=" crossorigin="anonymous"></script>
 	
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/lightgallery.min.js" integrity="sha256-dkTk5cgrLUjjQiGNZsoDnjhCI+UuhTffLnyrN7qLutw=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/plugins/zoom/lg-zoom.min.js" integrity="sha256-6Ny31P8WSBcY1SFaWxg4zgDzZJNNIJ4BchV+RxFiDR0=" crossorigin="anonymous"></script>
@@ -26,8 +27,9 @@
 
 	<script src="https://cdn.jsdelivr.net/npm/lazyload@2.0.0-rc.2/lazyload.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
+	<script src="https://www.lvshuncai.com/custom/js/clicklove.min.js"></script>
 
-	<script type="text/javascript" src="../Albums/Json/albums.js"></script>
+	<script type="text/javascript" src="../Albums/json/albums.js"></script>
 </head>
 
 <body>
@@ -75,12 +77,12 @@
 														<%}%>
 													</p>
 												</div>
-												<div class="col text-center">
+												<div class="col text-center text-truncate">
 													<%if(photo.name){%>
-														<h6><%:=API.Common.formatContent(photo.name, "HTML", false, false)%></h6>
+														<h6 data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(photo.name, 'HTML', false, false)%>"><%:=API.Common.formatContent(photo.name, "HTML", false, false)%></h6>
 													<%}%>
 													<%if(photo.desc){%>
-														<span class="text-white-50"><%:=API.Common.formatContent(photo.desc, "HTML", false, false)%></span>
+														<span class="text-white-50" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(photo.desc, 'HTML', false, false)%>"><%:=API.Common.formatContent(photo.desc, "HTML", false, false)%></span>
 													<%}%>
 												</div>
 												<div class="col"></div>
@@ -89,7 +91,7 @@
 									<%}%>
 									<%if(photo.is_video && photo.video_info){%>
 										<a class="lightbox" data-video='{"source": [{"src":"<%:=API.Common.getMediaPath(photo.video_info.video_url, photo.custom_filepath, "Photos_HTML")%>", "type":"video/mp4"}],"attributes": {"preload": false, "controls": true}}' 
-											data-poster="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath, 'Photos_HTML')%>" title="<%:=photo.desc || photo.name%>" data-sub-html="#<%:=photo.uid%>">
+											data-poster="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath, 'Photos_HTML')%>" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(photo.desc || photo.name, 'HTML', false, false)%>" data-sub-html="#<%:=photo.uid%>">
 											<span class="photo-video"></span>
 											<%if(photo.isLocal){%>
 												<img class="lazyload loading" />
@@ -97,24 +99,32 @@
 												<img class="lazyload loading" src="../Common/Images/loading.gif" data-src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath,'Photos_HTML')%>" />
 											<%}%>
 										</a>
-										<div class="card-body">
-											<span class="card-title"><%:=(photo.name || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%></span>
+										<div class="card-body text-truncate">
+											<span class="card-title" data-toggle="tooltip" data-html="true" title="<%:=(API.Common.formatContent(photo.name, 'HTML', false, false) || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%>"><%:=(API.Common.formatContent(photo.name, 'HTML', false, false) || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%></span>
 										</div>
-										<span class="pic-num-wrap">
-											<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="uniKey" data-target="<%:=photo.uniKey%>"><%:=photo.likes ? photo.likes.length : 0%></span>
-											<span class="text-light fa fa-comments-o cursor viewcomments" title="查看评论" data-field="uniKey" data-target="<%:=photo.uniKey%>"><%:=photo.comments ? photo.comments.length : 0%></span>
-										</span>
+										<div class="pic-num-wrap d-flex justify-content-around">
+											<div class="align-self-end">
+												<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="uniKey" data-target="<%:=photo.uniKey%>"><%:=photo.likes ? photo.likes.length : 0%></span>
+											</div>
+											<div class="align-self-end">
+												<span class="text-light fa fa-comments-o cursor viewcomments" title="查看评论" data-field="uniKey" data-target="<%:=photo.uniKey%>"><%:=photo.comments ? photo.comments.length : 0%></span>
+											</div>
+										</div>
 									<%}else{%>
-										<a class="lightbox" href="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, 'Photos_HTML')%>" title="<%:=photo.desc || photo.name%>" data-sub-html="#<%:=photo.uid%>">
+										<a class="lightbox" href="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, 'Photos_HTML')%>" data-toggle="tooltip" data-html="true" title="<%:=photo.desc || photo.name%>" data-sub-html="#<%:=photo.uid%>">
 											<img class="lazyload loading card-img" height="225px" src="../Common/Images/loading.gif" data-src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath || photo.custom_filepath, 'Photos_HTML')%>">
 										</a>
-										<div class="card-body">
-											<span class="card-title"><%:=(photo.name || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%></span>
+										<div class="card-body  text-truncate">
+											<span class="card-title" data-toggle="tooltip" data-html="true" title="<%:=(API.Common.formatContent(photo.name, 'HTML', false, false) || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%>"><%:=(API.Common.formatContent(photo.name, 'HTML', false, false) || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%></span>
 										</div>
-										<span class="pic-num-wrap">
-											<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="uniKey" data-target="<%:=photo.uniKey%>"><%:=photo.likes ? photo.likes.length : 0%></span>
-											<span class="text-light fa fa-comments-o cursor viewcomments" title="查看评论" data-field="uniKey" data-target="<%:=photo.uniKey%>"><%:=photo.comments ? photo.comments.length : 0%></span>
-										</span>
+										<div class="pic-num-wrap d-flex justify-content-around">
+											<div class="align-self-end">
+												<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="uniKey" data-target="<%:=photo.uniKey%>"><%:=photo.likes ? photo.likes.length : 0%></span>
+											</div>
+											<div class="align-self-end">
+												<span class="text-light fa fa-comments-o cursor viewcomments" title="查看评论" data-field="uniKey" data-target="<%:=photo.uniKey%>"><%:=photo.comments ? photo.comments.length : 0%></span>
+											</div>
+										</div>
 									<%}%>
 								</div>
 							</div>

@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "QQ空间导出助手",
     "description": "QQ空间导出助手，用于导出备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友、收藏夹、分享、访客为文件，便于迁移与保存",
-    "version": "1.1.5",
+    "version": "1.1.6",
     "icons": {
         "128": "img/icon-128.png"
     },
@@ -25,7 +25,7 @@
                 "vendor/bootstrap/js/bootstrap-table.min.js",
                 "vendor/bootstrap/js/bootstrap-table-zh-CN.min.js",
                 "vendor/turndown/turndown.js",
-                "vendor/lodash/lodash.js",
+                "vendor/lodash/lodash.min.js",
                 "vendor/filer/filer.min.js",
                 "vendor/jszip/jszip.min.js",
                 "vendor/FileSaver/FileSaver.min.js",
@@ -78,6 +78,7 @@
         "downloads",
         "downloads.shelf",
         "declarativeContent",
+        "clipboardWrite",
         "<all_urls>"
     ]
 }

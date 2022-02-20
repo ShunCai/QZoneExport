@@ -50,11 +50,11 @@ $(function() {
             mode: 'lg-fade',
             selector: '.message-lightbox',
             download: false,
-            thumbnail: true,
+            thumbnail: false,
             mousewheel: true,
             commentBox: true,
             loop: false,
-            autoplayVideoOnSlide: true,
+            autoplayVideoOnSlide: false,
             commentsMarkup: '<div id="lg-comment-box" class="lg-comment-box lg-fb-comment-box"><div class="lg-comment-header"><h3 class="lg-comment-title">评论</h3><span class="lg-comment-close lg-icon"></span></div><div class="lg-comment-body"></div></div>'
         });
 
@@ -87,7 +87,7 @@ $(function() {
             mode: 'lg-fade',
             selector: '.comment-img-lightbox',
             download: false,
-            thumbnail: true,
+            thumbnail: false,
             loop: false
         });
         $galleryDom.galleryIns = galleryIns;
@@ -107,5 +107,8 @@ $(function() {
 
     // 取消懒加载样式
     API.Common.registerImageLoadedEvent();
+
+    // 初始化提示
+    $('[data-toggle="tooltip"]').tooltip();
 
 });

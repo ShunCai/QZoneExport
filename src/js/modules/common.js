@@ -7,85 +7,146 @@
  * 初始化用户信息
  */
 API.Common.initUserInfo = async() => {
+
+    if (API.Common.isOnlyFileExport()) {
+        // 仅文件导出，无需初始化
+        console.log('仅文件导出，无需初始化用户信息');
+        return;
+    }
+
+    // 状态更新器
+    const indicator = new StatusIndicator('Init_User_Info_Export');
+    indicator.print();
+
     try {
 
         // 获取所有的QQ好友
-        let userInfo = await API.Common.getUserInfos();
-        userInfo = API.Utils.toJson(userInfo, /^_Callback\(/);
-        if (userInfo.code < 0) {
-            // 获取异常
-            console.warn('初始化用户信息异常：', userInfo);
-        }
-        userInfo = userInfo.data || {};
+        await API.Common.getUserInfos().then((userInfo) => {
+            userInfo = API.Utils.toJson(userInfo, /^_Callback\(/);
+            console.info("获取用户信息完成", userInfo);
 
-        // 用户信息
-        userInfo = Object.assign(QZone.Common.Target, userInfo);
+            if (userInfo.code < 0) {
+                // 获取异常
+                console.warn('初始化用户信息异常：', userInfo);
+            }
+            userInfo = userInfo.data || {};
+
+            // 用户信息
+            userInfo = userInfo && Object.assign(QZone.Common.Target, userInfo);
+
+            // 添加目标头像下载任务
+            API.Common.downloadUserAvatars([QZone.Common.Target, QZone.Common.Owner, userInfo]);
+
+            // 更换用户图片
+            userInfo.avatar = API.Common.getUserLogoUrl(userInfo.uin);
+
+        }).catch((error) => {
+            console.error("获取用户信息异常", error);
+        });
+    } catch (error) {
+        console.error('初始化用户信息异常', error);
+    }
+
+    // 完成
+    indicator.complete();
+}
+
+/**
+ * 其它的导出
+ */
+API.Common.exportOthers = async() => {
+
+    // 模块总进度更新器
+    const indicator = new StatusIndicator('Common_Row_Infos');
+    indicator.print();
+
+    try {
+
+        // 初始化用户信息
+        await API.Common.initUserInfo();
+
+        // 导出用户信息
+        await API.Common.exportUser();
 
         // 下载助手配置信息
         await API.Common.exportConfigToJson();
 
-        // 添加目标头像下载任务
-        API.Common.downloadUserAvatars([QZone.Common.Target, QZone.Common.Owner, userInfo]);
+        // 保存备份数据
+        const backupInfos = await API.Common.saveBackupItems();
 
-        // 更换用户图片
-        userInfo.avatar = API.Common.getUserLogoUrl(userInfo.uin);
+        // 导出备份数据到JSON
+        await API.Common.exportBackupItemsToJson(backupInfos);
+
+        // 下载文件
+        await API.Utils.downloadAllFiles();
+
     } catch (error) {
-        console.error('初始化用户信息异常', error);
+        console.error('导出其它信息失败', error);
     }
+
+    // 完成
+    indicator.complete();
+
 }
 
 /**
  * 导出用户个人档信息
  */
 API.Common.exportUser = async() => {
-    try {
-        let userInfo = QZone.Common.Target
 
-        // 添加统计信息到用户信息
-        userInfo.messages = QZone.Messages.Data.length;
-        userInfo.blogs = QZone.Blogs.Data.length;
-        userInfo.diaries = QZone.Diaries.Data.length;
-        let photos = [];
-        for (const album of QZone.Photos.Album.Data) {
-            photos = photos.concat(album.photoList || []);
-        }
-        userInfo.photos = photos.length;
-        userInfo.videos = QZone.Videos.Data.length;
-        userInfo.boards = QZone.Boards.Data.total;
-        userInfo.favorites = QZone.Favorites.Data.length;
-        userInfo.shares = QZone.Shares.Data.length;
-        userInfo.friends = QZone.Friends.Data.length;
-        userInfo.visitors = QZone.Visitors.Data.total;
-
-        // 根据导出类型导出数据
-        await API.Common.exportUserToJson(userInfo);
-
-        // 生成MarkDown
-        await API.Common.exportUserToMd(userInfo);
-
-        // 生成HTML
-        await API.Common.exportUserToHtml(userInfo);
-
-        // 保存配置项，主要是上次备份时间
-        chrome.storage.sync.set(QZone_Config);
-    } catch (error) {
-        console.error('导出用户个人档信息失败', error);
+    if (API.Common.isOnlyFileExport()) {
+        // 仅文件导出，无需生成首页文件
+        console.log('仅文件导出，无需生成首页文件');
+        return;
     }
+
+    // 状态更新器
+    const indicator = new StatusIndicator('Init_User_Info_Export_Other');
+    indicator.print();
+
+    let userInfo = QZone.Common.Target
+
+    // 添加统计信息到用户信息
+    userInfo.messages = QZone.Messages.Data.length;
+    userInfo.blogs = QZone.Blogs.Data.length;
+    userInfo.diaries = QZone.Diaries.Data.length;
+    let photos = [];
+    for (const album of QZone.Photos.Album.Data) {
+        photos = photos.concat(album.photoList || []);
+    }
+    userInfo.photos = photos.length;
+    userInfo.videos = QZone.Videos.Data.length;
+    userInfo.boards = QZone.Boards.Data.total;
+    userInfo.favorites = QZone.Favorites.Data.length;
+    userInfo.shares = QZone.Shares.Data.length;
+    userInfo.friends = QZone.Friends.Data.length;
+    userInfo.visitors = QZone.Visitors.Data.total;
+
+    // 根据导出类型导出数据
+    await API.Common.exportUserToJson(userInfo);
+
+    // 生成MarkDown
+    await API.Common.exportUserToMd(userInfo);
+
+    // 生成HTML
+    await API.Common.exportUserToHtml(userInfo);
+
+    // 完成
+    indicator.complete();
 }
 
 /**
  * 导出个人信息到JSON文件
  * @param {Array} friends 好友列表
  */
-API.Common.exportUserToJson = async(userInfo) => {
-    const json = JSON.stringify(userInfo);
+API.Common.exportUserToJson = async(jsonObj) => {
     const path = API.Common.getModuleRoot('Common') + '/json';
 
     // 创建JSON文件夹
     await API.Utils.createFolder(path);
 
     // 写入JOSN
-    await API.Utils.writeText(json, path + '/User.json').then((fileEntry) => {
+    await API.Utils.writeText(JSON.stringify(jsonObj), path + '/User.json').then((fileEntry) => {
         console.info("导出用户个人档信息完成", fileEntry);
     }).catch((error) => {
         console.error("导出用户个人档信息异常", error);
@@ -298,33 +359,6 @@ API.Common.addDownloadTask = (module, url, content) => {
 }
 
 /**
- * 获取多媒体路径
- * @param {string} url 远程URL
- * @param {string} filepath 本地文件路径
- * @param {string} sourceType 来源类型
- */
-API.Common.getMediaPath = (url, filepath, sourceType) => {
-    if (!filepath) {
-        return url;
-    }
-    let res = filepath || url;
-    switch (sourceType) {
-        case 'Messages_HTML':
-            res = '../' + res;
-            break;
-        case 'Photos_HTML':
-            res = '../' + res;
-            break;
-        case 'Videos_HTML':
-            res = '../' + res;
-            break;
-        default:
-            break;
-    }
-    return res;
-}
-
-/**
  * 通过Ajax请求下载文件
  * @param {Array} tasks
  */
@@ -372,7 +406,7 @@ API.Common.downloadsByBrowser = async(tasks) => {
     indicator.setTotal(tasks.length);
 
     // 开始下载
-    const _tasks = _.chunk(tasks, 10);
+    const _tasks = _.chunk(tasks, 100);
     for (let i = 0; i < _tasks.length; i++) {
         const list = _tasks[i];
         for (let j = 0; j < list.length; j++) {
@@ -394,7 +428,7 @@ API.Common.downloadsByBrowser = async(tasks) => {
             })
         }
         // 等待1秒再继续添加
-        await API.Utils.sleep(1000);
+        await API.Utils.sleep(500);
     }
     indicator.complete();
     return true;
@@ -470,13 +504,91 @@ API.Common.invokeThunder = async(thunderInfo) => {
         if (index < _tasks.length) {
             let sleep = QZone_Config.Common.thunderTaskSleep * 1;
             let interId = setInterval(function() {
-                    indicator.setNextTip(--sleep);
-                }, 1000)
-                // 等待指定秒再继续唤起，并给用户提示
+                indicator.setNextTip(--sleep);
+            }, 1000);
+
+            // 等待指定秒再继续唤起，并给用户提示
             await API.Utils.sleep(sleep * 1000);
             clearInterval(interId);
         }
     }
+
+    // 完成
+    indicator.complete();
+}
+
+/**
+ * 复制迅雷下载链接到剪切板
+ * @param {ThunderInfo} thunderInfo 迅雷下载信息
+ */
+API.Common.copyThunderTasksToClipboard = async(thunderInfo) => {
+    // 进度更新器
+    const indicator = new StatusIndicator('Common_Thunder_Clipboard');
+    indicator.setTotal(thunderInfo.tasks.length);
+    indicator.print();
+
+    // 处理迅雷下载信息
+    const _thunderInfo = API.Common.handerThunderInfo(thunderInfo);
+
+    // 通过迅雷任务数将任务分组，任务太大时无法唤起迅雷
+    const tasks = _thunderInfo.tasks || [];
+    const _tasks = _.chunk(tasks, QZone_Config.Common.thunderTaskNum);
+    for (let i = 0; i < _tasks.length; i++) {
+        const index = i + 1;
+        indicator.setIndex(index);
+
+        const list = _tasks[i];
+        let taskGroupName = _thunderInfo.taskGroupName;
+        if (_tasks.length > 1) {
+            taskGroupName = taskGroupName + "_" + index;
+        }
+
+        // 唤起迅雷下载
+        const groupTask = new ThunderInfo(taskGroupName, QZone_Config.Common.downloadThread, list)
+
+        // 下载任务信息
+        const copyTaskLinks = 'thunderx://' + JSON.stringify(groupTask);
+
+        // 复制下载链接到剪切板
+        navigator.clipboard.writeText(copyTaskLinks).catch((error) => {
+
+            console.error('异步复制失败', error);
+
+            // 创建text area
+            let textArea = document.createElement("textarea");
+            textArea.value = copyTaskLinks;
+            // 使text area不在viewport，同时设置不可见
+            textArea.style.position = "absolute";
+            textArea.style.opacity = 0;
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            return new Promise((res, rej) => {
+                // 执行复制命令并移除文本框
+                document.execCommand('copy') ? res() : rej();
+                textArea.remove();
+            });
+        });
+
+        // 添加唤起数
+        indicator.addSuccess(list);
+
+        // 继续唤起
+        if (index < _tasks.length) {
+            let sleep = QZone_Config.Common.thunderTaskSleep * 1;
+            let interId = setInterval(function() {
+                indicator.setNextTip(--sleep);
+            }, 1000);
+
+            // 等待指定秒再继续唤起，并给用户提示
+            await API.Utils.sleep(sleep * 1000);
+            clearInterval(interId);
+        }
+    }
+
+    // 完成
     indicator.complete();
 }
 
@@ -542,50 +654,11 @@ API.Common.handerThunderInfo = (thunderInfo) => {
 }
 
 /**
- * 设置模块备份信息
- * @param {object} moduleConfig 模块配置
- */
-API.Common.setBackupInfo = (moduleConfig) => {
-    if (!moduleConfig || !moduleConfig.PreBackup) {
-        return;
-    }
-    moduleConfig.PreBackup.uin = QZone.Common.Target.uin;
-    moduleConfig.PreBackup.downloadType = QZone_Config.Common.downloadType;
-    moduleConfig.PreBackup.time = new Date().format('yyyy-MM-dd hh:mm:ss');
-    // 同步更新配置项
-    if (moduleConfig.IncrementType === 'LastTime') {
-        // 增量类型为上次备份的才同步更新
-        moduleConfig.IncrementTime = moduleConfig.PreBackup.time;
-    }
-}
-
-/**
  * 是否全量备份
  * @param {Object} moduleConfig 模块配置
  */
 API.Common.isFullBackup = (moduleConfig) => {
-    const pre_backup = moduleConfig.PreBackup;
-    if (!pre_backup || moduleConfig.IncrementType === 'Full') {
-        // 不需要增量备份
-        return true;
-    }
-    if (QZone.Common.Target.uin !== pre_backup.uin && moduleConfig.IncrementType !== 'Custom') {
-        // 当前备份QQ与上次备份QQ不一致，且增量类型不为自定义
-        return true;
-    }
-    // if (API.Common.isQzoneUrl()) {
-    //     // QQ空间外链
-    //     return true;
-    // }
-    // if (QZone_Config.Common.exportType !== pre_backup.exportType) {
-    //     // 当前模块数据备份类型与上次备份类型不一致
-    //     return true;
-    // }
-    if (QZone_Config.Common.downloadType !== pre_backup.downloadType) {
-        // 当前备份文件下载方式与上次备份文件下载方式不一致
-        return true;
-    }
-    return false;
+    return moduleConfig.IncrementType === 'Full';
 }
 
 /**
@@ -594,23 +667,23 @@ API.Common.isFullBackup = (moduleConfig) => {
  * @param {Object} moduleConfig 模块配置
  */
 API.Common.isPreBackupPos = (new_items, moduleConfig) => {
-    if (API.Common.isFullBackup(moduleConfig)) {
-        return false;
-    }
-    const preBackup = moduleConfig.PreBackup;
-    // 增量备份时间
-    const incrementTime = new Date(moduleConfig.IncrementTime).getTime();
     if (new_items.length == 0) {
         return false;
     }
+    if (API.Common.isFullBackup(moduleConfig)) {
+        return false;
+    }
+
+    // 增量备份时间
+    const incrementTime = API.Utils.parseDate(moduleConfig.IncrementTime).getTime();
+    // 增备份字段
+    const field = moduleConfig.IncrementField;
+
     // 新获取到的第一条数据
-    let firstItem = new_items[0];
-    let firstTime = firstItem[preBackup.field];
-    firstTime = typeof firstTime === 'string' ? new Date(firstTime).getTime() : firstTime * 1000;
+    const firstTime = API.Utils.parseDate(_.first(new_items)[field]);
     // 新获取到的最后一条数据
-    let lastItem = new_items[new_items.length - 1];
-    let lastTime = lastItem[preBackup.field];
-    lastTime = typeof lastTime === 'string' ? new Date(lastTime).getTime() : lastTime * 1000;
+    const lastTime = API.Utils.parseDate(_.last(new_items)[field]);
+
     // 情况一、第一条是符合增量时间的
     // 情况二、最后一条是符合增量时间的
     // 情况三、不是第一也不是最后
@@ -635,16 +708,19 @@ API.Common.isNewItem = (item) => {
  */
 API.Common.removeOldItems = (old_items, moduleConfig) => {
     if (API.Common.isFullBackup(moduleConfig) || old_items === undefined) {
-        // 选择全量备份时，直接返回空数组，当初没有历史数据处理
+        // 选择全量备份时，直接返回空数组，当作没有历史数据处理
         return [];
     }
-    const preBackup = moduleConfig.PreBackup;
+
     // 增量备份时间
-    const incrementTime = new Date(moduleConfig.IncrementTime).getTime();
+    const incrementTime = API.Utils.parseDate(moduleConfig.IncrementTime).getTime();
+    // 增备份字段
+    const field = moduleConfig.IncrementField;
+
     // items中的数据是从新到旧的，直接倒序判断时间
     for (let i = old_items.length - 1; i >= 0; i--) {
         const item = old_items[i];
-        let time = item[preBackup.field] * 1000;
+        const time = API.Utils.parseDate(item[field]).getTime();
         if (time > incrementTime) {
             // 如果集合中的元素存在大于增量备份时间的，则移除
             old_items.splice(i, 1);
@@ -665,13 +741,15 @@ API.Common.removeNewItems = (new_items, moduleConfig) => {
     if (API.Common.isFullBackup(moduleConfig)) {
         return new_items;
     }
-    const preBackup = moduleConfig.PreBackup;
     // 增量备份时间
-    const incrementTime = new Date(moduleConfig.IncrementTime).getTime();
+    const incrementTime = API.Utils.parseDate(moduleConfig.IncrementTime).getTime();
+    // 增备份字段
+    const field = moduleConfig.IncrementField;
+
     // items中的数据是从新到旧的，直接倒序判断时间
     for (let i = new_items.length - 1; i >= 0; i--) {
         const item = new_items[i];
-        let time = item[preBackup.field] * 1000;
+        const time = API.Utils.parseDate(item[field]).getTime();
         if (time < incrementTime) {
             // 如果集合中的元素存在小于增量备份时间的，则移除
             new_items.splice(i, 1);
@@ -690,6 +768,10 @@ API.Common.removeNewItems = (new_items, moduleConfig) => {
  * @param {Array} new_items 新数据
  */
 API.Common.unionBackedUpItems = (moduleConfig, old_items, new_items) => {
+    if (_.isEmpty(old_items)) {
+        // 如果已备份数据为空，直接返回新数据
+        return new_items;
+    }
     // 移除已备份数据中不符合条件的数据
     old_items = API.Common.removeOldItems(old_items, moduleConfig);
 
@@ -704,52 +786,186 @@ API.Common.unionBackedUpItems = (moduleConfig, old_items, new_items) => {
  * 保存当前备份数据
  */
 API.Common.saveBackupItems = () => {
+
+    // 状态更新器
+    const indicator = new StatusIndicator('Backup_Save');
+    indicator.print();
+
     return new Promise(function(resolve, reject) {
-        const key = QZone.Common.Target.uin + "_" + QZone_Config.Common.downloadType;
-        const backups = {};
-        // 只存储需要的数据
-        backups[key] = {
-            Messages: {
-                Data: API.Common.isExport('Messages') ? QZone.Messages.Data : QZone.Messages.OLD_Data
-            },
-            Blogs: {
-                Data: API.Common.isExport('Blogs') ? QZone.Blogs.Data : QZone.Blogs.OLD_Data
-            },
-            Diaries: {
-                Data: API.Common.isExport('Diaries') ? QZone.Diaries.Data : QZone.Diaries.OLD_Data
-            },
-            Photos: {
-                Album: {
-                    Data: API.Common.isExport('Photos') ? QZone.Photos.Album.Data : QZone.Photos.Album.OLD_Data
-                }
-            },
-            Videos: {
-                Data: API.Common.isExport('Videos') ? QZone.Videos.Data : QZone.Videos.OLD_Data
-            },
-            Boards: {
-                Data: API.Common.isExport('Boards') ? QZone.Boards.Data : QZone.Boards.OLD_Data
-            },
-            Friends: {
-                Data: API.Common.isExport('Friends') ? QZone.Friends.Data : QZone.Friends.OLD_Data
-            },
-            Favorites: {
-                Data: API.Common.isExport('Favorites') ? QZone.Favorites.Data : QZone.Favorites.OLD_Data
-            },
-            Shares: {
-                Data: API.Common.isExport('Shares') ? QZone.Shares.Data : QZone.Shares.OLD_Data
-            },
-            Visitors: {
-                Data: API.Common.isExport('Visitors') ? QZone.Visitors.Data : QZone.Visitors.OLD_Data
-            }
+
+        // 需要保存的备份数据
+        const backupInfos = {
+            Backedup: window.Backedup || {}
         };
 
-        // 保存数据Storage TODO 保存大小是否受限？
-        chrome.storage.local.set(backups, function() {
-            console.info("保存当前备份数据到Storage完成", backups);
-            resolve(backups);
+        // 历史数据
+        const rows = backupInfos.Backedup[QZone.Common.Target.uin] || [];
+        const oldRowMaps = _.keyBy(rows, 'module');
+
+        // 清空数据
+        rows.length = 0;
+
+        for (const moduleName of MODULE_NAME_LIST) {
+
+            // 配置的备份时间，直接刷新为当前时间
+            QZone_Config[moduleName].IncrementTime = API.Utils.formatDate(Date.now() / 1000);
+
+            // 历史备份数据是否为空
+            const oldItems = API.Common.getOldModuleData(moduleName);
+
+            if (!API.Common.isExport(moduleName) && _.isEmpty(oldItems)) {
+                // 如果不导出，且旧数据为空，则不保存该模块
+                continue;
+            }
+
+            // 是否有新数据导出
+            const isNewExport = API.Common.isNewExport(moduleName);
+
+            // 需要保存的模块数据
+            const moduleInfo = oldRowMaps[moduleName] || {};
+            moduleInfo.module = moduleName;
+            moduleInfo.data = API.Common.getSaveModuleData(moduleName);
+            moduleInfo.time = isNewExport ? Date.now() : moduleInfo.time || Date.now();
+            rows.push(moduleInfo);
+        }
+
+        backupInfos.Backedup[QZone.Common.Target.uin] = rows;
+
+        // 保存配置项，主要是上次备份时间
+        chrome.storage.sync.set(QZone_Config);
+
+        // 保存数据到Storage
+        chrome.storage.local.set(backupInfos, function() {
+            console.info("保存当前备份数据到Storage完成");
+            indicator.complete();
+            resolve(backupInfos);
         });
 
     })
+}
+
+/**
+ * 获取模块旧数据
+ * @param {String} moduleName 模块名称
+ */
+API.Common.getOldModuleData = (moduleName) => {
+    // 新模块数据
+    const module = QZone[moduleName];
+
+    // 旧数据
+    let oldData = module.OLD_Data || [];
+
+    if (moduleName === 'Photos') {
+        // 相册
+        oldData = module.Album.OLD_Data || [];
+    }
+    if (['Boards', 'Visitors'].includes(moduleName)) {
+        // 留言板、访客
+        oldData = module.OLD_Data.items || [];
+    }
+    return oldData;
+}
+
+/**
+ * 获取模块新数据
+ * @param {String} moduleName 模块名称
+ */
+API.Common.getNewModuleData = (moduleName) => {
+    // 新模块数据
+    const module = QZone[moduleName];
+
+    // 旧数据
+    let oldData = module.Data || [];
+
+    if (moduleName === 'Photos') {
+        // 相册
+        oldData = module.Album.Data || [];
+    }
+    if (['Boards', 'Visitors'].includes(moduleName)) {
+        // 留言板、访客
+        oldData = module.Data.items || [];
+    }
+    return oldData;
+}
+
+/**
+ * 获取模块保存的数据
+ * @param {String} moduleName 模块名称
+ */
+API.Common.getSaveModuleData = (moduleName) => {
+    // 新模块数据
+    const module = QZone[moduleName];
+
+    // 数据
+    let data = API.Common.isExport(moduleName) ? module.Data : module.OLD_Data
+
+    if (moduleName === 'Photos') {
+        // 相册
+        data = API.Common.isExport(moduleName) ? module.Album.Data : module.Album.OLD_Data;
+    }
+    return data;
+}
+
+
+/**
+ * 是否新数据导出
+ * @param {String} moduleName 模块名称
+ */
+API.Common.isNewExport = (moduleName) => {
+    // 新模块数据
+    const module = QZone[moduleName];
+    const isExportModule = API.Common.isExport(moduleName);
+
+    // 旧数据
+    let oldData = module.OLD_Data || [];
+
+    // 保存的列表数据
+    let moduleItems = isExportModule ? module.Data : oldData;
+
+    if (moduleName === 'Photos') {
+        // 相册
+        oldData = module.Album.OLD_Data || [];
+        moduleItems = isExportModule ? module.Album.Data : oldData;
+    }
+    if (['Boards', 'Visitors'].includes(moduleName)) {
+        // 留言板、访客
+        oldData = module.OLD_Data.items || [];
+        moduleItems = isExportModule ? module.Data.items : oldData;
+    }
+    return _.isEmpty(oldData) || _.some(moduleItems, item => item.isNewItem || _.some(item.photoList || [], item => item.isNewItem));
+}
+
+/**
+ * 导入备份数据到JSON文件
+ * @param {Object} backupInfos 已备份数据
+ */
+API.Common.exportBackupItemsToJson = async(backupInfos) => {
+
+    // 状态更新器
+    const indicator = new StatusIndicator('Backup_Export');
+    indicator.print();
+
+    const path = API.Common.getModuleRoot('Common') + '/json';
+
+    // 创建JSON文件夹
+    await API.Utils.createFolder(path);
+
+    // 导出的数据
+    const exportData = {
+        Backedup: {}
+    };
+    // 仅导出备份QQ
+    exportData.Backedup[QZone.Common.Target.uin] = backupInfos.Backedup[QZone.Common.Target.uin];
+
+    // 写入JOSN
+    await API.Utils.writeText(JSON.stringify(exportData), path + '/助手备份数据_' + QZone.Common.Target.uin + '.json').then((fileEntry) => {
+        console.info("导出助手备份数据完成", fileEntry);
+    }).catch((error) => {
+        console.error("导出助手备份数据异常", error);
+    });
+
+    // 完成
+    indicator.complete();
 }
 
 /**
@@ -757,16 +973,16 @@ API.Common.saveBackupItems = () => {
  */
 API.Common.hasIncrementBackup = () => {
     let hasIncrementBackup = false;
-    for (let key in QZone_Config) {
-        let moduleCfg = QZone_Config[key];
-        if (!moduleCfg) {
+    for (const exportType of QZone.Common.ExportTypes) {
+        if (!QZone_Config.hasOwnProperty(exportType)) {
             continue;
         }
-        let incrCfg = moduleCfg['IncrementType'] || moduleCfg['isIncrement'];
+        const moduleCfg = QZone_Config[exportType];
+        const incrCfg = moduleCfg['IncrementType'] || moduleCfg['isIncrement'];
         if (!incrCfg) {
             continue;
         }
-        if (incrCfg === true || ['LastTime', 'Custom'].indexOf(incrCfg) != -1) {
+        if (incrCfg === true || ['LastTime', 'Custom'].includes(incrCfg)) {
             hasIncrementBackup = true;
             break;
         }
@@ -779,84 +995,66 @@ API.Common.hasIncrementBackup = () => {
  */
 API.Common.getBackupItems = () => {
     return new Promise(function(resolve, reject) {
-        const key = QZone.Common.Target.uin + "_" + QZone_Config.Common.downloadType;
-
-        // 保存数据Storage TODO 保存大小是否受限？
-        chrome.storage.local.get([key], function(data) {
-            console.info("基于Storage获取上次备份数据完成", data[key]);
-            resolve(data[key]);
+        chrome.storage.local.get('Backedup', function(data) {
+            window.Backedup = data || {};
+            resolve(window.Backedup);
         });
-
     })
 }
 
 /**
  * 重置QQ空间备份数据
  */
-API.Common.resetQzoneItems = () => {
-    // 重置说说模块数据
-    QZone.Messages.total = 0;
-    QZone.Messages.Data = [];
-    QZone.Messages.OLD_Data = [];
-
-    // 重置日志模块数据
-    QZone.Blogs.total = 0;
-    QZone.Blogs.Data = [];
-    QZone.Blogs.OLD_Data = [];
-
-    // 重置日记模块数据
-    QZone.Diaries.total = 0;
-    QZone.Diaries.Data = [];
-    QZone.Diaries.OLD_Data = [];
-
-    // 重置相册模块数据
-    QZone.Photos.Album.total = 0;
-    QZone.Photos.Album.Data = [];
-    QZone.Photos.Album.OLD_Data = [];
-
-    // 重置视频模块数据
-    QZone.Videos.total = 0;
-    QZone.Videos.Data = [];
-    QZone.Videos.OLD_Data = [];
-
-    // 重置留言模块数据
-    QZone.Boards.Data = {
-        items: [],
-        authorInfo: {
-            message: '',
-            sign: ''
-        },
-        total: 0
-    };
-    QZone.Boards.OLD_Data = {
-        items: [],
-        authorInfo: {
-            message: '',
-            sign: ''
-        },
-        total: 0
-    };
-
-    // 重置好友模块数据
-    QZone.Friends.total = 0;
-    QZone.Friends.Data = [];
-    QZone.Friends.OLD_Data = [];
-
-    // 重置收藏模块数据
-    QZone.Favorites.total = 0;
-    QZone.Favorites.Data = [];
-    QZone.Favorites.OLD_Data = [];
-
-    // 重置访客模块数据
-    QZone.Visitors.Data = {
-        items: [],
-        total: 0,
-        totalPage: 0
-    }
-    QZone.Visitors.OLD_Data = {
-        items: [],
-        total: 0,
-        totalPage: 0
+API.Common.resetQZoneBackupItems = () => {
+    // 遍历模块清单
+    for (const moduleName of MODULE_NAME_LIST) {
+        // 模块数据
+        const module = QZone[moduleName] || {};
+        switch (moduleName) {
+            case 'Photos':
+                // 相册
+                module.Album.total = 0;
+                module.Album.Data = [];
+                module.Album.OLD_Data = [];
+                break;
+            case 'Boards':
+                // 留言
+                module.Data = {
+                    items: [],
+                    authorInfo: {
+                        message: '',
+                        sign: ''
+                    },
+                    total: 0
+                };
+                module.OLD_Data = {
+                    items: [],
+                    authorInfo: {
+                        message: '',
+                        sign: ''
+                    },
+                    total: 0
+                };
+                break;
+            case 'Visitors':
+                // 访客
+                module.Data = {
+                    items: [],
+                    total: 0,
+                    totalPage: 0
+                }
+                module.OLD_Data = {
+                    items: [],
+                    total: 0,
+                    totalPage: 0
+                }
+                break;
+            default:
+                module.total = 0;
+                module.Data = [];
+                module.OLD_Data = [];
+                break;
+        }
     }
 }
 
@@ -872,43 +1070,89 @@ API.Common.initBackedUpItems = async() => {
     const indicator = new StatusIndicator('InitIncrement');
     indicator.print();
 
-    // 获取已备份数据
-    const Old_QZone = await API.Common.getBackupItems();
-    if (!Old_QZone || Object.keys(Old_QZone).length == 0) {
+    // 获取所有备份QQ的数据
+    window.Backedup = await API.Common.getBackupItems() || {};
+    window.Backedup = window.Backedup.Backedup || {}
+    if (!window.Backedup || Object.keys(window.Backedup).length == 0) {
         // 没有上次备份数据
+        indicator.complete();
         return;
     }
-    // 覆盖更新说说模块全局变量
-    QZone.Messages.OLD_Data = Old_QZone.Messages ? Old_QZone.Messages.Data : [];
-    // 覆盖更新日志模块全局变量
-    QZone.Blogs.OLD_Data = Old_QZone.Blogs ? Old_QZone.Blogs.Data : [];
-    // 覆盖更新私密日记模块全局变量
-    QZone.Diaries.OLD_Data = Old_QZone.Diaries ? Old_QZone.Diaries.Data : [];
-    // 覆盖更新相册模块全局变量
-    QZone.Photos.Album.OLD_Data = Old_QZone.Photos && Old_QZone.Photos.Album ? Old_QZone.Photos.Album.Data : [];
-    // 覆盖更新视频模块全局变量
-    QZone.Videos.OLD_Data = Old_QZone.Videos ? Old_QZone.Videos.Data : [];
-    // 覆盖更新留言板模块全局变量
-    QZone.Boards.OLD_Data = Old_QZone.Boards ? Old_QZone.Boards.Data : {
-        items: [],
-        authorInfo: {
-            message: '',
-            sign: ''
-        },
-        total: 0
-    };
-    // 覆盖更新好友模块全局变量
-    QZone.Friends.OLD_Data = Old_QZone.Friends ? Old_QZone.Friends.Data : [];
-    // 覆盖更新收藏夹模块全局变量
-    QZone.Favorites.OLD_Data = Old_QZone.Favorites ? Old_QZone.Favorites.Data : [];
-    // 覆盖更新分享模块全局变量
-    QZone.Shares.OLD_Data = Old_QZone.Shares ? Old_QZone.Shares.Data : [];
-    // 覆盖更新分享模块全局变量
-    QZone.Visitors.OLD_Data = Old_QZone.Visitors ? Old_QZone.Visitors.Data : {
-        items: [],
-        total: 0,
-        totalPage: 0
-    };
+
+    // 指定QQ号数据
+    const oldDatas = window.Backedup[QZone.Common.Target.uin] || [];
+    if (!oldDatas || oldDatas.length == 0) {
+        // 没有上次备份数据
+        indicator.complete();
+        return;
+    }
+
+    for (const moduleName of MODULE_NAME_LIST) {
+        // 模块数据
+        const module = QZone[moduleName] || {};
+
+        const oldModule = _.find(oldDatas, ['module', moduleName]) || {};
+
+        // 更新模块备份时间
+        if (QZone_Config[moduleName].IncrementType === 'LastTime') {
+            QZone_Config[moduleName].IncrementTime = oldModule.time ? API.Utils.formatDate(oldModule.time / 1000) : Default_IncrementTime;
+        }
+
+        switch (moduleName) {
+            case 'Photos':
+                // 相册
+                module.Album.OLD_Data = oldModule.data || [];
+                // 是否新数据标识
+                module.Album.OLD_Data.forEach(album => {
+                    // 相册标识
+                    album.isNewItem = false;
+
+                    // 相片标识
+                    album.photoList = album.photoList || [];
+                    album.photoList.forEach(photo => {
+                        photo.isNewItem = false;
+                    });
+                });
+                break;
+            case 'Boards':
+                // 留言
+                module.OLD_Data = oldModule.data || {
+                    items: [],
+                    authorInfo: {
+                        message: '',
+                        sign: ''
+                    },
+                    total: 0
+                };
+                // 是否新数据标识
+                module.OLD_Data.items.forEach(item => {
+                    item.isNewItem = false;
+                });
+                break;
+            case 'Visitors':
+                // 访客
+                module.OLD_Data = oldModule.data || {
+                    items: [],
+                    authorInfo: {
+                        message: '',
+                        sign: ''
+                    },
+                    total: 0
+                };
+                // 是否新数据标识
+                module.OLD_Data.items.forEach(item => {
+                    item.isNewItem = false;
+                });
+                break;
+            default:
+                module.OLD_Data = oldModule.data || [];
+                // 是否新数据标识
+                module.OLD_Data.forEach(item => {
+                    item.isNewItem = false;
+                });
+                break;
+        }
+    }
     indicator.complete();
 }
 
@@ -963,7 +1207,10 @@ API.Common.isExport = (moduleType) => {
 API.Common.setCompareFiledInfo = (items, sourceFiled, targetFiled) => {
     // 处理发布时间，兼容增量备份
     for (const item of items) {
-        item[targetFiled] = Math.floor(new Date(item[sourceFiled]).getTime() / 1000);
+        if (!item.hasOwnProperty(sourceFiled) || item.hasOwnProperty(targetFiled)) {
+            continue;
+        }
+        item[targetFiled] = Math.floor(API.Utils.parseDate(item[sourceFiled]).getTime() / 1000);
     }
     return items;
 }
@@ -1070,6 +1317,17 @@ API.Common.downloadUserAvatars = (users) => {
  * @param {Array} friends 好友列表
  */
 API.Common.exportConfigToJson = async() => {
+
+    if (API.Common.isOnlyFileExport()) {
+        // 仅文件导出，无需导出配置文件
+        console.log('仅文件导出，无需导出配置文件');
+        return;
+    }
+
+    // 状态更新器
+    const indicator = new StatusIndicator('User_Config_Infos');
+    indicator.print();
+
     const path = API.Common.getModuleRoot('Common') + '/json';
 
     console.info('生成助手配置JSON开始', QZone_Config);
@@ -1078,4 +1336,17 @@ API.Common.exportConfigToJson = async() => {
     // 写入JOSN
     const jsonFile = await API.Common.writeJsonToJs('QZone_Config', QZone_Config, API.Common.getModuleRoot('Common') + '/json/config.js');
     console.info('生成助手配置JSON结束', jsonFile, QZone_Config);
+
+    // 完成
+    indicator.complete();
+}
+
+/**
+ * 是否仅导出文件
+ */
+API.Common.isOnlyFileExport = () => {
+    // 相册导出类型为文件、视频导出类型为文件
+    const isFile = QZone_Config.Photos.exportType === 'File' && QZone_Config.Videos.exportType === 'File';
+    // 且下载工具不为下载链接
+    return isFile && QZone_Config.Common.downloadType !== 'Thunder_Link';
 }

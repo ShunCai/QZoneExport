@@ -1,5 +1,9 @@
 (function() {
 
+    // 上次备份类型
+    let PreExportTypes = localStorage.getItem('PreExportTypes') || '[]';
+    PreExportTypes = JSON.parse(PreExportTypes);
+
     // 获取当前选项卡ID
     function getCurrentTabId(callback) {
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
@@ -32,19 +36,32 @@
 
     const initOwnerOp = (data) => {
         // 是否为当前用户
-        let isOwner = data.Owner.uin == data.Target.uin;
+        const isOwner = data.Owner.uin == data.Target.uin;
 
         // 显示信息
         $("#loginUin").text(data.Owner.uin);
-        $("#targetUin").text(data.Target.uin);
-        $("#userType").text(isOwner ? '个人模式' : '他人模式');
+        $("#loginUin").attr('title', '当前登录账户：' + data.Owner.nickname || data.Owner.name);
 
-        $("#Diaries").attr("checked", isOwner);
-        $("#Diaries").attr("disabled", !isOwner);
-        $("#Friends").attr("checked", isOwner);
-        $("#Friends").attr("disabled", !isOwner);
-        $("#Favorites").attr("checked", isOwner);
-        $("#Favorites").attr("disabled", !isOwner);
+        $("#targetUin").text(data.Target.uin);
+        $("#targetUin").attr('title', '当前备份账户：' + data.Target.nickname || data.Target.name);
+
+        $("#userType").text(isOwner ? '个人模式' : '他人模式');
+        $("#userType").attr('title', isOwner ? '个人模式：将备份自己的空间数据，访问他人空间自动切换他人模式' : '他人模式，将备份他人的空间数据，将会留下访客记录，当然，你有黄钻就当我没说，为什么？真羡慕你看不懂...');
+
+        // 私有模块
+        const privateTypeList = ['Diaries', 'Friends', 'Favorites'];
+        if (isOwner) {
+            // 个人模式，取消禁用
+            for (const privateType of privateTypeList) {
+                $("#" + privateType).attr("disabled", false);
+            }
+        } else {
+            // 他人模式，禁用模块
+            for (const privateType of privateTypeList) {
+                $("#" + privateType).prop("checked", false);
+                $("#" + privateType).attr("disabled", true);
+            }
+        }
     }
 
     // 初始化助手配置
@@ -60,7 +77,8 @@
                 'File': '助手内部',
                 'Browser': '浏览器',
                 'Aria2': 'Aria2',
-                'Thunder': '迅雷（自动唤起）',
+                'Thunder': '迅雷（助手唤醒）',
+                'Thunder_Clipboard': '迅雷（剪切板唤醒）',
                 'Thunder_Link': '迅雷（下载链接）',
                 'QZone': 'QQ空间外链',
             }
@@ -84,15 +102,19 @@
                     break;
                 case 'Aria2':
                     $download_help_reson.text('将调用Aria2服务下载文件');
-                    $download_help_suggestion.text('点击检查Aria2配置');
+                    $download_help_suggestion.text('点击这里检查Aria2配置');
                     break;
                 case 'Thunder':
                     $download_help_reson.text('将调用本地迅雷下载文件');
                     $download_help_suggestion.text('建议迅雷处于启动状态');
                     break;
+                case 'Thunder_Clipboard':
+                    $download_help_reson.text('将自动复制下载链接');
+                    $download_help_suggestion.text('迅雷需要打开接管剪切板的开关');
+                    break;
                 case 'Thunder_Link':
-                    $download_help_reson.text('将调用本地迅雷下载文件');
-                    $download_help_suggestion.text('建议迅雷处于启动状态');
+                    $download_help_reson.text('仅生成下载链接到备份压缩包中');
+                    $download_help_suggestion.text('需自行添加下载任务');
                     break;
                 case 'QZone':
                     $download_help_reson.text('不下载文件，直接使用QQ空间在线文件地址');
@@ -144,9 +166,9 @@
             }
             let contents = [];
             for (const [className, albums] of albumMap) {
-                contents.push('<optgroup label="' + className + '">');
+                contents.push(`<optgroup data-subtext="${albums.length}" label="${className}">`);
                 for (const album of albums) {
-                    contents.push('<option value="{0}" >{1}</option>'.format(album.id, album.name));
+                    contents.push(`<option data-subtext="${album.total}" value="${album.id}" >${album.name}</option>`);
                 }
                 contents.push('</optgroup>');
             }
@@ -229,10 +251,6 @@
     $("#openOptions").click(() => {
         chrome.runtime.openOptionsPage();
     });
-
-    // 上次备份类型
-    let PreExportTypes = localStorage.getItem('PreExportTypes') || '[]';
-    PreExportTypes = JSON.parse(PreExportTypes);
 
     // 如果存在上次选中，则默认选中上次选择的类型
     if (PreExportTypes.length > 0) {

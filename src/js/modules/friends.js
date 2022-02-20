@@ -7,16 +7,22 @@
  * 导出QQ空间好友
  */
 API.Friends.export = async() => {
+
+    // 模块总进度更新器
+    const indicator = new StatusIndicator('Friends_Row_Infos');
+    indicator.print();
+
     try {
         // 获取所有的QQ好友
         let friends = await API.Friends.getAllList();
+        console.log('好友列表获取完成，共有好友%i个', friends.length);
 
         // 添加QQ好友的头像下载
-        API.Common.downloadUserAvatars(friends);
+        API.Common.downloadUserAvatars(_.filter(friends, API.Friends.isNewItem));
 
         // 根据分组名称（非分组ID）进行排序
         friends = API.Utils.sort(friends, 'groupName');
-        console.info('排序后', friends, QZone.Friends.Data)
+        console.log('好友列表排序完成');
 
         // 根据导出类型导出数据
         await API.Friends.exportAllToFiles(friends);
@@ -24,6 +30,9 @@ API.Friends.export = async() => {
     } catch (error) {
         console.error('QQ好友导出异常', error);
     }
+
+    // 完成
+    indicator.complete();
 }
 
 /**
@@ -184,7 +193,7 @@ API.Friends.isNewItem = (item) => {
     if (!QZone_Config.Friends.isIncrement) {
         return true;
     }
-    return QZone.Friends.OLD_Data.getIndex(item.uin, 'uin') == -1;
+    return API.Common.isNewItem(item) || QZone.Friends.OLD_Data.getIndex(item.uin, 'uin') == -1;
 }
 
 /**
@@ -397,7 +406,7 @@ API.Friends.getZoneAccessList = async(friends) => {
 
     // 遍历
     for (const friend of friends) {
-        if (friend.isMe) {
+        if (friend.isMe || !API.Friends.isNewItem(friend)) {
             indicator.addSkip(friend);
             continue;
         }
@@ -407,7 +416,7 @@ API.Friends.getZoneAccessList = async(friends) => {
             data = API.Utils.toJson(data, /^_Callback\(/);
             if (data.code < 0) {
                 // 获取异常
-                console.warn('获取好友空间访问权限异常：', data);
+                console.warn('获取好友空间访问权限异常：', friend, data);
             }
 
             // 状态码慰-4009表示无权限

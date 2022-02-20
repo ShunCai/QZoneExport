@@ -22,6 +22,7 @@
     <script src="https://cdn.jsdelivr.net/npm/x-editable-4-bs4@2.2.0/dist/bootstrap4-editable/js/bootstrap-editable.min.js" integrity="sha256-F2w/rRTJCTminpQHTIZ69RCFJyyeTThqqNeGbhxaY9A=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.19.1/dist/extensions/resizable/bootstrap-table-resizable.min.js" integrity="sha256-bnx3qhjwjuNaU+aDr622pnYc6QFjZ5fnpSqp6FWWhBs=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.39.0/build/js/tempusdominus-bootstrap-4.min.js" integrity="sha256-VpqYzVoiXWnJ6OWGzqbreWjWS5pu3mLoqyQSLyQD6aE=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" integrity="sha256-qXBd/EfAdjOA2FGrGAG+b3YBn2tn5A6bhz+LSgYD96k=" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -94,13 +95,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Messages">重置</button>
-                                    </div>
-                                    <div class="col-sm-auto">
-                                        <small class="text-muted">
-                                            <span class="text-danger ml-2">说说文件增量</span><span class="fa fa-question-circle-o fa-lg" title="即说说的配图、语音、视频、表情增量下载，已经下载过的文件不再重复下载，但前提是保留上次备份的文件，否则文案展示时，无法查看多媒体内容"></span>
-                                            <span class="text-danger ml-2">增量维度</span><span class="fa fa-question-circle-o fa-lg" title="增量维度为发表时间，表示上次备份时间之前的内容(修改、点赞、评论、最近访问等)都不会重新获取，如上次备份后，说说新增/删除了评论，增量备份完成后，新增/删除的评论无法查看，但如若上次备份后，新发表了说说，那该说说将会备份！又比如上次备份后，删除了说说，该说说仍会存在备份中不会被删除！"></span>
-                                        </small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="messages_increment_time_row">
@@ -361,13 +356,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Blogs">重置</button>
-                                    </div>
-                                    <div class="col-sm-auto">
-                                        <small class="text-muted">
-                                            <span class="text-danger ml-2">日志文件增量</span><span class="fa fa-question-circle-o fa-lg" title="即日志的配图、语音、视频、表情增量下载，已经下载过的文件不再重复下载，但前提是保留上次备份的文件，否则文案展示时，无法查看多媒体内容"></span>
-                                            <span class="text-danger ml-2">增量维度</span><span class="fa fa-question-circle-o fa-lg" title="增量维度为发表时间，表示上次备份时间之前的内容(修改、点赞、评论、最近访问等)都不会重新获取，如上次备份后，日志新增/删除了评论，增量备份完成后，新增/删除的评论无法查看，但如若上次备份后，新发表了日志，那该日志将会备份！又比如上次备份后，删除了日志，该日志仍会存在备份中不会被删除！"></span>
-                                        </small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="blogs_increment_time_row">
@@ -396,7 +385,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">日志列表的展示方式：表格：表格方式展示、列表：普通列表展示，仅适用HTML备份方式</small>
+                                        <small class="text-muted">日志列表的查看/展示方式，表格：列表以表格方式展示；列表：普通列表展示，仅适用HTML备份方式</small>
                                     </div>
                                 </div>
                                 <div class="form-group row">
@@ -560,13 +549,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Diaries">重置</button>
-                                    </div>
-                                    <div class="col-sm-auto">
-                                        <small class="text-muted">
-                                            <span class="text-danger ml-2">日记文件增量</span><span class="fa fa-question-circle-o fa-lg" title="即日记的配图、语音、视频、表情增量下载，已经下载过的文件不再重复下载，但前提是保留上次备份的文件，否则文案展示时，无法查看多媒体内容"></span>
-                                            <span class="text-danger ml-2">增量维度</span><span class="fa fa-question-circle-o fa-lg" title="增量维度为发表时间，表示上次备份时间之前的内容(修改、点赞、评论、最近访问等)都不会重新获取，如上次备份后，日记新增/删除了评论，增量备份完成后，新增/删除的评论无法查看，但如若上次备份后，新发表了日记，那该日记将会备份！又比如上次备份后，删除了日记，该日记仍会存在备份中不会被删除！"></span>
-                                        </small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="diaries_increment_time_row">
@@ -595,7 +578,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">日记列表的展示方式：表格：表格方式展示、列表：普通列表展示，仅适用HTML备份方式</small>
+                                        <small class="text-muted">日记列表列表的查看/展示方式，表格：列表以表格方式展示；列表：普通列表展示，仅适用HTML备份方式</small>
                                     </div>
                                 </div>
                                 <div class="form-group row">
@@ -747,13 +730,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Photos">重置</button>
-                                    </div>
-                                    <div class="col-sm-auto">
-                                        <small class="text-muted">
-                                            <span class="text-danger ml-2">相片文件增量</span><span class="fa fa-question-circle-o fa-lg" title="即相片的配图、语音、视频、表情增量下载，已经下载过的文件不再重复下载，但前提是保留上次备份的文件，否则文案展示时，无法正常显示相片"></span>
-                                            <span class="text-danger ml-2">增量维度</span><span class="fa fa-question-circle-o fa-lg" title="增量维度为发表时间，表示上次备份时间之前的内容(修改、点赞、评论、最近访问等)都不会重新获取，如上次备份后，相册或相片新增/删除了评论，增量备份完成后，新增/删除的评论无法查看，但如若上次备份后，新发表了相册或相片，那该相册或相片将会备份！又比如上次备份后，删除了相册或相片，该相册或相片仍会存在备份中不会被删除！"></span>
-                                        </small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="photos_increment_time_row">
@@ -772,6 +749,32 @@
                                 </div>
                                 <h5 style="color:cadetblue">相册选项：</h5>
                                 <hr>
+                                <div class="form-group row">
+                                    <label for="photos_albums_sort_type" class="col-sm-auto col-form-label">排序方式：</label>
+                                    <div class="col-sm-2">
+                                        <select id="photos_albums_sort_type" class="custom-select">
+											<option value="4" selected >最新上传在前</option>
+											<option value="1">最新创建在前</option>
+											<option value="0">最新创建在后</option>
+											<option value="2">自定义排序</option>
+										</select>
+                                    </div>
+                                    <div class="col-sm-auto">
+                                        <small class="text-muted">相册的排序方式</small>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="photos_albums_folder_rename_type" class="col-sm-auto col-form-label">命名方式：</label>
+                                    <div class="col-sm-2">
+                                        <select id="photos_albums_folder_rename_type" class="custom-select">
+											<option value="Default" selected >相册名</option>
+											<option value="Sort">排序号+相册名</option>
+										</select>
+                                    </div>
+                                    <div class="col-sm-auto">
+                                        <small class="text-muted">相册备份文件夹的命名方式</small>
+                                    </div>
+                                </div>
                                 <div class="form-group row">
                                     <label class="col-sm-auto col-form-label">查询间隔：</label>
                                     <div class="col-sm-1">
@@ -830,11 +833,32 @@
                                 <h5 style="color:cadetblue">相片选项：</h5>
                                 <hr>
                                 <div class="form-group row">
+                                    <label for="photos_file_structure_type" class="col-sm-auto col-form-label">归类方式：</label>
+                                    <div class="col-sm-2">
+                                        <select id="photos_file_structure_type" class="custom-select">
+											<option value="File" selected >相册</option>
+											<option value="Year">年份</option>
+											<option value="Month">月份</option>
+											<option value="Date">日期</option>
+										</select>
+                                    </div>
+                                    <div class="col-sm-auto">
+                                        <small class="text-muted">基于相册的相片的文件归类存放方式
+                                            <span class="fa fa-question-circle-o fa-lg" data-toggle="tooltip" data-html="true" title='
+                                            相册：相册/相片<br>
+                                            年份：相册/年/相片<br>
+                                            月份：相册/年/月/相片<br>
+                                            日期：相册/年/月/日/相片<br>
+                                            时间优先取原图的拍摄时间，非原图或无拍摄时间，再取相片上传时间'></span>
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
                                     <label for="photos_images_list_type" class="col-sm-auto col-form-label">列表类型：</label>
                                     <div class="col-sm-2">
                                         <select id="photos_images_list_type" class="custom-select">
-											<option value="Default" selected>默认列表</option>
-											<option value="Detail">详情列表</option>
+											<option value="Default">默认列表</option>
+											<option value="Detail" selected>详情列表</option>
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
@@ -1080,13 +1104,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Videos">重置</button>
-                                    </div>
-                                    <div class="col-sm-auto">
-                                        <small class="text-muted">
-                                            <span class="text-danger ml-2">视频文件增量</span><span class="fa fa-question-circle-o fa-lg" title="即视频的配图、语音、视频、表情增量下载，已经下载过的文件不再重复下载，但前提是保留上次备份的文件，否则文案展示时，无法查看多媒体内容"></span>
-                                            <span class="text-danger ml-2">增量维度</span><span class="fa fa-question-circle-o fa-lg" title="增量维度为发表时间，表示上次备份时间之前的内容(修改、点赞、评论、最近访问等)都不会重新获取，如上次备份后，视频新增/删除了评论，增量备份完成后，新增/删除的评论无法查看，但如若上次备份后，新发表了视频，那该视频将会备份！又比如上次备份后，删除了视频，该视频仍会存在备份中不会被删除！"></span>
-                                        </small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="videos_increment_time_row">
@@ -1105,6 +1123,27 @@
                                 </div>
                                 <h5 style="color:cadetblue">视频选项：</h5>
                                 <hr>
+                                <div class="form-group row">
+                                    <label for="videos_file_structure_type" class="col-sm-auto col-form-label">归类方式：</label>
+                                    <div class="col-sm-2">
+                                        <select id="videos_file_structure_type" class="custom-select">
+											<option value="File" selected >默认</option>
+											<option value="Year">年份</option>
+											<option value="Month">月份</option>
+											<option value="Date">日期</option>
+										</select>
+                                    </div>
+                                    <div class="col-sm-auto">
+                                        <small class="text-muted">基于视频文件归类存放方式
+                                            <span class="fa fa-question-circle-o fa-lg" data-toggle="tooltip" data-html="true" title='
+                                            默认：Videos/视频文件<br>
+                                            年份：Videos/年/视频文件<br>
+                                            月份：Videos/年/月/视频文件<br>
+                                            日期：Videos/年/月/日/视频文件<br>
+                                            时间取视频的上传时间'></span>
+                                        </small>
+                                    </div>
+                                </div>
                                 <div class="form-group row">
                                     <label class="col-sm-auto col-form-label">查询间隔：</label>
                                     <div class="col-sm-1">
@@ -1221,13 +1260,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Boards">重置</button>
-                                    </div>
-                                    <div class="col-sm-auto">
-                                        <small class="text-muted">
-                                            <span class="text-danger ml-2">留言文件增量</span><span class="fa fa-question-circle-o fa-lg" title="即留言的配图、语音、留言、表情增量下载，已经下载过的文件不再重复下载，但前提是保留上次备份的文件，否则文案展示时，无法查看多媒体内容"></span>
-                                            <span class="text-danger ml-2">增量维度</span><span class="fa fa-question-circle-o fa-lg" title="增量维度为发表时间，表示上次备份时间之前的内容(新增/删除留言或回复)都不会重新获取，如上次备份后，新发表了留言，那该留言将会备份！又比如上次备份后，删除了留言，该留言仍会存在备份中不会被删除！"></span>
-                                        </small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="boards_increment_time_row">
@@ -1325,7 +1358,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">好友的展示方式：表格：表格方式展示、列表：普通列表展示，仅适用HTML备份方式</small>
+                                        <small class="text-muted">好友列表的查看/展示方式，表格：表格方式展示；列表：普通列表展示，仅适用HTML备份方式</small>
                                     </div>
                                 </div>
                                 <div class="form-group row">
@@ -1404,13 +1437,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Favorites">重置</button>
-                                    </div>
-                                    <div class="col-sm-auto">
-                                        <small class="text-muted">
-                                            <span class="text-danger ml-2">收藏文件增量</span><span class="fa fa-question-circle-o fa-lg" title="即收藏的配图、语音、收藏、表情增量下载，已经下载过的文件不再重复下载，但前提是保留上次备份的文件，否则文案展示时，无法查看多媒体内容"></span>
-                                            <span class="text-danger ml-2">增量维度</span><span class="fa fa-question-circle-o fa-lg" title="增量维度为发表时间，表示上次备份时间之前的内容(新增/删除收藏)都不会重新获取，如上次备份后，新增了收藏，那该收藏将会备份！又比如上次备份后，删除了收藏，该收藏仍会存在备份中不会被删除！"></span>
-                                        </small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="favorites_increment_time_row">
@@ -1485,13 +1512,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Shares">重置</button>
-                                    </div>
-                                    <div class="col-sm-auto">
-                                        <small class="text-muted">
-                                            <span class="text-danger ml-2">分享文件增量</span><span class="fa fa-question-circle-o fa-lg" title="即分享的配图、语音、视频、表情增量下载，已经下载过的文件不再重复下载，但前提是保留上次备份的文件，否则文案展示时，无法查看多媒体内容"></span>
-                                            <span class="text-danger ml-2">增量维度</span><span class="fa fa-question-circle-o fa-lg" title="增量维度为发表时间，表示上次备份时间之前的内容(修改、点赞、评论、最近访问等)都不会重新获取，如上次备份后，分享新增/删除了评论，增量备份完成后，新增/删除的评论无法查看，但如若上次备份后，新发表了分享，那该分享将会备份！又比如上次备份后，删除了分享，该分享仍会存在备份中不会被删除！"></span>
-                                        </small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="shares_increment_time_row">
@@ -1703,13 +1724,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <button type="button" class="btn btn-outline-danger reset_increment" data-toggle="tooltip" title="清除已备份数据与重置上次备份时间" data-module="Visitors">重置</button>
-                                    </div>
-                                    <div class="col-sm-auto">
-                                        <small class="text-muted">
-                                            <span class="text-danger ml-2">访客文件增量</span><span class="fa fa-question-circle-o fa-lg" title="即访客最近访问的配图、表情增量下载，已经下载过的文件不再重复下载，但前提是保留上次备份的文件，否则文案展示时，无法查看多媒体内容"></span>
-                                            <span class="text-danger ml-2">增量维度</span><span class="fa fa-question-circle-o fa-lg" title="增量维度为访问时间，表示上次备份时间之前的访客都不会重新获取，如上次备份后，新增了访客，那该分享将会备份！"></span>
-                                        </small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="visitors_increment_time_row">
@@ -1779,8 +1794,9 @@
                                         <select id="common_download_type" class="custom-select" aria-describedby="common_download_type_help">
 											<option value="Browser" selected>浏览器</option>
 											<option value="Aria2">Aria2/Motrix</option>
-											<option value="Thunder">迅雷</option>
-											<option value="Thunder_Link">迅雷下载链接</option>
+											<option value="Thunder">迅雷（助手唤醒）</option>
+											<option value="Thunder_Clipboard">迅雷（剪切板唤醒）</option>
+											<option value="Thunder_Link">迅雷（下载链接）</option>
 											<option value="QZone">QQ空间外链</option>
 										</select>
                                     </div>
@@ -1814,7 +1830,7 @@
                                 <div id="common_thunder_task_count_row" class="form-group row" style="display: none;">
                                     <label for="common_thunder_task_count" class="col-sm-auto col-form-label">迅雷最大任务：</label>
                                     <div class="col-sm-2">
-                                        <input type="number" min="1000" class="form-control" id="common_thunder_task_count" placeholder="迅雷任务数" aria-describedby="common_thunder_task_count_help">
+                                        <input type="number" min="50" class="form-control" id="common_thunder_task_count" placeholder="迅雷任务数" aria-describedby="common_thunder_task_count_help">
                                     </div>
                                     <div class="col-sm-auto">
                                         <small id="common_thunder_task_count_help" class="text-muted">迅雷的最大任务数，当值为5000，照片数量为10000时，则唤起2次迅雷，每次5000个任务，不宜太大，太大将无法唤起迅雷。</small>
@@ -1841,15 +1857,17 @@
                                 </div>
                                 <!-- 浏览器下载相关配置 -->
                                 <div id="common_download_status_row" class="form-group row" style="display: none;">
-                                    <div class="col-sm-auto">启用状态栏：</div>
-                                    <div class="col-sm-2">
+                                    <div class="col-sm-auto">隐藏状态栏：</div>
+                                    <div class="col-sm-2 ml-3">
                                         <div class="custom-control custom-checkbox">
                                             <input type="checkbox" class="custom-control-input" id="common_download_status">
                                             <label class="custom-control-label" for="common_download_status" aria-describedby="common_download_status_help"></label>
                                         </div>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small id="common_download_status_help" class="text-muted">勾选表示启用，禁用后，会影响整个浏览器下载文件时无状态栏提醒，适用于下载方式为浏览器</small>
+                                        <small id="common_download_status_help" class="text-muted">勾选将隐藏浏览器底部的下载内容栏，也就隐藏浏览器的下载通知
+                                            <span class="fa fa-question-circle-o fa-lg" data-toggle="tooltip" title="影响范围是全局，也就是说，隐藏后，自己手动下载其它任务也无提醒"></span>
+                                        </small>
                                     </div>
                                 </div>
                                 <!-- Aria2下载相关配置 -->

@@ -4,7 +4,13 @@
  */
 
 API.Visitors.export = async() => {
+
+    // 模块总进度更新器
+    const indicator = new StatusIndicator('Visitors_Row_Infos');
+    indicator.print();
+
     try {
+
         // 获取所有的访客列表
         const visitorInfo = await API.Visitors.getAllList();
         console.info('访客列表获取完成', visitorInfo);
@@ -14,12 +20,13 @@ API.Visitors.export = async() => {
 
         // 根据导出类型导出数据    
         await API.Visitors.exportAllListToFiles(visitorInfo);
-
-        // 设置备份时间
-        API.Common.setBackupInfo(QZone_Config.Visitors);
+        
     } catch (error) {
         console.error('访客导出异常：', error);
     }
+
+    // 完成
+    indicator.complete();
 }
 
 /**
@@ -53,7 +60,7 @@ API.Visitors.getAllList = async() => {
             data = API.Utils.toJson(data, /^_Callback\(/) || {};
             if (data.code < 0) {
                 // 获取异常
-                console.warn('获取一页的视频列表异常：', data);
+                console.warn('获取单页的访客列表异常：', nextPageIndex, data);
             }
             data = data.data || {};
             const items = data.items || [];
@@ -72,7 +79,7 @@ API.Visitors.getAllList = async() => {
 
             // 合并数据
             QZone.Visitors.Data.items = API.Utils.unionItems(QZone.Visitors.Data.items, items);
-            if (API.Common.isPreBackupPos(items, CONFIG)) {
+            if (!_.isEmpty(QZone.Visitors.OLD_Data.items) && API.Common.isPreBackupPos(items, CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return QZone.Visitors.Data;
             }
@@ -266,7 +273,7 @@ API.Visitors.getMarkdown = (item) => {
     if (item.blogs.length > 0) {
         contents.push('{0} 查看了日志  '.format(user_name));
         for (const blog of item.blogs) {
-            contents.push('- 《{0}》  '.format(API.Common.formatContent(blog.name, 'MD')));
+            contents.push('- {0}  '.format(API.Common.formatContent(blog.name, 'MD')));
         }
         contents.push('\n  ');
     }

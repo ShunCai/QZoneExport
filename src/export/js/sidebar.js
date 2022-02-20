@@ -26,14 +26,14 @@ const initSidebar = function() {
 
     haders.each(function(i, item) {
         const tag = $(this).attr('data-tag') || $(item).get(0).tagName.toLowerCase();
-        var id = API.Utils.newUid();
-        var className = 'item_' + tag;
+        const id = API.Utils.newUid();
+        const className = 'item_' + tag;
         $(item).attr("id", "wow" + id);
         $(item).addClass("wow_head");
         // 显示的内容
         const html = $(this).attr('data-sidebar') || $(this).html();
         $("#AnchorContent").css('max-height', ($(window).height() - 80) + 'px');
-        $("#AnchorContent").append('<li><a class="nav_item ' + className + ' anchor-link text-truncate" title=' + $('<div>' + html + '</div>').text() + ' href="#wow' + id + '">' + "" + "" + html + '</a></li>');
+        $("#AnchorContent").append(`<li><a class="nav_item {0} anchor-link text-truncate" data-toggle="tooltip" data-html="true" title='{1}' href="#wow{2}">{3}</a></li>`.format(className, html, id, html));
     });
 
     $(".anchor-link").click(function() {

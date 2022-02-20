@@ -29,28 +29,47 @@ let sendMessage = (data, callback) => {
     });
 }
 
+/**
+ * 获取当前任务下载数
+ */
+const getInProgressTask = () => {
+    return new Promise(resolve => {
+        chrome.downloads.search({
+            state: "in_progress"
+        }, function(data) {
+            resolve(data)
+        })
+    })
+}
 
 /**
- * 浏览器下载(发送消息给背景页下载)
- * @param {object} options
+ * 浏览器下载
+ * @param {object} request
  */
-const downloadByBrowser = function(options) {
-    return new Promise(function(resolve, reject) {
-        chrome.downloads.download(options, function(downloadId) {
+const downloadByBrowser = function(request) {
+    return new Promise(async resolve => {
+        let dataList = await getInProgressTask();
+        console.log(`添加任务到浏览器，当前任务数：${dataList.length}`);
+        // 如果有配置最大并发数，需要查询当前下载任务数，如果等于或大于，则继续等待
+        while (request.downloadThread > 0 && dataList.length >= request.downloadThread) {
+            console.log(`添加任务到浏览器，当前任务数：${dataList.length}，不允许添加任务`);
+            // 等待1秒后重新查询当前任务数
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            dataList = await getInProgressTask();
+        }
+        console.log(`添加任务到浏览器，当前任务数：${dataList.length}，允许添加任务`);
+        // 添加下载任务
+        chrome.downloads.download(request.task, function(downloadId) {
             if (chrome.runtime.lastError) {
-                console.error(chrome.runtime.lastError.message, options);
+                console.error(`添加任务到浏览器失败，请求参数：${JSON.stringify(request)}，错误信息：${chrome.runtime.lastError}`);
                 // 返回失败标识
                 resolve(0);
                 return;
             }
-            if (!downloadId) {
-                // 返回失败标识
-                resolve(0);
-            }
-            BrowseDownloads.set(downloadId, options)
+            BrowseDownloads.set(downloadId, request.task)
             resolve(downloadId);
         });
-    });
+    })
 }
 
 /**
@@ -104,7 +123,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                     break;
                 case 'download_browser':
                     // 浏览器下载
-                    downloadByBrowser(request.options).then((downloadId) => {
+                    downloadByBrowser(request).then((downloadId) => {
                         sendResponse(downloadId);
                     });
                     break;
@@ -187,19 +206,16 @@ chrome.downloads.onDeterminingFilename.addListener(function(item, __suggest) {
 // 扩展安装时
 chrome.runtime.onInstalled.addListener((details) => {
     console.info('QQ空间导出助手安装中...', details);
-    let reason = details.reason;
-    let previousVersion = details.previousVersion;
-    switch (reason) {
+    switch (details.reason) {
         // 安装
         case chrome.runtime.OnInstalledReason.INSTALL:
             // 打开官网说明文档
             chrome.tabs.create({
-                url: 'https://lvshuncai.com/qzone-export.html'
+                url: 'https://lvshuncai.com/archives/qzone-export.html'
             });
             break;
-            // 更新
         case chrome.runtime.OnInstalledReason.UPDATE:
-            switch (previousVersion) {
+            switch (details.previousVersion) {
                 case '1.0.0':
                 case '1.0.1':
                 case '1.0.2':
@@ -218,12 +234,17 @@ chrome.runtime.onInstalled.addListener((details) => {
                 case '1.1.4':
                     // 打开更新日志
                     chrome.tabs.create({
-                        url: 'https://github.com/ShunCai/QZoneExport/releases/latest'
+                        url: 'https://www.lvshuncai.com/archives/qzone-export.html#更新日志'
                     });
-                
-                    // 打开官网说明文档
-                    chrome.tabs.create({
-                        url: 'https://lvshuncai.com/qzone-export.html'
+                    break;
+                case '1.1.5':
+                    // 重置配置项
+                    chrome.storage.sync.clear(function() {
+                        console.info('清空配置完成');
+                    });
+                    // 重置备份数据S
+                    chrome.storage.local.clear(function() {
+                        console.info('重置备份数据完成');
                     });
                     break;
                 default:

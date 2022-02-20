@@ -200,7 +200,7 @@ const API = {
     Favorites: {}, // 收藏模块
     Shares: {}, // 分享模块
     Visitors: {}, // 访问模块
-    Statistics: {}, // 数据统计模块
+    Statistics: {} // 数据统计模块
 };
 
 /**
@@ -543,31 +543,47 @@ API.Utils = {
      * @param {string} url 请求URL
      */
     get(url, params) {
+        // 重试
+        const retryRequest = (ajax, reject, error) => {
+            if (ajax.retries > 0) {
+                ajax.retries--;
+                // 指定秒数后继续请求
+                setTimeout(function() {
+                    console.warn('请求接口异常，正在尝试重试', url, params, ajax.retries);
+                    $.ajax(ajax);
+                }, ajax.retryInterval);
+                return;
+            }
+            console.info('重试次数已用完，准备回调');
+            reject(error);
+        }
         return new Promise(function(resolve, reject) {
             $.ajax({
                 url: url,
                 type: 'GET',
                 data: params,
-                // async: false,
-                // cache: false,
                 retries: QZone_Config.Common.listRetryCount, // 重试次数
                 retryInterval: QZone_Config.Common.listRetrySleep * 1000, // 每次重试间隔秒数
                 success: function(result) {
+                    try {
+                        const resJson = API.Utils.toJson(result);
+                        if (resJson.code === -3000 || resJson.message === '请先登录' ||
+                            resJson.code === -99997 || resJson.message === '出了点小问题，请稍后再试') {
+                            // code = -3000 未登录
+                            // 如果返回未登录，而实际上是已登录，则继续重试，重试后，可能会成功，不成功继续重试，直到重试次数用完
+                            console.warn('接口请求成功，接口处理返回错误', resJson);
+                            retryRequest(this);
+                            return;
+                        }
+                    } catch (error) {
+                        // 转换JSON错误时，当作成功返回
+                        resolve(result);
+                        return;
+                    }
                     resolve(result);
                 },
                 error: function(xhr, status, error) {
-                    if (this.retries > 0) {
-                        this.retries--;
-                        // 指定秒数后继续请求
-                        let scope = this;
-                        setTimeout(function() {
-                            console.warn('请求接口异常，正在尝试重试', url, params, scope.retries);
-                            $.ajax(scope);
-                        }, this.retryInterval);
-                        return;
-                    }
-                    console.info('重试次数已用完，准备回调');
-                    reject(error);
+                    retryRequest(this, reject, error);
                 }
             });
         });
@@ -691,17 +707,28 @@ API.Utils = {
      * 获取QQ号
      */
     initUin() {
-        // 获取目标QQ
+
         let rs = /\/user\.qzone\.qq\.com\/([\d]+)/.exec(window.location.href);
         if (rs) {
             // 获取登录QQ
             const res = /\d.+/g.exec(API.Utils.getCookie('uin'));
             if (res && res.length > 0) {
+
+                // 当前登录用户信息
+                const $ownerInfoDom = document.querySelector('#QZ_Toolbar_Container > div > div.user-info > a.user-home > span');
                 QZone.Common.Owner.uin = /\d.+/g.exec(API.Utils.getCookie('uin'))[0] - 0;
+                QZone.Common.Owner.name = $ownerInfoDom && $ownerInfoDom.innerText.trim() || '我';
+                QZone.Common.Owner.nickname = QZone.Common.Owner.name;
+
+                // 备份目标用户信息
+                const $targetInfoDom = document.querySelector('#headContainer > div.head-detail > div.head-detail-name > span.user-name.textoverflow');
+
                 QZone.Common.Target = {
                     uin: rs[1] - 0,
                     title: document.title,
-                    description: $('meta[name="description"]').attr("content"),
+                    description: $('meta[name="description"]').attr("content") || document.title,
+                    name: $targetInfoDom && $targetInfoDom.innerText.trim() || 'TA',
+                    nickname: $targetInfoDom && $targetInfoDom.innerText.trim() || 'TA'
                 }
             }
         }
@@ -908,7 +935,7 @@ API.Utils = {
      * 转换HTML特殊字符
      */
     escHTML(content) {
-        var l = { "&amp;": /&/g, "&lt;": /</g, "&gt;": />/g, "&#039;": /\x27/g, "&quot;": /\x22/g };
+        var l = { "&amp;": /&/g, "&lt;": /</g, "&gt;": />/g, "&quot;": /\x22/g };
         for (var i in l) {
             content = content.replace(l[i], i);
         }
@@ -935,8 +962,9 @@ API.Utils = {
      * @param {string} type 转换类型，默认TEXT,可选HTML,MD
      * @param {boolean} isRt 是否是处理转发内容
      * @param {boolean} isSupportedHtml 内容本身是否支持HTML
+     * @param {boolean} isEscHTML 是否全部转换HTML标签
      */
-    formatContent(item, type, isRt, isSupportedHtml) {
+    formatContent(item, type, isRt, isSupportedHtml, isEscHTML) {
         if (typeof item === 'string') {
             // 转换特殊符号
             if (!isSupportedHtml) {
@@ -950,7 +978,7 @@ API.Utils = {
             item = API.Utils.formatMention(item, type);
             // 转换微信表情
             item = API.Common.formatWxEmoji(item, type);
-            return item;
+            return isEscHTML ? API.Utils.escHTML(item) : item;
         }
         var conlist = (isRt && item.rt_con && item.rt_con['conlist']) || item.conlist || [];
         var contents = [];
@@ -994,7 +1022,7 @@ API.Utils = {
                     // 普通说说内容？
                     if (info.con) {
                         // 转换话题
-                        info.custom_display = API.Utils.formatTopic(info.con, type);
+                        info.custom_display = this.formatTopic(this.escHTML(info.con), type);
                         // 转换表情
                         info.custom_display = API.Utils.formatEmoticon(info.custom_display, type);
                         // 转换微信表情
@@ -1015,9 +1043,8 @@ API.Utils = {
                     break;
             }
         }
-        let content = contents.join("");
-        content = content.replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, "");
-        return content;
+        const content = contents.join("").replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, "");
+        return isEscHTML ? API.Utils.escHTML(content) : content;
     },
 
     /**
@@ -1079,11 +1106,25 @@ API.Utils = {
      *  @param {integer} time 
      */
     formatDate(time, str) {
-        if (!Number.isInteger(time)) {
+        if (!_.isNumber(time)) {
             return time;
         }
         str = str || 'yyyy-MM-dd hh:mm:ss';
         return new Date(time * 1000).format(str);
+    },
+
+    /**
+     * 转换时间
+     *  @param {integer} time 
+     */
+    parseDate(time) {
+        if (_.isNumber(time)) {
+            const sec = time * 1000;
+            if (sec < Date.now()) {
+                return new Date(sec);
+            }
+        }
+        return new Date(time);
     },
 
     /**
@@ -1127,6 +1168,11 @@ API.Utils = {
             // 不基于正则替换，如果JSON本身有这些字符，会被替换掉
             // 懒得折腾了，还是直接截取简单
             json = json.substring(0, json.lastIndexOf(')'));
+        } else {
+            // 是否包含Callback关键字
+            if (json.indexOf('Callback(') > -1) {
+                json = json.substring(json.indexOf('Callback(') + 'Callback('.length);
+            }
         }
 
         try {
@@ -1259,21 +1305,22 @@ API.Utils = {
     downloadByBrowser(task) {
         return new Promise(function(resolve, reject) {
             // 简单克隆
-            let options = JSON.parse(JSON.stringify(task));
+            const newTask = JSON.parse(JSON.stringify(task));
 
             // 删除多余属性
-            delete options.id;
-            delete options.dir;
-            delete options.name;
-            delete options.source;
-            delete options.state;
-            delete options.downloadState;
-            delete options.module;
+            delete newTask.id;
+            delete newTask.dir;
+            delete newTask.name;
+            delete newTask.source;
+            delete newTask.state;
+            delete newTask.downloadState;
+            delete newTask.module;
 
             chrome.runtime.sendMessage({
                 from: 'content',
                 type: 'download_browser',
-                options: options
+                downloadThread: QZone_Config.Common.downloadThread,
+                task: newTask
             }, function(id) {
                 if (chrome.runtime.lastError) {
                     task.setId(0);
@@ -1514,6 +1561,32 @@ API.Utils = {
  * QQ空间公共模块
  */
 API.Common = {
+
+    /**
+     * 基于相片获取相片的文件夹结构路径
+     * @param {Date} dateTime 日期时间
+     * @param {String} fileStructureType 归类方式
+     */
+    getFileStructureFolderPath(dateTime, fileStructureType) {
+        let folder = '';
+        switch (fileStructureType) {
+            case 'Year':
+                // 年份/文件
+                folder = API.Utils.formatDate(dateTime / 1000, 'yyyy年');
+                break;
+            case 'Month':
+                // 年份/月份/文件
+                folder = API.Utils.formatDate(dateTime / 1000, 'yyyy年/MM月');
+                break;
+            case 'Date':
+                // 年份/月份/日期/文件
+                folder = API.Utils.formatDate(dateTime / 1000, 'yyyy年/MM月/dd日');
+                break;
+            default:
+                break;
+        }
+        return folder;
+    },
 
     /**
      * 获取来源类型（该判断不严谨）
@@ -1780,6 +1853,39 @@ API.Common = {
      */
     getModuleRoot(module) {
         return API.Common.getRootFolder() + '/' + QZone[module].ROOT;
+    },
+
+    /**
+     * 获取多媒体路径
+     * @param {string} url 远程URL
+     * @param {string} filepath 本地文件路径
+     * @param {string} sourceType 来源类型
+     */
+    getMediaPath(url, filepath, sourceType) {
+        if (!filepath) {
+            return url;
+        }
+        let res = filepath || url;
+        switch (sourceType) {
+            case 'Messages_HTML':
+                res = '../' + res;
+                break;
+            case 'Photos_HTML':
+                res = '../' + res;
+                break;
+            case 'Photos_MarkDown':
+                res = '../../../' + res;
+                break;
+            case 'Videos_HTML':
+                res = '../' + res;
+                break;
+            case 'Friends_HTML':
+                res = '../' + res;
+                break;
+            default:
+                break;
+        }
+        return res;
     }
 }
 
@@ -1996,6 +2102,9 @@ API.Blogs = {
      * @returns 
      */
     isTemplateBlog(item) {
+        if (!item) {
+            return false;
+        }
         return item.exblogtype == 2 || item.blogType;
     },
 
@@ -2692,6 +2801,21 @@ API.Boards = {
 API.Photos = {
 
     /**
+     * 基于相片获取相片的文件夹结构路径
+     * @param {Object} photo 相片
+     */
+    getFileStructureFolderPath(photo) {
+
+        // 原图时间、上传时间
+        const dateTime = API.Utils.parseDate((photo.rawshoottime || photo.shootTime) || (photo.uploadtime || photo.uploadTime)).getTime();
+
+        // 文件夹结构
+        const fileStructureType = QZone_Config.Photos.Images.fileStructureType;
+
+        return API.Common.getFileStructureFolderPath(dateTime, fileStructureType);
+    },
+
+    /**
      * 获取相片类型
      * @param {string} photo 相片对象
      */
@@ -2707,7 +2831,7 @@ API.Photos = {
                 photoType = "GIF";
                 break;
             case 3:
-                photoType = "PND";
+                photoType = "PNG";
                 break;
             case 4:
                 photoType = "BMP";
@@ -2838,10 +2962,10 @@ API.Photos = {
             "needUserInfo": 1,
             "idcNum": QZone.Common.Target.route || this.getRoute(),
             "mode": 2, // 视图：普通视图
-            "sortOrder": 2, // 排序类型：自定义排序
+            "sortOrder": '2', // 排序类型：0：最新创建在后，1：最新创建在前，2：自定义排序，4：最新上传在前，如未自定义，则默认最新创建在后？
             "pageStart": page * QZone_Config.Photos.pageSize,
             "pageNum": QZone_Config.Photos.pageSize,
-            // "needSave": 1, // 保存视图
+            // "needSave": 1, // 保存排序
             "callbackFun": "shine0",
             "_": Date.now()
         }
@@ -3147,6 +3271,21 @@ API.Photos = {
 API.Videos = {
 
     /**
+     * 基于相片获取相片的文件夹结构路径
+     * @param {Object} video 相片
+     */
+    getFileStructureFolderPath(video) {
+
+        // 上传时间
+        const dateTime = API.Utils.parseDate(video.uploadtime || video.uploadTime).getTime();
+
+        // 文件夹结构
+        const fileStructureType = QZone_Config.Videos.fileStructureType;
+
+        return API.Common.getFileStructureFolderPath(dateTime, fileStructureType);
+    },
+
+    /**
      * 获取视频列表
      * @param {integer} page 当前页
      */
@@ -3239,8 +3378,7 @@ API.Videos = {
      * @param {string} url 视频地址
      */
     getFileName(url) {
-        url = url || '';
-        let result = /http:\/\/(.+)\/(.+\.mp4)\?(.+)/gi.exec(url);
+        let result = /http:\/\/(.+)\/(.+\.mp4)\?(.+)/gi.exec(API.Utils.toHttp(url || ''));
         if (result) {
             return result[2];
         }
@@ -3368,6 +3506,10 @@ API.Favorites = {
                     temp.source_info.video_list = temp.url_info.video_list || [];
                     temp.source_info.music_list = temp.url_info.music_list || [];
                     break;
+                case 2:
+                    // 相片
+                    console.warn('相片类型无需处理多媒体', temp);
+                    break;
                 case 3:
                     // 日志                    
                     temp.source_info.video_list = temp.blog_info.video_list || [];
@@ -3383,6 +3525,10 @@ API.Favorites = {
                     temp.source_info.video_list = temp.shuoshuo_info.video_list || [];
                     temp.source_info.music_list = temp.shuoshuo_info.music_list || [];
                     temp.shuoshuo_info.detail_shuoshuo_info = temp.shuoshuo_info.detail_shuoshuo_info || {};
+                    break;
+                case 6:
+                    // 文本
+                    console.warn('文本类型无需处理多媒体', temp);
                     break;
                 case 7:
                     // 分享
@@ -3460,21 +3606,34 @@ API.Favorites = {
      * 获取收藏夹分享的URL
      * @param {object} share_info 收藏夹分享信息
      */
+
+
+    /**
+     * 获取收藏夹分享的URL
+     * @param {object} share_info 收藏夹分享信息
+     */
     getShareUrl(share_info) {
         if (!share_info) {
             return "#";
         }
+        // 相册分享
+        if (share_info.album_info && Object.keys(share_info.album_info).length > 0) {
+            return 'https://user.qzone.qq.com/{owner_uin}/photo/{id}'.format(share_info.album_info);
+        }
+        // 日志分享
+        if (share_info.blog_info && Object.keys(share_info.blog_info).length > 0) {
+            return 'https://user.qzone.qq.com/{owner_uin}/blog/{id}'.format(share_info.blog_info);
+        }
+        // 音乐分享
         if (share_info.music_list && share_info.music_list.length > 0) {
-            // 音乐分享
             return share_info.music_list[0].music_info.play_url;
         }
+        // 视频分享
         if (share_info.video_list && share_info.video_list.length > 0) {
-            // 视频分享
             return share_info.video_list[0].video_info.play_url;
         }
         return share_info.share_url;
     }
-
 };
 
 

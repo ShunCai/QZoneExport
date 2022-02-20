@@ -14,11 +14,6 @@ API.Friends.showList = function() {
     const careFriends = friends.filter((item) => item.care === true);
     const careShowTip = careFriends.length == 1 ? "TA" : "TA们";
     newGroupMaps.set('<span title="你特别关心的' + careShowTip + '，' + careShowTip + '一定很重要、重要、重要吧"><span class="fa fa-heartbeat text-danger mr-2"></span>特别关心<span>', careFriends);
-
-    // QQ分组
-    for (const [groupName, groupItems] of groupMaps) {
-        newGroupMaps.set(groupName, groupItems);
-    }
     // 虚拟无权限分组
     const notAccessFriends = friends.filter((item) => item.access === false);
     newGroupMaps.set('<span title="无权限访问TA们的空间或TA们未开通QQ空间"><span class="fa fa-lock text-danger mr-2"></span>无权访问</span>', notAccessFriends);
@@ -26,6 +21,11 @@ API.Friends.showList = function() {
     // 虚拟单向好友分组
     const oneWayFriends = friends.filter((item) => item.isFriend === 2);
     newGroupMaps.set('<span title="TA们在你的QQ好友列表，你不在TA们的QQ好友列表，反正很让人心情不爽就对了"><span class="fa fa-user-times text-danger mr-2"></span>单向好友<span>', oneWayFriends);
+
+    // QQ分组
+    for (const [groupName, groupItems] of groupMaps) {
+        newGroupMaps.set(groupName, groupItems);
+    }
 
     // 基于模板渲染列表
     const list_html = template(TPL.FRIENDS_GROUP_LIST, { friends: friends, groupMaps: newGroupMaps });

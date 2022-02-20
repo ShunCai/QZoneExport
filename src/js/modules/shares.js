@@ -4,13 +4,19 @@
  */
 
 API.Shares.export = async() => {
+
+    // 模块总进度更新器
+    const indicator = new StatusIndicator('Shares_Row_Infos');
+    indicator.print();
+
     try {
         // 获取所有的分享列表
         let items = await API.Shares.getAllList();
-        console.info('分享列表获取完成', items);
+        console.log('分享列表获取完成，共有分享%i条', items.length);
 
         // 获取所有的分享评论
         items = await API.Shares.getItemsAllCommentList(items);
+        console.log('分享列表评论获取完成');
 
         // 添加多媒体下载任务
         items = await API.Shares.addMediaToTasks(items);
@@ -23,12 +29,13 @@ API.Shares.export = async() => {
 
         // 根据导出类型导出数据    
         await API.Shares.exportAllListToFiles(items);
-
-        // 设置备份时间
-        API.Common.setBackupInfo(QZone_Config.Shares);
+        
     } catch (error) {
         console.error('分享导出异常：', error);
     }
+
+    // 完成
+    indicator.complete();
 }
 
 /**
@@ -67,7 +74,7 @@ API.Shares.getAllList = async() => {
 
             // 合并数据
             QZone.Shares.Data = API.Utils.unionItems(QZone.Shares.Data, dataList);
-            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+            if (!_.isEmpty(QZone.Shares.OLD_Data) && API.Common.isPreBackupPos(dataList, CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return QZone.Shares.Data;
             }

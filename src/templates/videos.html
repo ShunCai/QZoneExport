@@ -13,6 +13,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/jquery-mousewheel@3.1.13/jquery.mousewheel.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" integrity="sha256-qXBd/EfAdjOA2FGrGAG+b3YBn2tn5A6bhz+LSgYD96k=" crossorigin="anonymous"></script>
 	
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/lightgallery.min.js" integrity="sha256-dkTk5cgrLUjjQiGNZsoDnjhCI+UuhTffLnyrN7qLutw=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/plugins/zoom/lg-zoom.min.js" integrity="sha256-6Ny31P8WSBcY1SFaWxg4zgDzZJNNIJ4BchV+RxFiDR0=" crossorigin="anonymous"></script>
@@ -23,6 +24,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/plugins/fullscreen/lg-fullscreen.min.js" integrity="sha256-7SXgJ9rT6uPHY7fse2NsZN7Yq96f+9I35bDtUwX8ZHc=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/plugins/comment/lg-comment.min.js" integrity="sha256-RszgszIiPRvEWMviw43SzoZwsvKZNbz2Djio7kUemrY=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/plugins/autoplay/lg-autoplay.min.js" integrity="sha256-XGqZJI2/fqI+ph7+msYWRIi9NLzsZ2PlhrhltWEUmOM=" crossorigin="anonymous"></script>
+	<script src="https://www.lvshuncai.com/custom/js/clicklove.min.js"></script>
 
 	<script src="https://cdn.jsdelivr.net/npm/lazyload@2.0.0-rc.2/lazyload.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
@@ -50,65 +52,57 @@
 	<main role="main">
 		<div class="albums py-5 bg-light" style="padding-top: 4rem!important;">
 			<div class="container-fluid tz-gallery">
-				<div id="lightgallery" class="row">
-					<script id="videos_tpl" type="text/html">
-						<%/* 遍历视频 */%>
-						<%for (const video of videos) {%>
-							<%video.uid = 'QZ-' + API.Utils.newSimpleUid(16)%>
-							<div class="col-md-2 mb-2">
-								<div class="card thumbnail mb-2 shadow-sm">
-									<div id="<%:=video.uid%>" class='photo-detail' style="display:none">
-										<div class="container">
-											<div class="row">
-												<div class="col-sm text-white-50 text-left">
-													<p>
-														<i title="拍摄/上传时间" class="fa fa-camera text-primary"><%:=video.shootTime ? API.Utils.formatDate(video.shootTime) : API.Utils.formatDate(video.uploadTime)%></i>
-														<i title="相片类型" class="ml-2">MP4</i>
-													</p>
-												</div>
-												<div class="col-sm">
-													<h6><%:=video.name ? API.Common.formatContent(video.name) : API.Utils.formatDate(video.uploadTime)%></h6>
-													<%if(video.desc){%>
-														<span class="text-white-50"><%:=API.Common.formatContent(video.desc, "HTML", false, false)%></span>
-													<%}%>
-												</div>
-												<div class="col-sm"></div>
+				<div id="lightgallery" class="row videos">
+					<%/* 遍历视频 */%>
+					<%for (const video of videos) {%>
+						<%video.uid = 'QZ-' + API.Utils.newSimpleUid(16)%>
+						<div class="col-md-2 mb-2">
+							<div class="card thumbnail mb-2 shadow-sm">
+								<div id="<%:=video.uid%>" class='photo-detail' style="display:none">
+									<div class="container">
+										<div class="row">
+											<div class="col text-white-50 text-left">
+												<p>
+													<i title="拍摄/上传时间" class="fa fa-camera text-primary"><%:=video.shootTime ? API.Utils.formatDate(video.shootTime) : API.Utils.formatDate(video.uploadTime)%></i>
+													<i title="相片类型" class="ml-2">MP4</i>
+												</p>
 											</div>
+											<div class="col text-center text-truncate">
+												<h6 data-toggle="tooltip" data-html="true" title='<%:=API.Common.formatContent(video.name || API.Utils.formatDate(video.uploadTime))%>'><%:=API.Common.formatContent(video.name || API.Utils.formatDate(video.uploadTime))%></h6>
+												<%if(video.desc){%>
+													<span class="text-white-50" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(video.desc, 'HTML', false, false)%>"><%:=API.Common.formatContent(video.desc, "HTML", false, false)%></span>
+												<%}%>
+											</div>
+											<div class="col"></div>
 										</div>
 									</div>
-									<a class="lightbox" data-video='{"source": [{"src":"<%:=(video.custom_filepath || video.custom_url || video.url)%>", "type":"video/mp4"}],"attributes": {"preload": false, "controls": true}}' 
-										data-poster="<%:=API.Common.getMediaPath(video.pre || video.custom_pre_url, video.custom_pre_filepath)%>" title="<%:=video.desc || video.name%>" data-sub-html="#<%:=video.uid%>">
-										<span class="photo-video"></span>
-										<img class="lazyload loading" src="../Common/Images/loading.gif" data-src="<%:=API.Common.getMediaPath(video.pre || video.custom_pre_url, video.custom_pre_filepath)%>" />
-									</a>
-									<div class="card-body">
-										<h5 class="card-title"><%:=video.desc ? API.Common.formatContent(video.desc) : API.Utils.formatDate(video.uploadTime)%></h5>
+								</div>
+								<a class="lightbox" data-video='{"source": [{"src":"<%:=(video.custom_filepath || video.custom_url || video.url)%>", "type":"video/mp4"}],"attributes": {"preload": false, "controls": true}}' 
+									data-poster="<%:=API.Common.getMediaPath(video.pre || video.custom_pre_url, video.custom_pre_filepath)%>" data-toggle="tooltip" data-html="true" title="<%:=video.desc || video.name%>" data-sub-html="#<%:=video.uid%>">
+									<span class="photo-video"></span>
+									<img class="lazyload loading" src="../Common/Images/loading.gif" data-src="<%:=API.Common.getMediaPath(video.pre || video.custom_pre_url, video.custom_pre_filepath)%>" />
+								</a>
+								<div class="card-body text-truncate">
+									<span class="card-title" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(video.desc || API.Utils.formatDate(video.uploadTime)) %>"><%:=API.Common.formatContent(video.desc || API.Utils.formatDate(video.uploadTime)) %></span>
+								</div>
+								<div class="pic-num-wrap d-flex justify-content-around">
+									<div class="align-self-end">
+										<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="uniKey" data-target="<%:=video.uniKey%>" ><%:=video.likes ? video.likes.length : 0%></span>
 									</div>
-									<span class="pic-num-wrap">
-										<span class="text-light fa fa-thumbs-o-up cursor viewlikes" title="查看点赞" data-field="uniKey" data-target="<%:=video.uniKey%>" style="
-																			position: absolute;
-																			top: 25px;
-																			left: 10px;
-																			font-size: 20px;
-																		"><%:=video.likes ? video.likes.length : 0%></span>
-										<span class="text-light fa fa-comments-o cursor viewcomments" title="查看评论" data-field="uniKey" data-target="<%:=video.uniKey%>" style="
-																			position: absolute;
-																			top: 25px;
-																			left: 50px;
-																			font-size: 20px;
-																		"><%:=video.comments ? video.comments.length : 0%></span>
-									</span>
+									<div class="align-self-end">
+										<span class="text-light fa fa-comments-o cursor viewcomments" title="查看评论" data-field="uniKey" data-target="<%:=video.uniKey%>"><%:=video.comments ? video.comments.length : 0%></span>
+									</div>
 								</div>
 							</div>
-						<%}%>
-					</script>
+						</div>
+					<%}%>
 				</div>
 			</div>
 		</div>
 	</main>
 	<script type="text/javascript">
-		// 当前年份的视频
-		window.yearItems = '<%:=JSON.stringify(videos)%>';
+		// 当前年份
+		window.targetYear = "<%:=targetYear || 'ALL'%>";
 	</script>
 	<script type="text/javascript" src="../Common/js/common.js"></script>
 	<script type="text/javascript" src="js/videos.js"></script>

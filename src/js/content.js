@@ -171,8 +171,8 @@ class PageInfo {
  */
 const MAX_MSG = {
     InitIncrement: [
-        '存在需要增量备份的模块',
-        '正在获取上次备份的数据',
+        '存在增量备份模块',
+        '正在获取已备份的数据',
         '请稍后...'
     ],
     Messages: [
@@ -587,23 +587,50 @@ const MAX_MSG = {
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
+    Common_Thunder_Clipboard: [
+        '正在第 <span style="color: #1ca5fc;">{index}</span> 次复制迅雷下载链接',
+        '将在 <span style="color: #1ca5fc;">{nextTip}</span> 秒后再次复制',
+        '已复制 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
     Common_Thunder_Link: [
         '正在生成迅雷下载链接',
         '打包下载后，打开迅雷复制根目录下的【迅雷下载链接.txt】',
         '请稍后...'
     ],
     Common_Browser: [
-        '正在添加下载任务到浏览器',
+        '正在添加多媒体文件下载任务到浏览器',
         '已添加 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '添加超时或失败 <span style="color: red;">{downloadFailed}</span> ',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
     Common_Aria2: [
-        '正在添加下载任务到Aria2',
+        '正在添加多媒体文件下载任务到Aria2',
         '已添加 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '添加超时或失败 <span style="color: red;">{downloadFailed}</span> ',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
+    Init_User_Info_Export: [
+        '正在采集用户基本信息',
+        '请稍后...'
+    ],
+    Init_User_Info_Export_Other: [
+        '正在生成个人首页',
+        '请稍后...'
+    ],
+    User_Config_Infos: [
+        '正在导出助手配置信息',
+        '请稍后...'
+    ],
+    Backup_Save: [
+        '正在保存当前备份数据',
+        '请稍后...'
+    ],
+    Backup_Export: [
+        '正在导出当前备份数据',
         '请稍后...'
     ]
 }
@@ -620,7 +647,7 @@ class StatusIndicator {
     constructor(type) {
         this.id = type + '_Tips'
         this.type = type
-        this.tip = MAX_MSG[type] || ''
+        this.tip = MAX_MSG[type] || []
         this.total = 0
         this.index = 0
         this.pageSize = 0
@@ -644,9 +671,16 @@ class StatusIndicator {
      * 输出提示信息
      */
     print() {
-        let $tip_dom = $("#" + this.id);
+        const $tip_dom = $("#" + this.id);
         $tip_dom.show();
-        $tip_dom.html(this.tip.join('，').format(this));
+        if (this.tip && this.tip.length > 0) {
+            $tip_dom.html(this.tip.join('，').format(this));
+        }
+
+        if ($tip_dom.is('details')) {
+            // 展开
+            $tip_dom.find('summary').click();
+        }
     }
 
     /**
@@ -654,9 +688,20 @@ class StatusIndicator {
      * @param {object} params 格式化参数
      */
     complete() {
-        let $tip_dom = $("#" + this.id)
+        const $tip_dom = $("#" + this.id)
         $tip_dom.show()
-        $tip_dom.html(this.tip.join('，').format(this).replace('正在', '已').replace('请稍后', '已完成').replace('...', ''))
+        let showTip = $tip_dom.html() || '';
+        if (this.tip && this.tip.length > 0) {
+            showTip = this.tip.join('，').format(this);
+        }
+        $tip_dom.html(showTip.replace('正在', '已').replace('请稍后', '已完成').replace('...', ''));
+
+        if ($tip_dom.is('details') && this.id !== 'Common_Row_Infos_Tips') {
+            // 收起
+            $tip_dom.find('summary').click();
+        }
+
+        $("#progressModal .modal-body").animate({ scrollTop: 1000 });
     }
 
     /**
@@ -815,7 +860,7 @@ const OperatorType = {
     /**
      * 导出用户信息
      */
-    USER_INFO: 'USER_INFO',
+    OTHERS_INFO: 'OTHERS_INFO',
 
     /**
      * 获取所有说说列表
@@ -868,11 +913,6 @@ const OperatorType = {
     Visitors: 'Visitors',
 
     /**
-     * 下载文件
-     */
-    FILE_LIST: 'FILE_LIST',
-
-    /**
      * 压缩
      */
     ZIP: 'ZIP',
@@ -905,9 +945,7 @@ class QZoneOperator {
                 break;
             case OperatorType.INIT_USER_INFO:
                 // 重置QQ空间备份数据
-                API.Common.resetQzoneItems();
-                // 初始化用户信息
-                await API.Common.initUserInfo();
+                API.Common.resetQZoneBackupItems();
                 // 初始化上次备份信息
                 await API.Common.initBackedUpItems();
                 this.next(OperatorType.Messages);
@@ -980,33 +1018,35 @@ class QZoneOperator {
                 if (API.Common.isExport(moduleType)) {
                     await API.Videos.export();
                 }
-                this.next(OperatorType.USER_INFO);
+                this.next(OperatorType.OTHERS_INFO);
                 break;
-            case OperatorType.USER_INFO:
-                // 导出用户信息
-                await API.Common.exportUser();
-                this.next(OperatorType.FILE_LIST);
-                break;
-            case OperatorType.FILE_LIST:
-                // 保存数据
-                await API.Common.saveBackupItems();
-                // 下载文件
-                await API.Utils.downloadAllFiles();
+            case OperatorType.OTHERS_INFO:
+                // 其它信息导出
+                await API.Common.exportOthers();
                 this.next(OperatorType.ZIP);
                 break;
             case OperatorType.ZIP:
-                await API.Utils.sleep(1000);
-                // 压缩
-                await API.Utils.Zip(API.Common.getRootFolder());
-                operator.next(OperatorType.COMPLETE);
+                if (API.Common.isOnlyFileExport()) {
+                    // 仅文件导出，无需压缩文件
+                    console.log('仅文件导出，无需压缩文件');
+                } else {
+                    // 压缩文件
+                    await API.Utils.sleep(1000);
+                    await API.Utils.Zip(API.Common.getRootFolder());
+                    operator.next(OperatorType.COMPLETE);
+                }
                 break;
             case OperatorType.COMPLETE:
                 // 延迟3秒，确保压缩完
                 await API.Utils.sleep(1000);
-                $("#downloadBtn").show();
                 $("#fileList").show();
-                $("#backupStatus").html("数据采集完成，<span style='color:red' >请点击下方【打包下载】ZIP包</span>。");
-                API.Utils.notification("QQ空间导出助手通知", "空间数据已获取完成，请点击下载！");
+                if (API.Common.isOnlyFileExport()) {
+                    API.Utils.notification("QQ空间导出助手通知", "不涉及文案内容备份，多媒体文件下载任务已添加完成！");
+                } else {
+                    $("#downloadBtn").show();
+                    $("#backupStatus").html("数据采集完成，请点击下方<span style='color:red'>打包下载</span>按钮下载备份压缩包。");
+                    API.Utils.notification("QQ空间导出助手通知", "数据采集完成，请打包下载文案内容！");
+                }
                 break;
             default:
                 break;
@@ -1076,7 +1116,6 @@ class QZoneOperator {
                     continue;
                 }
                 let entry = await API.Utils.createFolder(API.Common.getRootFolder() + '/' + moduleRoot);
-                console.info('创建目录成功', entry);
             }
         }
 
@@ -1128,6 +1167,12 @@ class QZoneOperator {
                 // 修改继续重试按钮文本为【唤起迅雷】
                 $againDownloadBtn.text('唤起迅雷');
                 break;
+            case 'Thunder_Clipboard':
+                // 下载方式为迅雷下载时隐藏【迅雷下载】按钮
+                $thunderDownloadBtn.hide();
+                // 修改继续重试按钮文本为【唤起迅雷】
+                $againDownloadBtn.text('唤起迅雷');
+                break;
             case 'Thunder_Link':
                 // 隐藏重试按钮
                 $againDownloadBtn.hide();
@@ -1165,7 +1210,7 @@ class QZoneOperator {
                 $downloadBtn.attr('disabled', false);
                 $fileListBtn.attr('disabled', false);
                 $("#showFolder").show();
-                API.Utils.notification("QQ空间导出助手通知", "你的QQ空间数据下载完成！");
+                API.Utils.notification("QQ空间导出助手通知", "文案内容压缩包下载完成！");
             });
 
         });
@@ -1245,7 +1290,7 @@ class QZoneOperator {
         // 查看指定状态的数据
         $('#statusFilter').change(function() {
             const status = $(this).val();
-            if ('interrupted' === status || ('Thunder' === downloadType && 'all' === status)) {
+            if ('interrupted' === status || (['Thunder', 'Thunder_Clipboard'].indexOf(downloadType) > -1 && 'all' === status)) {
                 // 失败列表与迅雷下载全部列表时才展示【继续重试】按钮
                 $againDownloadBtn.show();
             } else {
@@ -1281,9 +1326,14 @@ class QZoneOperator {
                     await API.Common.downloadByAria2(tasks);
                     break;
                 case 'Thunder':
-                    // 下载方式为迅雷下载时
+                    // 下载方式为迅雷（助手唤醒）
                     const newThunderInfo = new ThunderInfo(API.Common.getRootFolderName(), QZone_Config.Common.downloadThread, tasks);
                     await API.Common.invokeThunder(newThunderInfo);
+                    break;
+                case 'Thunder_Clipboard':
+                    // 下载方式为迅雷（剪切板唤醒）
+                    const copyNewThunderInfo = new ThunderInfo(API.Common.getRootFolderName(), QZone_Config.Common.downloadThread, tasks);
+                    await API.Common.copyThunderTasksToClipboard(copyNewThunderInfo);
                     break;
                 default:
                     break;
@@ -1570,6 +1620,10 @@ API.Utils.downloadAllFiles = async() => {
             break;
         case 'Thunder':
             await API.Common.invokeThunder(thunderInfo);
+            break;
+        case 'Thunder_Clipboard':
+            // 复制迅雷下载任务到Clipboard
+            await API.Common.copyThunderTasksToClipboard(thunderInfo);
             break;
         case 'Thunder_Link':
             // 写入迅雷任务到文件

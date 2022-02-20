@@ -7,7 +7,13 @@
  * 导出视频数据
  */
 API.Videos.export = async() => {
+
+    // 模块总进度更新器
+    const indicator = new StatusIndicator('Videos_Row_Infos');
+    indicator.print();
+
     try {
+
         // 获取所有的视频列表
         let videos = await API.Videos.getAllList();
 
@@ -21,17 +27,17 @@ API.Videos.export = async() => {
         await API.Videos.getAllLikeList(videos);
 
         // 添加视频下载任务
-        API.Videos.addDownloadTasks('Videos', videos);
+        API.Videos.addDownloadTasks('Videos', videos, 'Videos/Images');
 
         // 根据导出类型导出数据
         await API.Videos.exportAllToFiles(videos);
 
-        // 设置备份时间
-        API.Common.setBackupInfo(QZone_Config.Videos);
-
     } catch (error) {
         console.error('视频导出异常', error);
     }
+
+    // 完成
+    indicator.complete();
 }
 
 
@@ -95,7 +101,7 @@ API.Videos.getAllList = async() => {
         return await API.Videos.getPageList(pageIndex, indicator).then(async(dataList) => {
             // 合并数据
             QZone.Videos.Data = API.Utils.unionItems(QZone.Videos.Data, dataList);
-            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+            if (!_.isEmpty(QZone.Videos.OLD_Data) && API.Common.isPreBackupPos(dataList, CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return QZone.Videos.Data;
             }
@@ -116,7 +122,7 @@ API.Videos.getAllList = async() => {
     QZone.Videos.Data = API.Common.unionBackedUpItems(CONFIG, QZone.Videos.OLD_Data, QZone.Videos.Data);
 
     // 发表时间倒序
-    QZone.Videos.Data = API.Utils.sort(QZone.Videos.Data, CONFIG.PreBackup.field, true);
+    QZone.Videos.Data = API.Utils.sort(QZone.Videos.Data, CONFIG.IncrementField, true);
 
     // 完成
     indicator.complete();
@@ -185,7 +191,7 @@ API.Videos.getAllComments = async(videos) => {
                 // 合并数据
                 video.comments = API.Utils.unionItems(video.comments, data.comments);
 
-                if (API.Common.isPreBackupPos(data.comments, CONFIG)) {
+                if (!_.isEmpty(QZone.Videos.OLD_Data) && API.Common.isPreBackupPos(data.comments, CONFIG)) {
                     // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                     return video.comments;
                 }
@@ -219,22 +225,27 @@ API.Videos.getAllComments = async(videos) => {
  * @param {Array} videos 视频列表
  * @param {string} module_dir 模块相对目录
  * @param {object} source 来源
- * @param {Map} FILE_URLS 模块已下载映射
  */
-API.Videos.addDownloadTasks = (module, videos, module_dir, source, FILE_URLS) => {
-    // 是否为其他模块添加视频下载任务
-    const isOther = module_dir ? true : false;
-    if (!videos || API.Common.isQzoneUrl() || (!isOther && QZone_Config.Videos.exportType == 'Link')) {
+API.Videos.addDownloadTasks = (module, videos, module_dir, source) => {
+    // 是否为视频
+    const isVideo = 'Videos' === module;
+
+    if (!videos || API.Common.isQzoneUrl() || (isVideo && QZone_Config.Videos.exportType == 'Link')) {
         // QQ空间外链、视频备份类型为下载链接、则不添加下载任务
         return;
     }
 
-    // 下载相对目录
-    FILE_URLS = FILE_URLS || QZone.Videos.FILE_URLS;
-    for (const video of videos) {
+    // 遍历
+    for (let idx = 0; idx < videos.length; idx++) {
+        // 视频
+        const video = videos[idx];
 
-        if (!isOther && !API.Common.isNewItem(video)) {
+        // 序号，便于排序
+        const orderNumber = API.Utils.prefixNumber(idx + 1, videos.length.toString().length);
+
+        if (isVideo && !API.Common.isNewItem(video)) {
             // 已备份数据跳过不处理
+            console.warn("已备份数据跳过不处理", video);
             continue;
         }
 
@@ -243,10 +254,11 @@ API.Videos.addDownloadTasks = (module, videos, module_dir, source, FILE_URLS) =>
         // 预览图直接写死后缀
         video.custom_pre_filename = API.Utils.newSimpleUid(8, 16) + '.jpeg';
         video.custom_pre_filepath = 'Images/' + video.custom_pre_filename;
-        API.Utils.newDownloadTask(module, video.custom_pre_url, isOther ? module_dir : 'Videos/Images', video.custom_pre_filename, video);
+        API.Utils.newDownloadTask(module, video.custom_pre_url, module_dir, video.custom_pre_filename, video);
 
         // 如果是外部视频，跳过不下载
         if (video.play_url) {
+            console.warn("外部视频，跳过", video);
             continue;
         }
 
@@ -254,19 +266,23 @@ API.Videos.addDownloadTasks = (module, videos, module_dir, source, FILE_URLS) =>
         video.custom_url = video.url || video.video_url || video.url3;
         if (!video.custom_url || API.Videos.isExternalVideo(video)) {
             // 外部视频跳过不下载
+            console.warn("外部视频，跳过", video);
             continue;
         }
-        let filename = FILE_URLS.get(video.custom_url);
-        if (!filename) {
-            filename = API.Videos.getFileName(video.custom_url);
+        video.custom_filename = API.Videos.getFileName(video.custom_url);
+        video.custom_filename = isVideo ? orderNumber + '_' + video.custom_filename : video.custom_filename;
+
+        // 添加下载任务
+        const categoryPath = API.Videos.getFileStructureFolderPath(video);
+        const downloadFolder = categoryPath ? 'Videos/' + categoryPath : 'Videos';
+
+        // 文件路径
+        video.custom_filepath = 'Images/' + video.custom_filename;
+        if (isVideo) {
+            video.custom_filepath = categoryPath ? categoryPath + '/' + video.custom_filename : video.custom_filename;
         }
-        video.custom_filename = filename;
-        video.custom_filepath = isOther ? 'Images/' + video.custom_filename : video.custom_filename;
-        if (!FILE_URLS.has(video.custom_url)) {
-            // 添加下载任务
-            API.Utils.newDownloadTask(module, video.custom_url, isOther ? module_dir : 'Videos', video.custom_filename, source || video);
-            FILE_URLS.set(video.custom_url, video.custom_filename);
-        }
+
+        API.Utils.newDownloadTask(module, video.custom_url, isVideo ? downloadFolder : module_dir, video.custom_filename, source || video);
     }
     return videos;
 }
@@ -317,13 +333,13 @@ API.Videos.exportToHtml = async(videos) => {
         await API.Common.writeJsonToJs('videos', videos, moduleFolder + '/json/videos.js');
 
         // 生成视频汇总列表HTML
-        await API.Common.writeHtmlofTpl('videos', null, moduleFolder + "/index.html");
+        await API.Common.writeHtmlofTpl('videos', { videos: videos, targetYear: 'ALL' }, moduleFolder + "/index.html");
 
         // 根据年份分组
         const year_maps = API.Utils.groupedByTime(videos, 'uploadTime', 'year');
         for (const [year, year_items] of year_maps) {
             // 生成视频年份列表HTML
-            await API.Common.writeHtmlofTpl('videos', { videos: year_items }, moduleFolder + "/" + year + ".html");
+            await API.Common.writeHtmlofTpl('videos', { videos: year_items, targetYear: year }, moduleFolder + "/" + year + ".html");
         }
 
     } catch (error) {
@@ -409,12 +425,12 @@ API.Videos.getMarkdowns = (videos) => {
         contents.push('\r\n');
 
         // 视频
-        contents.push('<video src="{0}" controls="controls" ></video>'.format(video.custom_filename || video.custom_url || video.url));
+        contents.push('<video height="400" src="{0}" controls="controls" ></video>'.format(video.custom_filepath || video.custom_url || video.url));
         contents.push('\r\n');
 
         // 视频评论 TODO 私密评论处理
         video.comments = video.comments || [];
-        contents.push('> 评论({0})'.format(video.cmtTotal));
+        contents.push('> 评论({0})'.format(video.cmtTotal || video.comments.length));
         contents.push('\r\n');
 
         for (const comment of video.comments) {
