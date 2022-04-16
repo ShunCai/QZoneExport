@@ -1,11 +1,24 @@
 .blocker {
-    z-index:9999;
+    z-index: 9999;
 }
 
-#progressModal{
+#progressModal {
     color: #333;
 }
 
 #progressModal a {
     color: rgb(0, 123, 255) !important;
+}
+
+#progressModal p {
+    font-size: medium;
+}
+
+#progressModal details {
+    font-size: medium;
+    display: none;
+}
+
+#progressModal details>p {
+    margin-left: 14px;
 }

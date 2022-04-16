@@ -7,6 +7,11 @@
  * 导出收藏板
  */
 API.Favorites.export = async() => {
+
+    // 模块总进度更新器
+    const indicator = new StatusIndicator('Favorites_Row_Infos');
+    indicator.print();
+
     try {
         // 获取所有的收藏列表
         let dataList = await API.Favorites.getAllList();
@@ -17,12 +22,12 @@ API.Favorites.export = async() => {
         // 根据导出类型导出数据
         await API.Favorites.exportAllToFiles(dataList);
 
-        // 设置备份时间
-        API.Common.setBackupInfo(QZone_Config.Favorites);
-
     } catch (error) {
         console.error('收藏导出异常', error);
     }
+
+    // 完成
+    indicator.complete();
 }
 
 
@@ -83,7 +88,7 @@ API.Favorites.getAllList = async() => {
 
             // 合并数据
             QZone.Favorites.Data = API.Utils.unionItems(QZone.Favorites.Data, dataList);
-            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+            if (!_.isEmpty(QZone.Favorites.OLD_Data) && API.Common.isPreBackupPos(dataList, CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return QZone.Favorites.Data;
             }
@@ -104,7 +109,7 @@ API.Favorites.getAllList = async() => {
     QZone.Favorites.Data = API.Common.unionBackedUpItems(CONFIG, QZone.Favorites.OLD_Data, QZone.Favorites.Data);
 
     // 发表时间倒序
-    QZone.Favorites.Data = API.Utils.sort(QZone.Favorites.Data, CONFIG.PreBackup.field, true);
+    QZone.Favorites.Data = API.Utils.sort(QZone.Favorites.Data, CONFIG.IncrementField, true);
 
     // 完成
     indicator.complete();
@@ -443,7 +448,7 @@ API.Favorites.addMediaToTasks = async(dataList) => {
         }
 
         // 下载视频预览图及视频
-        API.Videos.addDownloadTasks('Favorites', item.custom_videos, module_dir, item, QZone.Favorites.FILE_URLS);
+        API.Videos.addDownloadTasks('Favorites', item.custom_videos, module_dir, item);
 
         // 下载音乐预览图
         for (const audio of item.custom_audios) {

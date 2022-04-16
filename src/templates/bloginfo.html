@@ -12,7 +12,8 @@
 	<link rel="stylesheet" type="text/css" href="../Common/css/common.css">
 	<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
-    
+	<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" integrity="sha256-qXBd/EfAdjOA2FGrGAG+b3YBn2tn5A6bhz+LSgYD96k=" crossorigin="anonymous"></script>
+	
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/lightgallery.min.js" integrity="sha256-dkTk5cgrLUjjQiGNZsoDnjhCI+UuhTffLnyrN7qLutw=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/plugins/zoom/lg-zoom.min.js" integrity="sha256-6Ny31P8WSBcY1SFaWxg4zgDzZJNNIJ4BchV+RxFiDR0=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/plugins/video/lg-video.min.js" integrity="sha256-lkYYtHLEk1Rnr3TOXc/l1tfObPXEzvgKwePG49fZ1Rw=" crossorigin="anonymous"></script>
@@ -21,6 +22,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/plugins/fullscreen/lg-fullscreen.min.js" integrity="sha256-7SXgJ9rT6uPHY7fse2NsZN7Yq96f+9I35bDtUwX8ZHc=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/plugins/comment/lg-comment.min.js" integrity="sha256-RszgszIiPRvEWMviw43SzoZwsvKZNbz2Djio7kUemrY=" crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.3.0/plugins/autoplay/lg-autoplay.min.js" integrity="sha256-XGqZJI2/fqI+ph7+msYWRIi9NLzsZ2PlhrhltWEUmOM=" crossorigin="anonymous"></script>
+	<script src="https://www.lvshuncai.com/custom/js/clicklove.min.js"></script>
 
 	<script src="https://cdn.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
 	<script type="text/javascript" src="json/blogs.js"></script>
@@ -64,48 +66,81 @@
 						<span class="text-primary p-1 float-right fa fa-thumbs-up mr-2 cursor viewlikes" title="查看点赞" data-field="blogid" data-target="<%:=blog.blogid%>"><%:=blog.likeTotal || 0 %></span>
 						<span class="text-primary p-1 float-right fa fa-eye mr-2 cursor viewVisitors" title="最近访问" data-field="blogid" data-target="<%:=blog.blogid%>"><%:=blog.custom_visitor && blog.custom_visitor.viewCount || 0 %></span>
 					</h5>
-					<%/* 评论 */%>
-					<%/* 遍历评论 */%>
+					<!-- 日志评论 -->
 					<%if(blog.comments){%>
 						<%for (let index = 0; index < blog.comments.length; index++) {%>
 							<%const comment = blog.comments[index];%>
-							<div class="p-1 border-top comments mt-3">
-								<div class="container comment  m-1 p-0">
-									<a class="me-a avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(comment.poster.id)%>">
-										<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(comment.poster.id)%>">
-									</a>
-									<div class="ml-4">
-										<%/* 评论 */%>
-										<div class="container ml-4">
-											<a class="author">
-												<a target="_blank" href="<%:=API.Common.getUserUrl(comment.poster.id)%>">
-													<span><%:=API.Common.formatContent(comment.poster.name)%></span>
-												</a>
-												<span class="text-muted small"><%:=API.Utils.formatDate(comment.postTime)%></span>
-												<span class="border-warning border rounded text-warning small p-1">#<%:=index + 1 %></span>
+							<hr>
+							<div class="comments mt-2">
+								<div class="comment">
+									<div class="d-flex justify-content-start ">
+										<div class="comment-avatar">
+											<a class="avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(comment.poster && comment.poster.id || comment.uin)%>">
+												<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(comment.poster && comment.poster.id || comment.uin)%>" >
 											</a>
 										</div>
-										<div class="messageText ml-4 container m-3">
-											<%:=API.Common.formatContent(comment.content)%>
+										<div class="comment-infos ml-2">
+											<a target="_blank" href="<%:=API.Common.getUserUrl(comment.poster && comment.poster.id || comment.uin)%>">
+												<span><%:=API.Common.formatContent(comment.poster && comment.poster.name || comment.name)%></span>
+											</a>
+											<%if(comment.private){%>
+												<span class="text-warning"> 私密评论 </span>
+											<%}%>
+											<span class="border-warning border rounded text-warning small p-1" title="当前楼层">#<%:=index + 1 %></span>
+											<div class="text-muted small"><%:=API.Utils.formatDate(comment.postTime || comment.create_time)%></div>
 										</div>
-										<%/* 评论回复 */%>
-										<%if(comment.replyNum > 0 && comment.replies){%>
-											<%for(let reply of comment.replies){%>
-												<div class="comments m-1">
-													<div class="container border-top comment p-1">
-														<a class="me-a avatar p-0 m-0 " target="_blank" href="<%:=API.Common.getUserUrl(reply.poster.id)%>">
-															<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(reply.poster.id)%>">
+									</div>
+									<div class="comment-text">
+										<div class="messageText">
+											<p><%:=API.Common.formatContent(comment.content)%></p>
+											<%if(comment.pic){%>
+												<div class="comment-lightgallery">
+													<%for (let cmIdx = 0; cmIdx < comment.pic.length; cmIdx++) {%>
+														<%const image = comment.pic[cmIdx];%>
+														<a class="comment-img-lightbox" data-idx="<%:=cmIdx%>" data-sub-html="<%:=API.Common.formatContent(comment.content)%>"
+															data-src="<%:=(image.custom_filepath || image.custom_url || image.o_url || image.hd_url || image.b_url || image.s_url || image.url)%>">
+															<img src="<%:=(image.custom_filepath || image.custom_url || image.o_url || image.hd_url || image.b_url || image.s_url || image.url)%>" class="comment-img img-thumbnail">
 														</a>
-														<div class=" ml-4  ">
-															<div class="container ml-4">
-																<a class="author">
-																	<a target="_blank" href="<%:=API.Common.getUserUrl(reply.poster.id)%>">
-																		<span class="text-info"><%:=API.Common.formatContent(reply.poster.name)%></span>
-																	</a>
-																	<span class="text-muted small"><%:=API.Utils.formatDate(reply.postTime)%></span>
+													<%}%>
+												</div>
+											<%}%>
+										</div>
+										<% const replies = comment.replies || comment.list_3 || []%>
+										<%if(replies.length > 0){%>
+											<%for(const reply of replies){%>
+												<div class="comments">
+													<div class="comment">
+														<div class="d-flex justify-content-start">
+															<div class="comment-avatar">
+																<a class="avatar p-0 m-0 " target="_blank" href="<%:=API.Common.getUserUrl(reply.poster && reply.poster.id || reply.uin)%>">
+																	<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(reply.poster && reply.poster.id || reply.uin)%>">
 																</a>
 															</div>
-															<div class="messageText ml-4 container m-1"><%:=API.Common.formatContent(reply.content)%></div>
+															<div class="comment-infos ml-2">
+																<a target="_blank" href="<%:=API.Common.getUserUrl(reply.poster && reply.poster.id || reply.uin)%>">
+																	<span><%:=API.Common.formatContent(reply.poster && reply.poster.name || reply.name)%></span>
+																</a>
+																<%if(reply.private){%>
+																	<span class="text-warning"> 私密回复 </span>
+																<%}%>
+																<div class="text-muted small"><%:=API.Utils.formatDate(reply.postTime || reply.create_time)%></div>
+															</div>
+														</div>
+														<div class="comment-text">
+															<div class="messageText">
+																<p><%:=API.Common.formatContent(reply.content)%></p>
+																<%if(reply.pic){%>
+																	<div class="comment-lightgallery">
+																		<%for (let cmIdx = 0; cmIdx < reply.pic.length; cmIdx++) {%>
+																			<%const image = reply.pic[cmIdx];%>
+																			<a class="comment-img-lightbox" data-idx="<%:=cmIdx%>" data-sub-html="<%:=API.Common.formatContent(comment.content)%>" 
+																				data-src="<%:=(image.custom_filepath || image.custom_url || image.o_url || image.hd_url || image.b_url || image.s_url || image.url)%>">
+																				<img src="<%:=(image.custom_filepath || image.custom_url || image.o_url || image.hd_url || image.b_url || image.s_url || image.url)%>" class="comment-img img-thumbnail">
+																			</a>
+																		<%}%>
+																	</div>
+																<%}%>
+															</div>
 														</div>
 													</div>
 												</div>

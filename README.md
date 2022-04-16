@@ -64,7 +64,7 @@
 
 ## 使用说明
 1. 进行助手的安装，参考[在线安装](#在线安装)或[离线安装](#离线安装)进行助手安装
-2. 助手安装完成后，可进行助手的配置，可参考[配置说明](https://lvshuncai.com/qzone-export.html#配置说明)
+2. 助手安装完成后，可进行助手的配置，可参考[配置说明](https://lvshuncai.com/archives/qzone-export.html#配置说明)
 3. 助手配置完成后，先登录自己的[QQ空间](https://i.qq.com/)
 4. 进入需要备份的QQ空间，如若备份自己的[QQ空间](https://i.qq.com/)，可跳过
 5. 刷新QQ空间使助手配置生效，如若是保存配置后再打开的QQ空间页面，可跳过
@@ -74,18 +74,18 @@
    [![7TIqG8.png](https://s4.ax1x.com/2022/01/24/7TIqG8.png)](https://imgtu.com/i/7TIqG8)
 8. 助手将开始收集QQ空间的数据，请耐心等待数据收集完成
    [![75eUC8.png](https://s4.ax1x.com/2022/01/23/75eUC8.png)](https://imgtu.com/i/75eUC8)
-9.  采集完成后，助手自动添加[多媒体文件](https://lvshuncai.com/qzone-export.html#多媒体文件)的下载任务到[文件下载工具](https://lvshuncai.com/qzone-export.html#文件下载工具)
+9.  采集完成后，助手自动添加[多媒体文件](https://lvshuncai.com/archives/qzone-export.html#多媒体文件)的下载任务到[文件下载工具](https://lvshuncai.com/archives/qzone-export.html#文件下载工具)
    [![75mZrj.png](https://s4.ax1x.com/2022/01/23/75mZrj.png)](https://imgtu.com/i/75mZrj)
 10. 下载任务添加完成后，备份界面下方将出现【打包下载】按钮
    [![75mbes.png](https://s4.ax1x.com/2022/01/23/75mbes.png)](https://imgtu.com/i/75mbes)
-11. 点击【打包下载】按钮时，助手自动打包[文案内容](https://lvshuncai.com/qzone-export.html#文案内容)到ZIP包中并下载ZIP包
+11. 点击【打包下载】按钮时，助手自动打包[文案内容](https://lvshuncai.com/archives/qzone-export.html#文案内容)到ZIP包中并下载ZIP包
    [![75nAFx.png](https://s4.ax1x.com/2022/01/23/75nAFx.png)](https://imgtu.com/i/75nAFx)
-12. ZIP包下载完成后，点击【查看备份】按钮查看ZIP包，或自行打开[文案内容下载文件夹](https://lvshuncai.com/qzone-export.html#文案内容下载文件夹)查看[备份压缩包](https://lvshuncai.com/qzone-export.html#备份压缩包)
+12. ZIP包下载完成后，点击【查看备份】按钮查看ZIP包，或自行打开[文案内容下载文件夹](https://lvshuncai.com/archives/qzone-export.html#文案内容下载文件夹)查看[备份压缩包](https://lvshuncai.com/archives/qzone-export.html#备份压缩包)
    [![75neSO.png](https://s4.ax1x.com/2022/01/23/75neSO.png)](https://imgtu.com/i/75neSO)
-13. 再进行[文案内容备份文件夹](https://lvshuncai.com/qzone-export.html#文案内容备份文件夹)与[多媒体文件备份文件夹](https://lvshuncai.com/qzone-export.html#多媒体文件备份文件夹)进行合并，详情参考：[备份文件夹合并](https://lvshuncai.com/qzone-export.html#备份文件夹合并)
-14. 合并完成后，根据备份类型的不同，自行[查看备份内容](https://lvshuncai.com/qzone-export.html#查看备份内容)
+13. 再进行[文案内容备份文件夹](https://lvshuncai.com/archives/qzone-export.html#文案内容备份文件夹)与[多媒体文件备份文件夹](https://lvshuncai.com/archives/qzone-export.html#多媒体文件备份文件夹)进行合并，详情参考：[备份文件夹合并](https://lvshuncai.com/archives/qzone-export.html#备份文件夹合并)
+14. 合并完成后，根据备份类型的不同，自行[查看备份内容](https://lvshuncai.com/archives/qzone-export.html#查看备份内容)
    [![7T4kxH.png](https://s4.ax1x.com/2022/01/24/7T4kxH.png)](https://imgtu.com/i/7T4kxH)
-15. [点击这里查看更多说明](https://lvshuncai.com/qzone-export.html#使用说明)
+15. [点击这里查看更多说明](https://lvshuncai.com/archives/qzone-export.html#使用说明)
 
 ## 常见问题    
 是否会导致QQ空间账号被冻结
@@ -108,14 +108,14 @@
 - 官方版保证安全，第三方修改版除外。
 - 更多详情请访问[隐私政策](https://github.com/ShunCai/QZoneExport/wiki/Privacy-Policy)
 
-> 更多问题请访问：[常见问题](https://lvshuncai.com/qzone-export.html#常见问题)
+> 更多问题请访问：[常见问题](https://lvshuncai.com/archives/qzone-export.html#常见问题)
 
 ## 配置说明
 1. 浏览器插件栏右键助手图标，选择【选项】菜单后，将进入助手配置页   
 [![75Fc4g.png](https://s4.ax1x.com/2022/01/23/75Fc4g.png)](https://imgtu.com/i/75Fc4g)
 3. 【注意事项】：助手更新配置后，需要点击下方配置页的保存按钮
 4. 【注意事项】：保存后，需要刷新QQ空间页面才能使最新的配置在备份页面生效。
-5. 更多配置说明请访问：[配置说明](https://lvshuncai.com/qzone-export.html#配置说明)
+5. 更多配置说明请访问：[配置说明](https://lvshuncai.com/archives/qzone-export.html#配置说明)
 
 
 ## 预览

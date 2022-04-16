@@ -8,6 +8,11 @@
  * 导出相册数据
  */
 API.Photos.export = async() => {
+
+    // 模块总进度更新器
+    const indicator = new StatusIndicator('Photos_Row_Infos');
+    indicator.print();
+
     try {
         // 用户选择的备份相册列表
         const albumList = await API.Photos.initAlbums();
@@ -46,12 +51,12 @@ API.Photos.export = async() => {
         // 根据导出类型导出数据    
         await API.Photos.exportAllListToFiles(albumList);
 
-        // 设置备份时间
-        API.Common.setBackupInfo(QZone_Config.Photos);
-
     } catch (error) {
         console.error('相册导出异常', error);
     }
+
+    // 完成
+    indicator.complete();
 }
 
 /**
@@ -248,6 +253,13 @@ API.Photos.getAlbumPageList = async(pageIndex, indicator) => {
         QZone.Photos.Album.total = data.albumsInUser || QZone.Photos.Album.total || 0;
         indicator.setTotal(QZone.Photos.Album.total);
 
+        // 更新相册分类信息
+        if (data.classList && data.classList.length > 0) {
+            for (const classItem of data.classList) {
+                QZone.Photos.Class[classItem.id] = classItem.name;
+            }
+        }
+
         let dataList = data.albumList || [];
 
         //  更新获取成功数据
@@ -278,7 +290,7 @@ API.Photos.getAllAlbumList = async() => {
             // 合并数据
             QZone.Photos.Album.Data = API.Utils.unionItems(QZone.Photos.Album.Data, dataList);
 
-            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+            if (!_.isEmpty(QZone.Photos.Album.OLD_Data) && API.Common.isPreBackupPos(dataList, CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return QZone.Photos.Album.Data;
             }
@@ -305,6 +317,9 @@ API.Photos.getAllAlbumList = async() => {
 
     // 完成
     indicator.complete();
+
+    // 重新排序
+    API.Photos.sortAlbums(QZone.Photos.Album.Data);
 
     return QZone.Photos.Album.Data;
 
@@ -386,7 +401,7 @@ API.Photos.getAlbumImageAllList = async(album) => {
 
             // 合并数据
             QZone.Photos.Images[album.id].Data = API.Utils.unionItems(QZone.Photos.Images[album.id].Data, dataList);
-            if (API.Common.isPreBackupPos(dataList, ALBUM_CONFIG)) {
+            if (!_.isEmpty(QZone.Photos.Images[album.id].OLD_Data) && API.Common.isPreBackupPos(dataList, ALBUM_CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return QZone.Photos.Images[album.id].Data;
             }
@@ -408,7 +423,7 @@ API.Photos.getAlbumImageAllList = async(album) => {
         QZone.Photos.Images[album.id].Data = API.Common.unionBackedUpItems(ALBUM_CONFIG, QZone.Photos.Images[album.id].OLD_Data, QZone.Photos.Images[album.id].Data);
 
         // 上传时间倒序
-        QZone.Photos.Images[album.id].Data = API.Utils.sort(QZone.Photos.Images[album.id].Data, ALBUM_CONFIG.PreBackup.field, true);
+        QZone.Photos.Images[album.id].Data = API.Utils.sort(QZone.Photos.Images[album.id].Data, ALBUM_CONFIG.IncrementField, true);
     }
 
     // 完成
@@ -443,15 +458,16 @@ API.Photos.getAlbumImageAllListByDetail = async(album) => {
         // 相片配置项
     const PHOTO_CONFIG = ALBUM_CONFIG.Images;
 
+    // 正在获取
+    indicator.addDownload(QZone_Config.Photos.Images.pageSize);
+
     // 需要先获取相册的第一页的相片列表，再基于第一页的第一个相片获取相片详情列表
     const firstPagePhotos = await API.Photos.getAlbumImagePageList(album, 0) || [];
     if (firstPagePhotos.length === 0) {
         // 如果第一页就获取失败，就当作整个相册没有相片，懒得再处理了
+        indicator.complete();
         return [];
     }
-
-    // 正在获取
-    indicator.addDownload(QZone_Config.Photos.Images.pageSize);
 
     // 下一页
     const nextPage = async function(albumId, picKey, indicator) {
@@ -478,7 +494,7 @@ API.Photos.getAlbumImageAllListByDetail = async(album) => {
             // 成功数量
             indicator.setSuccess(QZone.Photos.Images[albumId].Data);
 
-            if (API.Common.isPreBackupPos(dataList, ALBUM_CONFIG) || data.last === 1) {
+            if (!_.isEmpty(QZone.Photos.Images[albumId].OLD_Data) && API.Common.isPreBackupPos(dataList, ALBUM_CONFIG) || data.last === 1) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return QZone.Photos.Images[albumId].Data;
             }
@@ -509,7 +525,7 @@ API.Photos.getAlbumImageAllListByDetail = async(album) => {
         QZone.Photos.Images[album.id].Data = API.Common.unionBackedUpItems(ALBUM_CONFIG, QZone.Photos.Images[album.id].OLD_Data, QZone.Photos.Images[album.id].Data);
 
         // 上传时间倒序
-        QZone.Photos.Images[album.id].Data = API.Utils.sort(QZone.Photos.Images[album.id].Data, ALBUM_CONFIG.PreBackup.field, true);
+        QZone.Photos.Images[album.id].Data = API.Utils.sort(QZone.Photos.Images[album.id].Data, ALBUM_CONFIG.IncrementField, true);
     }
 
     // 完成
@@ -524,6 +540,11 @@ API.Photos.getAlbumImageAllListByDetail = async(album) => {
  */
 API.Photos.getAllAlbumImageList = async(items) => {
     for (const item of items) {
+        if (!_.some(QZone.Photos.Album.Select, ['id', item.id])) {
+            // 不是用户选中的相册，暂不处理
+            console.log('不是用户选中的相册，暂不处理');
+            continue;
+        }
         if (item.allowAccess === 0) {
             // 没权限的跳过不获取
             console.warn("无权限访问该相册", item);
@@ -541,6 +562,11 @@ API.Photos.getAllAlbumImageList = async(items) => {
  */
 API.Photos.getAllAlbumImageListByDetail = async(items) => {
     for (const item of items) {
+        if (!_.some(QZone.Photos.Album.Select, ['id', item.id])) {
+            // 不是用户选中的相册，暂不处理
+            console.log('不是用户选中的相册，暂不处理');
+            continue;
+        }
         if (item.allowAccess === 0) {
             // 没权限的跳过不获取
             console.warn("无权限访问该相册", item);
@@ -595,7 +621,7 @@ API.Photos.getAlbumAllComments = async(item) => {
             // 合并数据
             item.comments = API.Utils.unionItems(item.comments, data.comments);
 
-            if (API.Common.isPreBackupPos(data.comments, CONFIG)) {
+            if (!_.isEmpty(QZone.Photos.Album.OLD_Data) && API.Common.isPreBackupPos(data.comments, CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return item.comments;
             }
@@ -691,7 +717,7 @@ API.Photos.getImageAllComments = async(item, indicator) => {
             item.comments = API.Utils.unionItems(item.comments, data.comments);
             indicator.addSuccess(data.comments);
 
-            if (API.Common.isPreBackupPos(data.comments, CONFIG)) {
+            if (!_.isEmpty(QZone.Photos.Album.OLD_Data) && API.Common.isPreBackupPos(data.comments, CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return item.comments;
             }
@@ -854,11 +880,15 @@ API.Photos.addPhotosDownloadTasks = async(album, photos) => {
         // 处理中
         indicator.addDownload(photo);
 
-        let orderNumber = API.Utils.prefixNumber(index + 1, photos.length.toString().length);
+        // 序号，便于排序
+        const orderNumber = API.Utils.prefixNumber(index + 1, photos.length.toString().length);
 
-        const albumClass = API.Utils.filenameValidate(album.className);
-        const albumName = API.Utils.filenameValidate(album.name);
-        const albumFolder = 'Albums/' + albumClass + '/' + albumName;
+        // 相册文件夹
+        const albumFolder = API.Photos.getAlbumFolderPath(album, QZone.Photos.Album.Data.length);
+
+        // 下载存放的文件夹
+        const categoryPath = API.Photos.getFileStructureFolderPath(photo);
+        const downloadFolder = categoryPath ? albumFolder + '/' + categoryPath : albumFolder;
 
         if (API.Common.isQzoneUrl()) {
             // QQ空间外链导出时，不需要添加下载任务，但是需要处理
@@ -879,45 +909,36 @@ API.Photos.addPhotosDownloadTasks = async(album, photos) => {
                 // 下载预览图
                 // 根据配置的清晰度匹配图片，默认高清
                 photo.custom_url = API.Photos.getDownloadUrl(photo, QZone_Config.Photos.Images.exifType);
-                // 获取图片类型
-                const suffix = API.Photos.getPhotoSuffix(photo);
-                photo.custom_pre_filename = filename + suffix;
-                photo.custom_pre_filepath = albumFolder + '/' + photo.custom_pre_filename;
-                // 添加下载任务
-                API.Utils.newDownloadTask('Photos', photo.custom_url, albumFolder, photo.custom_pre_filename, photo);
+
+                // 下载视频预览图
+                photo.custom_pre_filename = filename + API.Photos.getPhotoSuffix(photo);
+                photo.custom_pre_filepath = albumFolder + '/Images/' + photo.custom_pre_filename;
+                API.Utils.newDownloadTask('Photos', photo.custom_url, albumFolder + '/Images', photo.custom_pre_filename, photo);
 
                 // 下载视频
-                photo.custom_filename = QZone.Photos.FILE_URLS.get(photo.video_info.video_url);
-                if (!photo.custom_filename) {
-                    photo.custom_filename = filename + '.mp4';
-                    // 添加下载任务
-                    API.Utils.newDownloadTask('Photos', photo.video_info.video_url, albumFolder, photo.custom_filename, photo);
-                    QZone.Photos.FILE_URLS.set(photo.video_info.video_url, photo.custom_filename);
-                }
-                photo.custom_filepath = albumFolder + '/' + photo.custom_filename;
+                photo.custom_filename = filename + '.mp4';
+                API.Utils.newDownloadTask('Photos', photo.video_info.video_url, downloadFolder, photo.custom_filename, photo);
+                photo.custom_filepath = downloadFolder + '/' + photo.custom_filename;
+
             } else {
                 // 根据配置的清晰度匹配图片，默认高清
                 photo.custom_url = API.Photos.getDownloadUrl(photo, QZone_Config.Photos.Images.exifType);
-                // 预览图
-                photo.custom_pre_filepath = photo.pre;
 
-                photo.custom_filename = QZone.Photos.FILE_URLS.get(photo.custom_url);
-                if (!photo.custom_filename) {
-                    // 获取图片类型
-                    const suffix = API.Photos.getPhotoSuffix(photo);
-                    photo.custom_filename = API.Utils.filenameValidate(orderNumber + '_' + photo.name + '_' + API.Utils.newSimpleUid(8, 16));
-                    photo.custom_filename = photo.custom_filename + suffix;
-                    // 添加下载任务
-                    API.Utils.newDownloadTask('Photos', photo.custom_url, albumFolder, photo.custom_filename, photo);
-                    QZone.Photos.FILE_URLS.set(photo.custom_url, photo.custom_filename);
-                }
-                photo.custom_filepath = albumFolder + '/' + photo.custom_filename;
+                // 文件名称
+                photo.custom_filename = API.Utils.filenameValidate(orderNumber + '_' + photo.name + '_' + API.Utils.newSimpleUid(8, 16));
+                photo.custom_filename = photo.custom_filename + API.Photos.getPhotoSuffix(photo);
+
+                // 添加下载任务
+                API.Utils.newDownloadTask('Photos', photo.custom_url, downloadFolder, photo.custom_filename, photo);
+
+                // 文件完整路径
+                photo.custom_filepath = downloadFolder + '/' + photo.custom_filename;
 
                 // 添加预览图，默认使用原图
                 photo.custom_pre_filepath = photo.custom_filepath;
+
                 // 是否下载预览图
-                const isGetPreview = QZone_Config.Photos.Images.isGetPreview;
-                if (isGetPreview) {
+                if (QZone_Config.Photos.Images.isGetPreview) {
                     // 如果需要获取预览图
                     photo.custom_pre_filepath = albumFolder + '/Images/' + photo.custom_filename;
                     // 添加下载任务
@@ -1192,8 +1213,7 @@ API.Photos.exportPhotosToHtml = async(albums) => {
  */
 API.Photos.exportPhotosToMarkdown = async(albums) => {
     for (const album of albums) {
-        let categoryName = album.className || QZone.Photos.Class[album.classid] || '其他';
-        let albumName = API.Utils.filenameValidate(album.name);
+        // 相片列表
         const photos = album.photoList || [];
 
         // 每个相册的进度器
@@ -1202,7 +1222,8 @@ API.Photos.exportPhotosToMarkdown = async(albums) => {
         indicator.setTotal(photos.length);
         indicator.addDownload(photos);
 
-        const folderName = API.Common.getModuleRoot('Photos') + '/' + categoryName + '/' + albumName;
+        // 相册文件夹
+        const folderName = API.Common.getRootFolder() + '/' + API.Photos.getAlbumFolderPath(album, QZone.Photos.Album.Data.length);
         await API.Utils.createFolder(folderName);
 
         // 生成相片年份的MD文件
@@ -1214,7 +1235,9 @@ API.Photos.exportPhotosToMarkdown = async(albums) => {
 
         // 生成相册汇总的MD文件
         const album_content = API.Photos.getPhotosMarkdownContents(photos);
-        await API.Utils.writeText(album_content, folderName + "/" + albumName + '.md');
+        // 相册名称
+        const albumName = API.Utils.filenameValidate(album.name);
+        await API.Utils.writeText(album_content, folderName + '/' + albumName + '.md');
 
         indicator.addSuccess(photos);
         indicator.complete();
@@ -1235,12 +1258,13 @@ API.Photos.getPhotosMarkdownContents = (photos) => {
         contents.push('\r\n');
 
         // 相片
+        const custom_filepath = API.Common.getMediaPath(photo.custom_url || photo.url, photo.custom_filepath, "Photos_MarkDown");
         if (photo.is_video) {
             // 视频
-            contents.push('<video src="{0}" controls="controls" ></video>'.format(photo.custom_filename || photo.custom_url));
+            contents.push('<video height="400" src="{0}" controls="controls" ></video>'.format(custom_filepath));
         } else {
             // 图片
-            contents.push(API.Utils.getImagesMarkdown(photo.custom_filename || photo.custom_url || photo.url, photo.name));
+            contents.push(API.Utils.getImagesMarkdown(custom_filepath, photo.name));
         }
         contents.push('\r\n');
 
@@ -1301,16 +1325,23 @@ API.Photos.getPhotosMarkdownContents = (photos) => {
  * @param {Array} albums 相册列表
  */
 API.Photos.exportPhotosToJson = async(albums) => {
-    let indicator = new StatusIndicator('Photos_Images_Export_Other');
+    // 进度显示器
+    const indicator = new StatusIndicator('Photos_Images_Export_Other');
+
     for (const album of albums) {
-        const categoryName = album.className || QZone.Photos.Class[album.classid] || '其他';
-        const albumName = API.Utils.filenameValidate(album.name);
-        const photos = album.photoList || [];
-        const json = JSON.stringify(photos);
-        const folderName = API.Common.getModuleRoot('Photos') + '/' + categoryName + '/' + albumName;
+        // 相册文件夹
+        const folderName = API.Common.getRootFolder() + '/' + API.Photos.getAlbumFolderPath(album, QZone.Photos.Album.Data.length);
         await API.Utils.createFolder(folderName);
-        await API.Utils.writeText(json, folderName + "/" + albumName + '.json');
+
+        // 相册列表
+        const photos = album.photoList || [];
+
+        // 相册名称
+        const albumName = API.Utils.filenameValidate(album.name);
+        await API.Utils.writeText(JSON.stringify(photos), folderName + '/' + albumName + '.json');
     }
+
+    // 完成
     indicator.complete();
     return albums;
 }
@@ -1385,29 +1416,54 @@ API.Photos.isNewItem = (albumId, photo) => {
  * 初始化相册列表
  */
 API.Photos.initAlbums = async() => {
-    let albumList = QZone.Photos.Album.Data || [];
+    // 备份的相册清单
+    const albumList = QZone.Photos.Album.Data || [];
+    // 用户挑选的相册清单
     const selects = QZone.Photos.Album.Select || [];
     if (selects.length === 0) {
         // 用户没有选择时，默认获取所有相册列表
-        albumList = await API.Photos.getAllAlbumList();
+        albumList.push(...await API.Photos.getAllAlbumList());
     } else {
         // 如果用户选择了备份指定的相册
         // 合并数据
-        QZone.Photos.Album.Data = QZone.Photos.Album.Data.concat(selects);
-        albumList = QZone.Photos.Album.Data;
+        albumList.push(...selects);
     }
+
     // 处理增量相册
-    // 合并、过滤数据
-    QZone.Photos.Album.Data = API.Utils.unionItems(QZone.Photos.Album.OLD_Data, QZone.Photos.Album.Data);
-    let albumIds = [];
-    for (let i = QZone.Photos.Album.Data.length - 1; i >= 0; i--) {
-        const album = QZone.Photos.Album.Data[i];
-        if (albumIds.indexOf(album.id) > -1) {
-            QZone.Photos.Album.Data.splice(i, 1);
-            continue;
-        }
-        albumIds.push(album.id);
+    if (!API.Common.isFullBackup(QZone_Config.Photos)) {
+        // 已备份相册
+        const oldAlbumList = QZone.Photos.Album.OLD_Data || [];
+
+        // 需要拷贝的属性
+        const attrs = ['desc', 'createtime', 'modifytime', 'lastuploadtime', 'order', 'total', 'viewtype'];
+
+        // 最新相册中，移除已备份的相册
+        _.remove(albumList, newAlbum => {
+            // 找到历史备份相册
+            const oldIdx = _.findIndex(oldAlbumList, ['id', newAlbum.id]);
+            if (oldIdx === -1) {
+                return false;
+            }
+            const oldAlbum = oldAlbumList[oldIdx]
+            if (newAlbum.name != oldAlbum.name) {
+                // 如果相册改名，则重新备份，因为文件名都是按相册名归类的。
+                return false;
+            }
+
+            // 拷贝新相册的部分属性到旧相册
+            for (const attr of attrs) {
+                oldAlbum[attr] = newAlbum[attr]
+            }
+            return true;
+        })
+
+        // 合并
+        albumList.push(...oldAlbumList);
     }
+
+    // 重新排序
+    API.Photos.sortAlbums(albumList);
+
     for (const item of albumList) {
         // 添加点赞Key
         item.uniKey = API.Photos.getUniKey(item.id);
@@ -1639,4 +1695,70 @@ API.Photos.getAllVisitorList = async(items) => {
     indicator.complete();
 
     return items;
+}
+
+/**
+ * 获取相册的文件夹
+ * @param {Object} album 相册
+ * @param {Object} total 相册数
+ */
+API.Photos.getAlbumFolderPath = (album, total) => {
+
+    // 相册分类
+    album.className = album.className || QZone.Photos.Class[album.classid] || '其他';
+    const albumClass = API.Utils.filenameValidate(album.className);
+    // 相册名称
+    let albumName = API.Utils.filenameValidate(album.name);
+
+    if (QZone_Config.Photos.RenameType === 'Sort') {
+        // 使用序号命名方式
+        const orderNumber = API.Utils.prefixNumber(album.order + 1, total.toString().length);
+        albumName = orderNumber + '_' + albumName;
+    }
+
+    // 相册文件夹
+    return 'Albums/' + albumClass + '/' + albumName;
+}
+
+/**
+ * 重新排序
+ * @param {Array} albums 相册列表
+ */
+API.Photos.sortAlbums = albums => {
+
+    switch (QZone_Config.Photos.SortType) {
+        case '0':
+            // 最新创建在后
+            API.Utils.sort(albums, 'createtime', false);
+            break;
+        case '1':
+            // 最新创建在前
+            API.Utils.sort(albums, 'createtime', true);
+            break;
+        case '4':
+            // 最新上传在前
+            API.Utils.sort(albums, 'lastuploadtime', true);
+            break;
+        default:
+            // 自定义排序，也就是按序号排序
+            API.Utils.sort(albums, 'order', false);
+            break;
+    }
+
+    // 分类不支持排序，按空间默认顺序
+    API.Utils.sort(albums, 'classid', false);
+
+    // 根据相册索引位置，重新更新相册的排序号，避免相册order字段为0
+    API.Photos.resetAlbumOrderNumber(albums);
+}
+
+/**
+ * 重置相册排序号
+ * @param {Array} albums 相册列表
+ */
+API.Photos.resetAlbumOrderNumber = albums => {
+    for (let idx = 0; idx < albums.length; idx++) {
+        const album = albums[idx];
+        album.order = idx;
+    }
 }

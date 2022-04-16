@@ -8,4 +8,7 @@ $(function() {
     // 最近访问
     API.Common.registerShowLikeWin(albums);
 
+    // 初始化提示
+    $('[data-toggle="tooltip"]').tooltip();
+
 });

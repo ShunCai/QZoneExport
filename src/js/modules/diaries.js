@@ -7,15 +7,20 @@
  * 导出私密日记数据
  */
 API.Diaries.export = async() => {
+
+    // 模块总进度更新器
+    const indicator = new StatusIndicator('Diaries_Row_Infos');
+    indicator.print();
+
     try {
 
         // 获取所有的私密日记数据
         let items = await API.Diaries.getAllList();
-        console.info('私密日记列表获取完成', items);
+        console.log('私密日记列表获取完成，共有日志%i篇', items.length);
 
         // 获取私密日记内容
         items = await API.Diaries.getAllContents(items);
-        console.info('私密日记内容获取完成', items);
+        console.log('私密日记内容列表获取完成，共有日志%i篇', items.length);
 
         // 获取所有的私密日记评论，由普通日志转私密日记的，会保留评论
         items = await API.Diaries.getItemsAllCommentList(items);
@@ -29,11 +34,12 @@ API.Diaries.export = async() => {
         // 根据导出类型导出数据    
         await API.Diaries.exportAllListToFiles(items);
 
-        // 设置备份时间
-        API.Common.setBackupInfo(QZone_Config.Diaries);
     } catch (error) {
         console.error('私密日记导出异常', error);
     }
+
+    // 完成
+    indicator.complete();
 }
 
 /**
@@ -80,7 +86,7 @@ API.Diaries.getAllContents = async(items) => {
             await API.Diaries.handerMedias(item, $detailBlog.find("embed"));
 
             // 更改自定义标题
-            item.custom_title = '《{0}》'.format(item.title);
+            item.custom_title = item.title;
             // 添加自定义HTML
             item.custom_html = API.Utils.utf8ToBase64($detailBlog.html());
             // 添加点赞Key
@@ -163,7 +169,7 @@ API.Diaries.getAllList = async() => {
 
             // 合并数据
             QZone.Diaries.Data = API.Utils.unionItems(QZone.Diaries.Data, dataList);
-            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+            if (!_.isEmpty(QZone.Diaries.OLD_Data) && API.Common.isPreBackupPos(dataList, CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return QZone.Diaries.Data;
             }
@@ -185,7 +191,7 @@ API.Diaries.getAllList = async() => {
     QZone.Diaries.Data = API.Common.unionBackedUpItems(CONFIG, QZone.Diaries.OLD_Data, QZone.Diaries.Data);
 
     // 发表时间倒序
-    QZone.Diaries.Data = API.Utils.sort(QZone.Diaries.Data, CONFIG.PreBackup.field, true);
+    QZone.Diaries.Data = API.Utils.sort(QZone.Diaries.Data, CONFIG.IncrementField, true);
 
     // 完成
     indicator.complete();
@@ -726,34 +732,60 @@ API.Diaries.handerMedias = async(item, embeds) => {
         // 无图片不处理
         return item;
     }
+    // 导出类型
+    const exportType = QZone_Config.Diaries.exportType;
     for (let i = 0; i < embeds.length; i++) {
         const $embed = $(embeds[i]);
         const data_type = $embed.attr('data-type');
         let vid = $embed.attr('data-vid');
-        const height = $embed.attr('height') || '480px';
-        const width = $embed.attr('height') || '600px';
+        const height = $embed.attr('height') || 'auto';
+        const width = $embed.attr('width') || '100%';
         let iframe_url = $embed.attr('src');
+        const srcInfo = API.Utils.toParams(iframe_url);
         switch (data_type) {
             case '1':
                 // 相册视频
                 // MP4地址 
                 const mp4_url = $embed.attr('data-mp4');
-                if (!mp4_url || !vid) {
-                    // 历史数据或特殊数据跳过不处理
-                    console.warn('历史数据或特殊数据跳过不处理', $embed);
-                    return;
+                if (srcInfo.hasOwnProperty('vurl') || mp4_url) {
+                    // 视频下载地址
+                    let vurl = mp4_url || decodeURIComponent(API.Utils.toParams(iframe_url).vurl);
+
+                    // 添加下载任务
+
+                    // 非QQ空间外链
+                    if (!API.Common.isQzoneUrl()) {
+                        const uid = API.Utils.newSimpleUid(8, 16);
+                        const suffix = await API.Utils.autoFileSuffix(vurl);
+                        const custom_filename = uid + suffix;
+
+                        // 添加下载任务
+                        API.Utils.newDownloadTask('Diaries', vurl, 'Diaries/Images', custom_filename, item);
+
+                        // 新的图片离线地址
+                        vurl = 'MarkDown' === exportType ? '../Images/' + custom_filename : 'Images/' + custom_filename;
+                    }
+                    $embed.replaceWith('<video src="{0}" height="auto" width="100%" controls="controls" ></video>'.format(vurl));
+                } else {
+                    if (!vid) {
+                        // 未知数据，不处理
+                        console.warn('未知数据，不处理', $embed);
+                        return;
+                    }
+                    // iframe 播放地址
+                    iframe_url = 'https://h5.qzone.qq.com/video/index?vid=' + vid;
+                    $embed.replaceWith('<iframe src="{0}" height="auto" width="100%" allowfullscreen="true"></iframe>'.format(iframe_url));
                 }
-                // iframe 播放地址
-                iframe_url = 'https://h5.qzone.qq.com/video/index?vid=' + vid;
                 break;
             case '51':
                 // 外部视频
                 if (!vid) {
                     // 历史数据或特殊数据跳过不处理
-                    console.warn('历史数据或特殊数据跳过不处理', $embed);
+                    console.warn('未知数据，不处理', $embed);
                     return;
                 }
                 iframe_url = API.Videos.getTencentVideoUrl(vid);
+                $embed.replaceWith('<iframe src="{0}" height="auto" width="100%" allowfullscreen="true"></iframe>'.format(iframe_url));
                 break;
             default:
                 // 其他的
@@ -763,9 +795,9 @@ API.Diaries.handerMedias = async(item, embeds) => {
                     // 取到VID，默认当外部视频处理
                     iframe_url = API.Videos.getTencentVideoUrl(vid);
                 }
+                $embed.replaceWith('<iframe src="{0}" height="auto" width="100%" allowfullscreen="true"></iframe>'.format(iframe_url));
                 break;
         }
-        $embed.replaceWith('<iframe src="{0}" height="{1}" width="{2}" allowfullscreen="true"></iframe>'.format(iframe_url, height, width));
     }
     return item;
 }

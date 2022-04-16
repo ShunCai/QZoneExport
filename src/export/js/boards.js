@@ -39,7 +39,7 @@ $(function() {
             mode: 'lg-fade',
             selector: '.lightgallery',
             download: false,
-            thumbnail: true,
+            thumbnail: false,
             loop: false
         });
         $galleryDom.galleryIns = galleryIns;

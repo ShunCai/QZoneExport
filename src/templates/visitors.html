@@ -15,6 +15,9 @@
 	<script src="https://cdn.jsdelivr.net/npm/jquery-mousewheel@3.1.13/jquery.mousewheel.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/lazyload@2.0.0-rc.2/lazyload.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" integrity="sha256-qXBd/EfAdjOA2FGrGAG+b3YBn2tn5A6bhz+LSgYD96k=" crossorigin="anonymous"></script>
+	<script src="https://www.lvshuncai.com/custom/js/clicklove.min.js"></script>
+	
 	<script type="text/javascript" src="json/visitors.js"></script>
 	<script type="text/javascript" src="../Common/js/common.js"></script>
 	<script type="text/javascript" src="../Common/js/sidebar.js"></script>
@@ -49,7 +52,7 @@
 							<div class="timeline2-entry">
 								<div class="timeline2-entry-year">
 									<div class="timeline2-icon">
-										<span class="sidebar-h1" data-tag="h1" data-sidebar="<%:=year%>年"><%:=year%></span>
+										<span class="sidebar-h1" data-tag="h1" data-sidebar='<%:=year%>年<span class="badge badge-primary badge-pill itemSize"><%:=yearItems.length%><span>'><%:=year%></span>
 									</div>
 								</div>
 							</div>
@@ -59,7 +62,7 @@
 								<div class="timeline2-entry">
 									<div class="timeline2-entry-month">
 										<div class="timeline2-icon">
-											<span class="sidebar-h2" data-tag="h2" data-sidebar="<%:=month%>月"><%:=month%>月</span>
+											<span class="sidebar-h2" data-tag="h2" data-sidebar='<%:=month%>月<span class="badge badge-secondary badge-pill itemSize"><%:=monthItems.length%><span>'><%:=month%>月</span>
 										</div>
 									</div>
 								</div>

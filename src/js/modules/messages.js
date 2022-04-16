@@ -8,6 +8,10 @@
  */
 API.Messages.export = async() => {
 
+    // 模块总进度更新器
+    const indicator = new StatusIndicator('Messages_Row_Infos');
+    indicator.print();
+
     try {
 
         // 获取所有的说说数据
@@ -43,12 +47,12 @@ API.Messages.export = async() => {
         // 根据导出类型导出数据    
         await API.Messages.exportAllListToFiles(items);
 
-        // 设置备份时间
-        API.Common.setBackupInfo(QZone_Config.Messages);
-
     } catch (error) {
         console.error('说说导出异常', error);
     }
+
+    // 完成
+    indicator.complete();
 }
 
 /**
@@ -109,7 +113,7 @@ API.Messages.getAllList = async() => {
         return await API.Messages.getList(pageIndex, indicator).then(async(dataList) => {
             // 合并数据
             QZone.Messages.Data = API.Utils.unionItems(QZone.Messages.Data, dataList);
-            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+            if (!_.isEmpty(QZone.Messages.OLD_Data) && API.Common.isPreBackupPos(dataList, CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return QZone.Messages.Data;
             }
@@ -131,7 +135,7 @@ API.Messages.getAllList = async() => {
     QZone.Messages.Data = API.Common.unionBackedUpItems(CONFIG, QZone.Messages.OLD_Data, QZone.Messages.Data);
 
     // 发表时间倒序
-    QZone.Messages.Data = API.Utils.sort(QZone.Messages.Data, CONFIG.PreBackup.field, true);
+    QZone.Messages.Data = API.Utils.sort(QZone.Messages.Data, CONFIG.IncrementField, true);
 
     // 完成
     indicator.complete();
@@ -393,7 +397,7 @@ API.Messages.exportToHtml = async(messages) => {
     } catch (error) {
         console.error('导出说说到HTML异常', error, messages);
     }
-    
+
     // 完成
     indicator.complete();
 
@@ -613,7 +617,7 @@ API.Messages.addMediaToTasks = async(dataList) => {
                     continue;
                 }
                 // 添加视频下载任务
-                API.Videos.addDownloadTasks('Messages', [video], module_dir, item, QZone.Messages.FILE_URLS);
+                API.Videos.addDownloadTasks('Messages', [video], module_dir, item);
             } else {
                 // 普通图片
                 let url = image.url2 || image.url1;
@@ -623,7 +627,7 @@ API.Messages.addMediaToTasks = async(dataList) => {
         }
 
         // 下载视频预览图及视频
-        API.Videos.addDownloadTasks('Messages', item.custom_videos, module_dir, item, QZone.Messages.FILE_URLS);
+        API.Videos.addDownloadTasks('Messages', item.custom_videos, module_dir, item);
         indicator.addSuccess(item.custom_videos);
 
         // 下载音乐预览图
@@ -1087,7 +1091,7 @@ API.Messages.dealLbs = function(items) {
             lbs.pos_y = lbs.pos_y / 1000000
         }
         // 科学计算法处理
-        lbs.pos_x = Number.parseFloat(lbs.pos_x).toString();
-        lbs.pos_y = Number.parseFloat(lbs.pos_y).toString();
+        lbs.pos_x = Number.parseFloat(lbs.pos_x).toString() * 1;
+        lbs.pos_y = Number.parseFloat(lbs.pos_y).toString() * 1;
     }
 }

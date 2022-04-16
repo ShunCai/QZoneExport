@@ -7,6 +7,11 @@
  * 导出留言板
  */
 API.Boards.export = async() => {
+
+    // 模块总进度更新器
+    const indicator = new StatusIndicator('Boards_Row_Infos');
+    indicator.print();
+
     try {
         // 获取所有的留言
         let boardInfo = await API.Boards.getAllList();
@@ -17,12 +22,12 @@ API.Boards.export = async() => {
         // 根据导出类型导出数据
         await API.Boards.exportAllToFiles(boardInfo);
 
-        // 设置备份时间
-        API.Common.setBackupInfo(QZone_Config.Boards);
-
     } catch (error) {
         console.error('留言导出异常', error);
     }
+
+    // 完成
+    indicator.complete();
 }
 
 
@@ -93,7 +98,7 @@ API.Boards.getAllList = async() => {
 
             // 合并数据
             QZone.Boards.Data.items = API.Utils.unionItems(QZone.Boards.Data.items, dataList);
-            if (API.Common.isPreBackupPos(dataList, CONFIG)) {
+            if (!_.isEmpty(QZone.Boards.OLD_Data.items) && API.Common.isPreBackupPos(dataList, CONFIG)) {
                 // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
                 return QZone.Boards.Data;
             }
@@ -114,7 +119,7 @@ API.Boards.getAllList = async() => {
     QZone.Boards.Data.items = API.Common.unionBackedUpItems(CONFIG, QZone.Boards.OLD_Data.items, QZone.Boards.Data.items);
 
     // 发表时间倒序
-    QZone.Boards.Data.items = API.Utils.sort(QZone.Boards.Data.items, CONFIG.PreBackup.field, true);
+    QZone.Boards.Data.items = API.Utils.sort(QZone.Boards.Data.items, CONFIG.IncrementField, true);
 
     // 完成
     indicator.complete();

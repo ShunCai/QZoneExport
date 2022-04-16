@@ -6,15 +6,18 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" integrity="sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-table@1.19.1/dist/bootstrap-table.min.css" integrity="sha256-ZD9Tb2mCr01yh68j+JrUV91+SoL5xpUzChErCIHDCko=" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tempusdominus-bootstrap-4@5.1.2/build/css/tempusdominus-bootstrap-4.min.css" integrity="sha256-vi00YWza8MRCSI5GdsFLptAZIULny5MPn62PxEf/ZTY=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery.loadmask@1.0.1/jquery.loadmask.css" integrity="sha256-b1bMgmqsZl8mmXnqSwZDTgToEQDfwBOzTFPnbG1xS6Y=" crossorigin="anonymous">
     <link rel="stylesheet" href="../css/options.css">
     <link rel="icon" href="../img/icon-128.png">
     <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>QQ空间导出助手-选项</title>
-	<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.19.1/dist/bootstrap-table.min.js" integrity="sha256-BqVxqb61C9Xd1gUXFZd13+wfPnmP/zj7EXriNQ3Jup0=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.19.1/dist/locale/bootstrap-table-zh-CN.min.js" integrity="sha256-pE+tLWBaNzEJufpbligmXg6jcxEHGXrWjQe4rv3yUNY=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery.loadmask@1.0.1/jquery.loadmask.js" integrity="sha256-H6wQZnEUqzmTaAblQuLvp+cLdxre7XWdRyb3llskfAU=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" integrity="sha256-qXBd/EfAdjOA2FGrGAG+b3YBn2tn5A6bhz+LSgYD96k=" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -45,11 +48,12 @@
                 <div class="container-fluid">
                     <nav>
                         <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                            <a class="nav-item nav-link active" id="nav-messages-tab" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="false">本地相册</a>
+                            <a class="nav-item nav-link active" id="nav-local-albums-tab" data-toggle="tab" href="#nav-local-albums" role="tab" aria-controls="nav-local-albums" aria-selected="true">本地相册</a>
+                            <a class="nav-item nav-link" id="nav-backedup-tab" data-toggle="tab" href="#nav-backedup" role="tab" aria-controls="nav-backedup" aria-selected="false">备份管理</a>
                         </div>
                     </nav>
                     <div class="tab-content" id="nav-tabContent">
-                        <div class="tab-pane fade show active" id="nav-messages" role="tabpanel" aria-labelledby="nav-messages-tab">
+                        <div class="tab-pane fade show active" id="nav-local-albums" role="tabpanel" aria-labelledby="nav-local-albums-tab">
                             <p class="mt-2 text-muted">基于已备份的QQ空间数据，添加本地相册，仅适用HTML备份方式</p>
                             <div id="toolbar">
                                 <button id="selectFolder" class="btn btn-secondary" data-toggle="tooltip" title="选择QQ空间备份文件夹">
@@ -61,6 +65,38 @@
                                 <small id='localAlbums-tips' class="ml-3 text-primary">先选择已备份的QQ空间备份文件夹，再点击生成本地相册</small>
                             </div>
                             <table id="localAlbums" data-toolbar="#toolbar"></table>
+                        </div>
+                        <div class="tab-pane fade" id="nav-backedup" role="tabpanel" aria-labelledby="nav-backedup-tab">
+                            <p class="mt-2 text-muted">查看与管理已备份的数据，仅适用于增量备份</p>
+                            <div class="form-group row">
+                                <label for="backedup" class="col-sm-auto col-form-label">目标QQ：</label>
+                                <div class="col-sm-10">
+                                    <select id="backedup-uin" class="custom-select">
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="backedup-toolbar">
+                                <button id="importBackedup" class="btn btn-primary" title="导入指定QQ的备份信息">导入</button>
+                                <button id="exportBackedup" class="btn btn-secondary" title="导出指定QQ的备份信息">导出</button>
+                                <button id="resetBackedup" class="btn btn-danger" title="删除指定QQ的备份信息">删除</button>
+                                <small id='backedup-tips' class="ml-3 text-danger">不勾选模块时，全量导入/删除；勾选模块时，仅导入/删除勾选的模块</small>
+                            </div>
+                            <table id="backedupItems" data-toolbar="#backedup-toolbar"></table>
+                            <div id="albumTableModal" data-backdrop="static" data-keyboard="false" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="file-list-lable" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">相册列表</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <table id="albumTable"></table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

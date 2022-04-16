@@ -31,10 +31,10 @@ $(function() {
             mode: 'lg-fade',
             selector: '.message-lightbox',
             download: false,
-            thumbnail: true,
+            thumbnail: false,
             mousewheel: true,
             loop: false,
-            autoplayVideoOnSlide: true
+            autoplayVideoOnSlide: false
         });
 
         $galleryDom.galleryIns = galleryIns;
@@ -45,4 +45,7 @@ $(function() {
 
     // 取消懒加载样式
     API.Common.registerImageLoadedEvent();
+
+    // 初始化提示
+    $('[data-toggle="tooltip"]').tooltip();
 });

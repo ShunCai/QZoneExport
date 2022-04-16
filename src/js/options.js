@@ -149,7 +149,7 @@
     // 初始化日期选择控件
     $('.increment_time').datetimepicker({
         locale: 'zh-cn',
-        defaultDate: "2005-06-06 00:00:00", // QQ空间正式发行日期？
+        defaultDate: Default_IncrementTime, // QQ空间正式发行日期？
         minDate: "2005-04-01 00:00:00", // QQ空间内测发行日期？
         format: 'YYYY-MM-DD HH:mm:ss',
         toolbarPlacement: 'top',
@@ -198,72 +198,20 @@
             case 'Full':
                 // 全量备份
                 $increment_time_row.hide();
-                $increment_time.val("2005-06-06 00:00:00");
+                $increment_time.val(Default_IncrementTime);
                 break;
             case 'LastTime':
                 // 上次备份
-                $increment_time_row.show();
-                $increment_time.val(target_module.PreBackup.time);
-                $increment_time.attr('readonly', true);
+                $increment_time_row.hide();
                 break;
             case 'Custom':
                 // 自定义
                 $increment_time_row.show();
-                $increment_time.attr('readonly', false);
                 $increment_time.val(target_module.IncrementTime);
                 break;
             default:
                 break;
         }
-    })
-
-    // 增量数据重置点击事件
-    $(".reset_increment").click(function() {
-        const $this = $(this);
-        const moduleName = $this.attr("data-module");
-        const module = QZone_Config[moduleName];
-        // 获取模块上次备份的信息
-        // 上次备份QQ号
-        const uin = module.PreBackup.uin;
-        if (!uin) {
-            tips('重置QQ：<span class="text-info">无</span><br>重置模块：<span class="text-info">{1}</span><br>上次备份：<span class="text-info">未备份</span><br>重置结果：<span class="text-info">无需重置</span>'.format(uin, moduleName));
-            return;
-        }
-        // 上次备份文件下载方式
-        const downloadType = module.PreBackup.downloadType || QZone_Config.Common.downloadType;
-        // 上次备份文件下载方式
-        const time = module.PreBackup.time;
-
-        // 重置上次备份时间
-        module.IncrementTime = '2005-06-06 00:00:00';
-
-        module.PreBackup.time = '2005-06-06 00:00:00';
-
-        // 重置配置
-        chrome.storage.sync.set(QZone_Config, function() {
-            // 覆盖配置
-            loadOptions(QZone_Config);
-
-            // 重置数据
-            // 获取指定模块的上次备份的数据
-            const key = uin + "_" + downloadType;
-
-            // 获取数据
-            chrome.storage.local.get([key], function(data) {
-                if (Object.keys(data).length === 0) {
-                    tips('重置QQ：<span class="text-info">{0}</span><br>重置模块：<span class="text-info">{1}</span><br>下载方式：<span class="text-info">{2}</span><br>上次备份：<span class="text-info">{3}</span><br>重置结果：<span class="text-info">未方式该备份数据</span>'.format(uin, moduleName, downloadType, time));
-                    return;
-                }
-                data[key][moduleName] = undefined;
-                // 保存数据
-                chrome.storage.local.set(data, function(data) {
-                    tips('重置QQ：<span class="text-info">{0}</span><br>重置模块：<span class="text-info">{1}</span><br>下载方式：<span class="text-info">{2}</span><br>上次备份：<span class="text-info">{3}</span><br>重置结果：<span class="text-info">重置成功</span>'.format(uin, moduleName, downloadType, time));
-                    return;
-                });
-            });
-        });
-
-
     })
 
     // 监听个人中心菜单点击事件
@@ -321,7 +269,7 @@
                 $file_suffix_row.show();
                 $suffix_timeout_row.show();
 
-                $download_type_help.html('不了解Aria2请忽略该项，仅在<span style="color:red">Aria2的1.35.0以上版本</span>测试通过，请确保Aria2服务处于<span style="color:red">启动中</span>，并<span style="color:red">启用RPC服务</span>，目前仅支持<span style="color:red">HTTP协议</span>！');
+                $download_type_help.html('老司机可用Aria2，小白建议用Motrix，请确保Aria2/Motrix服务处于启动中！');
                 break;
             case 'Thunder':
                 $download_status_row.hide();
@@ -335,21 +283,35 @@
                 $suffix_timeout_row.show();
                 $download_thread_row.show();
 
-                $download_type_help.html('仅在<span style="color:red">正版的安装版迅雷（不禁用迅雷基础服务）的10.1.3以上版本</span>测试通过，建议提前启动迅雷，禁用服务或其他版本建议切换迅雷（剪切板）');
+                $download_type_help.html('正版的<span class="text-danger">Windows版迅雷10+</span>以上版本测试通过，，建议先启动迅雷，若无法正常唤醒，可切换迅雷（剪切板唤醒）或Aria2等');
                 break;
-            case 'Thunder_Link':
-                $task_count_row.hide();
-                $task_sleep_row.hide();
+            case 'Thunder_Clipboard':
                 $download_status_row.hide();
                 // 隐藏Aria2配置
                 $common_aria2_rpc_row.hide();
                 $common_aria2_token_row.hide();
 
+                $task_count_row.show();
+                $task_sleep_row.show();
                 $file_suffix_row.show();
                 $suffix_timeout_row.show();
                 $download_thread_row.show();
 
-                $download_type_help.html('仅支持迅雷且打开剪切板监听，打开迅雷，复制ZIP包中【<span style="color:red">迅雷下载链接.txt</span>】文本内容自动新建下载任务');
+                $download_type_help.html('正版的<span class="text-danger">Windows版迅雷10+</span>以上版本测试通过，需要<span class="text-danger">先启动迅雷</span>，并<span class="text-danger">打开迅雷设置中的接管剪切板开关</span>');
+                break;
+            case 'Thunder_Link':
+                $download_status_row.hide();
+                // 隐藏Aria2配置
+                $common_aria2_rpc_row.hide();
+                $common_aria2_token_row.hide();
+
+                $task_count_row.show();
+                $task_sleep_row.hide();
+                $file_suffix_row.show();
+                $suffix_timeout_row.show();
+                $download_thread_row.show();
+
+                $download_type_help.html('<span class="text-danger">打开迅雷设置中的接管剪切板开关</span>，然后复制ZIP包中【<span class="text-danger">迅雷下载链接.txt</span>】中的全部文字内容自动新建下载任务');
                 break;
             case 'Browser':
                 $task_count_row.hide();
@@ -368,7 +330,6 @@
             case 'QZone':
                 $task_count_row.hide();
                 $task_sleep_row.hide();
-                $download_status_row.hide();
                 $file_suffix_row.hide();
                 $suffix_timeout_row.hide();
                 $download_thread_row.hide();
@@ -523,7 +484,7 @@
         let isChecked = $(this).prop("checked");
         // 相片列表类型
         const listType = $('#photos_images_list_type').val();
-        if(listType === 'Detail'){
+        if (listType === 'Detail') {
             $('#photos_images_video').hide();
             return;
         }
@@ -724,12 +685,16 @@
         $("#photos_list_cost_min").val(options.Photos.randomSeconds.min);
         $("#photos_list_cost_max").val(options.Photos.randomSeconds.max);
         $("#photos_list_limit").val(options.Photos.pageSize);
+        $("#photos_albums_sort_type").val(options.Photos.SortType);
+        $("#photos_albums_folder_rename_type").val(options.Photos.RenameType);
         $("#photos_albums_comments_has").prop("checked", options.Photos.Comments.isGet).change();
         $("#photos_albums_comments_cost_min").val(options.Photos.Comments.randomSeconds.min);
         $("#photos_albums_comments_cost_max").val(options.Photos.Comments.randomSeconds.max);
         $("#photos_albums_comments_limit").val(options.Photos.Comments.pageSize);
         // 相片列表
         $("#photos_images_list_type").val(options.Photos.Images.listType).change();
+        // 文件夹结构类型
+        $("#photos_file_structure_type").val(options.Photos.Images.fileStructureType);
         $("#photos_images_cost_min").val(options.Photos.Images.randomSeconds.min);
         $("#photos_images_cost_max").val(options.Photos.Images.randomSeconds.max);
         $("#photos_images_limit").val(options.Photos.Images.pageSize);
@@ -755,6 +720,7 @@
 
         // 视频模块赋值
         $("#videos_exportFormat").val(options.Videos.exportType).change();
+        $("#videos_file_structure_type").val(options.Videos.fileStructureType);
         $("#videos_increment_type").val(options.Videos.IncrementType).change();
         $("#videos_increment_time").val(options.Videos.IncrementTime);
         $("#videos_list_cost_min").val(options.Videos.randomSeconds.min);
@@ -829,8 +795,8 @@
         $("#common_list_retry_count").val(options.Common.listRetryCount);
         $("#common_list_retry_sleep").val(options.Common.listRetrySleep);
         $("#common_download_type").val(options.Common.downloadType).change();
-        $('#common_download_status').prop("checked", options.Common.enabledShelf);
-        chrome.downloads.setShelfEnabled(options.Common.enabledShelf);
+        $('#common_download_status').prop("checked", options.Common.disabledShelf);
+        chrome.downloads.setShelfEnabled && chrome.downloads.setShelfEnabled(!options.Common.disabledShelf);
         $("#common_thunder_task_count").val(options.Common.thunderTaskNum);
         $("#common_thunder_task_sleep").val(options.Common.thunderTaskSleep);
         $("#common_download_thread").val(options.Common.downloadThread);
@@ -986,6 +952,8 @@
         QZone_Config.Photos.IncrementType = $("#photos_increment_type").val();
         QZone_Config.Photos.IncrementTime = $("#photos_increment_time").val();
         QZone_Config.Photos.pageSize = $("#photos_list_limit").val() * 1;
+        QZone_Config.Photos.SortType = $("#photos_albums_sort_type").val();
+        QZone_Config.Photos.RenameType = $("#photos_albums_folder_rename_type").val();
         QZone_Config.Photos.randomSeconds.min = $("#photos_list_cost_min").val() * 1;
         QZone_Config.Photos.randomSeconds.max = $("#photos_list_cost_max").val() * 1;
         QZone_Config.Photos.Comments.isGet = $("#photos_albums_comments_has").prop("checked");
@@ -994,6 +962,7 @@
         QZone_Config.Photos.Comments.pageSize = $("#photos_albums_comments_limit").val() * 1;
 
         QZone_Config.Photos.Images.listType = $("#photos_images_list_type").val();
+        QZone_Config.Photos.Images.fileStructureType = $("#photos_file_structure_type").val();
         QZone_Config.Photos.Images.randomSeconds.min = $("#photos_images_cost_min").val() * 1;
         QZone_Config.Photos.Images.randomSeconds.max = $("#photos_images_cost_max").val() * 1;
         QZone_Config.Photos.Images.pageSize = $("#photos_images_limit").val() * 1;
@@ -1020,6 +989,7 @@
 
         // 视频模块赋值
         QZone_Config.Videos.exportType = $("#videos_exportFormat").val();
+        QZone_Config.Videos.fileStructureType = $("#videos_file_structure_type").val();
         QZone_Config.Videos.IncrementType = $("#videos_increment_type").val();
         QZone_Config.Videos.IncrementTime = $("#videos_increment_time").val();
         QZone_Config.Videos.randomSeconds.min = $("#videos_list_cost_min").val() * 1;
@@ -1094,8 +1064,8 @@
         QZone_Config.Common.listRetryCount = $("#common_list_retry_count").val() * 1;
         QZone_Config.Common.listRetrySleep = $("#common_list_retry_sleep").val() * 1;
         QZone_Config.Common.downloadType = $('#common_download_type').val();
-        QZone_Config.Common.enabledShelf = $('#common_download_status').prop("checked");
-        chrome.downloads.setShelfEnabled(QZone_Config.Common.enabledShelf);
+        QZone_Config.Common.disabledShelf = !$('#common_download_status').prop("checked");
+        chrome.downloads.setShelfEnabled && chrome.downloads.setShelfEnabled(!QZone_Config.Common.disabledShelf);
         QZone_Config.Common.thunderTaskNum = $("#common_thunder_task_count").val() * 1;
         QZone_Config.Common.thunderTaskSleep = $("#common_thunder_task_sleep").val() * 1;
         QZone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
