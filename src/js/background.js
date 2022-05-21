@@ -49,26 +49,51 @@ const getInProgressTask = () => {
 const downloadByBrowser = function(request) {
     return new Promise(async resolve => {
         let dataList = await getInProgressTask();
-        console.log(`添加任务到浏览器，当前任务数：${dataList.length}`);
         // 如果有配置最大并发数，需要查询当前下载任务数，如果等于或大于，则继续等待
         while (request.downloadThread > 0 && dataList.length >= request.downloadThread) {
-            console.log(`添加任务到浏览器，当前任务数：${dataList.length}，不允许添加任务`);
             // 等待1秒后重新查询当前任务数
             await new Promise(resolve => setTimeout(resolve, 1000));
             dataList = await getInProgressTask();
         }
-        console.log(`添加任务到浏览器，当前任务数：${dataList.length}，允许添加任务`);
-        // 添加下载任务
-        chrome.downloads.download(request.task, function(downloadId) {
-            if (chrome.runtime.lastError) {
-                console.error(`添加任务到浏览器失败，请求参数：${JSON.stringify(request)}，错误信息：${chrome.runtime.lastError}`);
-                // 返回失败标识
-                resolve(0);
-                return;
+
+        // 下载任务
+        const task = request.task;
+
+        // 读取配置
+        chrome.storage.sync.get({
+            Common: {
+                refererUrls: [
+                    "gtimg.com"
+                ]
             }
-            BrowseDownloads.set(downloadId, request.task)
-            resolve(downloadId);
-        });
+        }, async function(options) {
+
+            // 是否需要添加引用页
+            const isMatch = options.Common.refererUrls.filter(item => task.url.includes(item)).length > 0;
+
+            if (isMatch) {
+                // 通过XHR下载视频文件
+                await send(task.url, 'blob').then((xhr) => {
+                    // 使用BLOB链接下载文件
+                    task.url = URL.createObjectURL(xhr.response);
+                }).catch((e) => {
+                    console.error('通过XHR下载视频错误，将使用浏览器直接下载 bg', task, e);
+                })
+            }
+
+            // 添加下载任务
+            chrome.downloads.download(task, function(downloadId) {
+                if (chrome.runtime.lastError) {
+                    console.error(`添加任务到浏览器失败，请求参数：${JSON.stringify(request)}，错误信息：${chrome.runtime.lastError}`);
+                    // 返回失败标识
+                    resolve(0);
+                    return;
+                }
+                BrowseDownloads.set(downloadId, task)
+                resolve(downloadId);
+            });
+
+        })
     })
 }
 
@@ -112,7 +137,6 @@ const resumeDownload = function(downloadId) {
  * 消息监听器，监听来自其他页面的消息
  */
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    console.info("Background 接收到消息！", request, sender);
     switch (request.from) {
         case 'content':
             // 消息来源，内容脚本
@@ -257,6 +281,40 @@ chrome.runtime.onInstalled.addListener((details) => {
 })
 
 /**
+ * 发送请求
+ * @param {string} url 
+ * @param {string} responseType 
+ * @param {integer} timeout 超时秒数 
+ */
+const send = function(url, responseType, timeout) {
+    return new Promise(function(resolve, reject) {
+        var request = new XMLHttpRequest();
+        request.open("GET", url);
+        if (responseType) {
+            request.responseType = responseType;
+        }
+        // 允许跨域
+        request.withCredentials = true;
+        // 超时秒数
+        if (timeout) {
+            request.timeout = timeout * 1000;
+        }
+        request.onload = function() {
+            resolve(this);
+        };
+        request.onerror = function(error) {
+            reject(error);
+            this.abort();
+        };
+        request.ontimeout = function(error) {
+            reject(error);
+            this.abort();
+        };
+        request.send();
+    });
+}
+
+/**
  * 获取文件类型
  * @param {string} url 文件地址
  * @param {number} timeout 超时秒数
@@ -318,3 +376,50 @@ const getMapJson = function(url) {
         xhr.send();
     });
 }
+
+// 获取动态规则
+chrome.declarativeNetRequest && chrome.declarativeNetRequest.getDynamicRules(
+    function(res) {
+        // 添加的规则
+        const addRules = [{
+            "id": 1,
+            "priority": 1,
+            "action": {
+                "requestHeaders": [{
+                    "header": "Referer",
+                    "operation": "set",
+                    "value": "https://user.qzone.qq.com/"
+                }],
+                "type": "modifyHeaders"
+            },
+            "condition": {
+                "urlFilter": 'gtimg.com',
+                "resourceTypes": [
+                    "xmlhttprequest"
+                ]
+            }
+        }]
+
+        // 删除的规则
+        const removeRuleIds = res.map(item => item.id);
+
+        try {
+            // 移除动态规则
+            chrome.declarativeNetRequest.updateDynamicRules({
+                removeRuleIds: removeRuleIds
+            }, function() {
+                // 添加动态规则
+                chrome.declarativeNetRequest.updateDynamicRules({
+                    addRules: addRules
+                })
+            })
+        } catch (error) {
+            try {
+                // 移除动态规则
+                chrome.declarativeNetRequest.updateDynamicRules(removeRuleIds, addRules)
+            } catch (error) {
+
+            }
+        }
+    }
+)

@@ -236,6 +236,13 @@ const MAX_MSG = {
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
         '请稍后...'
     ],
+    Messages_Lbs_Info: [
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条微信说说坐标信息',
+        '已刷新 <span style="color: #1ca5fc;">{downloaded}</span> 条',
+        '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
+        '总共 <span style="color: #1ca5fc;">{total}</span> 条',
+        '请稍后...'
+    ],
     Messages_Export: [
         '正在导出说说',
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
@@ -1029,6 +1036,7 @@ class QZoneOperator {
                 if (API.Common.isOnlyFileExport()) {
                     // 仅文件导出，无需压缩文件
                     console.log('仅文件导出，无需压缩文件');
+                    $("#fileList").show();
                 } else {
                     // 压缩文件
                     await API.Utils.sleep(1000);
@@ -1555,7 +1563,7 @@ API.Utils.addDownloadTasks = async(module, item, url, module_dir, source, FILE_U
         }
     }
     item.custom_filename = filename;
-    item.custom_filepath = 'Images/' + filename;
+    item.custom_filepath = 'images/' + filename;
     if (!FILE_URLS.has(url)) {
         // 添加下载任务
         API.Utils.newDownloadTask(module, url, module_dir, filename, source, suffix);

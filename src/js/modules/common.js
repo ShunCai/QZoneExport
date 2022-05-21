@@ -146,7 +146,7 @@ API.Common.exportUserToJson = async(jsonObj) => {
     await API.Utils.createFolder(path);
 
     // 写入JOSN
-    await API.Utils.writeText(JSON.stringify(jsonObj), path + '/User.json').then((fileEntry) => {
+    await API.Common.writeJsonToJs('userInfo', jsonObj, path + '/user.js').then((fileEntry) => {
         console.info("导出用户个人档信息完成", fileEntry);
     }).catch((error) => {
         console.error("导出用户个人档信息异常", error);
@@ -325,7 +325,7 @@ API.Common.handerContentImages = (module, content, type) => {
     if ("MD" === type) {
         content.replace(/!\[.*?\]\((.+?)\)/g, function(linkmd, url) {
             let custom_filename = API.Common.addDownloadTask(module, url, content);
-            return linkmd.replace(url, API.Common.getMediaPath(url, 'Common/Images/' + custom_filename, "Messages_HTML"));
+            return linkmd.replace(url, API.Common.getMediaPath(url, 'Common/images/' + custom_filename, "Messages_HTML"));
         })
         return content;
     }
@@ -336,7 +336,7 @@ API.Common.handerContentImages = (module, content, type) => {
         const $img = $(images[i]);
         let url = $img.attr('orgsrc') || $img.attr('src') || '';
         let custom_filename = API.Common.addDownloadTask(module, url, content);
-        $img.attr('src', API.Common.getMediaPath(url, 'Common/Images/' + custom_filename, "Messages_HTML"));
+        $img.attr('src', API.Common.getMediaPath(url, 'Common/images/' + custom_filename, "Messages_HTML"));
     }
     return _html.html();
 }
@@ -352,7 +352,7 @@ API.Common.addDownloadTask = (module, url, content) => {
     if (!custom_filename) {
         custom_filename = API.Utils.newSimpleUid(8, 16);
         // 添加下载任务
-        API.Utils.newDownloadTask(module, url, 'Common/Images', custom_filename, content);
+        API.Utils.newDownloadTask(module, url, 'Common/images', custom_filename, content);
         QZone.Common.FILE_URLS.set(url, custom_filename);
     }
     return custom_filename;
@@ -412,7 +412,7 @@ API.Common.downloadsByBrowser = async(tasks) => {
         for (let j = 0; j < list.length; j++) {
             const task = list[j];
             // 添加任务到下载器的时候，可能存在一直无返回的情况，问题暂未定位，先临时添加超时秒数逻辑
-            await API.Utils.timeoutPromise(API.Utils.downloadByBrowser(task), 15 * 1000).then((downloadTask) => {
+            await API.Utils.timeoutPromise(API.Utils.downloadByBrowser(task), 60 * 1000 * 5).then((downloadTask) => {
                 if (downloadTask.id > 0) {
                     task.setState('complete');
                     indicator.addSuccess(task);
@@ -662,6 +662,22 @@ API.Common.isFullBackup = (moduleConfig) => {
 }
 
 /**
+ * 是否上次备份
+ * @param {Object} moduleConfig 模块配置
+ */
+API.Common.isLast = (moduleConfig) => {
+    return moduleConfig.IncrementType === 'LastTime';
+}
+
+/**
+ * 是否自定义备份
+ * @param {Object} moduleConfig 模块配置
+ */
+API.Common.isCustom = (moduleConfig) => {
+    return moduleConfig.IncrementType === 'Custom';
+}
+
+/**
  * 数据是否包含上次备份的位置
  * @param {Array} new_items 新数据
  * @param {Object} moduleConfig 模块配置
@@ -807,8 +823,10 @@ API.Common.saveBackupItems = () => {
 
         for (const moduleName of MODULE_NAME_LIST) {
 
-            // 配置的备份时间，直接刷新为当前时间
-            QZone_Config[moduleName].IncrementTime = API.Utils.formatDate(Date.now() / 1000);
+            if (QZone_Config[moduleName].IncrementType === 'Last') {
+                // 备份方式为上次备份时，配置的备份时间，刷新为当前时间
+                QZone_Config[moduleName].IncrementTime = API.Utils.formatDate(Date.now() / 1000);
+            }
 
             // 历史备份数据是否为空
             const oldItems = API.Common.getOldModuleData(moduleName);
@@ -1290,7 +1308,7 @@ API.Common.downloadUserAvatar = (user) => {
         return;
     }
 
-    API.Utils.newDownloadTask('Friends', avatarUrl, 'Common/Images', user.uin + '', user);
+    API.Utils.newDownloadTask('Friends', avatarUrl, 'Common/images', user.uin + '', user);
     user.avatar = API.Common.getUserLogoUrl(user.uin);
     user.custom_avatar = API.Common.getUserLogoLocalUrl(user.uin);
 
@@ -1345,8 +1363,41 @@ API.Common.exportConfigToJson = async() => {
  * 是否仅导出文件
  */
 API.Common.isOnlyFileExport = () => {
-    // 相册导出类型为文件、视频导出类型为文件
-    const isFile = QZone_Config.Photos.exportType === 'File' && QZone_Config.Videos.exportType === 'File';
-    // 且下载工具不为下载链接
-    return isFile && QZone_Config.Common.downloadType !== 'Thunder_Link';
+    if (QZone.Common.ExportTypes.length > 2) {
+        // 大于两个的备份模块，都不是仅文件导出
+        return false;
+    }
+    if (QZone.Common.ExportTypes.includes('Photos') && QZone.Common.ExportTypes.includes('Videos')) {
+        // 相册导出类型为文件、视频导出类型为文件
+        const isFile = QZone_Config.Photos.exportType === 'File' && QZone_Config.Videos.exportType === 'File';
+        // 且下载工具不为下载链接
+        return isFile && QZone_Config.Common.downloadType !== 'Thunder_Link';
+    }
+    // 包含非相册或非视频的，都不是仅文件导出
+    return false;
+}
+
+/**
+ * 是否继续获取下一页
+ * @param {Array} oldItems 历史备份条目
+ * @param {Array} pageItems 新页的条目
+ * @param {Object} moduleCfg 模块的配置信息
+ */
+API.Common.isGetNextPage = (oldItems, pageItems, moduleCfg) => {
+    if (API.Common.isFullBackup(moduleCfg)) {
+        // 如果是全量备份，需要继续获取下一页，是否获取到末页不在这里判断，在hasNextPage判断
+        return true;
+    }
+    if (API.Common.isCustom(moduleCfg)) {
+        // 如果是自定义备份，则需判断是否备份到指定时间的位置
+        return !API.Common.isPreBackupPos(pageItems, moduleCfg);
+    }
+    if (API.Common.isLast(moduleCfg)) {
+        // 如果是上次备份，则需要判断是否达到上次备份的位置
+        if (_.isEmpty(oldItems)) {
+            return true;
+        }
+        return !API.Common.isPreBackupPos(pageItems, moduleCfg);
+    }
+    return true;
 }

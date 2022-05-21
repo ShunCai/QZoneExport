@@ -48,4 +48,7 @@ $(function() {
         galleryIns.openGallery(imgIdx * 1);
     })
 
+    // 初始化提示
+    $('[data-toggle="tooltip"]').tooltip();
+
 });

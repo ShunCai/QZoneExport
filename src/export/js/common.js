@@ -1001,7 +1001,7 @@ API.Common = {
      */
     formatWxEmoji(content, type) {
         const contentList = parseEmoji(content);
-        const imgRelativePath = 'https://cdn.jsdelivr.net/gh/ShunCai/QZoneExport@dev/src/img/emoji';
+        const imgRelativePath = 'https://fastly.jsdelivr.net/gh/ShunCai/QZoneExport@dev/src/img/emoji';
         const result = [];
         for (const _content of contentList) {
             if (_content.type === 1) {
@@ -1769,7 +1769,7 @@ TPL.LIKE_LIST = `
     <%for (const item of items) {%>
         <a href="<%:=API.Common.getUserUrl(item.fuin)%>" target="_blank" class="list-group-item list-group-item-action border rounded">
             <div class="d-flex flex-row bd-highlight">
-                <div class="bd-highlight">
+                <div class="avatar bd-highlight">
                     <img class="rounded-circle" src="<%:=API.Common.getUserLogoUrl(item.fuin)%>" alt="" style="height: 50px;width: 50px;">
                 </div>
                 <div class="flex-fill bd-highlight align-self-center ml-3">
@@ -1805,7 +1805,7 @@ TPL.VISITOR_LIST = `
     <%for (const item of items) {%>
         <a href="<%:=API.Common.getUserUrl(item.uin)%>" target="_blank" class="list-group-item list-group-item-action border rounded">
             <div class="d-flex flex-row bd-highlight">
-                <div class="bd-highlight">
+                <div class="avatar bd-highlight">
                     <img class="rounded-circle" src="<%:=API.Common.getUserLogoUrl(item.uin)%>" alt="" style="height: 50px;width: 50px;">
                 </div>
                 <div class="flex-fill bd-highlight align-self-center ml-3">
@@ -2014,14 +2014,14 @@ TPL.MESSAGES_ITEM = `
                             <!-- 外部视频 -->
                             <a class="medias-item border message-lightbox-external" href="<%:=API.Videos.getVideoUrl(video)%>" target="_blank">
                                 <span class="message-video"></span>
-                                <img class="lazyload loading w-100 h-100" src="../Common/Images/loading.gif" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>">
+                                <img class="lazyload loading w-100 h-100" src="../Common/images/loading.gif" data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>">
                             </a>
                         <%}else{%>
                             <!-- 空间视频 -->
                             <a class="medias-item border message-lightbox" data-idx="<%:=imgIdx%>" data-video='{"source": [{"src":"<%:=(video.custom_filepath || video.custom_url || video.url3)%>", "type":"video/mp4"}],"attributes": {"preload": false, "controls": true}}'
                                 data-poster="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" data-sub-html="#<%:= 'QZIMG-'+ message.tid%>">
                                 <span class="message-video"></span>
-                                <img class="lazyload loading w-100 h-100" data-id="<%:=video.video_id%>" src="../Common/Images/loading.gif"  data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" />
+                                <img class="lazyload loading w-100 h-100" data-id="<%:=video.video_id%>" src="../Common/images/loading.gif"  data-src="<%:=video.custom_pre_filepath || video.custom_pre_url || video.url1%>" />
                             </a>
                             <%imgIdx++%>
                         <%}%>
@@ -2036,20 +2036,20 @@ TPL.MESSAGES_ITEM = `
                                 <!-- 外部视频 -->
                                 <a class="medias-item border message-lightbox-external" href="<%:=API.Videos.getVideoUrl(image.video_info)%>" target="_blank">
                                     <span class="message-video"></span>
-                                    <img class="lazyload loading w-100 h-100" src="../Common/Images/loading.gif" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>">
+                                    <img class="lazyload loading w-100 h-100" src="../Common/images/loading.gif" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>">
                                 </a>
                             <%}else{%>
                                 <!-- 空间视频 -->
                                 <a class="medias-item border message-lightbox" data-idx="<%:=imgIdx%>" data-video='{"source": [{"src":"<%:=(image.video_info.custom_filepath || image.video_info.custom_url || image.video_info.url3)%>", "type":"video/mp4"}],"attributes": {"preload": false, "controls": true}}'
                                     data-poster="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" data-sub-html="#<%:= 'QZIMG-'+ message.tid%>">
                                     <span class="message-video"></span>
-                                    <img class="lazyload loading w-100 h-100" data-id="<%:=image.video_info.video_id%>" src="../Common/Images/loading.gif" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" />
+                                    <img class="lazyload loading w-100 h-100" data-id="<%:=image.video_info.video_id%>" src="../Common/images/loading.gif" data-src="<%:=image.video_info.custom_pre_filepath || image.video_info.custom_pre_url || image.video_info.url1%>" />
                                 </a>
                                 <%imgIdx++%>
                             <%}%>
                         <%}else{%>
                             <a class="medias-item border message-lightbox" data-idx="<%:=imgIdx%>" data-src="<%:=(image.custom_filepath || image.custom_url)%>" data-sub-html="#<%:= 'QZIMG-'+ message.tid%>">
-                                <img class="lazyload loading w-100 h-100" data-id="<%:=image.pic_id%>" src="../Common/Images/loading.gif" src="../Common/Images/loading.gif" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
+                                <img class="lazyload loading w-100 h-100" data-id="<%:=image.pic_id%>" src="../Common/images/loading.gif" src="../Common/images/loading.gif" data-src="<%:=(image.custom_filepath || image.custom_url)%>">
                             </a>
                             <%imgIdx++%>
                         <%}%>
@@ -2212,7 +2212,7 @@ TPL.BOARDS_YEAR_ITEMS = `
 TPL.SHARES_COMMENTS = `
  <%if(share.comments && share.comments.length > 0){%>
      <%/* 遍历评论 */%>
-     <%for(let comment of comments.comments){%>
+     <%for(let comment of share.comments){%>
         <hr>
          ` + TPL.COMMON_COMMENT + `
      <%}%>
@@ -2417,7 +2417,7 @@ TPL.BLOGS_TYPE_LIST = `
 TPL.FRIENDS_LIST_ITEM = `
  <div class="list-group-item list-group-item-action mb-2">
      <div class="align-middle mb-2">
-        <a href="<%:=API.Common.getUserUrl(friend.uin)%>" target="_blank" title="访问TA的QQ空间">
+        <a class="avatar" href="<%:=API.Common.getUserUrl(friend.uin)%>" target="_blank" title="访问TA的QQ空间">
             <img src="<%:=API.Common.getMediaPath(API.Common.getUserLogoUrl(friend.uin), friend.custom_avatar, "Friends_HTML")%>">
         </a>
         <span title="备注/昵称" class="ml-2"><%:=API.Common.formatContent(friend.remark || friend.name)%></span>

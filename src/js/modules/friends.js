@@ -245,8 +245,8 @@ API.Friends.exportToExcel = async(friends) => {
         // 行信息
         const rowData = [
             friend.uin,
-            friend.remark,
             friend.name,
+            friend.remark,
             friend.groupName,
             API.Friends.getShowCare(friend),
             API.Friends.getShowFriendTime(friend, 0),
