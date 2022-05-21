@@ -44,6 +44,9 @@ API.Messages.export = async() => {
         // 处理特殊坐标数据，避免地图跳转错误
         API.Messages.dealLbs(items);
 
+        // 优化微信同步说说的坐标信息
+        await API.Messages.refreshWeChatLbsInfo(items);
+
         // 根据导出类型导出数据    
         await API.Messages.exportAllListToFiles(items);
 
@@ -113,8 +116,8 @@ API.Messages.getAllList = async() => {
         return await API.Messages.getList(pageIndex, indicator).then(async(dataList) => {
             // 合并数据
             QZone.Messages.Data = API.Utils.unionItems(QZone.Messages.Data, dataList);
-            if (!_.isEmpty(QZone.Messages.OLD_Data) && API.Common.isPreBackupPos(dataList, CONFIG)) {
-                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+            if (!API.Common.isGetNextPage(QZone.Messages.OLD_Data, dataList, CONFIG)) {
+                // 不再继续获取下一页
                 return QZone.Messages.Data;
             }
             // 递归获取下一页
@@ -222,7 +225,7 @@ API.Messages.getItemCommentList = async(item, pageIndex) => {
         }
 
         // 下载相对目录
-        let module_dir = 'Messages/Images';
+        let module_dir = 'Messages/images';
 
         // 处理说说评论的配图
         let comments = data.commentlist || [];
@@ -597,7 +600,7 @@ API.Messages.addMediaToTasks = async(dataList) => {
     const indicator = new StatusIndicator('Messages_Images_Mime');
 
     // 下载相对目录
-    let module_dir = 'Messages/Images';
+    let module_dir = 'Messages/images';
 
     for (const item of dataList) {
 
@@ -1094,4 +1097,70 @@ API.Messages.dealLbs = function(items) {
         lbs.pos_x = Number.parseFloat(lbs.pos_x).toString() * 1;
         lbs.pos_y = Number.parseFloat(lbs.pos_y).toString() * 1;
     }
+}
+
+/**
+ * 刷新微信同步说说的坐标信息
+ * @param {Array} items 说说
+ */
+API.Messages.refreshWeChatLbsInfo = async items => {
+    if (!QZone_Config.Messages.refreshWeChatLbs) {
+        return;
+    }
+    // 状态更新器
+    const indicator = new StatusIndicator('Messages_Lbs_Info');
+
+    // 更新总数
+    indicator.setTotal(items.length);
+
+    for (let idx = 0; idx < items.length; idx++) {
+        const item = items[idx];
+        indicator.setIndex(idx + 1);
+
+        if (item.custom_lbsInfo) {
+            // 已有坐标信息的，跳过
+            indicator.addSkip(item);
+            continue;
+        }
+        if (!API.Messages.isWeChat(item)) {
+            // 不是微信的，跳过
+            indicator.addSkip(item);
+            continue;
+        }
+        if (!item.lbs || !item.lbs.idname) {
+            // 没有坐标信息的，跳过
+            indicator.addSkip(item);
+            continue;
+        }
+        if(!QZone_Config.DEV.Maps.TxKey){
+            // 没有API Key的，跳过
+            indicator.addSkip(item);
+            continue;
+        }
+        await API.Common.toTxLbs(item.lbs.pos_y, item.lbs.pos_x).then(lbsInfo => {
+            if (lbsInfo.status === 0) {
+                item.lbs.pos_y = lbsInfo.locations[0].lat;
+                item.lbs.pos_x = lbsInfo.locations[0].lng;
+            }
+        }).catch(e => {
+            console.error('转换微信GPS坐标到腾讯火星系坐标异常', item, e);
+        });
+
+        await API.Common.getLbsInfo(item.lbs.pos_y, item.lbs.pos_x).then(lbsInfo => {
+            if (lbsInfo.status === 0) {
+                item.custom_lbsInfo = lbsInfo.result;
+                item.lbs.idname = item.custom_lbsInfo.formatted_addresses.recommend;
+                item.lbs.name = item.custom_lbsInfo.address;
+            }
+            indicator.addSuccess(item);
+        }).catch(e => {
+            console.error('请求坐标信息异常', item, e);
+            indicator.addFailed(item);
+        });
+
+        await API.Utils.sleep(500);
+    }
+
+    // 完成
+    indicator.complete();
 }

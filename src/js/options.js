@@ -241,6 +241,7 @@
 
         // 提示信息
         const $download_type_help = $('#common_download_type_help');
+        const $common_refererUrls = $('#common_refererUrls_row');
         switch (value) {
             case 'File':
                 $task_count_row.hide();
@@ -253,6 +254,7 @@
                 $file_suffix_row.show();
                 $suffix_timeout_row.show();
                 $download_thread_row.show();
+                $common_refererUrls.show();
 
                 $download_type_help.html('助手内部目前<span style="color:red">暂不支持数据容量大于2G的备份</span>，2G内建议使用助手内部下载，超2G的建议使用其他方式下载');
                 break;
@@ -262,6 +264,7 @@
                 $task_sleep_row.hide();
                 $download_status_row.hide();
                 $download_thread_row.hide();
+                $common_refererUrls.hide();
 
                 // 显示Aria2配置
                 $common_aria2_rpc_row.show();
@@ -276,6 +279,7 @@
                 // 隐藏Aria2配置
                 $common_aria2_rpc_row.hide();
                 $common_aria2_token_row.hide();
+                $common_refererUrls.hide();
 
                 $task_count_row.show();
                 $task_sleep_row.show();
@@ -290,6 +294,7 @@
                 // 隐藏Aria2配置
                 $common_aria2_rpc_row.hide();
                 $common_aria2_token_row.hide();
+                $common_refererUrls.hide();
 
                 $task_count_row.show();
                 $task_sleep_row.show();
@@ -304,6 +309,7 @@
                 // 隐藏Aria2配置
                 $common_aria2_rpc_row.hide();
                 $common_aria2_token_row.hide();
+                $common_refererUrls.hide();
 
                 $task_count_row.show();
                 $task_sleep_row.hide();
@@ -324,6 +330,7 @@
                 $file_suffix_row.show();
                 $suffix_timeout_row.show();
                 $download_thread_row.show();
+                $common_refererUrls.show();
 
                 $download_type_help.html('使用浏览器下载，请确保已关闭浏览器设置中的<span style="color:red">【下载前询问每个文件的保存位置】</span>选项，否则浏览器将会一直弹窗提示保存文件');
                 break;
@@ -333,6 +340,7 @@
                 $file_suffix_row.hide();
                 $suffix_timeout_row.hide();
                 $download_thread_row.hide();
+                $common_refererUrls.hide();
 
                 // 隐藏Aria2配置
                 $common_aria2_rpc_row.hide();
@@ -695,6 +703,7 @@
         $("#photos_images_list_type").val(options.Photos.Images.listType).change();
         // 文件夹结构类型
         $("#photos_file_structure_type").val(options.Photos.Images.fileStructureType);
+        $("#photos_images_rename_type").val(options.Photos.Images.RenameType);
         $("#photos_images_cost_min").val(options.Photos.Images.randomSeconds.min);
         $("#photos_images_cost_max").val(options.Photos.Images.randomSeconds.max);
         $("#photos_images_limit").val(options.Photos.Images.pageSize);
@@ -721,6 +730,7 @@
         // 视频模块赋值
         $("#videos_exportFormat").val(options.Videos.exportType).change();
         $("#videos_file_structure_type").val(options.Videos.fileStructureType);
+        $("#videos_file_rename_type").val(options.Videos.RenameType);
         $("#videos_increment_type").val(options.Videos.IncrementType).change();
         $("#videos_increment_time").val(options.Videos.IncrementTime);
         $("#videos_list_cost_min").val(options.Videos.randomSeconds.min);
@@ -804,8 +814,17 @@
         $("#common_aria2_token").val(options.Common.Aria2.token || '');
         $('#common_user_link').prop("checked", options.Common.hasUserLink);
 
+        
+        // 开发者
+        $('#dev_maps_tx_key').val(options.Dev.Maps.TxKey);
+        $('#dev_maps_bd_key').val(options.Dev.Maps.BdKey);
+        $('#dev_maps_gd_key').val(options.Dev.Maps.GdKey);
+
         // 那年今日
         renderValueToDom(options, 'hasThatYearToday');
+
+        // 微信坐标
+        renderValueToDom(options, 'refreshWeChatLbs');
 
         // 图片类型识别
         renderValueToDom(options, 'isAutoFileSuffix');
@@ -821,6 +840,9 @@
 
         // 空间权限
         renderValueToDom(options, 'ZoneAccess');
+
+        // 引用来源
+        $('#common_refererUrls').val(QZone_Config.Common.refererUrls.join('\n'));
     }
 
     // 读取数据，第一个参数是指定要读取的key以及设置默认值
@@ -857,8 +879,8 @@
      * @param {string} field 属性名称
      */
     const setValueByFrom = (options, field) => {
-        const $hasThatYearTodayFields = $('input[name="' + field + '"],select[name="' + field + '"]');
-        for (const item of $hasThatYearTodayFields) {
+        const $fields = $('input[name="' + field + '"],select[name="' + field + '"]');
+        for (const item of $fields) {
             const moduleName = $(item).attr('data-module');
             if (!moduleName) {
                 continue;
@@ -961,6 +983,7 @@
         QZone_Config.Photos.Comments.randomSeconds.max = $("#photos_albums_comments_cost_max").val() * 1;
         QZone_Config.Photos.Comments.pageSize = $("#photos_albums_comments_limit").val() * 1;
 
+        QZone_Config.Photos.Images.RenameType = $("#photos_images_rename_type").val();
         QZone_Config.Photos.Images.listType = $("#photos_images_list_type").val();
         QZone_Config.Photos.Images.fileStructureType = $("#photos_file_structure_type").val();
         QZone_Config.Photos.Images.randomSeconds.min = $("#photos_images_cost_min").val() * 1;
@@ -990,6 +1013,7 @@
         // 视频模块赋值
         QZone_Config.Videos.exportType = $("#videos_exportFormat").val();
         QZone_Config.Videos.fileStructureType = $("#videos_file_structure_type").val();
+        QZone_Config.Videos.RenameType = $("#videos_file_rename_type").val();
         QZone_Config.Videos.IncrementType = $("#videos_increment_type").val();
         QZone_Config.Videos.IncrementTime = $("#videos_increment_time").val();
         QZone_Config.Videos.randomSeconds.min = $("#videos_list_cost_min").val() * 1;
@@ -1071,11 +1095,18 @@
         QZone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
         QZone_Config.Common.Aria2.rpc = $("#common_aria2_rpc").val();
         QZone_Config.Common.Aria2.token = $("#common_aria2_token").val();
-
         QZone_Config.Common.hasUserLink = $('#common_user_link').prop("checked");
+
+        // 开发者
+        QZone_Config.Dev.Maps.TxKey = $("#dev_maps_tx_key").val();
+        QZone_Config.Dev.Maps.BdKey = $("#dev_maps_bd_key").val();
+        QZone_Config.Dev.Maps.GdKey = $("#dev_maps_gd_key").val();
 
         // 那年今日
         setValueByFrom(QZone_Config, 'hasThatYearToday');
+
+        // 微信坐标
+        setValueByFrom(QZone_Config, 'refreshWeChatLbs');
 
         // 图片类型识别
         setValueByFrom(QZone_Config, 'isAutoFileSuffix');
@@ -1092,6 +1123,60 @@
         // 空间权限
         setValueByFrom(QZone_Config, 'ZoneAccess');
 
+        // 引用来源
+        QZone_Config.Common.refererUrls = $('#common_refererUrls').val().split('\n');
+
+        // 获取动态规则
+        chrome.declarativeNetRequest && chrome.declarativeNetRequest.getDynamicRules(
+            function(res) {
+
+                // 需要添加的规则
+                const addRules = [];
+                for (let idx = 0; idx < QZone_Config.Common.refererUrls.length; idx++) {
+                    const url = QZone_Config.Common.refererUrls[idx];
+                    addRules.push({
+                        "id": idx + 1,
+                        "priority": idx + 1,
+                        "action": {
+                            "requestHeaders": [{
+                                "header": "Referer",
+                                "operation": "set",
+                                "value": "https://user.qzone.qq.com/"
+                            }],
+                            "type": "modifyHeaders"
+                        },
+                        "condition": {
+                            "urlFilter": url,
+                            "resourceTypes": [
+                                "xmlhttprequest"
+                            ]
+                        }
+                    });
+                }
+
+                // 删除的规则
+                const removeRuleIds = res.map(item => item.id);
+
+                try {
+                    // 移除动态规则
+                    chrome.declarativeNetRequest.updateDynamicRules({
+                        removeRuleIds: removeRuleIds
+                    }, function() {
+                        // 添加动态规则
+                        chrome.declarativeNetRequest.updateDynamicRules({
+                            addRules: addRules
+                        })
+                    })
+                } catch (error) {
+                    try {
+                        // 移除动态规则
+                        chrome.declarativeNetRequest.updateDynamicRules(removeRuleIds, addRules)
+                    } catch (error) {
+
+                    }
+                }
+            }
+        )
         chrome.storage.sync.set(QZone_Config, function() {
             console.info("保存成功！");
         });

@@ -1,0 +1,40 @@
+@CHARSET "UTF-8";
+
+/************************************/
+.mask-hidden {
+	overflow: hidden !important;
+}
+
+.mask-relative {
+	position: relative;
+}
+
+.mask-backdrop {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 1000;
+	background-color: #ccc;
+	opacity: 0.5;
+	filter: alpha(opacity = 50);
+}
+
+.mask-icon {
+	position: absolute;
+	z-index: 1001;
+	top: 0;
+	left: 0;
+	cursor: wait;
+}
+
+.mask-backdrop-fixed {
+	position: fixed;
+	z-index: 999999999;
+}
+
+.mask-icon-fixed {
+	position: fixed;
+	z-index: 999999999;
+}

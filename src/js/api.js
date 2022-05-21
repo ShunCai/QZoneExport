@@ -118,7 +118,13 @@ const REST_URLS = {
     SPECIAL_CARE_LIST_URL: 'https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/tfriend/specialcare_get.cgi',
 
     /** 好友/用户名片（含昵称、备注、智能备注、是否特别关心、亲密度、共同好友、是否好友，是否开通空间，性别，城市） */
-    USER_CARD_URL: 'https://h5.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/user/cgi_personal_card'
+    USER_CARD_URL: 'https://h5.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/user/cgi_personal_card',
+
+    /** 获取坐标地址信息 */
+    MAP_LBS_INFO: 'https://apis.map.qq.com/ws/geocoder/v1',
+
+    /** 转换坐标信息 */
+    TO_TX_LBS: 'https://apis.map.qq.com/ws/coord/v1/translate'
 
 };
 
@@ -372,7 +378,10 @@ API.Utils = {
     async getFileSuffix(url) {
         let viewUrl = API.Utils.makeViewUrl(url);
         return await API.Utils.getMimeType(viewUrl).then((data) => {
-            return '.' + data;
+            if (data) {
+                return '.' + data;
+            }
+            return '';
         }).catch((e) => {
             console.error('获取文件类型异常', viewUrl, e);
             return '';
@@ -1299,28 +1308,36 @@ API.Utils = {
     },
 
     /**
+     * 删除浏览器任务属性
+     * @param {BrowserTask} task
+     */
+    transformBrowserTask(task) {
+        // 简单克隆
+        const newTask = JSON.parse(JSON.stringify(task));
+
+        // 删除多余属性
+        delete newTask.id;
+        delete newTask.dir;
+        delete newTask.name;
+        delete newTask.source;
+        delete newTask.state;
+        delete newTask.downloadState;
+        delete newTask.module;
+
+        return newTask;
+    },
+
+    /**
      * 浏览器下载(发送消息给背景页下载)
      * @param {BrowserTask} task
      */
     downloadByBrowser(task) {
-        return new Promise(function(resolve, reject) {
-            // 简单克隆
-            const newTask = JSON.parse(JSON.stringify(task));
-
-            // 删除多余属性
-            delete newTask.id;
-            delete newTask.dir;
-            delete newTask.name;
-            delete newTask.source;
-            delete newTask.state;
-            delete newTask.downloadState;
-            delete newTask.module;
-
+        return new Promise(async function(resolve, reject) {
             chrome.runtime.sendMessage({
                 from: 'content',
                 type: 'download_browser',
                 downloadThread: QZone_Config.Common.downloadThread,
-                task: newTask
+                task: API.Utils.transformBrowserTask(task)
             }, function(id) {
                 if (chrome.runtime.lastError) {
                     task.setId(0);
@@ -1777,7 +1794,7 @@ API.Common = {
      */
     getUserLogoLocalUrl(uin) {
         // 头像默认PNG格式
-        return "Common/Images/{uin}".format({
+        return "Common/images/{uin}".format({
             uin: uin
         });
     },
@@ -1886,6 +1903,39 @@ API.Common = {
                 break;
         }
         return res;
+    },
+
+    /**
+     * 获取坐标的地址信息
+     * @param {Number} lat 纬度
+     * @param {Number} lng 经度
+     */
+    getLbsInfo(lat, lng) {
+        const params = {
+            "location": '{0},{1}'.format(lat, lng),
+            "key": QZone_Config.DEV.Maps.TxKey
+        };
+        return API.Utils.get(REST_URLS.MAP_LBS_INFO, params);
+    },
+
+    /**
+     * 转换坐标到腾讯坐标，也就是火星系坐标
+     * @param {Number} lat 纬度
+     * @param {Number} lng 经度
+     */
+    toTxLbs(lat, lng, type) {
+        const params = {
+            "locations": '{0},{1}'.format(lat, lng),
+            "type": type || "1",
+            "key": QZone_Config.DEV.Maps.TxKey
+        };
+        // 1 GPS坐标
+        // 2 sogou经纬度
+        // 3 baidu经纬度
+        // 4 mapbar经纬度
+        // 5 [默认]腾讯、google、高德坐标
+        // 6 sogou墨卡托
+        return API.Utils.get(REST_URLS.TO_TX_LBS, params);
     }
 }
 
@@ -2756,6 +2806,51 @@ API.Messages = {
             return '#';
         }
         return 'https://apis.map.qq.com/uri/v1/marker?marker=coord:{pos_y},{pos_x};title:{idname};addr:{name}'.format(ibs);
+    },
+
+    /**
+     * 是否为微信同步的说说
+     * @param {Message} item 说说
+     * @returns 
+     */
+    isWeChat(item) {
+        return item.t1_source === 1 && item.t1_subtype === 29;
+    },
+
+    /**
+     * 显示来源
+     * @param {Message} item 说说
+     */
+    getSourceHTML(item) {
+        if (item.t1_source === 0) {
+            // 朋友网
+            return '来自<span class="text-info">朋友网</span>';
+        }
+        if (item.t1_source === 1) {
+            // QQ空间
+            switch (item.t1_subtype) {
+                case 29:
+                    return `
+                    <svg t="1654947237192" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="10603" width="16" height="16">
+                        <path
+                            d="M512 954.24A442.24 442.24 0 1 0 69.76 512 442.08 442.08 0 0 0 512 954.24z m0-30.88a401.12 401.12 0 0 1-137.12-21.92V621.6l274.24 276.64A356 356 0 0 1 512 923.36z m285.28-119.68a400 400 0 0 1-112 81.28L487.2 687.04l389.44 1.92a359.52 359.52 0 0 1-79.2 114.72z m118.24-289.28a400 400 0 0 1-21.92 136.96H613.76l276.8-273.92a355.04 355.04 0 0 1 25.12 136.96z m-232.8-368a355.68 355.68 0 0 1 114.56 79.04 402.88 402.88 0 0 1 81.44 112L680.96 535.52zM512 653.6A141.6 141.6 0 1 1 653.6 512 141.6 141.6 0 0 1 512 653.6z m0-548.32A400 400 0 0 1 649.12 128v280L375.04 130.4A356.32 356.32 0 0 1 512 105.28z m-285.28 119.84a405.44 405.44 0 0 1 112-81.44l198.4 198.08-389.44-2.08a355.68 355.68 0 0 1 79.04-114.56zM108.64 514.4a400 400 0 0 1 21.92-136.96h279.84L133.6 651.36a357.92 357.92 0 0 1-24.96-136.96z m234.72-21.12l-1.92 389.44a357.12 357.12 0 0 1-114.72-79.04 401.76 401.76 0 0 1-81.28-112z"
+                            fill="#FFFFFF" p-id="10604"></path>
+                        <path d="M649.12 128A400 400 0 0 0 512 105.28a356.32 356.32 0 0 0-137.12 25.12l274.08 276.8z" fill="#FC6B4F" p-id="10605"></path>
+                        <path d="M797.44 225.12a355.68 355.68 0 0 0-114.56-79.04l-1.92 389.44 197.92-198.08a402.88 402.88 0 0 0-81.44-112.32z" fill="#7838F2" p-id="10606"></path>
+                        <path d="M893.76 651.36a400 400 0 0 0 21.92-136.96 355.04 355.04 0 0 0-25.12-136.96l-276.8 273.92z" fill="#5698F3" p-id="10607"></path>
+                        <path d="M685.12 884.96a400 400 0 0 0 112-81.28 359.52 359.52 0 0 0 79.2-114.72l-389.44-1.92z" fill="#20E9F4" p-id="10608"></path>
+                        <path d="M375.04 901.44A401.12 401.12 0 0 0 512 923.36a356 356 0 0 0 136.96-25.12L375.04 621.6z" fill="#00FD60" p-id="10609"></path>
+                        <path d="M341.44 882.72l1.92-389.44L145.44 691.2a401.76 401.76 0 0 0 81.28 112 357.12 357.12 0 0 0 114.72 79.52z" fill="#ABFB5B" p-id="10610"></path>
+                        <path d="M130.56 377.44a400 400 0 0 0-21.92 136.96 357.92 357.92 0 0 0 24.96 136.96l276.8-273.92z" fill="#F0E254" p-id="10611"></path>
+                        <path d="M339.04 144a405.44 405.44 0 0 0-112 81.44 355.68 355.68 0 0 0-79.04 114.56l389.44 2.08z" fill="#F6B351" p-id="10612"></path>
+                    </svg>
+                    <span class="text-info">朋友圈</span>
+                    `;
+                default:
+                    break;
+            }
+        }
+        return void 0;
     }
 };
 
@@ -3168,14 +3263,14 @@ API.Photos = {
     getDownloadUrl(photo, type) {
         let url = photo.url;
         // 原图
-        let raw_url = photo.raw_upload === 1 ? photo.raw : undefined;
-        // 高清原图
-        let origin_url = photo.origin_url;
-        // 常规
-        let normal_url = photo.downloadUrl || photo.url;
+        const raw_url = photo.raw_upload === 1 && photo.raw;
+        // 高清图
+        const origin_url = photo.origin_upload === 1 && photo.origin_url || photo.origin;
+        // 普通图
+        const normal_url = photo.downloadUrl || photo.url;
         switch (type) {
             case 'raw':
-                // 原图，原图不存在去高清，高清不存在取普通
+                // 原图，原图不存在取高清，高清不存在取普通
                 url = raw_url || origin_url || normal_url;
                 break;
             case 'original':

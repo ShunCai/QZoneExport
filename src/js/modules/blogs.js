@@ -177,8 +177,8 @@ API.Blogs.getAllList = async() => {
 
             // 合并数据
             QZone.Blogs.Data = API.Utils.unionItems(QZone.Blogs.Data, dataList);
-            if (!_.isEmpty(QZone.Blogs.OLD_Data) && API.Common.isPreBackupPos(dataList, CONFIG)) {
-                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+            if (!API.Common.isGetNextPage(QZone.Blogs.OLD_Data, dataList, CONFIG)) {
+                // 不再继续获取下一页
                 return QZone.Blogs.Data;
             }
             // 递归获取下一页
@@ -529,10 +529,10 @@ API.Blogs.handerListImages = async(items) => {
             const suffix = await API.Utils.autoFileSuffix(url);
             image.custom_url = uid + suffix;
 
-            API.Utils.newDownloadTask('Blogs', url, 'Blogs/Images', image.custom_url, item);
+            API.Utils.newDownloadTask('Blogs', url, 'Blogs/images', image.custom_url, item);
 
             // 备份的显示地址
-            image.custom_url = 'Images/' + image.custom_url;
+            image.custom_url = 'images/' + image.custom_url;
         }
     }
 }
@@ -563,10 +563,10 @@ API.Blogs.handerContentImages = async(item, images) => {
             const custom_filename = uid + suffix;
 
             // 添加下载任务
-            API.Utils.newDownloadTask('Blogs', url, 'Blogs/Images', custom_filename, item);
+            API.Utils.newDownloadTask('Blogs', url, 'Blogs/images', custom_filename, item);
 
             // 新的图片离线地址
-            url = 'MarkDown' === exportType ? '../Images/' + custom_filename : 'Images/' + custom_filename;
+            url = 'MarkDown' === exportType ? '../images/' + custom_filename : 'images/' + custom_filename;
         }
 
         // 修改日志中的图片链接
@@ -628,10 +628,10 @@ API.Blogs.handerMedias = async(item, embeds) => {
                         const custom_filename = uid + suffix;
 
                         // 添加下载任务
-                        API.Utils.newDownloadTask('Blogs', vurl, 'Blogs/Images', custom_filename, item);
+                        API.Utils.newDownloadTask('Blogs', vurl, 'Blogs/images', custom_filename, item);
 
                         // 新的图片离线地址
-                        vurl = 'MarkDown' === exportType ? '../Images/' + custom_filename : 'Images/' + custom_filename;
+                        vurl = 'MarkDown' === exportType ? '../images/' + custom_filename : 'images/' + custom_filename;
                     }
                     $embed.replaceWith('<video src="{0}" height="auto" width="100%" controls="controls" ></video>'.format(vurl));
                 } else {

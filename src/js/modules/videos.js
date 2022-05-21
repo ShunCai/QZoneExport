@@ -27,7 +27,7 @@ API.Videos.export = async() => {
         await API.Videos.getAllLikeList(videos);
 
         // 添加视频下载任务
-        API.Videos.addDownloadTasks('Videos', videos, 'Videos/Images');
+        API.Videos.addDownloadTasks('Videos', videos, 'Videos/images');
 
         // 根据导出类型导出数据
         await API.Videos.exportAllToFiles(videos);
@@ -101,8 +101,8 @@ API.Videos.getAllList = async() => {
         return await API.Videos.getPageList(pageIndex, indicator).then(async(dataList) => {
             // 合并数据
             QZone.Videos.Data = API.Utils.unionItems(QZone.Videos.Data, dataList);
-            if (!_.isEmpty(QZone.Videos.OLD_Data) && API.Common.isPreBackupPos(dataList, CONFIG)) {
-                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+            if (!API.Common.isGetNextPage(QZone.Videos.OLD_Data, dataList, CONFIG)) {
+                // 不再继续获取下一页
                 return QZone.Videos.Data;
             }
             // 递归获取下一页
@@ -191,8 +191,8 @@ API.Videos.getAllComments = async(videos) => {
                 // 合并数据
                 video.comments = API.Utils.unionItems(video.comments, data.comments);
 
-                if (!_.isEmpty(QZone.Videos.OLD_Data) && API.Common.isPreBackupPos(data.comments, CONFIG)) {
-                    // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+                if (!API.Common.isGetNextPage(QZone.Videos.OLD_Data, data.comments, CONFIG)) {
+                    // 不再继续获取下一页
                     return video.comments;
                 }
 
@@ -253,7 +253,7 @@ API.Videos.addDownloadTasks = (module, videos, module_dir, source) => {
         video.custom_pre_url = video.pre || video.url1 || video.preview_img;
         // 预览图直接写死后缀
         video.custom_pre_filename = API.Utils.newSimpleUid(8, 16) + '.jpeg';
-        video.custom_pre_filepath = 'Images/' + video.custom_pre_filename;
+        video.custom_pre_filepath = 'images/' + video.custom_pre_filename;
         API.Utils.newDownloadTask(module, video.custom_pre_url, module_dir, video.custom_pre_filename, video);
 
         // 如果是外部视频，跳过不下载
@@ -270,14 +270,14 @@ API.Videos.addDownloadTasks = (module, videos, module_dir, source) => {
             continue;
         }
         video.custom_filename = API.Videos.getFileName(video.custom_url);
-        video.custom_filename = isVideo ? orderNumber + '_' + video.custom_filename : video.custom_filename;
+        video.custom_filename = isVideo ? API.Videos.getVideoFileName(video, orderNumber) : video.custom_filename;
 
         // 添加下载任务
         const categoryPath = API.Videos.getFileStructureFolderPath(video);
         const downloadFolder = categoryPath ? 'Videos/' + categoryPath : 'Videos';
 
         // 文件路径
-        video.custom_filepath = 'Images/' + video.custom_filename;
+        video.custom_filepath = 'images/' + video.custom_filename;
         if (isVideo) {
             video.custom_filepath = categoryPath ? categoryPath + '/' + video.custom_filename : video.custom_filename;
         }
@@ -674,4 +674,33 @@ API.Videos.getAllLikeList = async(items) => {
     indicator.complete();
 
     return items;
+}
+
+/**
+ * 获取视频名称
+ * @param {Object} video 视频
+ * @param {String} prefix 前缀
+ * @returns 
+ */
+API.Videos.getVideoFileName = (video, prefix) => {
+    // 上传时间
+    const dateTime = API.Utils.parseDate(video.uploadtime || video.uploadTime).getTime();
+    if (QZone_Config.Videos.RenameType === 'Default') {
+        // 文件名称，排序号+空间名称
+        video.custom_filename = API.Utils.filenameValidate(prefix + '_' + video.custom_filename);
+    } else if (QZone_Config.Videos.RenameType === 'Name') {
+        // 文件名称，排序号+视频标题
+        video.custom_filename = API.Utils.filenameValidate(prefix + '_' + (video.title || API.Utils.formatDate(dateTime / 1000, 'yyyyMMdd_hhmmss')));
+    } else if (QZone_Config.Videos.RenameType === 'Time') {
+        // 文件名称，排序号+视频标题+拍摄/上传时间
+        if (video.title) {
+            video.custom_filename = API.Utils.filenameValidate(prefix + '_' + video.title + '_' + API.Utils.formatDate(dateTime / 1000, 'yyyyMMdd_hhmmss'));
+        } else {
+            video.custom_filename = API.Utils.filenameValidate(prefix + '_' + API.Utils.formatDate(dateTime / 1000, 'yyyyMMdd_hhmmss'));
+        }
+    }
+    // 追加后缀
+    video.custom_filename = video.custom_filename.endsWith('.mp4') ? video.custom_filename : video.custom_filename + '.mp4';
+    video.custom_filename = API.Utils.filenameValidate(video.custom_filename);
+    return video.custom_filename;
 }

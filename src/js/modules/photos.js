@@ -290,8 +290,8 @@ API.Photos.getAllAlbumList = async() => {
             // 合并数据
             QZone.Photos.Album.Data = API.Utils.unionItems(QZone.Photos.Album.Data, dataList);
 
-            if (!_.isEmpty(QZone.Photos.Album.OLD_Data) && API.Common.isPreBackupPos(dataList, CONFIG)) {
-                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+            if (!API.Common.isGetNextPage(QZone.Photos.Album.OLD_Data, dataList, CONFIG)) {
+                // 不再继续获取下一页
                 return QZone.Photos.Album.Data;
             }
             // 递归获取下一页
@@ -401,10 +401,11 @@ API.Photos.getAlbumImageAllList = async(album) => {
 
             // 合并数据
             QZone.Photos.Images[album.id].Data = API.Utils.unionItems(QZone.Photos.Images[album.id].Data, dataList);
-            if (!_.isEmpty(QZone.Photos.Images[album.id].OLD_Data) && API.Common.isPreBackupPos(dataList, ALBUM_CONFIG)) {
-                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+            if (!API.Common.isGetNextPage(QZone.Photos.Images[album.id].OLD_Data, dataList, ALBUM_CONFIG)) {
+                // 不再继续获取下一页
                 return QZone.Photos.Images[album.id].Data;
             }
+
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, PHOTO_CONFIG, QZone.Photos.Images[album.id].total, QZone.Photos.Images[album.id].Data, arguments.callee, nextPageIndex, indicator);
         }).catch(async(e) => {
@@ -494,8 +495,8 @@ API.Photos.getAlbumImageAllListByDetail = async(album) => {
             // 成功数量
             indicator.setSuccess(QZone.Photos.Images[albumId].Data);
 
-            if (!_.isEmpty(QZone.Photos.Images[albumId].OLD_Data) && API.Common.isPreBackupPos(dataList, ALBUM_CONFIG) || data.last === 1) {
-                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+            if (!API.Common.isGetNextPage(QZone.Photos.Images[albumId].OLD_Data, dataList, ALBUM_CONFIG) || data.last === 1) {
+                // 不再继续获取下一页
                 return QZone.Photos.Images[albumId].Data;
             }
 
@@ -503,9 +504,9 @@ API.Photos.getAlbumImageAllListByDetail = async(album) => {
             return await nextPage(albumId, API.Photos.getImageKey(_.last(dataList)), indicator) || [];
 
         }).catch((error) => {
-            console.error('获取相片详情异常', photo, error);
+            console.error('获取相片详情异常', picKey, error);
             // 更新获取进度
-            indicator.addFailed(photo);
+            indicator.addFailed(picKey);
         });
 
         // 请求一页成功后等待指定秒数后再请求下一页
@@ -621,10 +622,11 @@ API.Photos.getAlbumAllComments = async(item) => {
             // 合并数据
             item.comments = API.Utils.unionItems(item.comments, data.comments);
 
-            if (!_.isEmpty(QZone.Photos.Album.OLD_Data) && API.Common.isPreBackupPos(data.comments, CONFIG)) {
-                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+            if (!API.Common.isGetNextPage(QZone.Photos.Album.OLD_Data, data.comments, CONFIG)) {
+                // 不再继续获取下一页
                 return item.comments;
             }
+
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, item.comment, item.comments, arguments.callee, item, nextPageIndex);
 
@@ -717,10 +719,11 @@ API.Photos.getImageAllComments = async(item, indicator) => {
             item.comments = API.Utils.unionItems(item.comments, data.comments);
             indicator.addSuccess(data.comments);
 
-            if (!_.isEmpty(QZone.Photos.Album.OLD_Data) && API.Common.isPreBackupPos(data.comments, CONFIG)) {
-                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+            if (!API.Common.isGetNextPage(QZone.Photos.Album.OLD_Data, data.comments, CONFIG)) {
+                // 不再继续获取下一页
                 return item.comments;
             }
+
             // 递归获取下一页
             return await API.Common.callNextPage(nextPageIndex, CONFIG, item.cmtTotal, item.comments, arguments.callee, item, nextPageIndex, indicator);
 
@@ -792,10 +795,10 @@ API.Photos.addAlbumsDownloadTasks = async(albums) => {
         if (API.Photos.isNewAlbum(album.id)) {
 
             // 添加相册预览图的下载任务
-            await API.Photos.addPreviewDownloadTasks(album, 'Albums/Images');
+            await API.Photos.addPreviewDownloadTasks(album, 'Albums/images');
 
             // 添加评论的图片的下载任务
-            await API.Photos.addCommentDownloadTasks(album, 'Albums/Images');
+            await API.Photos.addCommentDownloadTasks(album, 'Albums/images');
         }
 
         // 添加相片的下载任务
@@ -816,7 +819,7 @@ API.Photos.addPreviewDownloadTasks = async(item, dir) => {
     item.custom_filename = API.Utils.newSimpleUid(8, 16);
     // 预览图直接写死后缀（有权限的默认JPEG，无权限的，根据文件名获取）
     item.custom_filename = item.custom_filename + (API.Utils.getFileSuffixByUrl(item.custom_url) || '.jpeg');
-    item.custom_filepath = 'Images/' + item.custom_filename;
+    item.custom_filepath = 'images/' + item.custom_filename;
     // 添加下载任务
     API.Utils.newDownloadTask('Photos', item.custom_url, dir, item.custom_filename, item);
     return item;
@@ -843,7 +846,7 @@ API.Photos.addCommentDownloadTasks = async(item, dir) => {
             // 获取图片类型
             let suffix = await API.Utils.autoFileSuffix(image.custom_url);
             image.custom_filename = image.custom_filename + suffix;
-            image.custom_filepath = 'Images/' + image.custom_filename;
+            image.custom_filepath = 'images/' + image.custom_filename;
             // 添加下载任务
             API.Utils.newDownloadTask('Photos', image.custom_url, dir, image.custom_filename, item);
         }
@@ -904,7 +907,7 @@ API.Photos.addPhotosDownloadTasks = async(album, photos) => {
 
             if (photo.is_video && photo.video_info) {
                 // 预览图与视频共用一个文件名
-                let filename = API.Utils.filenameValidate(orderNumber + '_' + photo.name + '_' + API.Utils.newSimpleUid(8, 16));
+                const filename = API.Photos.getImageFileName(photo, orderNumber);
 
                 // 下载预览图
                 // 根据配置的清晰度匹配图片，默认高清
@@ -912,8 +915,8 @@ API.Photos.addPhotosDownloadTasks = async(album, photos) => {
 
                 // 下载视频预览图
                 photo.custom_pre_filename = filename + API.Photos.getPhotoSuffix(photo);
-                photo.custom_pre_filepath = albumFolder + '/Images/' + photo.custom_pre_filename;
-                API.Utils.newDownloadTask('Photos', photo.custom_url, albumFolder + '/Images', photo.custom_pre_filename, photo);
+                photo.custom_pre_filepath = albumFolder + '/images/' + photo.custom_pre_filename;
+                API.Utils.newDownloadTask('Photos', photo.custom_url, albumFolder + '/images', photo.custom_pre_filename, photo);
 
                 // 下载视频
                 photo.custom_filename = filename + '.mp4';
@@ -925,7 +928,7 @@ API.Photos.addPhotosDownloadTasks = async(album, photos) => {
                 photo.custom_url = API.Photos.getDownloadUrl(photo, QZone_Config.Photos.Images.exifType);
 
                 // 文件名称
-                photo.custom_filename = API.Utils.filenameValidate(orderNumber + '_' + photo.name + '_' + API.Utils.newSimpleUid(8, 16));
+                photo.custom_filename = API.Photos.getImageFileName(photo, orderNumber);
                 photo.custom_filename = photo.custom_filename + API.Photos.getPhotoSuffix(photo);
 
                 // 添加下载任务
@@ -940,9 +943,9 @@ API.Photos.addPhotosDownloadTasks = async(album, photos) => {
                 // 是否下载预览图
                 if (QZone_Config.Photos.Images.isGetPreview) {
                     // 如果需要获取预览图
-                    photo.custom_pre_filepath = albumFolder + '/Images/' + photo.custom_filename;
+                    photo.custom_pre_filepath = albumFolder + '/images/' + photo.custom_filename;
                     // 添加下载任务
-                    API.Utils.newDownloadTask('Photos', photo.pre, albumFolder + '/Images', photo.custom_filename, photo);
+                    API.Utils.newDownloadTask('Photos', photo.pre, albumFolder + '/images', photo.custom_filename, photo);
                 }
             }
         }
@@ -956,7 +959,7 @@ API.Photos.addPhotosDownloadTasks = async(album, photos) => {
         }
 
         // 添加评论的下载任务
-        await API.Photos.addCommentDownloadTasks(photo, albumFolder + '/Images');
+        await API.Photos.addCommentDownloadTasks(photo, albumFolder + '/images');
     }
 
     // 完成
@@ -1761,4 +1764,121 @@ API.Photos.resetAlbumOrderNumber = albums => {
         const album = albums[idx];
         album.order = idx;
     }
+}
+
+/**
+ * 获取相片名称
+ * @param {Object} photo 相片
+ * @param {String} prefix 前缀
+ * @returns 
+ */
+API.Photos.getImageFileName = (photo, prefix) => {
+    // 固定
+    const fileNames = [API.Utils.filenameValidate(prefix + '_' + photo.name)];
+
+    // 上传时间
+    const uploadTime = (photo.uploadtime || photo.uploadTime) && API.Utils.parseDate(photo.uploadtime || photo.uploadTime).getTime();
+    // 上传地点
+    const uploadLbs = photo.lbs && photo.lbs.idname && photo.lbs;
+
+    // 拍摄时间
+    const shootTime = (photo.rawshoottime || photo.shootTime) && API.Utils.parseDate(photo.rawshoottime || photo.shootTime).getTime();
+    // 拍摄地点
+    const shootGeo = photo.shootGeo && photo.shootGeo.idname && photo.shootGeo;
+
+    if (QZone_Config.Photos.Images.RenameType === 'Default') {
+        // 序号_相片名_随机码
+        fileNames.push(API.Utils.newSimpleUid(8, 16));
+    } else if (QZone_Config.Photos.Images.RenameType === 'Time') {
+        // 序号_相片名_拍摄/上传时间
+        fileNames.push(API.Utils.formatDate((shootTime || uploadTime) / 1000, 'yyyyMMdd_hhmmss'));
+    } else if (QZone_Config.Photos.Images.RenameType === 'Time_Lbs1') {
+        // 序号_相片名_拍摄/上传时间_拍摄/上传地点
+        fileNames.push(API.Utils.formatDate((shootTime || uploadTime) / 1000, 'yyyyMMdd_hhmmss'));
+        let customLbs = shootGeo || uploadLbs || undefined;
+        if (customLbs) {
+            fileNames.push(customLbs.idname || customLbs.name);
+        }
+    } else if (QZone_Config.Photos.Images.RenameType === 'Time_Lbs2') {
+        // 序号_相片名_上传/拍摄时间_上传/拍摄地点
+        fileNames.push(API.Utils.formatDate((shootTime || uploadTime) / 1000, 'yyyyMMdd_hhmmss'));
+        let customLbs = uploadLbs || shootGeo || undefined;
+        if (customLbs) {
+            fileNames.push(customLbs.idname || customLbs.name);
+        }
+    } else if (QZone_Config.Photos.Images.RenameType === 'ALL') {
+        // 序号_相片名_上传时间_上传地点_拍摄时间_拍摄地点/上传地点
+        if (uploadTime) {
+            fileNames.push(API.Utils.formatDate(uploadTime / 1000, 'yyyyMMdd_hhmmss'));
+        }
+        if (uploadLbs) {
+            fileNames.push(uploadLbs.idname || uploadLbs.name);
+        }
+        if (shootTime) {
+            fileNames.push(API.Utils.formatDate(shootTime / 1000, 'yyyyMMdd_hhmmss'));
+        }
+        if (shootGeo) {
+            fileNames.push(shootGeo.idname || shootGeo.name);
+        }
+    } else if (QZone_Config.Photos.Images.RenameType === 'UploadTime') {
+        // 序号_相片名_上传时间
+        fileNames.push(API.Utils.formatDate(uploadTime / 1000, 'yyyyMMdd_hhmmss'));
+    } else if (QZone_Config.Photos.Images.RenameType === 'ShootTime') {
+        // 序号_相片名_拍摄时间
+        fileNames.push(API.Utils.formatDate(shootTime / 1000, 'yyyyMMdd_hhmmss'));
+    } else if (QZone_Config.Photos.Images.RenameType === 'ShootTime_ShootLbs') {
+        // 序号_相片名_拍摄时间_拍摄地点
+        if (shootTime) {
+            fileNames.push(API.Utils.formatDate(shootTime / 1000, 'yyyyMMdd_hhmmss'));
+        }
+        if (shootGeo) {
+            fileNames.push(shootGeo.idname || shootGeo.name);
+        }
+    } else if (QZone_Config.Photos.Images.RenameType === 'ShootTime_Lbs1') {
+        // 序号_相片名_拍摄时间_拍摄/上传地点
+        if (shootTime) {
+            fileNames.push(API.Utils.formatDate(shootTime / 1000, 'yyyyMMdd_hhmmss'));
+        }
+        let customLbs = shootGeo || uploadLbs || undefined;
+        if (customLbs) {
+            fileNames.push(customLbs.idname || customLbs.name);
+        }
+    } else if (QZone_Config.Photos.Images.RenameType === 'ShootTime_Lbs2') {
+        // 序号_相片名_拍摄时间_上传/拍摄地点
+        if (shootTime) {
+            fileNames.push(API.Utils.formatDate(shootTime / 1000, 'yyyyMMdd_hhmmss'));
+        }
+        let customLbs = uploadLbs || shootGeo || undefined;
+        if (customLbs) {
+            fileNames.push(customLbs.idname || customLbs.name);
+        }
+    } else if (QZone_Config.Photos.Images.RenameType === 'UploadTime_UploadLbs') {
+        // 序号_相片名_上传时间_上传地点
+        if (uploadTime) {
+            fileNames.push(API.Utils.formatDate(uploadTime / 1000, 'yyyyMMdd_hhmmss'));
+        }
+        if (uploadLbs) {
+            fileNames.push(uploadLbs.idname || uploadLbs.name);
+        }
+    } else if (QZone_Config.Photos.Images.RenameType === 'UploadTime_Lbs1') {
+        // 序号_相片名_上传时间_上传/拍摄地点
+        if (uploadTime) {
+            fileNames.push(API.Utils.formatDate(uploadTime / 1000, 'yyyyMMdd_hhmmss'));
+        }
+        let customLbs = uploadLbs || shootGeo || undefined;
+        if (customLbs) {
+            fileNames.push(customLbs.idname || customLbs.name);
+        }
+    } else if (QZone_Config.Photos.Images.RenameType === 'UploadTime_Lbs2') {
+        // 序号_相片名_上传时间_拍摄/上传地点
+        if (uploadTime) {
+            fileNames.push(API.Utils.formatDate(uploadTime / 1000, 'yyyyMMdd_hhmmss'));
+        }
+        let customLbs = shootGeo || uploadLbs || undefined;
+        if (customLbs) {
+            fileNames.push(customLbs.idname || customLbs.name);
+        }
+    }
+    photo.custom_filename = fileNames.join('_');
+    return photo.custom_filename;
 }

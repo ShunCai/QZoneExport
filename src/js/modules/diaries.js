@@ -169,8 +169,8 @@ API.Diaries.getAllList = async() => {
 
             // 合并数据
             QZone.Diaries.Data = API.Utils.unionItems(QZone.Diaries.Data, dataList);
-            if (!_.isEmpty(QZone.Diaries.OLD_Data) && API.Common.isPreBackupPos(dataList, CONFIG)) {
-                // 如果备份到已备份过的数据，则停止获取下一页，适用于增量备份
+            if (!API.Common.isGetNextPage(QZone.Diaries.OLD_Data.items, dataList, CONFIG)) {
+                // 不再继续获取下一页
                 return QZone.Diaries.Data;
             }
             // 递归获取下一页
@@ -694,10 +694,10 @@ API.Diaries.handerImages = async(item, images) => {
             let suffix = await API.Utils.autoFileSuffix(url);
             const custom_filename = uid + suffix;
             // 添加下载任务
-            API.Utils.newDownloadTask('Diaries', url, 'Diaries/Images', custom_filename, item);
+            API.Utils.newDownloadTask('Diaries', url, 'Diaries/images', custom_filename, item);
 
             // 新的图片离线地址
-            url = 'MarkDown' === exportType ? '../Images/' + custom_filename : 'Images/' + custom_filename;
+            url = 'MarkDown' === exportType ? '../images/' + custom_filename : 'images/' + custom_filename;
         }
 
         // 修改日志中的图片链接
@@ -760,10 +760,10 @@ API.Diaries.handerMedias = async(item, embeds) => {
                         const custom_filename = uid + suffix;
 
                         // 添加下载任务
-                        API.Utils.newDownloadTask('Diaries', vurl, 'Diaries/Images', custom_filename, item);
+                        API.Utils.newDownloadTask('Diaries', vurl, 'Diaries/images', custom_filename, item);
 
                         // 新的图片离线地址
-                        vurl = 'MarkDown' === exportType ? '../Images/' + custom_filename : 'Images/' + custom_filename;
+                        vurl = 'MarkDown' === exportType ? '../images/' + custom_filename : 'images/' + custom_filename;
                     }
                     $embed.replaceWith('<video src="{0}" height="auto" width="100%" controls="controls" ></video>'.format(vurl));
                 } else {

@@ -30,7 +30,20 @@ const Default_Config = {
         // 是否禁用下载状态栏提醒
         disabledShelf: false,
         // 生成内容是否包含其他空间用户链接
-        hasUserLink: true
+        hasUserLink: true,
+        // 需要添加来源页的URL，目前主要用来下载视频
+        refererUrls: [
+            "gtimg.com"
+        ]
+    },
+    // 开发者
+    Dev: {
+        Maps: {
+            // 腾讯Key
+            TxKey: "",
+            BdKey: "",
+            GdKey: ""
+        }
     },
     // 说说模块
     Messages: {
@@ -88,6 +101,7 @@ const Default_Config = {
             '0元抢购'
         ],
         hasThatYearToday: true,
+        refreshWeChatLbs: false, // 刷新朋友圈坐标信息
         Like: {
             isGet: false, //是否获取赞
             randomSeconds: {
@@ -225,7 +239,7 @@ const Default_Config = {
             exifType: "raw",
             Info: {
                 isGet: true, // 是否获取详情
-                pageSize: 1000,
+                pageSize: 200,
                 randomSeconds: {
                     min: 1,
                     max: 2
@@ -233,7 +247,8 @@ const Default_Config = {
             },
             isGetVideo: true, // 是否获取相片关联的视频
             isGetPreview: false, // 是否获取预览图
-            fileStructureType: 'File' // 文件夹结构类型
+            fileStructureType: 'File', // 文件夹结构类型
+            RenameType: "Default", // 相片命名规则
         },
         IncrementType: "Full", // 增量备份类型
         IncrementTime: Default_IncrementTime, // 增量时间
@@ -258,6 +273,7 @@ const Default_Config = {
     Videos: {
         exportType: "HTML",
         fileStructureType: 'File', // 文件夹结构类型
+        RenameType: "Default", // 视频命名规则
         randomSeconds: {
             min: 1,
             max: 2
@@ -609,13 +625,13 @@ const ExportFiles = [{
     target: 'Common/js/sidebar.js'
 }, {
     original: 'export/images/index.jpg',
-    target: 'Common/Images/index.jpg'
+    target: 'Common/images/index.jpg'
 }, {
     original: 'export/images/video-play.png',
-    target: 'Common/Images/video-play.png'
+    target: 'Common/images/video-play.png'
 }, {
     original: 'export/images/loading.gif',
-    target: 'Common/Images/loading.gif'
+    target: 'Common/images/loading.gif'
 }, {
     original: 'export/js/common.js',
     target: 'Common/js/common.js'
@@ -701,7 +717,7 @@ var QZone = {
     // 说说模块
     Messages: {
         ROOT: 'Messages',
-        IMAGES_ROOT: 'Messages/Images',
+        IMAGES_ROOT: 'Messages/images',
         total: 0,
         Data: [],
         FILE_URLS: new Map()
@@ -709,7 +725,7 @@ var QZone = {
     // 日志模块
     Blogs: {
         ROOT: 'Blogs',
-        IMAGES_ROOT: 'Blogs/Images',
+        IMAGES_ROOT: 'Blogs/images',
         total: 0,
         Data: [],
         FILE_URLS: new Map()
@@ -717,7 +733,7 @@ var QZone = {
     // 私密日记模块
     Diaries: {
         ROOT: 'Diaries',
-        IMAGES_ROOT: 'Diaries/Images',
+        IMAGES_ROOT: 'Diaries/images',
         total: 0,
         Data: [],
         FILE_URLS: new Map()
@@ -798,7 +814,7 @@ var QZone = {
     // 收藏夹模块
     Favorites: {
         ROOT: 'Favorites',
-        IMAGES_ROOT: 'Favorites/Images',
+        IMAGES_ROOT: 'Favorites/images',
         total: 0,
         Data: [],
         FILE_URLS: new Map()
@@ -806,7 +822,7 @@ var QZone = {
     // 分享模块
     Shares: {
         ROOT: 'Shares',
-        IMAGES_ROOT: 'Shares/Images',
+        IMAGES_ROOT: 'Shares/images',
         total: 0,
         Data: [],
         FILE_URLS: new Map(),
@@ -826,7 +842,7 @@ var QZone = {
     // 访客模块
     Visitors: {
         ROOT: 'Visitors',
-        IMAGES_ROOT: 'Visitors/Images',
+        IMAGES_ROOT: 'Visitors/images',
         Data: {
             items: [],
             total: 0,
@@ -837,7 +853,7 @@ var QZone = {
     // 数据统计模板
     Statistics: {
         ROOT: 'Statistics',
-        IMAGES_ROOT: 'Statistics/Images',
+        IMAGES_ROOT: 'Statistics/images',
         Data: {
 
         },

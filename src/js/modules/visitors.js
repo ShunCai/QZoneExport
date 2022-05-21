@@ -125,7 +125,7 @@ API.Visitors.getAllList = async() => {
  */
 API.Visitors.addMediaToTasks = async(visitorInfo) => {
     // 下载相对目录
-    const module_dir = 'Visitors/Images';
+    const module_dir = 'Visitors/images';
 
     const items = visitorInfo.items || [];
 
