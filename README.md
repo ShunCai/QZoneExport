@@ -26,6 +26,7 @@
 10. 支持备份QQ空间访客，仅支持备份谁访问了我，非全部备份，备份内容的多少，看是不是黄钻
 
 # 视频教程
+去[bilibili查看](https://www.bilibili.com/video/BV16r4y1x7hP?zw)
 > 非原创，来源于助手用户[阿博特-安稳](https://space.bilibili.com/36411485)投稿
 
 ## 安装
