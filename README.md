@@ -1,8 +1,8 @@
 # QQ空间导出助手
 
-**QQ空间导出助手，用于备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友、收藏夹、分享、访客为文件，便于迁移与保存。**
+**快速备份QQ空间的说说、日志、私密日记、相册、视频、留言板、QQ好友、收藏夹、分享、访客为文件，便于迁移与保存。**
 
-## 前言概述
+# 前言概述
 
 落叶随风，青春，稍纵即逝，QQ空间，一个承载了很多人的青春的地方。
 
@@ -103,7 +103,7 @@
 
 ![](https://s1.ax1x.com/2022/10/25/xWCITs.png)
 
-## 项目依赖
+# 项目依赖
 - [Blob.js](https://note.youdao.com/)
 - [Bootstrap](https://github.com/twbs/bootstrap)
 - [Filer](https://github.com/filerjs/filer)
