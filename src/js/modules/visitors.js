@@ -97,6 +97,12 @@ API.Visitors.getAllList = async() => {
             return await arguments.callee.apply(undefined, [nextPageIndex]);
         }).catch(async(e) => {
             console.error("获取访客列表异常，当前页：", nextPageIndex, e);
+            // PATCH: 如果服务器错误，则判断页数再进入重试
+            if (nextPageIndex >= QZone.Visitors.Data.totalPage) {
+              // 最后一页停止获取
+              return QZone.Visitors.Data;
+            }
+
             // 当前页失败后，跳过继续请求下一页
             // 递归获取下一页
             // 请求一页成功后等待一秒再请求下一页
