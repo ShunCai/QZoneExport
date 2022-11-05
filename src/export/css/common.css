@@ -1096,10 +1096,16 @@ pre {
 
 /* 好友图标下边距 */
 
+
 #friends-type-list .list-inline {
     margin-bottom: 0.3rem;
+	margin-left: 4rem;
 }
 
+#friends-type-list .align-middle.mb-2 > span{
+    margin-bottom: 0.3rem;
+	margin-left: 1.5rem !important;
+}
 
 /* 评论人内容 */
 
