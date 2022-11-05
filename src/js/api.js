@@ -1913,7 +1913,7 @@ API.Common = {
     getLbsInfo(lat, lng) {
         const params = {
             "location": '{0},{1}'.format(lat, lng),
-            "key": QZone_Config.DEV.Maps.TxKey
+            "key": QZone_Config.Dev.Maps.TxKey
         };
         return API.Utils.get(REST_URLS.MAP_LBS_INFO, params);
     },
@@ -1927,7 +1927,7 @@ API.Common = {
         const params = {
             "locations": '{0},{1}'.format(lat, lng),
             "type": type || "1",
-            "key": QZone_Config.DEV.Maps.TxKey
+            "key": QZone_Config.Dev.Maps.TxKey
         };
         // 1 GPS坐标
         // 2 sogou经纬度

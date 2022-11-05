@@ -1132,7 +1132,7 @@ API.Messages.refreshWeChatLbsInfo = async items => {
             indicator.addSkip(item);
             continue;
         }
-        if(!QZone_Config.DEV.Maps.TxKey){
+        if(!QZone_Config.Dev.Maps.TxKey){
             // 没有API Key的，跳过
             indicator.addSkip(item);
             continue;

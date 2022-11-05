@@ -123,7 +123,7 @@ const Default_Config = {
         exportType: "HTML", // 内容备份类型
         showType: '1', // HTML查看方式，0:表格视图，1:列表视图
         viewType: '1', // 视图类型，0:列表视图，1:摘要视图
-        pageSize: 50,
+        pageSize: 15,
         randomSeconds: {
             min: 1,
             max: 2
@@ -165,7 +165,7 @@ const Default_Config = {
     Diaries: {
         exportType: "HTML", // 内容备份类型
         showType: '1', // HTML查看方式，0:表格视图，1:列表视图
-        pageSize: 50,
+        pageSize: 15,
         randomSeconds: {
             min: 1,
             max: 2
