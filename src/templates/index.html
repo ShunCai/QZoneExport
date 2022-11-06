@@ -6,6 +6,7 @@
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<title>QQ空间备份-<%:=user.spacename%></title>
 	<link rel="stylesheet" href="https://cdn.staticfile.org/bootstrap/4.6.1/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" type="text/css" href="Common/css/common.css">
 	<script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
 	<script src="https://cdn.staticfile.org/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
@@ -55,7 +56,7 @@
 							日志<span class="badge badge-primary badge-pill"><%:=user.blogs || 0%></span>
 						</a>
 						<a href="Diaries/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.diaries >0 %>;">
-							私密日记<span class="badge badge-primary badge-pill"><%:=user.diaries || 0%></span>
+							日记<span class="badge badge-primary badge-pill"><%:=user.diaries || 0%></span>
 						</a>
 						<a href="Albums/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.photos >0 %>;">
 							相册<span class="badge badge-primary badge-pill"><%:=user.photos || 0%></span>
@@ -64,10 +65,10 @@
 							视频<span class="badge badge-primary badge-pill"><%:=user.videos || 0%></span>
 						</a>
 						<a href="Boards/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.boards >0 %>;">
-							留言板<span class="badge badge-primary badge-pill"><%:=user.boards || 0%></span>
+							留言<span class="badge badge-primary badge-pill"><%:=user.boards || 0%></span>
 						</a>
 						<a href="Favorites/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.favorites >0 %>;">
-							收藏夹<span class="badge badge-primary badge-pill"><%:=user.favorites || 0%></span>
+							收藏<span class="badge badge-primary badge-pill"><%:=user.favorites || 0%></span>
 						</a>
 						<a href="Shares/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.shares >0 %>;">
 							分享<span class="badge badge-primary badge-pill"><%:=user.shares || 0%></span>
@@ -77,6 +78,9 @@
 						</a>
 						<a href="Friends/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.friends >0 %>;">
 							好友<span class="badge badge-primary badge-pill"><%:=user.friends || 0%></span>
+						</a>
+						<a href="Statistics/index.html" class="list-group-item list-group-item-action">
+							足迹<i class="fa fa-map-marker" aria-hidden="true" style="color: red;"></i>
 						</a>
 					</div>
 				</div>

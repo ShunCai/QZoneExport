@@ -677,6 +677,30 @@ const ExportFiles = [{
 }, {
     original: 'export/js/statistics.js',
     target: 'Statistics/js/statistics.js'
+}, {
+    original: 'export/images/earth.svg',
+    target: 'Statistics/images/earth.svg'
+}, {
+    original: 'export/images/share.svg',
+    target: 'Statistics/images/share.svg'
+}, {
+    original: 'export/js/lib/coordtransform.min.js',
+    target: 'Statistics/js/lib/coordtransform.min.js'
+}, {
+    original: 'export/js/maps/china/china-cities.js',
+    target: 'Statistics/js/maps/china/china-cities.js'
+}, {
+    original: 'export/js/maps/china/china.js',
+    target: 'Statistics/js/maps/china/china.js'
+}, {
+    original: 'export/js/maps/config.js',
+    target: 'Statistics/js/maps/config.js'
+}, {
+    original: 'export/js/maps/world/world.js',
+    target: 'Statistics/js/maps/world/world.js'
+}, {
+    original: 'templates/statistics.html',
+    target: 'Statistics/index.html'
 }]
 
 /**

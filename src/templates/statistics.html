@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <link rel="icon" href="https://qzonestyle.gtimg.cn/aoi/img/logo/favicon.ico">
+    <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>QQ空间备份-数据统计</title>
+    <link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css">
+    <style>
+        #qzone-maps {
+            width: 100%;
+            height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            background: rgb(197, 214, 231);
+            /* background: url("https://hxkj.vip/demo/echartsMap/img/bg_bigdata.c130918a.png") no-repeat;
+            background-size: 100% 100% */
+        }
+        
+        #info-list {
+            left: auto;
+            top: 0;
+            width: 25%;
+            bottom: 0;
+            position: fixed;
+            right: 0;
+            padding: 1px;
+            max-height: none;
+        }
+    </style>
+
+    <script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/echarts/5.4.0/echarts.min.js"></script>
+    <script src="https://cdn.staticfile.org/lodash.js/4.17.21/lodash.min.js"></script>
+
+    <!-- 地图配置 -->
+    <script src="js/maps/config.js"></script>
+
+    <!-- 世界地图 -->
+    <script src="js/maps/world/world.js"></script>
+
+    <!-- 中国地图 -->
+    <script src="js/maps/china/china.js"></script>
+
+    <script src="https://www.lvshuncai.com/custom/js/clicklove.min.js"></script>
+    <script src="js/lib/coordtransform.min.js"></script>
+
+    <script type="text/javascript" src="../Common/json/config.js"></script>
+    <script type="text/javascript" src="../Common/json/user.js"></script>
+    <script type="text/javascript" src="../Messages/json/messages.js"></script>
+    <!-- <script type="text/javascript" src="../Albums/json/albums.jsf"></script> -->
+    <!-- <script type="text/javascript" src="../Friends/json/friends.js"></script> -->
+    <script type="text/javascript" src="../Common/js/common.js"></script>
+    <script type="text/javascript" src="js/statistics.js"></script>
+</head>
+
+<body>
+    <div id="qzone-maps"></div>
+    <!-- <div id="info-list">列表清单</div> -->
+</body>
+
+</html>
