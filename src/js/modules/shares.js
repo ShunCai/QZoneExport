@@ -18,6 +18,9 @@ API.Shares.export = async() => {
         items = await API.Shares.getItemsAllCommentList(items);
         console.log('分享列表评论获取完成');
 
+        // 添加表情下载任务
+        API.Videos.addDownloadEmoticonTasks(items);
+
         // 添加多媒体下载任务
         items = await API.Shares.addMediaToTasks(items);
 
@@ -45,8 +48,7 @@ API.Shares.getAllList = async() => {
 
     // 分享状态更新器
     const indicator = new StatusIndicator('Shares');
-
-    // 开始
+    indicator.setIndex(1);
     indicator.print();
 
     const CONFIG = QZone_Config.Shares;
@@ -126,7 +128,7 @@ API.Shares.getItemAllCommentList = async(item) => {
 
             // JSON转换
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取单条分享的全部评论列表异常：', data);
             }
@@ -283,7 +285,7 @@ API.Shares.getItemAllVisitorsList = async(item) => {
 
         return await API.Shares.getVisitors(item.id, pageIndex).then(async(data) => {
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取单条分享的全部最近访问异常：', data);
             }
@@ -485,10 +487,10 @@ API.Shares.exportToHtml = async(shares) => {
 API.Shares.getMarkdown = (share) => {
     const contents = [];
     // 分享人
-    let share_user_name = API.Common.formatContent(share.nickname, 'MD');
+    let share_user_name = API.Common.formatContent(share.nickname, 'MD', false, false, false, false, true);
     share_user_name = API.Common.getUserLink(share.uin, share_user_name, 'MD', true);
     // 分享描述
-    contents.push('{0}  分享：{1}  '.format(share_user_name, API.Common.formatContent(share.desc || '', 'MD')));
+    contents.push('{0}  分享：{1}  '.format(share_user_name, API.Common.formatContent(share.desc || '', 'MD', false, false, false, false, true)));
 
     // 分享源
     const shareSource = share.source || {};
@@ -501,10 +503,14 @@ API.Shares.getMarkdown = (share) => {
     // 分享源配图
     shareSource.images = shareSource.images || [];
     for (const images of shareSource.images) {
-        contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(images.custom_url, images.custom_filepath, "Shares_MD")) + '  ');
+        contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(images.custom_url, images.custom_filepath)) + '  ');
     }
     // 分享源来源
-    contents.push('来自： [{0}]({1}) 共分享 {2} 次'.format(shareSource.from.name, shareSource.from.url, shareSource.count));
+    if (shareSource.from && shareSource.from.name) {
+        contents.push('来自： [{0}]({1}) 共分享 {2} 次'.format(shareSource.from.name, shareSource.from.url, shareSource.count));
+    } else {
+        contents.push('共分享 {0} 次'.format(shareSource.count));
+    }
 
     // 分享时间
     contents.push('\n> {0}  '.format(API.Utils.formatDate(share.shareTime)));
@@ -515,27 +521,27 @@ API.Shares.getMarkdown = (share) => {
     for (const comment of comments) {
 
         // 评论人
-        let comment_name = API.Common.formatContent(comment.poster.name, 'MD');
+        let comment_name = API.Common.formatContent(comment.poster.name, 'MD', false, false, false, false, true);
         comment_name = API.Common.getUserLink(comment.poster.id, comment_name, 'MD', true);
 
-        contents.push("- {0}：{1}".format(comment_name, API.Common.formatContent(comment.content, 'MD')));
+        contents.push("- {0}：{1}".format(comment_name, API.Common.formatContent(comment.content, 'MD', false, false, false, false, true)));
 
         // 评论包含图片
         const comment_images = comment.pic || [];
         for (const image of comment_images) {
             // 替换URL
-            contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(image.custom_url, image.custom_filepath, "Shares_MD")));
+            contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(image.custom_url, image.custom_filepath)));
         }
 
         // 评论的回复
         const replies = comment.replies || [];
         for (const repItem of replies) {
             // 回复人
-            let repName = API.Common.formatContent(repItem.poster.name, 'MD');
+            let repName = API.Common.formatContent(repItem.poster.name, 'MD', false, false, false, false, true);
             repName = API.Common.getUserLink(repItem.poster.id, repName, 'MD', true);
 
             // 回复内容
-            let content = API.Common.formatContent(repItem.content, 'MD');
+            let content = API.Common.formatContent(repItem.content, 'MD', false, false, false, false, true);
 
             // 回复内容
             contents.push("\t- {0}：{1}".format(repName, content));
@@ -543,7 +549,7 @@ API.Shares.getMarkdown = (share) => {
             // 回复包含图片，理论上回复现在不能回复图片，兼容一下
             var repImgs = repItem.pic || [];
             for (const repImg of repImgs) {
-                contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(repImg.custom_url, repImg.custom_filepath, "Shares_MD")));
+                contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(repImg.custom_url, repImg.custom_filepath)));
             }
         }
     }
@@ -638,4 +644,39 @@ API.Shares.exportToJson = async(items) => {
     // 完成
     indicator.complete();
     return items;
+}
+
+/**
+ * 添加下载表情任务
+ * @param {Shares} item 
+ */
+API.Shares.addDownloadEmoticonTasks = (items) => {
+    if (API.Common.isQzoneUrl()) {
+        return;
+    }
+
+    for (const item of items) {
+        if (!API.Common.isNewItem(item)) {
+            // QQ空间外链或已备份项，跳过
+            continue;
+        }
+
+        // 分享描述
+        if (item && item.desc) {
+            API.Common.formatContent(item.desc, "HTML", false, false, false, true, false);
+        }
+
+        // 分享来源标题
+        if (item.source && item.source.title) {
+            API.Common.formatContent(item.source.title, "HTML", false, false, false, true, false);
+        }
+        // 分享源描述
+        if (item.source && item.source.desc) {
+            API.Common.formatContent(item.source.desc, "HTML", false, false, false, true, false);
+        }
+
+        // 添加评论的表情下载任务
+        API.Common.addCommentEmoticonDownloadTasks(item);
+    }
+
 }

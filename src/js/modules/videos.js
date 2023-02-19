@@ -26,6 +26,9 @@ API.Videos.export = async() => {
         // 获取视频赞记录
         await API.Videos.getAllLikeList(videos);
 
+        // 添加评论的表情下载任务
+        API.Videos.addDownloadEmoticonTasks(videos);
+
         // 添加视频下载任务
         API.Videos.addDownloadTasks('Videos', videos, 'Videos/images');
 
@@ -57,7 +60,7 @@ API.Videos.getPageList = async(pageIndex, indicator) => {
     return await API.Videos.getVideos(pageIndex).then(data => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^shine0_Callback\(/);
-        if (data.code < 0) {
+        if (data.code && data.code != 0) {
             // 获取异常
             console.warn('获取一页的视频列表异常：', data);
         }
@@ -87,8 +90,7 @@ API.Videos.getPageList = async(pageIndex, indicator) => {
 API.Videos.getAllList = async() => {
     // 进度更新器
     const indicator = new StatusIndicator('Videos');
-
-    // 开始
+    indicator.setIndex(1);
     indicator.print();
 
     // 视频配置项
@@ -178,7 +180,7 @@ API.Videos.getAllComments = async(videos) => {
 
                 // 去掉函数，保留json
                 data = API.Utils.toJson(data, /^_Callback\(/);
-                if (data.code < 0) {
+                if (data.code && data.code != 0) {
                     // 获取异常
                     console.warn('获取视频评论异常：', data);
                 }
@@ -421,7 +423,7 @@ API.Videos.getMarkdowns = (videos) => {
         video.desc = video.desc || video.name || API.Utils.formatDate(video.uploadTime);
 
         // 视频描述
-        contents.push('> ' + API.Common.formatContent(video.desc));
+        contents.push('> ' + API.Common.formatContent(video.desc, 'MD', false, false, false, false, true));
         contents.push('\r\n');
 
         // 视频
@@ -435,11 +437,11 @@ API.Videos.getMarkdowns = (videos) => {
 
         for (const comment of video.comments) {
             // 评论人
-            const poster_name = API.Common.formatContent(comment.poster.name, 'MD');
+            const poster_name = API.Common.formatContent(comment.poster.name, 'MD', false, false, false, false, true);
             const poster_display = API.Common.getUserLink(comment.poster.id, poster_name, "MD");
 
             // 评论内容
-            let content = API.Common.formatContent(comment.content, 'MD');
+            let content = API.Common.formatContent(comment.content, 'MD', false, false, false, false, true);
             contents.push("* {0}：{1}".format(poster_display, content));
 
             // 评论包含图片
@@ -457,11 +459,11 @@ API.Videos.getMarkdowns = (videos) => {
             for (const repItem of replies) {
 
                 // 回复人
-                let repName = API.Common.formatContent(repItem.poster.name, 'MD');
+                let repName = API.Common.formatContent(repItem.poster.name, 'MD', false, false, false, false, true);
                 const rep_poster_display = API.Common.getUserLink(comment.poster.id, repName, "MD");
 
                 // 回复内容
-                let content = API.Common.formatContent(repItem.content, 'MD');
+                let content = API.Common.formatContent(repItem.content, 'MD', false, false, false, false, true);
                 contents.push("\t* {0}：{1}".format(rep_poster_display, content));
 
                 const repImgs = repItem.pic || [];
@@ -703,4 +705,28 @@ API.Videos.getVideoFileName = (video, prefix) => {
     video.custom_filename = video.custom_filename.endsWith('.mp4') ? video.custom_filename : video.custom_filename + '.mp4';
     video.custom_filename = API.Utils.filenameValidate(video.custom_filename);
     return video.custom_filename;
+}
+
+/**
+ * 添加下载表情任务
+ * @param {Videos} item 
+ */
+API.Videos.addDownloadEmoticonTasks = (items) => {
+    if (API.Common.isQzoneUrl()) {
+        return;
+    }
+
+    for (const item of items) {
+        if (!API.Common.isNewItem(item)) {
+            // QQ空间外链或已备份项，跳过
+            continue;
+        }
+
+        // 视频描述
+        item.name && API.Common.formatContent(item.name, 'HTML', false, false, false, true, false);
+
+        // 添加评论的表情下载任务
+        API.Common.addCommentEmoticonDownloadTasks(item);
+    }
+
 }

@@ -1,10 +1,10 @@
 /**
- * QQ空间留言板模块导出API
+ * QQ空间留言模块导出API
  * @author https://lvshuncai.com
  */
 
 /**
- * 导出留言板
+ * 导出留言
  */
 API.Boards.export = async() => {
 
@@ -18,6 +18,9 @@ API.Boards.export = async() => {
 
         // 处理数据
         boardInfo = await API.Boards.handerData(boardInfo);
+
+        // 添加留言的回复表情，留言内容中的表情，当作一般图片下载即可
+        API.Boards.addDownloadEmoticonTasks(boardInfo.items);
 
         // 根据导出类型导出数据
         await API.Boards.exportAllToFiles(boardInfo);
@@ -47,7 +50,7 @@ API.Boards.getPageList = async(pageIndex, indicator) => {
     return await API.Boards.getBoards(pageIndex).then(data => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
-        if (data.code < 0) {
+        if (data.code && data.code != 0) {
             // 获取异常
             console.warn('获取一页的留言列表异常：', data);
         }
@@ -79,8 +82,7 @@ API.Boards.getAllList = async() => {
 
     // 进度更新器
     const indicator = new StatusIndicator('Boards');
-
-    // 开始
+    indicator.setIndex(1);
     indicator.print();
 
     // 配置项
@@ -143,7 +145,7 @@ API.Boards.handerData = async(boardInfo) => {
         }
 
         board.uin = board.uin || 0;
-        board.nickname = board.nickname || '神秘者';
+        board.nickname = API.Boards.getOwner(board);
         board.htmlContent = board.htmlContent || '';
         // 他人模式兼容私密留言
         if (board.secret == 1 && !board.htmlContent) {
@@ -161,6 +163,10 @@ API.Boards.handerData = async(boardInfo) => {
 
             // 处理相对协议
             let url = $img.attr('orgsrc') || $img.attr('src');
+            if (!url) {
+                console.warn('board img url is null', board, $img);
+                continue;
+            }
             // 处理表情表情相对协议
             url = url.replace(/^\/qzone\/em/g, 'http://qzonestyle.gtimg.cn/qzone/em');
             url = API.Utils.toHttp(url);
@@ -307,7 +313,7 @@ API.Boards.exportToMarkdown = async(boardInfo) => {
         const _messsages = [];
         _messsages.push('> 主人寄语  ');
         _messsages.push('\n');
-        _messsages.push(message);
+        _messsages.push(message || '说些寄语，欢迎您的空间访客吧');
         _messsages.push('\n');
         _messsages.push('---  ');
 
@@ -369,21 +375,21 @@ API.Boards.exportToMarkdown = async(boardInfo) => {
  * 生成单个留言的Markdown内容
  * @param {Object} boards 留言列表
  */
-API.Boards.getMarkdown = (borad) => {
+API.Boards.getMarkdown = (board) => {
     const year_contents = [];
 
-    let nickname = API.Common.formatContent(API.Boards.getOwner(borad), "MD");
-    nickname = API.Common.getUserLink(borad.uin, nickname, 'MD', true);
+    let nickname = API.Common.formatContent(API.Boards.getOwner(board), "MD", false, false, false, false, true);
+    nickname = API.Common.getUserLink(board.uin, nickname, 'MD', true);
 
-    year_contents.push('> {0} *{1}*'.format(nickname, API.Utils.formatDate(borad.pubtime)));
+    year_contents.push('> {0} *{1}*'.format(nickname, API.Utils.formatDate(board.pubtime)));
     year_contents.push("\r\n");
     year_contents.push('> 正文：');
     year_contents.push("\r\n");
 
     // 留言内容
-    const html_content = borad.htmlContent.replace(/\n/g, "\r\n");
+    const html_content = board.htmlContent.replace(/\n/g, "\r\n");
     let markdown_content = QZone.Common.MD.turndown(html_content);
-    markdown_content = API.Common.formatContent(markdown_content, "MD");
+    markdown_content = API.Common.formatContent(markdown_content, "MD", false, false, false, false, true);
 
     // 添加留言内容
     year_contents.push('- {0}：{1}'.format(nickname, markdown_content));
@@ -392,14 +398,14 @@ API.Boards.getMarkdown = (borad) => {
     // 处理留言回复
     year_contents.push('> 回复：');
     year_contents.push("\r\n");
-    let replyList = borad.replyList || [];
+    let replyList = board.replyList || [];
     for (const reply of replyList) {
         // 回复人
-        let replyName = API.Common.formatContent(API.Boards.getOwner(reply), "MD");
+        let replyName = API.Common.formatContent(API.Boards.getOwner(reply), "MD", false, false, false, false, true);
         replyName = API.Common.getUserLink(reply.uin, replyName, 'MD', true);
 
         // 回复内容
-        const replyContent = API.Common.formatContent(reply.content, "MD");
+        const replyContent = API.Common.formatContent(reply.content, "MD", false, false, false, false, true);
         const replyTime = API.Utils.formatDate(reply.time);
 
         const replyMd = '- {0}：{1} *{2}*'.format(replyName, replyContent, replyTime);
@@ -443,4 +449,28 @@ API.Boards.exportToJson = async(boardInfo) => {
     // 完成
     indicator.complete();
     return boardInfo;
+}
+
+/**
+ * 添加下载表情任务
+ * @param {Message} items 相册列表 
+ */
+API.Boards.addDownloadEmoticonTasks = (items) => {
+    if (API.Common.isQzoneUrl()) {
+        // QQ空间外链，跳过
+        return;
+    }
+
+    // 遍历
+    for (const item of items) {
+
+        if (API.Common.isQzoneUrl()) {
+            // QQ空间外链或已备份项，跳过
+            return;
+        }
+
+        // 添加任务
+        API.Common.addCommentEmoticonDownloadTasks(item);
+    }
+
 }

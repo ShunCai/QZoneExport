@@ -2,9 +2,9 @@
 <html lang="zh">
 
 <head>
-	<link rel="icon" href="https://qzonestyle.gtimg.cn/aoi/img/logo/favicon.ico">
+	<link rel="icon" href="../Common/images/favicon.ico">
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-	<title>QQ空间备份-收藏夹</title>
+	<title>QQ空间备份-收藏</title>
 	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" href="https://cdn.staticfile.org/bootstrap/4.6.1/css/bootstrap.min.css">
 	
@@ -26,9 +26,10 @@
 	<script src="https://cdn.staticfile.org/lightgallery/2.3.0/plugins/autoplay/lg-autoplay.min.js"></script>
 
 	<script src="https://cdn.staticfile.org/jquery_lazyload/2.0.0-rc.2/lazyload.min.js"></script>
-	<script src="https://fastly.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
 	<script src="https://www.lvshuncai.com/custom/js/clicklove.min.js"></script>
-
+	
+	<script type="text/javascript" src="../Common/json/config.js"></script>
 	<script type="text/javascript" src="../Common/js/common.js"></script>
 	<script type="text/javascript" src="../Common/js/sidebar.js"></script>
 	<script type="text/javascript" src="json/favorites.js"></script>
@@ -46,7 +47,7 @@
 				<nav aria-label="breadcrumb">
 					<ol class="breadcrumb bg-dark">
 						<li class="breadcrumb-item"><a href="../index.html">个人中心</a></li>
-						<li class="breadcrumb-item active" aria-current="page">收藏夹</li>
+						<li class="breadcrumb-item active" aria-current="page">收藏</li>
 					</ol>
 				</nav>
 			</div>
@@ -69,12 +70,12 @@
 										<div class="d-flex justify-content-start ">
 											<div class="comment-avatar">
 												<a class="avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(API.Favorites.getFavoriteOwner(favorite).uin)%>">
-													<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(API.Favorites.getFavoriteOwner(favorite).uin)%>" >
+													<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoLocalUrl(API.Favorites.getFavoriteOwner(favorite).uin, true)%>" >
 												</a>
 											</div>
 											<div class="comment-infos ml-2">
 												<a target="_blank" href="<%:=API.Common.getUserUrl(API.Favorites.getFavoriteOwner(favorite).uin)%>">
-													<span><%:=API.Common.formatContent(API.Favorites.getFavoriteOwner(favorite).name)%></span>
+													<span><%:=API.Common.formatContent(API.Favorites.getFavoriteOwner(favorite).name, 'HTML', false, false, false, false, true)%></span>
 												</a>
 												<span class="border-warning border rounded text-warning small p-1"><%:=API.Favorites.getType(favorite.type)%></span>
 												<div class="text-muted small mt-1"><%:=API.Common.formatContent(favorite.custom_create_time)%></div>
@@ -82,19 +83,19 @@
 										</div>
 										<div class="messageText mt-2">
 											<%if(favorite.shuoshuo_info && favorite.shuoshuo_info.reason  && favorite.shuoshuo_info.reason.trim() !== ''){%>
-												<pre><%:=API.Common.formatContent(favorite.shuoshuo_info.reason,'HTML', false, true)%></pre>
+												<pre><%:=API.Common.formatContent(favorite.shuoshuo_info.reason,'HTML', false, true, false, false, true)%></pre>
 												<hr>
 											<%}%>
 											<%if(favorite.share_info && favorite.share_info.reason  && favorite.share_info.reason.trim() !== ''){%>
-												<pre><%:=API.Common.formatContent(favorite.share_info.reason,'HTML', false, true)%></pre>
+												<pre><%:=API.Common.formatContent(favorite.share_info.reason,'HTML', false, true, false, false, true)%></pre>
 												<hr>
 											<%}%>
 											<%if(favorite.type === 5){%>
 												<%/* 说说 */%>
 												<%if(favorite.shuoshuo_info && favorite.shuoshuo_info.detail_shuoshuo_info && favorite.shuoshuo_info.detail_shuoshuo_info.content){%>
-													<pre><%:=API.Common.formatContent(favorite.shuoshuo_info.detail_shuoshuo_info.content,'HTML', false, false)%></pre>
+													<pre><%:=API.Common.formatContent(favorite.shuoshuo_info.detail_shuoshuo_info.content,'HTML', false, false, false, false, true)%></pre>
 												<%}else{%>
-													<pre><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, false)%></pre>
+													<pre><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, false, false, false, true)%></pre>
 												<%}%>
 											<%}else if(favorite.type === 7){%>
 												<%/* 分享 */%>
@@ -102,7 +103,7 @@
 													<pre><a target="_blank" href="<%:=API.Favorites.getShareUrl(favorite.share_info)%>"><%:=favorite.title%></a></pre>
 												<%}%>
 												<%if(favorite.abstract && favorite.abstract.trim() !== ''){%>
-													<pre><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true)%></pre>
+													<pre><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true, false, false, true)%></pre>
 												<%}%>
 											<%}else if(favorite.type === 3){%>
 												<%/* 日志 */%>
@@ -110,10 +111,10 @@
 													<pre><a target="_blank" href="http://user.qzone.qq.com/<%:=favorite.blog_info.owner_uin%>/blog/<%:=favorite.blog_info.id%>"><%:=favorite.title%></a></pre>
 												<%}%>
 												<%if(favorite.abstract && favorite.abstract.trim() !== ''){%>
-													<pre><%:=API.Common.formatContent(favorite.abstract,'HTML', false, true)%></pre>
+													<pre><%:=API.Common.formatContent(favorite.abstract,'HTML', false, true, false, false, true)%></pre>
 												<%}%>
 											<%}else{%>
-												<pre><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true)%></pre>
+												<pre><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true, false, false, true)%></pre>
 											<%}%>
 										</div>
 									</div>
@@ -128,17 +129,17 @@
 											</div>
 											<div class="col text-white text-truncate">
 												<%if(favorite.shuoshuo_info && favorite.shuoshuo_info.reason && favorite.shuoshuo_info.reason.trim() !== ''){%>
-													<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.shuoshuo_info.reason,'HTML', false, true)%>"><%:=API.Common.formatContent(favorite.shuoshuo_info.reason,'HTML', false, true)%></pre>
+													<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.shuoshuo_info.reason,'HTML', false, true, false, false, true)%>"><%:=API.Common.formatContent(favorite.shuoshuo_info.reason,'HTML', false, true, false, false, true)%></pre>
 												<%}%>
 												<%if(favorite.share_info && favorite.share_info.reason && favorite.share_info.reason.trim() !== ''){%>
-													<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.share_info.reason,'HTML', false, true)%>"><%:=API.Common.formatContent(favorite.share_info.reason,'HTML', false, true)%></pre>
+													<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.share_info.reason,'HTML', false, true, false, false, true)%>"><%:=API.Common.formatContent(favorite.share_info.reason,'HTML', false, true, false, false, true)%></pre>
 												<%}%>
 												<%if(favorite.type === 5){%>
 													<%/* 说说 */%>
 													<%if(favorite.shuoshuo_info && favorite.shuoshuo_info.detail_shuoshuo_info && favorite.shuoshuo_info.detail_shuoshuo_info.content){%>
-														<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.shuoshuo_info.detail_shuoshuo_info.content,'HTML', false, false)%>"><%:=API.Common.formatContent(favorite.shuoshuo_info.detail_shuoshuo_info.content,'HTML', false, false)%></pre>
+														<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.shuoshuo_info.detail_shuoshuo_info.content,'HTML', false, false, false, false, true)%>"><%:=API.Common.formatContent(favorite.shuoshuo_info.detail_shuoshuo_info.content,'HTML', false, false, false, false, true)%></pre>
 													<%}else{%>
-														<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, false)%>"><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, false)%></pre>
+														<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, false, false, false, true)%>"><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, false, false, false, true)%></pre>
 													<%}%>
 												<%}else if(favorite.type === 7){%>
 													<%/* 分享 */%>
@@ -146,7 +147,7 @@
 														<pre class="text-white" data-toggle="tooltip" data-html="true"><a target="_blank" href="<%:=API.Favorites.getShareUrl(favorite.share_info)%>"><%:=favorite.title%></a></pre>
 													<%}%>
 													<%if(favorite.abstract && favorite.abstract.trim() !== ''){%>
-														<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true)%>"><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true)%></pre>
+														<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true, false, false, true)%>"><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true, false, false, true)%></pre>
 													<%}%>
 												<%}else if(favorite.type === 3){%>
 													<%/* 日志 */%>
@@ -154,10 +155,10 @@
 														<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=favorite.title%>"><a target="_blank" href="http://user.qzone.qq.com/<%:=favorite.blog_info.owner_uin%>/blog/<%:=favorite.blog_info.id%>"><%:=favorite.title%></a></pre>
 													<%}%>
 													<%if(favorite.abstract && favorite.abstract.trim() !== ''){%>
-														<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.abstract,'HTML', false, true)%>"><%:=API.Common.formatContent(favorite.abstract,'HTML', false, true)%></pre>
+														<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.abstract,'HTML', false, true, false, false, true)%>"><%:=API.Common.formatContent(favorite.abstract,'HTML', false, true, false, false, true)%></pre>
 													<%}%>
 												<%}else{%>
-													<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true)%>"><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true)%></pre>
+													<pre class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true, false, false, true)%>"><%:=API.Common.formatContent(favorite.abstract || favorite.desp,'HTML', false, true, false, false, true)%></pre>
 												<%}%>
 											</div>
 											<div class="col"></div>
@@ -187,9 +188,10 @@
 										<%}%>
 									<%}%>
 									<%/* 图片内容 */%>
-									<%if(favorite.custom_images){%>
+									<%if(favorite.custom_origin_images || favorite.custom_images){%>
 										<%let imgIdex = 0%>
-										<%for(let image of favorite.custom_images){%>
+										<%let favImages = favorite.custom_origin_images || favorite.custom_images%>
+										<%for(let image of favImages){%>
 											<a class="medias-item border message-lightbox" target="_blank" href="<%:=image.custom_filepath || image.custom_url%>" data-sub-html="#<%:=favorite.uid%>">
 												<img class="lazyload loading w-100 h-100" data-idx="<%:=imgIdex%>" data-src="<%:=image.custom_filepath || image.custom_url%>">
 											</a>

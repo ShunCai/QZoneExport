@@ -21,11 +21,12 @@
                 </h6>
                 <h6 class="h6">如遇长时间无动静、卡死等，可点击<a class="skipLink" href="javascript:void(0)" data-link="html/about.html">这里</a>查看反馈渠道并反馈问题！</h6>
                 <h6 class="h6" id="backupCurrentTab">备份过程中，建议浏览器停留在当前页面，可加快备份速度！</h6>
+                <h6 class="h6" id="errorTips" style="display: none;"></h6>
                 <hr />
                 <div id="backupIndicator" class="container">
                     <p id="InitIncrement_Tips"></p>
                     <details id="Messages_Row_Infos_Tips" class="row">
-                        <summary>正在采集<span class="text-primary">说说</span>模块数据，请稍后...</summary>
+                        <summary>正在采集<span class="text-primary">说说</span>模块数据，请稍候...</summary>
                         <p id="Messages_Tips"></p>
                         <p id="Messages_Filter_Tips"></p>
                         <p id="Messages_Full_Content_Tips"></p>
@@ -40,7 +41,7 @@
                         <p id="Messages_Export_Other_Tips"></p>
                     </details>
                     <details id="Blogs_Row_Infos_Tips" class="row">
-                        <summary>正在采集<span class="text-primary">日志</span>模块数据，请稍后...</summary>
+                        <summary>正在采集<span class="text-primary">日志</span>模块数据，请稍候...</summary>
                         <p id="Blogs_Tips"></p>
                         <p id="Blogs_Content_Tips"></p>
                         <p id="Blogs_Comments_Tips"></p>
@@ -50,7 +51,7 @@
                         <p id="Blogs_Export_Other_Tips"></p>
                     </details>
                     <details id="Diaries_Row_Infos_Tips" class="row">
-                        <summary>正在采集<span class="text-primary">私密日记</span>模块数据，请稍后...</summary>
+                        <summary>正在采集<span class="text-primary">日记</span>模块数据，请稍候...</summary>
                         <p id="Diaries_Tips"></p>
                         <p id="Diaries_Content_Tips"></p>
                         <p id="Diaries_Comments_Tips"></p>
@@ -60,14 +61,14 @@
                         <p id="Diaries_Export_Other_Tips"></p>
                     </details>
                     <details id="Boards_Row_Infos_Tips" class="row">
-                        <summary>正在采集<span class="text-primary">留言板</span>模块数据，请稍后...</summary>
+                        <summary>正在采集<span class="text-primary">留言</span>模块数据，请稍候...</summary>
                         <p id="Boards_Tips"></p>
                         <p id="Boards_Images_Mime_Tips"></p>
                         <p id="Boards_Export_Tips"></p>
                         <p id="Boards_Export_Other_Tips"></p>
                     </details>
                     <details id="Friends_Row_Infos_Tips" class="row">
-                        <summary>正在采集<span class="text-primary">QQ好友</span>模块数据，请稍后...</summary>
+                        <summary>正在采集<span class="text-primary">好友</span>模块数据，请稍候...</summary>
                         <p id="Friends_Tips"></p>
                         <p id="Friends_Time_Tips"></p>
                         <p id="Friends_Access_Tips"></p>
@@ -75,13 +76,13 @@
                         <p id="Friends_Export_Tips"></p>
                     </details>
                     <details id="Favorites_Row_Infos_Tips" class="row">
-                        <summary>正在采集<span class="text-primary">收藏夹</span>模块数据，请稍后...</summary>
+                        <summary>正在采集<span class="text-primary">收藏</span>模块数据，请稍候...</summary>
                         <p id="Favorites_Tips"></p>
                         <p id="Favorites_Export_Tips"></p>
                         <p id="Favorites_Export_Other_Tips"></p>
                     </details>
                     <details id="Shares_Row_Infos_Tips" class="row">
-                        <summary>正在采集<span class="text-primary">分享</span>模块数据，请稍后...</summary>
+                        <summary>正在采集<span class="text-primary">分享</span>模块数据，请稍候...</summary>
                         <p id="Shares_Tips"></p>
                         <p id="Shares_Comments_Tips"></p>
                         <p id="Shares_Like_Tips"></p>
@@ -90,13 +91,13 @@
                         <p id="Shares_Export_Other_Tips"></p>
                     </details>
                     <details id="Visitors_Row_Infos_Tips" class="row">
-                        <summary>正在采集<span class="text-primary">访客</span>模块数据，请稍后...</summary>
+                        <summary>正在采集<span class="text-primary">访客</span>模块数据，请稍候...</summary>
                         <p id="Visitors_Tips"></p>
                         <p id="Visitors_Export_Tips"></p>
                         <p id="Visitors_Export_Other_Tips"></p>
                     </details>
                     <details id="Photos_Row_Infos_Tips" class="row">
-                        <summary>正在采集<span class="text-primary">相册</span>模块数据，请稍后...</summary>
+                        <summary>正在采集<span class="text-primary">相册</span>模块数据，请稍候...</summary>
                         <p id="Photos_Tips"></p>
                         <p id="Photos_Albums_Comments_Tips"></p>
                         <p id="Photos_Albums_Like_Tips"></p>
@@ -112,14 +113,15 @@
                         <p id="Photos_Images_Export_Other_Tips"></p>
                     </details>
                     <details id="Videos_Row_Infos_Tips" class="row">
-                        <summary>正在采集<span class="text-primary">视频</span>模块数据，请稍后...</summary>
+                        <summary>正在采集<span class="text-primary">视频</span>模块数据，请稍候...</summary>
                         <p id="Videos_Tips"></p>
                         <p id="Videos_Comments_Tips"></p>
                         <p id="Videos_Like_Tips"></p>
                         <p id="Videos_Export_Tips"></p>
                     </details>
                     <details id="Common_Row_Infos_Tips" class="row">
-                        <summary>正在处理<span class="text-primary">其它</span>模块，请稍后...</summary>
+                        <summary>正在处理<span class="text-primary">其它</span>模块，请稍候...</summary>
+                        <p id="User_Avatar_Export_Tips"></p>
                         <p id="Init_User_Info_Export_Tips"></p>
                         <p id="Init_User_Info_Export_Other_Tips"></p>
                         <p id="User_Config_Infos_Tips"></p>
@@ -167,9 +169,9 @@
 								<option value="Diaries">私密日志</option>
 								<option value="Photos">相册</option>
 								<option value="Videos">视频</option>
-								<option value="Boards">留言板</option>
+								<option value="Boards">留言</option>
 								<option value="Friends">好友</option>
-								<option value="Favorites">收藏夹</option>
+								<option value="Favorites">收藏</option>
 								<option value="Shares">分享</option>
 								<option value="Visitors">访客</option>
 								<option value="Others">其它</option>
@@ -186,9 +188,10 @@
                 <table id="table"></table>
             </div>
             <div class="modal-footer">
-                <button id="browserDownload" type="button" class="btn btn-outline-success" data-dismiss="modal">浏览器下载</button>
-                <button id="thunderDownload" type="button" class="btn btn-outline-secondary" data-dismiss="modal">迅雷下载</button>
-                <button id="againDownload" type="button" class="btn btn-primary" data-dismiss="modal">继续重试</button>
+                <button id="browserDownload" type="button" class="btn btn-outline-success" data-dismiss="modal"  title="使用浏览器下载">浏览器下载</button>
+                <button id="thunderDownload" type="button" class="btn btn-outline-secondary" data-dismiss="modal" title="使用迅雷下载">迅雷下载</button>
+                <button id="aria2rDownload" type="button" class="btn btn-outline-primary" data-dismiss="modal" title="使用Aria2下载">Aria2下载</button>
+                <button id="againDownload" type="button" class="btn btn-primary" data-dismiss="modal" title="用当前配置的下载工具继续重试">继续重试</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
             </div>
         </div>

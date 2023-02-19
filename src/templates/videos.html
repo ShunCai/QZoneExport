@@ -2,7 +2,7 @@
 <html lang="zh">
 
 <head>
-	<link rel="icon" href="https://qzonestyle.gtimg.cn/aoi/img/logo/favicon.ico">
+	<link rel="icon" href="../Common/images/favicon.ico">
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<title>QQ空间备份-视频</title>
 	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -27,8 +27,9 @@
 	<script src="https://www.lvshuncai.com/custom/js/clicklove.min.js"></script>
 
 	<script src="https://cdn.staticfile.org/jquery_lazyload/2.0.0-rc.2/lazyload.min.js"></script>
-	<script src="https://fastly.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
 	
+	<script type="text/javascript" src="../Common/json/config.js"></script>
 	<script type="text/javascript" src="json/videos.js"></script>
 </head>
 
@@ -68,9 +69,9 @@
 												</p>
 											</div>
 											<div class="col text-center text-truncate">
-												<h6 data-toggle="tooltip" data-html="true" title='<%:=API.Common.formatContent(video.name || API.Utils.formatDate(video.uploadTime))%>'><%:=API.Common.formatContent(video.name || API.Utils.formatDate(video.uploadTime))%></h6>
+												<h6 data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(video.name || API.Utils.formatDate(video.uploadTime), 'HTML', false, false, false, false, true)%>"><%:=API.Common.formatContent(video.name || API.Utils.formatDate(video.uploadTime), 'HTML', false, false, false, false, true)%></h6>
 												<%if(video.desc){%>
-													<span class="text-white-50" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(video.desc, 'HTML', false, false)%>"><%:=API.Common.formatContent(video.desc, "HTML", false, false)%></span>
+													<span class="text-white-50" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(video.desc, 'HTML', false, false, false, false, true)%>"><%:=API.Common.formatContent(video.desc, "HTML", false, false, false, false, true)%></span>
 												<%}%>
 											</div>
 											<div class="col"></div>
@@ -82,8 +83,8 @@
 									<span class="photo-video"></span>
 									<img class="lazyload loading" src="../Common/images/loading.gif" data-src="<%:=API.Common.getMediaPath(video.pre || video.custom_pre_url, video.custom_pre_filepath)%>" />
 								</a>
-								<div class="card-body text-truncate">
-									<span class="card-title" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(video.desc || API.Utils.formatDate(video.uploadTime)) %>"><%:=API.Common.formatContent(video.desc || API.Utils.formatDate(video.uploadTime)) %></span>
+								<div class="card-body text-truncate" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(video.desc || API.Utils.formatDate(video.uploadTime), 'HTML', false, false, false, false, true) %>">
+									<span class="card-title"><%:=API.Common.formatContent(video.desc || API.Utils.formatDate(video.uploadTime), 'HTML', false, false, false, false, true) %></span>
 								</div>
 								<div class="pic-num-wrap d-flex justify-content-around">
 									<div class="align-self-end">

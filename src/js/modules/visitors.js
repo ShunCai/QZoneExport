@@ -20,7 +20,7 @@ API.Visitors.export = async() => {
 
         // 根据导出类型导出数据    
         await API.Visitors.exportAllListToFiles(visitorInfo);
-        
+
     } catch (error) {
         console.error('访客导出异常：', error);
     }
@@ -42,8 +42,7 @@ API.Visitors.getAllList = async() => {
 
     // 访客状态更新器
     const indicator = new StatusIndicator('Visitors');
-
-    // 开始
+    indicator.setIndex(1);
     indicator.print();
 
     const CONFIG = QZone_Config.Visitors;
@@ -58,7 +57,7 @@ API.Visitors.getAllList = async() => {
 
             // 页面转数据
             data = API.Utils.toJson(data, /^_Callback\(/) || {};
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取单页的访客列表异常：', nextPageIndex, data);
             }
@@ -99,8 +98,8 @@ API.Visitors.getAllList = async() => {
             console.error("获取访客列表异常，当前页：", nextPageIndex, e);
             // PATCH: 如果服务器错误，则判断页数再进入重试
             if (nextPageIndex >= QZone.Visitors.Data.totalPage) {
-              // 最后一页停止获取
-              return QZone.Visitors.Data;
+                // 最后一页停止获取
+                return QZone.Visitors.Data;
             }
 
             // 当前页失败后，跳过继续请求下一页
@@ -130,46 +129,21 @@ API.Visitors.getAllList = async() => {
  * @param {Array} item
  */
 API.Visitors.addMediaToTasks = async(visitorInfo) => {
-    // 下载相对目录
-    const module_dir = 'Visitors/images';
 
     const items = visitorInfo.items || [];
 
     for (const item of items) {
+
         if (!API.Common.isNewItem(item)) {
             // 已备份数据跳过不处理
             continue;
         }
 
-        // 说说配图
-        item.shuoshuoes = item.shuoshuoes || []
-        for (const message of item.shuoshuoes) {
-            if (!message.imgsrc) {
-                continue;
-            }
-            await API.Utils.addDownloadTasks('Visitors', message, message.imgsrc, module_dir, item, QZone.Visitors.FILE_URLS);
-        }
+        // 下载配图
+        await API.Visitors.addDownloadImagesTasks(item);
 
-        // 日志配图 暂无
-        item.blogs = item.blogs || [];
-
-        // 相册配图
-        item.photoes = item.photoes || [];
-        for (const photo of item.photoes) {
-            if (!photo.imgsrc) {
-                continue;
-            }
-            await API.Utils.addDownloadTasks('Visitors', photo, photo.imgsrc, module_dir, item, QZone.Visitors.FILE_URLS);
-        }
-
-        // 分享配图
-        item.shares = item.shares || [];
-        for (const share of item.shares) {
-            if (!share.imgsrc) {
-                continue;
-            }
-            await API.Utils.addDownloadTasks('Visitors', share, share.imgsrc, module_dir, item, QZone.Visitors.FILE_URLS);
-        }
+        // 下载表情
+        API.Visitors.addDownloadEmoticonTasks(item);
     }
     return visitorInfo;
 }
@@ -254,7 +228,7 @@ API.Visitors.getMarkdown = (item) => {
     contents.push('###### {0}  \n'.format(API.Utils.formatDate(item.time)));
 
     // 访客
-    let user_name = API.Common.formatContent(item.name, 'MD');
+    let user_name = API.Common.formatContent(item.name, 'MD', false, false, false, false, true);
     user_name = API.Common.getUserLink(item.uin, user_name, 'MD', true);
 
     // 访问内容
@@ -268,9 +242,9 @@ API.Visitors.getMarkdown = (item) => {
     if (item.shuoshuoes.length > 0) {
         contents.push('{0} 查看了说说  '.format(user_name));
         for (const message of item.shuoshuoes) {
-            contents.push('- {0}   '.format(API.Common.formatContent(message.name, 'MD')));
+            contents.push('- {0}   '.format(API.Common.formatContent(message.name, 'MD', false, false, false, false, true)));
             if (message.imgsrc) {
-                contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(message.custom_url, message.custom_filepath, "Visitors_MD")) + '  ');
+                contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(message.custom_url, message.custom_filepath)) + '  ');
             }
         }
         contents.push('\n  ');
@@ -279,7 +253,7 @@ API.Visitors.getMarkdown = (item) => {
     if (item.blogs.length > 0) {
         contents.push('{0} 查看了日志  '.format(user_name));
         for (const blog of item.blogs) {
-            contents.push('- {0}  '.format(API.Common.formatContent(blog.name, 'MD')));
+            contents.push('- {0}  '.format(API.Common.formatContent(blog.name, 'MD', false, false, false, false, true)));
         }
         contents.push('\n  ');
     }
@@ -287,8 +261,8 @@ API.Visitors.getMarkdown = (item) => {
     if (item.photoes.length > 0) {
         contents.push('{0} 查看了相册  '.format(user_name));
         for (const photo of item.photoes) {
-            contents.push('> {0}  '.format(API.Common.formatContent(photo.name, 'MD')));
-            contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, "Visitors_MD")) + '  ');
+            contents.push('> {0}  '.format(API.Common.formatContent(photo.name, 'MD', false, false, false, false, true)));
+            contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(photo.custom_url, photo.custom_filepath)) + '  ');
             contents.push('\n  ');
         }
         contents.push('\n  ');
@@ -297,9 +271,9 @@ API.Visitors.getMarkdown = (item) => {
     if (item.shares.length > 0) {
         contents.push('{0} 查看了分享  '.format(user_name));
         for (const share of item.shares) {
-            contents.push('- {0}   '.format(API.Common.formatContent(share.name, 'MD')));
+            contents.push('- {0}   '.format(API.Common.formatContent(share.name, 'MD', false, false, false, false, true)));
             if (share.imgsrc) {
-                contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(share.custom_url, share.custom_filepath, "Visitors_MD")) + '  ');
+                contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(share.custom_url, share.custom_filepath)) + '  ');
             }
         }
         contents.push('\n  ');
@@ -406,4 +380,102 @@ API.Visitors.exportToJson = async(visitorInfo) => {
     // 完成
     indicator.complete();
     return visitorInfo;
+}
+
+/**
+ * 添加下载配图任务
+ * @param {Message} item 访客 
+ */
+API.Visitors.addDownloadImagesTasks = async(item) => {
+    if (!API.Common.isNewItem(item)) {
+        // QQ空间外链，跳过
+        return item;
+    }
+
+    // 下载相对目录
+    const module_dir = 'Visitors/images';
+
+    // 说说配图
+    item.shuoshuoes = item.shuoshuoes || []
+    for (const message of item.shuoshuoes) {
+        if (!message.imgsrc) {
+            continue;
+        }
+        await API.Utils.addDownloadTasks('Visitors', message, message.imgsrc, module_dir, item, QZone.Visitors.FILE_URLS);
+    }
+
+    // 日志配图 暂无
+    item.blogs = item.blogs || [];
+
+    // 相册配图
+    item.photoes = item.photoes || [];
+    for (const photo of item.photoes) {
+        if (!photo.imgsrc) {
+            continue;
+        }
+        await API.Utils.addDownloadTasks('Visitors', photo, photo.imgsrc, module_dir, item, QZone.Visitors.FILE_URLS);
+    }
+
+    // 分享配图
+    item.shares = item.shares || [];
+    for (const share of item.shares) {
+        if (!share.imgsrc) {
+            continue;
+        }
+        await API.Utils.addDownloadTasks('Visitors', share, share.imgsrc, module_dir, item, QZone.Visitors.FILE_URLS);
+    }
+
+    return item;
+
+}
+
+/**
+ * 添加下载表情任务
+ * @param {Message} item 访客 
+ */
+API.Visitors.addDownloadEmoticonTasks = (item) => {
+    if (API.Common.isQzoneUrl() || !API.Common.isNewItem(item)) {
+        // QQ空间外链，跳过
+        return item;
+    }
+
+    // 访客名称
+    API.Common.formatContent(item.name, 'HTML', false, false, false, true, false);
+
+    // 说说访问记录
+    if (item.shuoshuoes && item.shuoshuoes.length > 0) {
+        for (const shuoshuo of item.shuoshuoes) {
+            API.Common.formatContent(shuoshuo.name, 'HTML', false, false, false, true, false);
+        }
+    }
+
+    // 日志访问记录
+    if (item.blogs && item.blogs.length > 0) {
+        for (const blog of item.blogs) {
+            API.Common.formatContent(blog.name, 'HTML', false, false, false, true, false);
+        }
+    }
+
+    // 相片访问记录
+    if (item.photoes && item.photoes.length > 0) {
+        for (const photo of item.photoes) {
+            API.Common.formatContent(photo.name, 'HTML', false, false, false, true, false);
+        }
+    }
+
+    // 分享访问记录
+    if (item.shares && item.shares.length > 0) {
+        for (const share of item.shares) {
+            API.Common.formatContent(share.name, 'HTML', false, false, false, true, false);
+        }
+    }
+
+    // 其它相同访客
+    if (item.uins && item.uins.length > 0) {
+        for (const uniItem of item.uins) {
+            API.Common.formatContent(uniItem.name, 'HTML', false, false, false, true, false);
+        }
+    }
+
+    return item;
 }

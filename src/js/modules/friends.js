@@ -21,14 +21,14 @@ API.Friends.export = async() => {
         API.Common.downloadUserAvatars(_.filter(friends, API.Friends.isNewItem));
 
         // 根据分组名称（非分组ID）进行排序
-        friends = API.Utils.sort(friends, 'groupName');
+        friends = API.Utils.sort(friends, 'groupSortNo');
         console.log('好友列表排序完成');
 
         // 根据导出类型导出数据
         await API.Friends.exportAllToFiles(friends);
 
     } catch (error) {
-        console.error('QQ好友导出异常', error);
+        console.error('好友导出异常', error);
     }
 
     // 完成
@@ -44,19 +44,21 @@ API.Friends.getAllList = async() => {
 
     // 进度更新器
     const indicator = new StatusIndicator('Friends');
-
-    // 开始
+    indicator.setIndex(1);
     indicator.print();
 
-    await API.Friends.getFriends().then(async(data) => {
+    // 接口
+    const friendListRest = QZone_Config.Friends.SortType === 'QQ' ? API.Friends.getSortFriends : API.Friends.getFriends;
+
+    await friendListRest().then(async(data) => {
         data = API.Utils.toJson(data, /^_Callback\(/);
-        if (data.code < 0) {
+        if (data.code && data.code != 0) {
             // 获取异常
             console.warn('获取所有好友列表异常：', data);
         }
         data = data.data || {};
 
-        QZone.Friends.Data = data.items || [];
+        QZone.Friends.Data = data.items || data.list || [];
 
         QZone.Friends.total = QZone.Friends.Data.length || QZone.Friends.total || 0;
         indicator.setTotal(QZone.Friends.total);
@@ -85,8 +87,19 @@ API.Friends.getAllList = async() => {
 
     // 根据QQ号去重合并
     if (QZone_Config.Friends.isIncrement) {
-        QZone.Friends.Data = _.concat(QZone.Friends.OLD_Data, QZone.Friends.Data);
-        QZone.Friends.Data = _.unionBy(QZone.Friends.Data, 'uin');
+
+        // 最新数据没有，历史数据存在的，表示已删除
+        const deleteItems = _.filter(QZone.Friends.OLD_Data, item => _.findIndex(QZone.Friends.Data, ['uin', item.uin]) < 0);
+
+        // 合并数据，并去重
+        QZone.Friends.Data = _.unionBy(_.concat(QZone.Friends.OLD_Data, QZone.Friends.Data), 'uin');
+
+        // 全部修改为非删除
+        _.forEach(QZone.Friends.Data, item => item.deleted = false);
+
+        // 再把删除项改为删除
+        _.forEach(_.filter(QZone.Friends.Data, item => _.findIndex(deleteItems, ['uin', item.uin]) > -1), item => item.deleted = true);
+
     }
 
     return QZone.Friends.Data;
@@ -101,14 +114,20 @@ API.Friends.initGroupName = (data, friends) => {
     // 将QQ分组进行分组
     const groups = data.gpnames;
     const groupMap = new Map();
-    for (const group of groups) {
-        groupMap.set(group.gpid, group.gpname);
+    for (let i = 0; i < groups.length; i++) {
+        const group = groups[i];
+        group.sortNo = i + 1;
+        //group.gpname
+        groupMap.set(group.gpid, group);
     }
 
     // 遍历好友
     for (const friend of friends) {
-        // 设置默认值
-        friend.groupName = groupMap.get(friend.groupid) || "默认分组";
+        const group = groupMap.get(friend.groupid);
+        // 排序号
+        friend.groupSortNo = group.sortNo || 0;
+        // 分组名称
+        friend.groupName = group.gpname || "默认分组";
     }
 }
 
@@ -148,7 +167,7 @@ API.Friends.getFriendsTime = async(data, friends) => {
         await API.Friends.getFriendshipTime(friend.uin).then((data) => {
             // JSON转换
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 console.warn('获取互动信息异常：', friend, data);
                 indicator.addFailed(friend);
             }
@@ -193,7 +212,7 @@ API.Friends.isNewItem = (item) => {
     if (!QZone_Config.Friends.isIncrement) {
         return true;
     }
-    return API.Common.isNewItem(item) || QZone.Friends.OLD_Data.getIndex(item.uin, 'uin') == -1;
+    return _.isEmpty(QZone.Friends.OLD_Data) || _.findIndex(QZone.Friends.OLD_Data, ['uin', item.uin]) == -1;
 }
 
 /**
@@ -414,7 +433,7 @@ API.Friends.getZoneAccessList = async(friends) => {
         await API.Friends.getZoneAccess(friend.uin).then((data) => {
             // 转换JSON
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0 && data.code != -4009) {
                 // 获取异常
                 console.warn('获取好友空间访问权限异常：', friend, data);
             }
@@ -453,7 +472,7 @@ API.Friends.getCareFriendList = async(friends) => {
     await API.Friends.getSpecialCare().then((data) => {
         // 转换JSON
         data = API.Utils.toJson(data, /^_Callback\(/);
-        if (data.code < 0) {
+        if (data.code && data.code != 0) {
             // 获取异常
             console.warn('获取特别关心好友列表异常：', data);
         }

@@ -173,93 +173,93 @@ const MAX_MSG = {
     InitIncrement: [
         '存在增量备份模块',
         '正在获取已备份的数据',
-        '请稍后...'
+        '请稍候..'
     ],
     Messages: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的说说列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Messages_Filter: [
         '正在根据屏蔽词过滤说说列表',
         '已屏蔽 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Messages_Full_Content: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的全文',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Messages_More_Images: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的更多图片',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Messages_Voices: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的语音信息',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Messages_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Messages_Images_Mime: [
         '正在识别说说的图片类型',
         '已识别 <span style="color: #1ca5fc;">{downloaded}</span> 张',
-        '请稍后...'
+        '请稍候..'
     ],
     Messages_Like: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的点赞列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Messages_Visitor: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条说说的最近访问',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Messages_Lbs_Info: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条微信说说坐标信息',
         '已刷新 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Messages_Export: [
         '正在导出说说',
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Messages_Export_Other: [
         '正在导出说说到 <span style="color: #1ca5fc;">{index}</span> 文件',
-        '请稍后...'
+        '请稍候..'
     ],
     Blogs: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的日志列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
         '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-        '请稍后...'
+        '请稍候..'
     ],
     Blogs_Content: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇的日志内容',
@@ -267,123 +267,123 @@ const MAX_MSG = {
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-        '请稍后...'
+        '请稍候..'
     ],
     Blogs_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日志的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-        '请稍后...'
+        '请稍候..'
     ],
     Blogs_Like: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日志的点赞列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-        '请稍后...'
+        '请稍候..'
     ],
     Blogs_Visitor: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日志的最近访问',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-        '请稍后...'
+        '请稍候..'
     ],
     Blogs_Export: [
         '正在导出日志',
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Blogs_Export_Other: [
         '正在导出日志到 <span style="color: #1ca5fc;">{index}</span> 文件',
-        '请稍后...'
+        '请稍候..'
     ],
     Diaries: [
-        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的私密日记列表',
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的日记列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
         '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-        '请稍后...'
+        '请稍候..'
     ],
     Diaries_Content: [
-        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇的私密日记内容',
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇的日记内容',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '已失败 <span style="color: red;">{downloadFailed}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-        '请稍后...'
+        '请稍候..'
     ],
     Diaries_Comments: [
-        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇私密日记的评论列表',
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日记的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-        '请稍后...'
+        '请稍候..'
     ],
     Diaries_Like: [
-        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇私密日记的点赞列表',
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日记的点赞列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-        '请稍后...'
+        '请稍候..'
     ],
     Diaries_Visitor: [
-        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇私密日记的最近访问',
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 篇日记的最近访问',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 篇',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 篇',
         '总共 <span style="color: #1ca5fc;">{total}</span> 篇',
-        '请稍后...'
+        '请稍候..'
     ],
     Diaries_Export: [
-        '正在导出私密日记',
+        '正在导出日记',
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Diaries_Export_Other: [
-        '正在导出私密日记到 <span style="color: #1ca5fc;">{index}</span> 文件',
-        '请稍后...'
+        '正在导出日记到 <span style="color: #1ca5fc;">{index}</span> 文件',
+        '请稍候..'
     ],
     Boards: [
-        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的留言板列表',
+        '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的留言列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Boards_Images_Mime: [
         '正在识别留言的图片类型',
         '已识别 <span style="color: #1ca5fc;">{downloaded}</span> 张',
         '已失败 <span style="color: red;">{downloadFailed}</span> 张',
-        '请稍后...'
+        '请稍候..'
     ],
     Boards_Export: [
         '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的留言',
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Boards_Export_Other: [
         '正在导出留言到 <span style="color: #1ca5fc;">{index}</span> 文件',
-        '请稍后...'
+        '请稍候..'
     ],
     Friends: [
         '正在获取QQ好友列表',
         '已获取好友 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
+        '请稍候..'
     ],
     Friends_Time: [
         '正在获取好友互动信息',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
+        '请稍候..'
     ],
     Friends_Access: [
         '正在获取好友空间权限',
@@ -391,254 +391,258 @@ const MAX_MSG = {
         '已失败 <span style="color: red;">{downloadFailed}</span> 个',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
+        '请稍候..'
     ],
     Friends_Care: [
         '正在获取特别关心好友',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
+        '请稍候..'
     ],
     Friends_Export: [
         '正在导出QQ好友到 <span style="color: #1ca5fc;">{index}</span> 文件',
-        '请稍后...'
+        '请稍候..'
     ],
     Photos: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的相册列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已失败 <span style="color: red;">{downloadFailed}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
+        '请稍候..'
     ],
     Photos_Albums_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 个相册的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
+        '请稍候..'
     ],
     Photos_Albums_Like: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 个相册的点赞列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
+        '请稍候..'
     ],
     Photos_Albums_Visitor: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 个相册的最近访问',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
+        '请稍候..'
     ],
     Photos_Images: [
         '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
         '已失败 <span style="color: red;">{downloadFailed}</span> 张',
         '总共 <span style="color: #1ca5fc;">{total}</span> 张',
-        '请稍后...'
+        '请稍候..'
     ],
     Photos_Images_Info: [
         '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片详情',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 张',
         '总共 <span style="color: #1ca5fc;">{total}</span> 张',
-        '请稍后...'
+        '请稍候..'
     ],
     Photos_Images_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 张相片的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 张',
         '总共 <span style="color: #1ca5fc;">{total}</span> 张',
-        '请稍后...'
+        '请稍候..'
     ],
     Photos_Images_Like: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 张相片的点赞列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 张',
         '总共 <span style="color: #1ca5fc;">{total}</span> 张',
-        '请稍后...'
+        '请稍候..'
     ],
     Photos_Images_Mime: [
         '正在获取 <span style="color: #1ca5fc;">{index}</span> 的相片类型',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 张',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 张',
         '总共 <span style="color: #1ca5fc;">{total}</span> 张',
-        '请稍后...'
+        '请稍候..'
     ],
     Photos_Export: [
         '正在导出相册到 <span style="color: #1ca5fc;">{index}</span> 文件',
-        '请稍后...'
+        '请稍候..'
     ],
     Photos_Images_Export: [
         '正在导出 <span style="color: #1ca5fc;">{index}</span> 的相片',
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Photos_Images_Export_Other: [
         '正在导出相片到 <span style="color: #1ca5fc;">{index}</span> 文件',
-        '请稍后...'
+        '请稍候..'
     ],
     Videos: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的视频列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已失败 <span style="color: red;">{downloadFailed}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
+        '请稍候..'
     ],
     Videos_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 个视频的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
+        '请稍候..'
     ],
     Videos_Like: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 个视频的点赞列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
+        '请稍候..'
     ],
     Videos_Export: [
         '正在导出视频到 <span style="color: #1ca5fc;">{index}</span> 文件',
-        '请稍后...'
+        '请稍候..'
     ],
     Favorites: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的收藏列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 个',
         '已失败 <span style="color: red;">{downloadFailed}</span> 个',
         '总共 <span style="color: #1ca5fc;">{total}</span> 个',
-        '请稍后...'
+        '请稍候..'
     ],
     Favorites_Export: [
         '正在导出 <span style="color: #1ca5fc;">{index}</span> 年的收藏',
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Favorites_Export_Other: [
         '正在导出收藏到 <span style="color: #1ca5fc;">{index}</span> 文件',
-        '请稍后...'
+        '请稍候..'
     ],
     Shares: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的分享列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Shares_Comments: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条分享的评论列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Shares_Like: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条分享的点赞列表',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Shares_Visitor: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 条分享的最近访问',
         '已获取 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已跳过 <span style="color: #1ca5fc;">{skip}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Shares_Export: [
         '正在导出分享',
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Shares_Export_Other: [
         '正在导出分享到 <span style="color: #1ca5fc;">{index}</span> 文件',
-        '请稍后...'
+        '请稍候..'
     ],
     Visitors: [
         '正在获取第 <span style="color: #1ca5fc;">{index}</span> 页的访客列表',
         '总共 <span style="color: #1ca5fc;">{totalPage}</span> 页',
         '<span style="color: #1ca5fc;">{total}</span> 访问量',
-        '请稍后...'
+        '请稍候..'
     ],
     Visitors_Export: [
         '正在导出访客',
         '已导出 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '已失败 <span style="color: red;">{downloadFailed}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Visitors_Export_Other: [
         '正在导出访客到 <span style="color: #1ca5fc;">{index}</span> 文件',
-        '请稍后...'
+        '请稍候..'
     ],
     Common_File: [
         '正在下载文件',
         '已下载 <span style="color: #1ca5fc;">{downloaded}</span> ',
         '已失败 <span style="color: red;">{downloadFailed}</span> ',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Common_Thunder: [
         '正在第 <span style="color: #1ca5fc;">{index}</span> 次唤起迅雷下载文件',
         '将在 <span style="color: #1ca5fc;">{nextTip}</span> 秒后再次唤起迅雷',
         '已添加 <span style="color: #1ca5fc;">{downloaded}</span> ',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Common_Thunder_Clipboard: [
         '正在第 <span style="color: #1ca5fc;">{index}</span> 次复制迅雷下载链接',
         '将在 <span style="color: #1ca5fc;">{nextTip}</span> 秒后再次复制',
         '已复制 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Common_Thunder_Link: [
         '正在生成迅雷下载链接',
         '打包下载后，打开迅雷复制根目录下的【迅雷下载链接.txt】',
-        '请稍后...'
+        '请稍候..'
     ],
     Common_Browser: [
         '正在添加多媒体文件下载任务到浏览器',
         '已添加 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '添加超时或失败 <span style="color: red;">{downloadFailed}</span> ',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
     ],
     Common_Aria2: [
         '正在添加多媒体文件下载任务到Aria2',
         '已添加 <span style="color: #1ca5fc;">{downloaded}</span> 条',
         '添加超时或失败 <span style="color: red;">{downloadFailed}</span> ',
         '总共 <span style="color: #1ca5fc;">{total}</span> 条',
-        '请稍后...'
+        '请稍候..'
+    ],
+    User_Avatar_Export: [
+        '正在收集互动用户头像',
+        '请稍候..'
     ],
     Init_User_Info_Export: [
         '正在采集用户基本信息',
-        '请稍后...'
+        '请稍候..'
     ],
     Init_User_Info_Export_Other: [
         '正在生成个人首页',
-        '请稍后...'
+        '请稍候..'
     ],
     User_Config_Infos: [
         '正在导出助手配置信息',
-        '请稍后...'
+        '请稍候..'
     ],
     Backup_Save: [
         '正在保存当前备份数据',
-        '请稍后...'
+        '请稍候..'
     ],
     Backup_Export: [
         '正在导出当前备份数据',
-        '请稍后...'
+        '请稍候..'
     ]
 }
 
@@ -701,7 +705,7 @@ class StatusIndicator {
         if (this.tip && this.tip.length > 0) {
             showTip = this.tip.join('，').format(this);
         }
-        $tip_dom.html(showTip.replace('正在', '已').replace('请稍后', '已完成').replace('...', ''));
+        $tip_dom.html(showTip.replace('正在', '已').replace('请稍候', '已完成').replace('...', ''));
 
         if ($tip_dom.is('details') && this.id !== 'Common_Row_Infos_Tips') {
             // 收起
@@ -880,7 +884,7 @@ const OperatorType = {
     Blogs: 'Blogs',
 
     /**
-     * 获取私密日记所有列表
+     * 获取日记所有列表
      */
     Diaries: 'Diaries',
 
@@ -895,7 +899,7 @@ const OperatorType = {
     Videos: 'Videos',
 
     /**
-     * 获取留言板列表
+     * 获取留言列表
      */
     Boards: 'Boards',
 
@@ -972,7 +976,7 @@ class QZoneOperator {
                 this.next(OperatorType.Diaries);
                 break;
             case OperatorType.Diaries:
-                // 获取私密日记列表
+                // 获取日记列表
                 if (API.Common.isExport(moduleType)) {
                     await API.Diaries.export();
                 }
@@ -1149,48 +1153,20 @@ class QZoneOperator {
         const $progressbar = $("#progressbar");
         const $downloadBtn = $('#downloadBtn');
         const $fileListBtn = $('#fileList');
-        // 继续重试
-        const $againDownloadBtn = $("#againDownload");
         // 浏览器下载
         const $browserDownloadBtn = $("#browserDownload");
         // 迅雷下载
         const $thunderDownloadBtn = $("#thunderDownload");
+        // Aria2下载
+        const $aria2rDownloadBtn = $("#aria2rDownload");
+        // 继续重试
+        const $againDownloadBtn = $("#againDownload");
 
         // 下载方式
         const downloadType = QZone_Config.Common.downloadType;
-        switch (downloadType) {
-            case 'Browser':
-                // 下载方式为浏览器下载时隐藏【浏览器下载】按钮
-                $browserDownloadBtn.hide();
-                // 修改继续重试按钮文本为【继续重试】
-                $againDownloadBtn.text('继续重试');
-                break;
-            case 'Aria2':
-                // 修改继续重试按钮文本为【Aria2下载】
-                $againDownloadBtn.text('Aria2下载');
-                break;
-            case 'Thunder':
-                // 下载方式为迅雷下载时隐藏【迅雷下载】按钮
-                $thunderDownloadBtn.hide();
-                // 修改继续重试按钮文本为【唤起迅雷】
-                $againDownloadBtn.text('唤起迅雷');
-                break;
-            case 'Thunder_Clipboard':
-                // 下载方式为迅雷下载时隐藏【迅雷下载】按钮
-                $thunderDownloadBtn.hide();
-                // 修改继续重试按钮文本为【唤起迅雷】
-                $againDownloadBtn.text('唤起迅雷');
-                break;
-            case 'Thunder_Link':
-                // 隐藏重试按钮
-                $againDownloadBtn.hide();
-                break;
-            case 'File':
-                // 助手内部
-                $againDownloadBtn.text('继续重试');
-                break;
-            default:
-                break;
+        if (downloadType === 'Thunder_Link') {
+            // 隐藏重试按钮
+            $againDownloadBtn.hide();
         }
 
         // 【打包下载】按钮点击事件
@@ -1310,7 +1286,7 @@ class QZoneOperator {
 
         // 【重试】按钮点击事件
         $againDownloadBtn.click(async function() {
-            let tasks = $('#table').bootstrapTable('getSelections');
+            const tasks = $('#table').bootstrapTable('getSelections');
             switch (downloadType) {
                 case 'File':
                     // 下载方式为助手下载时
@@ -1349,9 +1325,9 @@ class QZoneOperator {
         })
 
         // 【迅雷下载】点击事件
-        $("#thunderDownload").click(async function() {
-            let tasks = $('#table').bootstrapTable('getSelections');
-            let newThunderInfo = new ThunderInfo(API.Common.getRootFolderName(), QZone_Config.Common.downloadThread);
+        $thunderDownloadBtn.click(async function() {
+            const tasks = $('#table').bootstrapTable('getSelections');
+            const newThunderInfo = new ThunderInfo(API.Common.getRootFolderName(), QZone_Config.Common.downloadThread);
             for (const task of tasks) {
                 newThunderInfo.tasks.push(new ThunderTask(task.module, task.dir, task.name, API.Utils.toHttp(task.url)));
                 task.setState('complete');
@@ -1359,10 +1335,17 @@ class QZoneOperator {
             await API.Common.invokeThunder(newThunderInfo)
         })
 
+        // 【Aria2下载】点击事件
+        $aria2rDownloadBtn.click(async function() {
+            const tasks = $('#table').bootstrapTable('getSelections');
+            // 下载方式为Aria2时
+            await API.Common.downloadByAria2(tasks);
+        })
+
         // 【浏览器下载】点击事件
         $browserDownloadBtn.click(function() {
-            let tasks = $('#table').bootstrapTable('getSelections');
-            let newBrowserTasks = [];
+            const tasks = $('#table').bootstrapTable('getSelections');
+            const newBrowserTasks = [];
             for (const task of tasks) {
                 newBrowserTasks.push(new BrowserTask(task.module, API.Utils.toHttp(task.url), thunderInfo.taskGroupName, task.dir, task.name));
                 task.setState('in_progress');
@@ -1431,8 +1414,8 @@ class QZoneOperator {
                                 // 日志
                                 return API.Utils.getLink(API.Blogs.getUniKey(value.blogid), '查看日志');
                             case 'Diaries':
-                                // 私密日记
-                                return API.Utils.getLink('https://rc.qzone.qq.com/blog?catalog=private', '私密日记');
+                                // 日记
+                                return API.Utils.getLink('https://rc.qzone.qq.com/blog?catalog=private', '日记');
                             case 'Photos':
                                 // 相册（暂无相册逻辑，直接查看照片即可）
                                 return API.Utils.getLink('#', '无');
@@ -1443,10 +1426,10 @@ class QZoneOperator {
                                 // 视频
                                 return API.Utils.getLink(value.url, '查看视频');
                             case 'Boards':
-                                // 留言板
+                                // 留言
                                 return API.Utils.getLink('https://user.qzone.qq.com/{0}/334'.format(QZone.Common.Target.uin), '查看留言');
                             case 'Favorites':
-                                // 收藏夹
+                                // 收藏
                                 return API.Utils.getLink('https://user.qzone.qq.com/{0}/favorite'.format(QZone.Common.Target.uin), '查看收藏');
                             default:
                                 return API.Utils.getLink('#', '无');

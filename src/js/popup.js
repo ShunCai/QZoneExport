@@ -191,7 +191,7 @@
         initConfig();
         // 显示备份用户
         initOwnerOp(data);
-        // 检测私密日记密码
+        // 检测日记密码
         checkDiaries();
         // 获取相册列表
         getAlbumList();

@@ -8,7 +8,7 @@ $(function() {
     // 渲染日志标题
     document.title = 'QQ空间备份-' + blog.custom_title;
     $("#blog_title").text(blog.custom_title);
-    $("#blog_time").text(API.Utils.formatDate(blog.pubtime));
+    $("#blog_time").text(API.Utils.formatDate(blog.lastModifyTime ||  blog.pubtime));
 
     const $blogHtml = $('<div><div>').html(API.Utils.base64ToUtf8(blog.custom_html));
     $('#blog_content').html($blogHtml.html());

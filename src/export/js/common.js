@@ -178,7 +178,7 @@ const API = {
     Boards: {}, // 留言模块
     Photos: {}, // 相册模块
     Videos: {}, // 视频模块
-    Favorites: {}, // 收藏夹模块
+    Favorites: {}, // 收藏模块
     Shares: {}, // 分享模块
     Visitors: {}, // 访客模块
     Statistics: {} // 数据统计模块
@@ -252,6 +252,20 @@ API.Utils = {
         }
         str = str || 'yyyy-MM-dd hh:mm:ss';
         return new Date(time * 1000).format(str);
+    },
+
+    /**
+     * 转换时间
+     *  @param {integer} time 
+     */
+    parseDate(time) {
+        if (_.isNumber(time)) {
+            const sec = time * 1000;
+            if (sec < Date.now()) {
+                return new Date(sec);
+            }
+        }
+        return new Date(time);
     },
 
     /**
@@ -508,14 +522,128 @@ API.Common = {
     },
 
     /**
+     * 是否为指定下载方式
+     * @param {string} type 类型
+     */
+    isDownloadType(type) {
+        // 文件备份类型
+        let downloadType = QZone_Config.Common.downloadType;
+        // 是否为QQ空间外链
+        return downloadType === type;
+    },
+
+    /**
+     * 下载工具是否为QQ空间外链
+     */
+    isQzoneUrl() {
+        return this.isDownloadType('QZone');
+    },
+
+    /**
+     * 获取评论人
+     * @param {Comment} comment 评论
+     */
+    getCommentUser(comment) {
+        if (comment.poster) {
+            comment.poster.id = comment.poster.id || comment.poster.uin || comment.poster.fuin;
+            comment.poster.uin = comment.poster.uin || comment.poster.id || comment.poster.fuin;
+            comment.poster.who = !!comment.t3_wc_uin * 2 || comment.t3_source || !!comment.t2_wc_uin * 2 || comment.t2_source || 1
+            return comment.poster;
+        }
+        return {
+            uin: comment.uin || comment.fuin,
+            name: comment.name || comment.nick || comment.nickname,
+            who: !!comment.t3_wc_uin * 2 || comment.t3_source || !!comment.t2_wc_uin * 2 || comment.t2_source || 1
+        }
+    },
+
+
+    /**
+     * 添加表情下载任务
+     * @param {string} content 表情内容
+     * @returns 
+     */
+    addEmoticonDowanloadTask(content) {
+        if (this.isQzoneUrl() || !content) {
+            content;
+        }
+
+        // 匹配QQ表情地址
+        const imageUrls = content.match(/(https|http):\/\/qzonestyle.gtimg.cn\/qzone\/em\/e\d+.gif/g) || [];
+        // 遍历，并添加任务
+        for (const imageUrl of imageUrls) {
+            const custom_filename = QZone.Common.FILE_URLS.get(imageUrl);
+            if (custom_filename) {
+                continue;
+            }
+            // 添加下载任务
+            API.Utils.newDownloadTask('Common', url, 'Common/images', this.getFileName(imageUrl, 'gif'));
+            QZone.Common.FILE_URLS.set(url, custom_filename);
+        }
+
+        // 匹配微信表情地址
+        const wxImageUrls = content.match(/https:\/\/cdn.jsdelivr.net\/gh\/ShunCai\/QZoneExport@dev\/src\/img\/emoji\/(.{1,15}).png/g) || [];
+        // 遍历，并添加任务
+        for (const imageUrl of wxImageUrls) {
+            const custom_filename = QZone.Common.FILE_URLS.get(imageUrl);
+            if (custom_filename) {
+                continue;
+            }
+            // 添加下载任务
+            API.Utils.newDownloadTask('Common', url, 'Common/images', this.getFileName(imageUrl, 'png'));
+            QZone.Common.FILE_URLS.set(url, custom_filename);
+        }
+
+        return content;
+    },
+
+    /**
+     * 替换表情路径
+     * @param {string} content 表情内容
+     * @returns 
+     */
+    formatEmoticonPath(content) {
+        if (this.isQzoneUrl() || !content) {
+            return content;
+        }
+
+        // 替换QQ表情地址
+        content = content.replace(/(https|http):\/\/qzonestyle.gtimg.cn\/qzone\/em\/e(\d+).gif/g, function(emoji, protocol, eid) {
+            return API.Common.getMediaPath(emoji, 'Common/images/e{0}.gif'.format(eid), true);
+        });
+
+        // 替换微信表情地址
+        content = content.replace(/https:\/\/cdn.jsdelivr.net\/gh\/ShunCai\/QZoneExport@dev\/src\/img\/emoji\/(.{1,15}).png/g, function(emoji, eid) {
+            return API.Common.getMediaPath(emoji, 'Common/images/{0}.png'.format(eid), true);
+        });
+
+        return content;
+    },
+
+    /**
      * 获取用户空间的头像地址
      */
     getUserLogoUrl(uin) {
+        if (!_.isFinite(uin)) {
+            // 这里简单判断一下，不是数字，就认为是朋友网的，腾讯微博的，也当朋友网，使用who判断太麻烦了。
+            return 'http://py.qlogo.cn/friend/{0}/audited/100'.format(uin);
+        }
         return "https://qlogo{host}.store.qq.com/qzone/{uin}/{uin}/{size}".format({
-            host: uin % 4 || 1,
+            host: QZone_Config.Common.AvatarHost <= 0 ? uin % 4 || 1 : QZone_Config.Common.AvatarHost,
             uin: uin,
             size: 100
         });
+    },
+
+    /**
+     * 获取用户空间的头像本地地址
+     */
+    getUserLogoLocalUrl(uin, isAppendPrePath, count) {
+        let filePath;
+        if (!this.isQzoneUrl()) {
+            filePath = 'Common/images/' + uin;
+        }
+        return API.Common.getMediaPath(this.getUserLogoUrl(uin), filePath, isAppendPrePath, count);
     },
 
     /**
@@ -647,8 +775,13 @@ API.Common = {
      * @param {boolean} isRt 是否是处理转发内容
      * @param {boolean} isSupportedHtml 内容本身是否支持HTML
      * @param {boolean} isEscHTML 是否全部转换HTML标签
+     * @param {boolean} isDownloadEmoticon 是否下载表情
+     * @param {boolean} isFormatEmoticonPath 是否转换本地地址
      */
-    formatContent(item, type, isRt, isSupportedHtml, isEscHTML) {
+    formatContent(item, type, isRt, isSupportedHtml, isEscHTML, isDownloadEmoticon, isFormatEmoticonPath) {
+        if (!item) {
+            return item;
+        }
         if (typeof item === 'string') {
             // 转换特殊符号
             if (!isSupportedHtml) {
@@ -662,7 +795,12 @@ API.Common = {
             item = this.formatMention(item, type);
             // 转换微信表情
             item = API.Common.formatWxEmoji(item, type);
-            return isEscHTML ? API.Utils.escHTML(item) : item;
+            // 转换特殊字符
+            item = isEscHTML ? API.Utils.escHTML(item) : item;
+            // 是否下载表情
+            item = isDownloadEmoticon ? API.Common.addEmoticonDowanloadTask(item) : item;
+            // 转换表情路径
+            return isFormatEmoticonPath ? API.Common.formatEmoticonPath(item) : item;
         }
         var conlist = (isRt && item.rt_con && item.rt_con['conlist']) || item.conlist || [];
         var contents = [];
@@ -726,8 +864,15 @@ API.Common = {
                     break;
             }
         }
-        const content = contents.join("").replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, "");
-        return isEscHTML ? API.Utils.escHTML(content) : content;
+        // 转换特殊字符
+        let content = contents.join("").replace(/^[\s\xA0]+/, "").replace(/[\s\xA0]+$/, "");
+        content = isEscHTML ? API.Utils.escHTML(content) : content;
+
+        // 是否下载表情
+        content = isDownloadEmoticon ? API.Common.addEmoticonDowanloadTask(content) : content;
+
+        // 转换表情路径
+        return isFormatEmoticonPath ? API.Common.formatEmoticonPath(content) : content;
     },
 
     /**
@@ -762,33 +907,19 @@ API.Common = {
      * 获取多媒体路径
      * @param {string} url 远程URL
      * @param {string} filepath 本地文件路径
-     * @param {string} sourceType 来源类型
+     * @param {string} isAppendPrePath 是否追加前一个路径
      */
-    getMediaPath(url, filepath, sourceType) {
+    getMediaPath(url, filepath, isAppendPrePath, count) {
         if (!filepath) {
             return url;
         }
-        let res = filepath || url;
-        switch (sourceType) {
-            case 'Messages_HTML':
-                res = '../' + res;
-                break;
-            case 'Photos_HTML':
-                res = '../' + res;
-                break;
-            case 'Photos_MarkDown':
-                res = '../../../' + res;
-                break;
-            case 'Videos_HTML':
-                res = '../' + res;
-                break;
-            case 'Friends_HTML':
-                res = '../' + res;
-                break;
-            default:
-                break;
+        count = count || 1;
+        if (isAppendPrePath) {
+            for (let i = 0; i < count; i++) {
+                filepath = '../' + filepath;
+            }
         }
-        return res;
+        return filepath;
     },
 
     /**
@@ -1001,18 +1132,15 @@ API.Common = {
      */
     formatWxEmoji(content, type) {
         const contentList = parseEmoji(content);
-        const imgRelativePath = 'https://fastly.jsdelivr.net/gh/ShunCai/QZoneExport@dev/src/img/emoji';
+        const imgRelativePath = 'https://cdn.jsdelivr.net/gh/ShunCai/QZoneExport@dev/src/img/emoji';
         const result = [];
         for (const _content of contentList) {
             if (_content.type === 1) {
                 result.push(_content.content);
             }
             if (_content.type === 2) {
-                let res = "<img src='{0}' >".format(imgRelativePath + "/" + _content.image);
-                switch (type) {
-                    case 'MD':
-                        res = API.Utils.getImagesMarkdown(url);
-                }
+                const url = imgRelativePath + "/" + _content.image;
+                const res = type === 'MD' ? API.Utils.getImagesMarkdown(url) : "<img src='{0}' >".format(url);
                 result.push(res);
             }
         }
@@ -1386,18 +1514,62 @@ API.Photos = {
      */
     getPhotoLbs(photo) {
         photo = photo || {};
-        return photo.shootGeo && photo.shootGeo.idname ? photo.shootGeo : photo.lbs;
+        return photo.shootGeo && (photo.shootGeo.idname || photo.shootGeo.name) ? photo.shootGeo : photo.lbs;
+    },
+
+    /**
+     * 获取相册的悬浮提示
+     * @param {Album} album 相册
+     */
+    getAlbumBasicInfoTooltip(album) {
+        const htmls = [];
+        htmls.push("<div class='text-left'>");
+        // 相册名称
+        htmls.push('<p><strong>相册名称：</strong>{0}</p>'.format(album.name));
+        // 相册描述
+        htmls.push('<p><strong>相册描述：</strong>{0}</p>'.format(API.Common.formatContent(album.desc || '暂无描述', "HTML", false, false, false, false, true)));
+        // 创建时间
+        htmls.push('<p><strong>创建时间：</strong>{0}</p>'.format(API.Utils.formatDate(album.createtime || album.create_time)));
+        // 更新时间
+        htmls.push('<p><strong>更新时间：</strong>{0}</p>'.format(API.Utils.formatDate(album.modifytime)));
+        // 最后上传时间
+        htmls.push('<p><strong>最后上传：</strong>{0}</p>'.format(album.lastuploadtime ? API.Utils.formatDate(album.lastuploadtime) : "暂未上传"));
+        htmls.push('</div>');
+        return htmls.join('');
+    },
+
+
+    /**
+     * 获取相片的悬浮提示
+     * @param {Album} photo 相片
+     */
+    getPhotoBasicInfoTooltip(photo) {
+        const htmls = [];
+        htmls.push("<div class='text-left'>");
+        // 相片名称
+        htmls.push('<p><strong>相片名称：</strong>{0}</p>'.format(photo.name || API.Utils.formatDate(photo.uploadtime || photo.uploadTime)));
+        // 相片描述
+        htmls.push('<p><strong>相片描述：</strong>{0}</p>'.format(API.Common.formatContent(photo.desc || '暂无描述', "HTML", false, false, false, false, true)));
+        // 上传时间
+        htmls.push('<p><strong>上传时间：</strong>{0}</p>'.format(API.Utils.formatDate(API.Utils.parseDate(photo.uploadtime || photo.uploadTime).getTime() / 1000) || '未知'));
+        // 拍摄时间
+        htmls.push('<p><strong>拍摄时间：</strong>{0}</p>'.format(API.Utils.formatDate(API.Utils.parseDate(photo.rawshoottime || photo.shootTime).getTime() / 1000) || '未知'));
+        // 拍摄地点
+        const custom_lbs = API.Photos.getPhotoLbs(photo);
+        htmls.push('<p><strong>拍摄/上传地点：</strong>{0}</p>'.format(custom_lbs ? custom_lbs.idname || custom_lbs.name || '未知' : '未知'));
+        htmls.push('</div>');
+        return htmls.join('');
     }
 }
 
 /**
- * 收藏夹模块API
+ * 收藏模块API
  */
 API.Favorites = {
 
     /**
-     * 获取收藏夹分享的URL
-     * @param {object} share_info 收藏夹分享信息
+     * 获取收藏分享的URL
+     * @param {object} share_info 收藏分享信息
      */
     getShareUrl(share_info) {
         if (!share_info) {
@@ -1580,6 +1752,25 @@ API.Videos = {
     }
 }
 
+
+
+/**
+ * 留言模块API
+ */
+API.Boards = {
+
+    /**
+     * 获取留言人
+     * @param {object} board 留言对象
+     */
+    getOwner(board) {
+        return board.nickname || board.nick || '神秘者';
+    }
+}
+
+/**
+ * 好友模块APi
+ */
 API.Friends = {
 
     /**
@@ -1643,7 +1834,7 @@ API.Friends = {
             return '本人';
         }
         if (!friend.addFriendTime || friend.addFriendTime === 0) {
-            return '老友';
+            return '未知';
         }
         if (0 === showType) {
             return API.Utils.formatDate(friend.addFriendTime);
@@ -1660,13 +1851,18 @@ API.Friends = {
         let showClass = 'fa-user-times text-danger';
         if (friend.isMe) {
             showText = '本人';
-            showClass = 'fa-user';
+            showClass = 'fa-user-plus';
         }
-        if (friend.isFriend === 2) {
-            showText = '单向好友';
-        } else if (friend.isFriend === 1) {
-            showText = '双向好友';
-            showClass = 'fa-user';
+        if (friend.deleted) {
+            showText = '已删';
+            showClass = 'fa-trash text-danger';
+        } else {
+            if (friend.isFriend === 2) {
+                showText = '单向';
+            } else if (friend.isFriend === 1) {
+                showText = '正常';
+                showClass = 'fa-user-plus';
+            }
         }
         if (showType === 'HTML') {
             return `<span title="好友关系：{0}" class="fa {1}"></span>`.format(showText, showClass);
@@ -1686,13 +1882,13 @@ API.Friends = {
             showClass = 'fa-unlock';
         }
         if (friend.access === false) {
-            showText = '无权限';
+            showText = '无';
         } else if (friend.access === true) {
-            showText = '有权限';
+            showText = '有';
             showClass = 'fa-unlock';
         }
         if (showType === 'HTML') {
-            return `<span title="QQ空间访问权限：{0}" class="fa {1}"></span>`.format(showText, showClass);
+            return `<span title="访问权限：{0}" class="fa {1}"></span>`.format(showText, showClass);
         }
         return showText;
     },
@@ -1770,10 +1966,10 @@ TPL.LIKE_LIST = `
         <a href="<%:=API.Common.getUserUrl(item.fuin)%>" target="_blank" class="list-group-item list-group-item-action border rounded">
             <div class="d-flex flex-row bd-highlight">
                 <div class="avatar bd-highlight">
-                    <img class="rounded-circle" src="<%:=API.Common.getUserLogoUrl(item.fuin)%>" alt="" style="height: 50px;width: 50px;">
+                    <img class="rounded-circle" src="<%:=API.Common.getUserLogoLocalUrl(item.fuin, true)%>" alt="" style="height: 50px;width: 50px;">
                 </div>
                 <div class="flex-fill bd-highlight align-self-center ml-3">
-                    <%:=API.Common.formatContent(item.nick)%>
+                    <%:=API.Common.formatContent(item.nick, "HTML", false, false, false, false, true)%>
                 </div>
                 <div class="bd-highlight align-self-center ml-3">
                     <small>
@@ -1806,10 +2002,10 @@ TPL.VISITOR_LIST = `
         <a href="<%:=API.Common.getUserUrl(item.uin)%>" target="_blank" class="list-group-item list-group-item-action border rounded">
             <div class="d-flex flex-row bd-highlight">
                 <div class="avatar bd-highlight">
-                    <img class="rounded-circle" src="<%:=API.Common.getUserLogoUrl(item.uin)%>" alt="" style="height: 50px;width: 50px;">
+                    <img class="rounded-circle" src="<%:=API.Common.getUserLogoLocalUrl(item.uin, true)%>" alt="" style="height: 50px;width: 50px;">
                 </div>
                 <div class="flex-fill bd-highlight align-self-center ml-3">
-                    <%:=API.Common.formatContent(item.name)%>
+                    <%:=API.Common.formatContent(item.name, "HTML", false, false, false, false, true)%>
                 </div>
                 <div class="bd-highlight align-self-center ml-3">
                     <small>
@@ -1830,13 +2026,13 @@ TPL.COMMON_COMMENT = `
     <div class="comment">
         <div class="d-flex justify-content-start ">
             <div class="comment-avatar">
-                <a class="avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(comment.poster && comment.poster.id || comment.uin)%>">
-                    <img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(comment.poster && comment.poster.id || comment.uin)%>" >
+                <a class="avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(API.Common.getCommentUser(comment).uin)%>">
+                    <img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoLocalUrl(API.Common.getCommentUser(comment).uin, true)%>" >
                 </a>
             </div>
             <div class="comment-infos ml-2">
-                <a target="_blank" href="<%:=API.Common.getUserUrl(comment.poster && comment.poster.id || comment.uin)%>">
-                    <span><%:=API.Common.formatContent(comment.poster && comment.poster.name || comment.name)%></span>
+                <a target="_blank" href="<%:=API.Common.getUserUrl(API.Common.getCommentUser(comment).uin)%>">
+                    <span><%:=API.Common.formatContent(API.Common.getCommentUser(comment).name, "HTML", false, false, false, false, true)%></span>
                 </a>
                 <%if(comment.private){%>
                     <span class="text-warning"> 私密评论 </span>
@@ -1846,12 +2042,12 @@ TPL.COMMON_COMMENT = `
         </div>
         <div class="comment-text">
             <div class="messageText">
-                <p><%:=API.Common.formatContent(comment.content)%></p>
+                <p><%:=API.Common.formatContent(comment.content, 'HTML', false, false, false, false, true)%></p>
                 <%if(comment.pic){%>
                     <div class="comment-lightgallery">
                         <%for (let cmIdx = 0; cmIdx < comment.pic.length; cmIdx++) {%>
                             <%const image = comment.pic[cmIdx];%>
-                            <a class="comment-img-lightbox" data-idx="<%:=cmIdx%>" data-sub-html="<%:=API.Common.formatContent(comment.content)%>"
+                            <a class="comment-img-lightbox" data-idx="<%:=cmIdx%>" data-sub-html="<%:=API.Common.formatContent(comment.content, 'HTML', false, false, false, false, true)%>"
                                 data-src="<%:=(image.custom_filepath || image.custom_url || image.o_url || image.hd_url || image.b_url || image.s_url || image.url)%>">
                                 <img src="<%:=(image.custom_filepath || image.custom_url || image.o_url || image.hd_url || image.b_url || image.s_url || image.url)%>" class="comment-img img-thumbnail">
                             </a>
@@ -1866,13 +2062,13 @@ TPL.COMMON_COMMENT = `
                         <div class="comment">
                             <div class="d-flex justify-content-start">
                                 <div class="comment-avatar">
-                                    <a class="avatar p-0 m-0 " target="_blank" href="<%:=API.Common.getUserUrl(reply.poster && reply.poster.id || reply.uin)%>">
-                                        <img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(reply.poster && reply.poster.id || reply.uin)%>">
+                                    <a class="avatar p-0 m-0 " target="_blank" href="<%:=API.Common.getUserUrl(API.Common.getCommentUser(reply).uin)%>">
+                                        <img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoLocalUrl(API.Common.getCommentUser(reply).uin, true)%>">
                                     </a>
                                 </div>
                                 <div class="comment-infos ml-2">
-                                    <a target="_blank" href="<%:=API.Common.getUserUrl(reply.poster && reply.poster.id || reply.uin)%>">
-                                        <span><%:=API.Common.formatContent(reply.poster && reply.poster.name || reply.name)%></span>
+                                    <a target="_blank" href="<%:=API.Common.getUserUrl(API.Common.getCommentUser(reply).uin)%>">
+                                        <span><%:=API.Common.formatContent(API.Common.getCommentUser(reply).name, "HTML", false, false, false, false, true)%></span>
                                     </a>
                                     <%if(reply.private){%>
                                         <span class="text-warning"> 私密回复 </span>
@@ -1882,12 +2078,12 @@ TPL.COMMON_COMMENT = `
                             </div>
                             <div class="comment-text">
                                 <div class="messageText">
-                                    <p><%:=API.Common.formatContent(reply.content)%></p>
+                                    <p><%:=API.Common.formatContent(reply.content, 'HTML', false, false, false, false, true)%></p>
                                     <%if(reply.pic){%>
                                         <div class="comment-lightgallery">
                                             <%for (let cmIdx = 0; cmIdx < reply.pic.length; cmIdx++) {%>
                                                 <%const image = reply.pic[cmIdx];%>
-                                                <a class="comment-img-lightbox" data-idx="<%:=cmIdx%>" data-sub-html="<%:=API.Common.formatContent(comment.content)%>" 
+                                                <a class="comment-img-lightbox" data-idx="<%:=cmIdx%>" data-sub-html="<%:=API.Common.formatContent(reply.content, 'HTML', false, false, false, false, true)%>" 
                                                     data-src="<%:=(image.custom_filepath || image.custom_url || image.o_url || image.hd_url || image.b_url || image.s_url || image.url)%>">
                                                     <img src="<%:=(image.custom_filepath || image.custom_url || image.o_url || image.hd_url || image.b_url || image.s_url || image.url)%>" class="comment-img img-thumbnail">
                                                 </a>
@@ -1941,19 +2137,19 @@ TPL.MESSAGES_ITEM = `
         <div class="d-flex justify-content-start message-infos">
             <div class="message-avatar-img">
                 <a class="avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(message.uin)%>">
-                    <img class="w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(message.uin)%>">
+                    <img class="w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoLocalUrl(message.uin, true)%>">
                 </a>
             </div>
             <div class="message-info ml-2">
                 <a class="message-avatar-name" target="_blank" href="<%:=API.Common.getUserUrl(message.uin)%>">
-                    <%:=API.Common.formatContent(message.name)%>
+                    <%:=API.Common.formatContent(message.name, "HTML", false, false, false, false, true)%>
                 </a>
                 <div class="message-time text-muted small"><%:=API.Common.formatContent(message.custom_create_time)%></div>
             </div>
         </div>
         <div class="messageText mt-3">
             <!-- 说说内容 -->
-            <pre class="card-text content <%:=message.has_more_con ? 'hasMore' : ''%> <%:=QZone_Config.Messages.isShowMore ? 'more' : ''%> "><%:=API.Common.formatContent(message, "HTML", false, false)%></pre>
+            <pre class="card-text content <%:=message.has_more_con ? 'hasMore' : ''%> <%:=QZone_Config.Messages.isShowMore ? 'more' : ''%> "><%:=API.Common.formatContent(message, "HTML", false, false, false, false, true)%></pre>
             <!-- 说说全文 -->
             <%if(message.has_more_con){%>
                 <span class="fa fa-2x <%:=QZone_Config.Messages.isShowMore ? 'fa-angle-up' : 'fa-angle-down'%> cursor <%:=QZone_Config.Messages.isShowMore ? 'more' : ''%> readMore" title="<%:=QZone_Config.Messages.isShowMore ? '收起全文' : '展开全文'%>"></span>
@@ -1968,10 +2164,10 @@ TPL.MESSAGES_ITEM = `
             <%if(message.rt_tid){%>
                 <hr>
                 <a class="float-left" target="_blank" href="<%:=API.Common.getUserUrl(message.rt_uin)%>">
-                    <span class="text-info"><%:=API.Common.formatContent(message.rt_uinname)%>：</span>
+                    <span class="text-info"><%:=API.Common.formatContent(message.rt_uinname, "HTML", false, false, false, false, true)%>：</span>
                 </a>
                 <!-- 转发全文 -->
-                <pre class="card-text content <%:=message.has_more_con ? 'hasMore' : ''%> <%:=QZone_Config.Messages.isShowMore ? 'more' : ''%> "><%:=API.Common.formatContent(message, "HTML", true, false)%></pre>
+                <pre class="card-text content <%:=message.has_more_con ? 'hasMore' : ''%> <%:=QZone_Config.Messages.isShowMore ? 'more' : ''%> "><%:=API.Common.formatContent(message, "HTML", true, false, false, false, true)%></pre>
                 <%if(message.rt_has_more_con && message.rt_con){%>
                     <span class="fa fa-2x <%:=QZone_Config.Messages.isShowMore ? 'fa-angle-up' : 'fa-angle-down'%> cursor readMore" title="<%:=QZone_Config.Messages.isShowMore ? '收起全文' : '展开全文'%>"></span>
                 <%}%>
@@ -1996,8 +2192,8 @@ TPL.MESSAGES_ITEM = `
                             </p>
                         </div>
                         <div class="col text-truncate">
-                            <p class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(message, "HTML", false, false)%>">
-                                <%:=API.Common.formatContent(message, "HTML", false, false)%>
+                            <p class="text-white" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(message, "HTML", false, false, false, false, true)%>">
+                                <%:=API.Common.formatContent(message, "HTML", false, false, false, false, true)%>
                             </p>
                         </div>
                         <div class="col"></div>
@@ -2100,9 +2296,9 @@ TPL.MESSAGES_ITEM = `
             <%if(message.source_name){%>
                 <li class="list-group-item pl-0">
                     <%if(message.source_url){%>
-                        <span class="text-info"><a target="_blank" href="<%:=message.source_url%>"><%:=API.Common.formatContent(message.source_name)%></a></span>
+                        <span class="text-info"><a target="_blank" href="<%:=message.source_url%>"><%:=API.Common.formatContent(message.source_name, "HTML", false, false, false, false, true)%></a></span>
                     <%}else{%>
-                        <span class="text-info fa fa-mobile-phone"> <%:=API.Common.formatContent(message.source_name)%></span>
+                        <span class="text-info fa fa-mobile-phone"> <%:=API.Common.formatContent(message.source_name, "HTML", false, false, false, false, true)%></span>
                     <%}%>
                 </li>	
             <%}%>
@@ -2144,18 +2340,18 @@ TPL.BOARDS_ITEM = `
                 <div class="d-flex justify-content-start ">
                     <div class="comment-avatar">
                         <a class="avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(board.uin)%>">
-                            <img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(board.uin)%>" >
+                            <img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoLocalUrl(board.uin, true)%>" >
                         </a>
                     </div>
                     <div class="comment-infos ml-2">
                         <a target="_blank" href="<%:=API.Common.getUserUrl(board.uin)%>">
-                            <span><%:=API.Common.formatContent(board.nickname)%></span>
+                            <span><%:=API.Common.formatContent(API.Boards.getOwner(board), "HTML", false, false, false, false, true)%></span>
                         </a>
                         <div class="text-muted small mt-1"><%:=API.Utils.formatDate(board.pubtime)%></div>
                     </div>
                 </div>
                 <div class="messageText ml-5">
-                    <%:=API.Common.formatContent(board.htmlContent,'HTML', false, true)%>
+                    <%:=API.Common.formatContent(board.htmlContent,'HTML', false, true, false, false, true)%>
                 </div>
                 <%if(board.replyList && board.replyList.length > 0){%>
                     <hr>
@@ -2165,18 +2361,18 @@ TPL.BOARDS_ITEM = `
                                 <div class="d-flex justify-content-start ">
                                     <div class="comment-avatar">
                                         <a class="avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(reply.uin)%>">
-                                            <img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(reply.uin)%>" >
+                                            <img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoLocalUrl(reply.uin, true)%>" >
                                         </a>
                                     </div>
                                     <div class="comment-infos ml-2">
                                         <a target="_blank" href="<%:=API.Common.getUserUrl(reply.uin)%>">
-                                            <span><%:=API.Common.formatContent(reply.nick)%></span>
+                                            <span><%:=API.Common.formatContent(reply.nick, "HTML", false, false, false, false, true)%></span>
                                         </a>
                                         <div class="text-muted small"><%:=API.Utils.formatDate(reply.time)%></div>
                                     </div>
                                 </div>
                                 <div class="messageText ml-5">
-                                    <%:=API.Common.formatContent(reply.content)%>
+                                    <%:=API.Common.formatContent(reply.content, 'HTML', false, false, false, false, true)%>
                                 </div>
                             </div>
                         <%}%>
@@ -2189,7 +2385,7 @@ TPL.BOARDS_ITEM = `
 `
 
 /**
- * 留言板那年今日模板
+ * 留言那年今日模板
  */
 TPL.BOARDS_YEAR_ITEMS = `
 <%if (yearMaps && yearMaps.size > 0) {%>
@@ -2230,12 +2426,12 @@ TPL.SHARES_ITEM = `
                 <div class="d-flex justify-content-start ">
                     <div class="comment-avatar">
                         <a class="avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(share.uin)%>">
-                            <img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(share.uin)%>" >
+                            <img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoLocalUrl(share.uin, true)%>" >
                         </a>
                     </div>
                     <div class="comment-infos ml-2">
                         <a target="_blank" href="<%:=API.Common.getUserUrl(share.uin)%>">
-                            <span><%:=API.Common.formatContent(share.nickname)%></span>
+                            <span><%:=API.Common.formatContent(share.nickname, "HTML", false, false, false, false, true)%></span>
                         </a>
                         分享<span class="border-warning border rounded text-warning small p-1"><%:=API.Shares.getDisplayType(share.type)%></span>
                         <div class="text-muted small mt-1"><%:=API.Utils.formatDate(share.shareTime)%></div>
@@ -2244,7 +2440,7 @@ TPL.SHARES_ITEM = `
                 <div class="messageText mt-2">
                     <!-- 分享描述 -->
                     <%if(share && share.desc){%>
-                        <p id="<%:='share-desc-' + share.id%>"><%:=API.Common.formatContent(share.desc, "HTML", false, false)%></p>
+                        <p id="<%:='share-desc-' + share.id%>"><%:=API.Common.formatContent(share.desc, "HTML", false, false, false, false, true)%></p>
                     <%}%>
                     <blockquote class="source">
                         <!-- 分享源标题 -->
@@ -2254,7 +2450,7 @@ TPL.SHARES_ITEM = `
                             <%}%>
                             <!-- 分享源描述 -->
                             <%if(share.source.desc){%>
-                                <p id="<%:='share-source-desc-' + share.id%>"><%:=API.Common.formatContent(share.source.desc, "HTML", false, false)%></p>
+                                <p id="<%:='share-source-desc-' + share.id%>"><%:=API.Common.formatContent(share.source.desc, "HTML", false, false, false, false, true)%></p>
                             <%}%>
                         <%}%>
                         <!-- 分享内容 -->
@@ -2319,7 +2515,7 @@ TPL.SHARES_YEAR_ITEMS = `
 TPL.BLOGS_LIST_ITEM = `
     <a href="./info.html?blogId=<%:=blog.blogid || blog.blogId%>" class="list-group-item list-group-item-action mb-2">
         <div class="d-flex w-100 justify-content-start">
-            <h6 class="mb-2">
+            <h5 class="mb-2 font-weight-bold">
                 <%let labels = API.Blogs.getBlogLabel(blog)%>
                 <%for (const label of labels) {%>
                     <%if (label === '置顶') {%>
@@ -2331,7 +2527,7 @@ TPL.BLOGS_LIST_ITEM = `
                     <%}%>
                 <%}%>
                 <%:=blog.title%>
-            </h6>
+            </h5>
         </div>
         <%if (blog.img && blog.img.length > 0) {%>
             <div class="d-flex w-100 justify-content-start mb-2">
@@ -2342,7 +2538,7 @@ TPL.BLOGS_LIST_ITEM = `
         <%}%>
         <p class="mb-2"><%:=blog.abstract || '' %></p>
         <div class="d-flex w-100 justify-content-start mt-2 mb-2 small">
-            <span class="mr-2 text-wrap" title="发表时间"><%:=API.Utils.formatDate(blog.pubtime)%></span>
+            <span class="mr-2 text-wrap" title="发表时间"><%:=API.Utils.formatDate(blog.lastModifyTime ||  blog.pubtime) %></span>
             <span class="text-primary fa fa-thumbs-up ml-2 mr-2 viewlikes" title="点赞数"><%:=blog.likeTotal%></span>
             <span class="text-primary fa fa-comments-o mr-2 viewcomments" title="评论数"><%:=blog.replynum%></span>
             <span class="text-primary fa fa-eye mr-2 viewVisitors" title="阅读数"><%:=blog.custom_visitor && blog.custom_visitor.viewCount || 0%></span>
@@ -2418,9 +2614,9 @@ TPL.FRIENDS_LIST_ITEM = `
  <div class="list-group-item list-group-item-action mb-2">
      <div class="align-middle mb-2">
         <a class="avatar" href="<%:=API.Common.getUserUrl(friend.uin)%>" target="_blank" title="访问TA的QQ空间">
-            <img src="<%:=API.Common.getMediaPath(API.Common.getUserLogoUrl(friend.uin), friend.custom_avatar, "Friends_HTML")%>">
+            <img src="<%:=API.Common.getUserLogoLocalUrl(friend.uin, true)%>">
         </a>
-        <span title="备注/昵称" class="ml-2"><%:=API.Common.formatContent(friend.remark || friend.name)%></span>
+        <span title="备注/昵称" class="ml-2"><%:=API.Common.formatContent(friend.remark || friend.name, "HTML", false, false, false, false, true)%></span>
      </div>
      <ul class="list-inline">
         <li class="list-inline-item qq-message">
@@ -2454,7 +2650,7 @@ TPL.FRIENDS_LIST_ITEM = `
 `
 
 /**
- * 所有日志列表模板
+ * 好友列表模板
  */
 TPL.FRIENDS_LIST = `
  <%for (const friend of friends) {%>
@@ -2463,7 +2659,7 @@ TPL.FRIENDS_LIST = `
 `
 
 /**
- * 分类日志列表模板
+ * 分组好友列表模板
  */
 TPL.FRIENDS_LIST_GROUP = `
  <%for (const friend of groupNameItems) {%>

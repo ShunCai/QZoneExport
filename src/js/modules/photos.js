@@ -45,6 +45,9 @@ API.Photos.export = async() => {
         // 获取相片赞记录
         await API.Photos.getPhotosLikeList(images);
 
+        // 添加表情下载任务
+        API.Photos.addDownloadEmoticonTasks(albumList);
+
         // 添加相片下载任务
         await API.Photos.addAlbumsDownloadTasks(albumList);
 
@@ -140,7 +143,7 @@ API.Photos.getAllImagesInfos = async(albumList) => {
             await API.Photos.getImageInfo(album.id, picKey).then((data) => {
                 // 去掉函数，保留json
                 data = API.Utils.toJson(data, /^_Callback\(/);
-                if (data.code < 0) {
+                if (data.code && data.code != 0) {
                     // 获取异常
                     console.warn('获取所有相片的详情异常：', data);
                 }
@@ -243,7 +246,7 @@ API.Photos.getAlbumPageList = async(pageIndex, indicator) => {
     return await API.Photos.getAlbums(pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^shine0_Callback\(/);
-        if (data.code < 0) {
+        if (data.code && data.code != 0) {
             // 获取异常
             console.warn('获取单页的相册列表异常：', data);
         }
@@ -275,8 +278,7 @@ API.Photos.getAlbumPageList = async(pageIndex, indicator) => {
 API.Photos.getAllAlbumList = async() => {
     // 进度更新器
     const indicator = new StatusIndicator('Photos');
-
-    // 开始
+    indicator.setIndex(1);
     indicator.print();
 
     const CONFIG = QZone_Config.Photos;
@@ -341,7 +343,7 @@ API.Photos.getAlbumImagePageList = async(item, pageIndex, indicator) => {
     return await API.Photos.getImages(item.id, pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^shine0_Callback\(/);
-        if (data.code < 0) {
+        if (data.code && data.code != 0) {
             // 获取异常
             console.warn('获取单个相册的指定页相片列表异常：', data);
         }
@@ -476,7 +478,7 @@ API.Photos.getAlbumImageAllListByDetail = async(album) => {
         await API.Photos.getImageInfo(albumId, picKey).then(async(data) => {
             // 去掉函数，保留json
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取所有相片的详情异常：', data);
             }
@@ -612,7 +614,7 @@ API.Photos.getAlbumAllComments = async(item) => {
 
             // 去掉函数，保留json
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取单个相册的所有评论异常：', data);
             }
@@ -668,8 +670,8 @@ API.Photos.getAllAlbumsComments = async(items) => {
             indicator.addSkip(item);
             continue;
         }
-        if (item.comment === 0) {
-            // 没评论时，跳过
+        if (item.comment === 0 || item.allowAccess === 0) {
+            // 没评论或无权限时，跳过
             indicator.addSkip(item);
             continue;
         }
@@ -707,7 +709,7 @@ API.Photos.getImageAllComments = async(item, indicator) => {
 
             // 去掉函数，保留json
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取单张相片的所有评论异常：', data);
             }
@@ -1092,11 +1094,11 @@ API.Photos.getAlbumsMarkdown = (albums) => {
 
         for (const comment of album.comments) {
             // 评论人
-            const poster_name = API.Common.formatContent(comment.poster.name, 'MD');
+            const poster_name = API.Common.formatContent(comment.poster.name, 'MD', false, false, false, false, true);
             const poster_display = API.Common.getUserLink(comment.poster.id, poster_name, "MD");
 
             // 评论内容
-            let content = API.Common.formatContent(comment.content, 'MD');
+            let content = API.Common.formatContent(comment.content, 'MD', false, false, false, false, true);
             contents.push("* {0}：{1}".format(poster_display, content));
 
             // 评论包含图片
@@ -1114,11 +1116,11 @@ API.Photos.getAlbumsMarkdown = (albums) => {
             for (const repItem of replies) {
 
                 // 回复人
-                let repName = API.Common.formatContent(repItem.poster.name, 'MD');
+                let repName = API.Common.formatContent(repItem.poster.name, 'MD', false, false, false, false, true);
                 const rep_poster_display = API.Common.getUserLink(comment.poster.id, repName, "MD");
 
                 // 回复内容
-                let content = API.Common.formatContent(repItem.content, 'MD');
+                let content = API.Common.formatContent(repItem.content, 'MD', false, false, false, false, true);
                 contents.push("\t* {0}：{1}".format(rep_poster_display, content));
 
                 const repImgs = repItem.pic || [];
@@ -1257,11 +1259,11 @@ API.Photos.getPhotosMarkdownContents = (photos) => {
     for (let index = 0; index < photos.length; index++) {
         const photo = photos[index];
         // 相片名称
-        contents.push('> ' + API.Common.formatContent(photo.name || '', 'MD'));
+        contents.push('> ' + API.Common.formatContent(photo.name || '', 'MD', false, false, false, false, true));
         contents.push('\r\n');
 
         // 相片
-        const custom_filepath = API.Common.getMediaPath(photo.custom_url || photo.url, photo.custom_filepath, "Photos_MarkDown");
+        const custom_filepath = API.Common.getMediaPath(photo.custom_url || photo.url, photo.custom_filepath, true, 3);
         if (photo.is_video) {
             // 视频
             contents.push('<video height="400" src="{0}" controls="controls" ></video>'.format(custom_filepath));
@@ -1272,7 +1274,7 @@ API.Photos.getPhotosMarkdownContents = (photos) => {
         contents.push('\r\n');
 
         // 相片描述
-        contents.push('> ' + API.Common.formatContent(photo.desc || photo.name || '', 'MD'));
+        contents.push('> ' + API.Common.formatContent(photo.desc || photo.name || '', 'MD', false, false, false, false, true));
         contents.push('\r\n');
 
         // 相片评论
@@ -1283,10 +1285,10 @@ API.Photos.getPhotosMarkdownContents = (photos) => {
         photo.comments = photo.comments || [];
         for (const comment of photo.comments) {
             // 评论人
-            const poster_name = API.Common.formatContent(comment.poster.name, 'MD');
+            const poster_name = API.Common.formatContent(comment.poster.name, 'MD', false, false, false, false, true);
             const poster_display = API.Common.getUserLink(comment.poster.id, poster_name, "MD");
             // 评论内容
-            let content = API.Common.formatContent(comment.content, 'MD');
+            let content = API.Common.formatContent(comment.content, 'MD', false, false, false, false, true);
             contents.push("* {0}：{1}".format(poster_display, content));
 
             // 评论包含图片
@@ -1302,10 +1304,10 @@ API.Photos.getPhotosMarkdownContents = (photos) => {
             const replies = comment.replies || [];
             for (const repItem of replies) {
                 // 回复人
-                const repName = API.Common.formatContent(repItem.poster.name, 'MD');
+                const repName = API.Common.formatContent(repItem.poster.name, 'MD', false, false, false, false, true);
                 const rep_poster_display = API.Common.getUserLink(comment.poster.id, repName, "MD");
                 // 回复内容
-                const content = API.Common.formatContent(repItem.content, 'MD');
+                const content = API.Common.formatContent(repItem.content, 'MD', false, false, false, false, true);
                 contents.push("\t* {0}：{1}".format(rep_poster_display, content));
 
                 const repImgs = repItem.pic || [];
@@ -1387,6 +1389,9 @@ API.Photos.getPhotosByAlbumId = (items, albumId) => {
  * @param {integer} albumId 相册ID
  */
 API.Photos.isNewAlbum = (albumId) => {
+    if (API.Common.isFullBackup(QZone_Config.Photos)) {
+        return true;
+    }
     if (!QZone.Photos.Album.OLD_Data || QZone.Photos.Album.OLD_Data.length === 0) {
         // 没有存在已备份数据的，当作新数据处理
         return true;
@@ -1405,6 +1410,9 @@ API.Photos.isNewAlbum = (albumId) => {
  * @param {Object} photo 相片
  */
 API.Photos.isNewItem = (albumId, photo) => {
+    if (API.Common.isFullBackup(QZone_Config.Photos)) {
+        return true;
+    }
     // 因为用户可以指定相册备份，不全量相册备份的情况下，不能直接取IncrementTime增量时间判断相片是否需要备份，IncrementTime仅适用全量备份的场景
     const album = API.Photos.getAlbumById(QZone.Photos.Album.OLD_Data, albumId);
     if (!album) {
@@ -1502,9 +1510,8 @@ API.Photos.getAlbumsLikeList = async(items) => {
             item.likes = item.likes || [];
 
             if (!API.Photos.isNewAlbum(item.id)) {
-                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
-                await Promise.all(tasks);
-                break end;
+                // 已备份相册
+                continue;
             }
 
             indicator.setIndex(++count);
@@ -1619,7 +1626,7 @@ API.Photos.getItemAllVisitorsList = async(item) => {
 
         return await API.Photos.getVisitors(item.id, pageIndex).then(async(data) => {
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取单条全部最近访问异常：', data);
             }
@@ -1671,9 +1678,8 @@ API.Photos.getAllVisitorList = async(items) => {
         for (let j = 0; j < list.length; j++) {
             const item = list[j];
             if (!API.Photos.isNewAlbum(item.id)) {
-                // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
-                await Promise.all(tasks);
-                break end;
+                // 已备份跳过
+                continue;
             }
             indicator.setIndex(++count);
             tasks.push(API.Photos.getItemAllVisitorsList(item).then((visitor) => {
@@ -1881,4 +1887,50 @@ API.Photos.getImageFileName = (photo, prefix) => {
     }
     photo.custom_filename = fileNames.join('_');
     return photo.custom_filename;
+}
+
+/**
+ * 添加下载表情任务
+ * @param {Message} albums 相册列表 
+ */
+API.Photos.addDownloadEmoticonTasks = (albums) => {
+    if (API.Common.isQzoneUrl()) {
+        // QQ空间外链，跳过
+        return;
+    }
+
+    // 遍历
+    for (const album of albums) {
+        // 相册表情
+        if (API.Photos.isNewAlbum(album.id)) {
+
+            // 相册名称表情，理论上不存在表情
+            API.Common.formatContent(album.name, "HTML", false, false, false, true, false);
+
+            // 相册描述表情
+            API.Common.formatContent(album.desc, "HTML", false, false, false, true, false);
+
+            // 相册评论表情
+            API.Common.addCommentEmoticonDownloadTasks(album);
+        }
+
+        // 相片表情
+        const photos = album.photoList || [];
+        for (const photo of photos) {
+            if (!API.Photos.isNewItem(album.id, photo)) {
+                // 已备份数据跳过不处理
+                continue;
+            }
+
+            // 相片名称表情，理论上不存在表情
+            API.Common.formatContent(photo.name, "HTML", false, false, false, true, false);
+
+            // 相片描述表情
+            API.Common.formatContent(photo.desc, "HTML", false, false, false, true, false);
+
+            // 相片评论表情
+            API.Common.addCommentEmoticonDownloadTasks(photo);
+        }
+    }
+
 }

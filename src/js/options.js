@@ -235,6 +235,7 @@
         const $file_suffix_row = $('#common_file_suffix_row');
         const $suffix_timeout_row = $('#common_file_suffix_timeout_row');
         const $download_thread_row = $('#common_download_thread_row');
+        const $download_sleep_row = $('#common_download_sleep_row');
         // Aria2
         const $common_aria2_rpc_row = $('#common_aria2_rpc_row');
         const $common_aria2_token_row = $('#common_aria2_token_row');
@@ -254,6 +255,7 @@
                 $file_suffix_row.show();
                 $suffix_timeout_row.show();
                 $download_thread_row.show();
+                $download_sleep_row.show();
                 $common_refererUrls.show();
 
                 $download_type_help.html('助手内部目前<span style="color:red">暂不支持数据容量大于2G的备份</span>，2G内建议使用助手内部下载，超2G的建议使用其他方式下载');
@@ -263,10 +265,11 @@
                 $task_count_row.hide();
                 $task_sleep_row.hide();
                 $download_status_row.hide();
-                $download_thread_row.hide();
                 $common_refererUrls.hide();
 
                 // 显示Aria2配置
+                $download_thread_row.show();
+                $download_sleep_row.show();
                 $common_aria2_rpc_row.show();
                 $common_aria2_token_row.show();
                 $file_suffix_row.show();
@@ -280,6 +283,7 @@
                 $common_aria2_rpc_row.hide();
                 $common_aria2_token_row.hide();
                 $common_refererUrls.hide();
+                $download_sleep_row.hide();
 
                 $task_count_row.show();
                 $task_sleep_row.show();
@@ -295,6 +299,7 @@
                 $common_aria2_rpc_row.hide();
                 $common_aria2_token_row.hide();
                 $common_refererUrls.hide();
+                $download_sleep_row.hide();
 
                 $task_count_row.show();
                 $task_sleep_row.show();
@@ -316,6 +321,7 @@
                 $file_suffix_row.show();
                 $suffix_timeout_row.show();
                 $download_thread_row.show();
+                $download_sleep_row.hide();
 
                 $download_type_help.html('<span class="text-danger">打开迅雷设置中的接管剪切板开关</span>，然后复制ZIP包中【<span class="text-danger">迅雷下载链接.txt</span>】中的全部文字内容自动新建下载任务');
                 break;
@@ -330,6 +336,7 @@
                 $file_suffix_row.show();
                 $suffix_timeout_row.show();
                 $download_thread_row.show();
+                $download_sleep_row.show();
                 $common_refererUrls.show();
 
                 $download_type_help.html('使用浏览器下载，请确保已关闭浏览器设置中的<span style="color:red">【下载前询问每个文件的保存位置】</span>选项，否则浏览器将会一直弹窗提示保存文件');
@@ -340,6 +347,7 @@
                 $file_suffix_row.hide();
                 $suffix_timeout_row.hide();
                 $download_thread_row.hide();
+                $download_sleep_row.hide();
                 $common_refererUrls.hide();
 
                 // 隐藏Aria2配置
@@ -529,7 +537,7 @@
         }
     })
 
-    // 监听留言板备份类型选择事件
+    // 监听留言备份类型选择事件
     $('#boards_exportFormat').change(function() {
         let value = $(this).val();
         switch (value) {
@@ -746,7 +754,7 @@
         $("#videos_like_min").val(options.Videos.Like.randomSeconds.min);
         $("#videos_like_max").val(options.Videos.Like.randomSeconds.max);
 
-        // 留言板模块赋值
+        // 留言模块赋值
         $("#boards_exportFormat").val(options.Boards.exportType).change();
         $("#boards_increment_type").val(options.Boards.IncrementType).change();
         $("#boards_increment_time").val(options.Boards.IncrementTime);
@@ -762,8 +770,9 @@
         $("#friends_interactive_info").prop("checked", options.Friends.Interactive);
         $("#friends_care_list").prop("checked", options.Friends.SpecialCare);
         $("#friends_is_increment").prop("checked", options.Friends.isIncrement);
+        $("#friends_special_group").selectpicker('val', options.Friends.SpecialGroup);
 
-        // 收藏夹模块赋值
+        // 收藏模块赋值
         $("#favorites_exportFormat").val(options.Favorites.exportType);
         $("#favorites_increment_type").val(options.Favorites.IncrementType).change();
         $("#favorites_increment_time").val(options.Favorites.IncrementTime);
@@ -804,17 +813,21 @@
         // 公共模块赋值
         $("#common_list_retry_count").val(options.Common.listRetryCount);
         $("#common_list_retry_sleep").val(options.Common.listRetrySleep);
+        $("#common_wait_count").val(options.Common.waitCount);
+        $("#common_wait_time").val(options.Common.waitTime);
+        $("#common_rest_sleep_url").selectpicker('val', options.Common.RestSleepUrls);
         $("#common_download_type").val(options.Common.downloadType).change();
         $('#common_download_status').prop("checked", options.Common.disabledShelf);
         chrome.downloads.setShelfEnabled && chrome.downloads.setShelfEnabled(!options.Common.disabledShelf);
         $("#common_thunder_task_count").val(options.Common.thunderTaskNum);
         $("#common_thunder_task_sleep").val(options.Common.thunderTaskSleep);
         $("#common_download_thread").val(options.Common.downloadThread);
+        $("#common_download_sleep").val(options.Common.downloadSleep);
         $("#common_aria2_rpc").val(options.Common.Aria2.rpc);
         $("#common_aria2_token").val(options.Common.Aria2.token || '');
         $('#common_user_link').prop("checked", options.Common.hasUserLink);
 
-        
+
         // 开发者
         $('#dev_maps_tx_key').val(options.Dev.Maps.TxKey);
         $('#dev_maps_bd_key').val(options.Dev.Maps.BdKey);
@@ -826,6 +839,9 @@
         // 微信坐标
         renderValueToDom(options, 'refreshWeChatLbs');
 
+        // 语音说说
+        renderValueToDom(options, 'GetVoice');
+
         // 图片类型识别
         renderValueToDom(options, 'isAutoFileSuffix');
 
@@ -834,6 +850,12 @@
 
         // 显示方式
         renderValueToDom(options, 'showType');
+
+        // 排序类型
+        renderValueToDom(options, 'SortType');
+
+        // 排序类型
+        renderValueToDom(options, 'AvatarHost');
 
         // 视图类型
         renderValueToDom(options, 'viewType');
@@ -1030,7 +1052,7 @@
         QZone_Config.Videos.Comments.randomSeconds.max = $("#videos_comments_max").val() * 1;
         QZone_Config.Videos.Comments.pageSize = $("#videos_comments_limit").val() * 1;
 
-        // 留言板模块赋值
+        // 留言模块赋值
         QZone_Config.Boards.exportType = $("#boards_exportFormat").val();
         QZone_Config.Boards.IncrementType = $("#boards_increment_type").val();
         QZone_Config.Boards.IncrementTime = $("#boards_increment_time").val();
@@ -1045,8 +1067,9 @@
         QZone_Config.Friends.Interactive = $("#friends_interactive_info").prop("checked");
         QZone_Config.Friends.SpecialCare = $("#friends_care_list").prop("checked");
         QZone_Config.Friends.isIncrement = $("#friends_is_increment").prop("checked");
+        QZone_Config.Friends.SpecialGroup = $("#friends_special_group").val();
 
-        // 收藏夹模块赋值
+        // 收藏模块赋值
         QZone_Config.Favorites.exportType = $("#favorites_exportFormat").val();
         QZone_Config.Favorites.IncrementType = $("#favorites_increment_type").val();
         QZone_Config.Favorites.IncrementTime = $("#favorites_increment_time").val();
@@ -1087,12 +1110,16 @@
         // 公共模块赋值		
         QZone_Config.Common.listRetryCount = $("#common_list_retry_count").val() * 1;
         QZone_Config.Common.listRetrySleep = $("#common_list_retry_sleep").val() * 1;
+        QZone_Config.Common.waitCount = $("#common_wait_count").val() * 1;
+        QZone_Config.Common.waitTime = $("#common_wait_time").val() * 1;
+        QZone_Config.Common.RestSleepUrls = $("#common_rest_sleep_url").val();
         QZone_Config.Common.downloadType = $('#common_download_type').val();
         QZone_Config.Common.disabledShelf = !$('#common_download_status').prop("checked");
         chrome.downloads.setShelfEnabled && chrome.downloads.setShelfEnabled(!QZone_Config.Common.disabledShelf);
         QZone_Config.Common.thunderTaskNum = $("#common_thunder_task_count").val() * 1;
         QZone_Config.Common.thunderTaskSleep = $("#common_thunder_task_sleep").val() * 1;
         QZone_Config.Common.downloadThread = $("#common_download_thread").val() * 1;
+        QZone_Config.Common.downloadSleep = $("#common_download_sleep").val() * 1;
         QZone_Config.Common.Aria2.rpc = $("#common_aria2_rpc").val();
         QZone_Config.Common.Aria2.token = $("#common_aria2_token").val();
         QZone_Config.Common.hasUserLink = $('#common_user_link').prop("checked");
@@ -1108,6 +1135,9 @@
         // 微信坐标
         setValueByFrom(QZone_Config, 'refreshWeChatLbs');
 
+        // 语音说说
+        setValueByFrom(QZone_Config, 'GetVoice');
+
         // 图片类型识别
         setValueByFrom(QZone_Config, 'isAutoFileSuffix');
 
@@ -1116,6 +1146,12 @@
 
         // 显示方式
         setValueByFrom(QZone_Config, 'showType');
+
+        // 排序类型
+        setValueByFrom(QZone_Config, 'SortType');
+
+        // 头像地址
+        setValueByFrom(QZone_Config, 'AvatarHost');
 
         // 视图类型
         setValueByFrom(QZone_Config, 'viewType');

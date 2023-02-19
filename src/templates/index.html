@@ -2,7 +2,7 @@
 <html lang="zh">
 
 <head>
-	<link rel="icon" href="https://qzonestyle.gtimg.cn/aoi/img/logo/favicon.ico"> 
+	<link rel="icon" href="Common/images/favicon.ico"> 
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<title>QQ空间备份-<%:=user.spacename%></title>
 	<link rel="stylesheet" href="https://cdn.staticfile.org/bootstrap/4.6.1/css/bootstrap.min.css">
@@ -12,6 +12,8 @@
 	<script src="https://cdn.staticfile.org/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
 	<script src="https://cdn.staticfile.org/lodash.js/4.17.21/lodash.min.js"></script>
 	<script src="https://www.lvshuncai.com/custom/js/clicklove.min.js"></script>
+	
+	<script type="text/javascript" src="Common/json/config.js"></script>
 </head>
 
 <body>
@@ -34,7 +36,7 @@
 		<div class="container">
 			<div id="index_html" class="header">
 				<div class="head-avatar">
-					<img src="<%:=user.custom_avatar || user.avatar%>" class="user-avatar border">
+					<img src="<%:=API.Common.getUserLogoLocalUrl(user.uin, false)%>" class="user-avatar border">
 				</div>
 				<div class="head-info">
 					<h3 class="head-title" id="top_head_title">
@@ -55,9 +57,11 @@
 						<a href="Blogs/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.blogs >0 %>;">
 							日志<span class="badge badge-primary badge-pill"><%:=user.blogs || 0%></span>
 						</a>
-						<a href="Diaries/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.diaries >0 %>;">
-							日记<span class="badge badge-primary badge-pill"><%:=user.diaries || 0%></span>
-						</a>
+						<%if(user.isOwner){%>
+							<a href="Diaries/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.diaries >0 %>;">
+								日记<span class="badge badge-primary badge-pill"><%:=user.diaries || 0%></span>
+							</a>
+						<%}%>
 						<a href="Albums/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.photos >0 %>;">
 							相册<span class="badge badge-primary badge-pill"><%:=user.photos || 0%></span>
 						</a>
@@ -67,19 +71,23 @@
 						<a href="Boards/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.boards >0 %>;">
 							留言<span class="badge badge-primary badge-pill"><%:=user.boards || 0%></span>
 						</a>
-						<a href="Favorites/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.favorites >0 %>;">
-							收藏<span class="badge badge-primary badge-pill"><%:=user.favorites || 0%></span>
-						</a>
+						<%if(user.isOwner){%>
+							<a href="Favorites/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.favorites >0 %>;">
+								收藏<span class="badge badge-primary badge-pill"><%:=user.favorites || 0%></span>
+							</a>
+						<%}%>
 						<a href="Shares/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.shares >0 %>;">
 							分享<span class="badge badge-primary badge-pill"><%:=user.shares || 0%></span>
 						</a>
 						<a href="Visitors/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.visitors >0 %>;">
 							访客<span class="badge badge-primary badge-pill"><%:=user.visitors || 0%></span>
 						</a>
-						<a href="Friends/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.friends >0 %>;">
-							好友<span class="badge badge-primary badge-pill"><%:=user.friends || 0%></span>
-						</a>
-						<a href="Statistics/index.html" class="list-group-item list-group-item-action">
+						<%if(user.isOwner){%>
+							<a href="Friends/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.friends >0 %>;">
+								好友<span class="badge badge-primary badge-pill"><%:=user.friends || 0%></span>
+							</a>
+						<%}%>
+						<a href="Statistics/index.html" class="list-group-item list-group-item-action" onclick="return <%:=user.messages >0 %>;">
 							足迹<i class="fa fa-map-marker" aria-hidden="true" style="color: red;"></i>
 						</a>
 					</div>

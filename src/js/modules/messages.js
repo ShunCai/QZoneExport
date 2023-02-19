@@ -69,7 +69,7 @@ API.Messages.getList = async(pageIndex, indicator) => {
     return await API.Messages.getMessages(pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_preloadCallback\(/);
-        if (data.code < 0) {
+        if (data.code && data.code != 0) {
             // 获取异常
             console.warn('获取单页的说说列表异常：', data);
         }
@@ -105,6 +105,8 @@ API.Messages.getAllList = async() => {
 
     // 说说状态更新器
     const indicator = new StatusIndicator('Messages');
+    indicator.setIndex(1);
+    indicator.print();
 
     // 说说配置项
     const CONFIG = QZone_Config.Messages;
@@ -185,7 +187,7 @@ API.Messages.getAllFullContent = async(items) => {
             // 更新状态-下载成功数
             indicator.addSuccess(item);
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取所有说说的全文内容异常：', data);
             }
@@ -218,17 +220,19 @@ API.Messages.getAllFullContent = async(items) => {
 API.Messages.getItemCommentList = async(item, pageIndex) => {
     return await API.Messages.getComments(item.tid, pageIndex).then(async(data) => {
         // 去掉函数，保留json
-        data = API.Utils.toJson(data, /^_preloadCallback\(/);
-        if (data.code < 0) {
+        data = API.Utils.toJson(data, /^_Callback\(/);
+        if (data.code && data.code != 0) {
             // 获取异常
             console.warn('获取单条说说的单页评论列表异常：', data);
+            return [];
         }
 
         // 下载相对目录
         let module_dir = 'Messages/images';
 
         // 处理说说评论的配图
-        let comments = data.commentlist || [];
+        let comments = data.commentlist || data.data && data.data.comments || [];
+
         for (let i = 0; i < comments.length; i++) {
             const comment = comments[i];
             let images = comment.pic || [];
@@ -263,7 +267,8 @@ API.Messages.getItemAllCommentList = async(item) => {
         // 当前列表比评论总数小的时候才需要获取全部评论，否则则跳过
         return item.custom_comments;
     }
-    // 情况原有的评论列表
+
+    // 清空原有的评论列表
     item.custom_comments = [];
 
     // 说说评论配置
@@ -525,7 +530,7 @@ API.Messages.getMarkdown = (item) => {
     }
 
     // 说说内容
-    contents.push(API.Common.formatContent(item, "MD", false));
+    contents.push(API.Common.formatContent(item, "MD", false, false, false, false, true));
 
     // 转发内容
     if (isRt) {
@@ -535,11 +540,11 @@ API.Messages.getMarkdown = (item) => {
         contents.push("\r\n");
 
         // 原作者
-        let rt_name = API.Common.formatContent(item.rt_uinname, 'MD');
+        let rt_name = API.Common.formatContent(item.rt_uinname, 'MD', false, false, false, false, true);
         rt_name = API.Common.getUserLink(item.rt_uin, rt_name, 'MD', true);
 
         // 原内容
-        contents.push('{0}：{1}'.format(rt_name, API.Common.formatContent(item, 'MD', true)));
+        contents.push('{0}：{1}'.format(rt_name, API.Common.formatContent(item, 'MD', true, false, false, false, true)));
     }
 
     // 说说为转发说说时，对应的图片，视频，歌曲信息属于源说说的
@@ -552,27 +557,27 @@ API.Messages.getMarkdown = (item) => {
     for (const comment of comments) {
 
         // 评论人
-        let comment_name = API.Common.formatContent(comment.name, 'MD');
+        let comment_name = API.Common.formatContent(comment.name, 'MD', false, false, false, false, true);
         comment_name = API.Common.getUserLink(comment.uin, comment_name, 'MD', true);
 
-        contents.push("*  {0}：{1}".format(comment_name, API.Common.formatContent(comment.content, 'MD')));
+        contents.push("*  {0}：{1}".format(comment_name, API.Common.formatContent(comment.content, 'MD', false, false, false, false, true)));
 
         // 评论包含图片
         const comment_images = comment.pic || [];
         for (const image of comment_images) {
             // 替换URL
-            contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(image.custom_url, image.custom_filepath, "Messages_MD")));
+            contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(image.custom_url, image.custom_filepath, true)));
         }
 
         // 评论的回复
         const replies = comment.list_3 || [];
         for (const repItem of replies) {
             // 回复人
-            let repName = API.Common.formatContent(repItem.name, 'MD');
+            let repName = API.Common.formatContent(repItem.name, 'MD', false, false, false, false, true);
             repName = API.Common.getUserLink(repItem.uin, repName, 'MD', true);
 
             // 回复内容
-            let content = API.Common.formatContent(repItem.content, 'MD');
+            let content = API.Common.formatContent(repItem.content, 'MD', false, false, false, false, true);
 
             // 回复内容
             contents.push("\t* {0}：{1}".format(repName, content));
@@ -580,7 +585,7 @@ API.Messages.getMarkdown = (item) => {
             // 回复包含图片，理论上回复现在不能回复图片，兼容一下
             const repImgs = repItem.pic || [];
             for (const repImg of repImgs) {
-                contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(repImg.custom_url, repImg.custom_filepath, "Messages_MD")));
+                contents.push(API.Utils.getImagesMarkdown(API.Common.getMediaPath(repImg.custom_url, repImg.custom_filepath, true)));
             }
         }
     }
@@ -646,35 +651,19 @@ API.Messages.addMediaToTasks = async(dataList) => {
             indicator.addSuccess(1);
         }
 
-        // 下载特殊表情
+        // 下载表情
+        API.Messages.addDownloadEmoticonTasks(item);
+
+        // 下载趣味表情
         for (const magic of item.custom_magics) {
             await API.Utils.addDownloadTasks('Messages', magic, magic.custom_url, module_dir, item, QZone.Messages.FILE_URLS, '.jpeg');
             indicator.addSuccess(1);
         }
 
-
-        // 获取评论的配图
-        // 评论内容
-        let comments = item.custom_comments || [];
-        for (const comment of comments) {
-            // 评论包含图片
-            let images = comment.pic || [];
-            for (const image of images) {
-                await API.Utils.addDownloadTasks('Messages', image, image.hd_url || image.b_url, module_dir, item, QZone.Messages.FILE_URLS);
-                indicator.addSuccess(1);
-            }
-
-            // 回复包含图片，理论上回复现在不能回复图片，兼容一下
-            let replies = comment.list_3 || [];
-            for (const repItem of replies) {
-                let images = repItem.pic || [];
-                for (const image of images) {
-                    await API.Utils.addDownloadTasks('Messages', image, image.hd_url || image.b_url, module_dir, item, QZone.Messages.FILE_URLS);
-                    indicator.addSuccess(1);
-                }
-            }
-        }
+        // 添加评论的配图下载任务
+        await API.Common.addCommentImageDownloadTasks(item, 'Messages', indicator)
     }
+
     // 完成
     indicator.complete();
     return dataList;
@@ -714,7 +703,7 @@ API.Messages.getAllImages = async(items) => {
         }
         await API.Messages.getImageInfos(item.tid).then((data) => {
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取所有图片异常：', data);
             }
@@ -757,7 +746,7 @@ API.Messages.getAllImages = async(items) => {
  * @param {Array} items 说说列表
  */
 API.Messages.getAllVoices = async(items) => {
-    if (!items) {
+    if (!items || !QZone_Config.Messages.GetVoice) {
         return items;
     }
 
@@ -995,7 +984,7 @@ API.Messages.getItemAllVisitorsList = async(item) => {
 
         return await API.Messages.getVisitors(item.tid, pageIndex).then(async(data) => {
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取单条说说的全部最近访问异常：', data);
             }
@@ -1117,6 +1106,11 @@ API.Messages.refreshWeChatLbsInfo = async items => {
         const item = items[idx];
         indicator.setIndex(idx + 1);
 
+        if (!API.Common.isNewItem(item)) {
+            // 已备份的，跳过
+            indicator.addSkip(item);
+        }
+
         if (item.custom_lbsInfo) {
             // 已有坐标信息的，跳过
             indicator.addSkip(item);
@@ -1132,7 +1126,7 @@ API.Messages.refreshWeChatLbsInfo = async items => {
             indicator.addSkip(item);
             continue;
         }
-        if(!QZone_Config.Dev.Maps.TxKey){
+        if (!QZone_Config.Dev.Maps.TxKey) {
             // 没有API Key的，跳过
             indicator.addSkip(item);
             continue;
@@ -1163,4 +1157,29 @@ API.Messages.refreshWeChatLbsInfo = async items => {
 
     // 完成
     indicator.complete();
+}
+
+/**
+ * 添加下载表情任务
+ * @param {Message} item 
+ */
+API.Messages.addDownloadEmoticonTasks = (item) => {
+    if (API.Common.isQzoneUrl() || !API.Common.isNewItem(item)) {
+        // QQ空间外链或已备份项，跳过
+        return;
+    }
+
+    // 说说作者
+    API.Common.formatContent(item.name, "HTML", false, false, false, true, false);
+    // 说说原文
+    API.Common.formatContent(item, "HTML", false, false, false, true, false);
+
+    // 转发说说原文
+    item.rt_tid && API.Common.formatContent(item, "HTML", true, false, false, true, false);
+    // 转发说说原文作者
+    item.rt_tid && API.Common.formatContent(item.rt_uinname, "HTML", true, false, false, true, false);
+
+    // 添加评论的表情下载任务
+    API.Common.addCommentEmoticonDownloadTasks(item);
+
 }

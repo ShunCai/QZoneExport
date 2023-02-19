@@ -2,7 +2,7 @@
 <html lang="zh">
 
 <head>
-	<link rel="icon" href="https://qzonestyle.gtimg.cn/aoi/img/logo/favicon.ico"> 
+	<link rel="icon" href="../Common/images/favicon.ico"> 
 	<title>QQ空间备份-相册</title>
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -10,10 +10,11 @@
 	<link rel="stylesheet" type="text/css" href="../Common/css/common.css">
 	<script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
 	<script src="https://cdn.staticfile.org/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
-    <script src="https://fastly.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
 	<script src="https://cdn.staticfile.org/lodash.js/4.17.21/lodash.min.js"></script>
 	<script src="https://www.lvshuncai.com/custom/js/clicklove.min.js"></script>
-
+	
+	<script type="text/javascript" src="../Common/json/config.js"></script>
 	<script type="text/javascript" src="json/albums.js"></script>
 	<script type="text/javascript" src="../Common/js/common.js"></script>
 	<script type="text/javascript" src="../Common/js/sidebar.js"></script>
@@ -51,11 +52,11 @@
 								<div class="card thumbnail mb-3 shadow-sm">
 									<span class="sidebar-h2" data-tag="h2" data-sidebar='<%:=album.name%>'></span>
 									<span class="badge badge-success badge-pill album-photo-total cursor" title="相片数量"><%:=album.total%></span>
-									<a href="photos.html?albumId=<%:=album.id%>">
+									<a href="photos.html?albumId=<%:=album.id%>" onclick="return <%:=album.allowAccess >0 && album.photoList.length >0 %>;">
 										<img class="card-img" src="<%:=(album.custom_filepath || album.custom_url || album.url || album.pre)%>">
 									</a>
-									<div class="card-body text-truncate">
-										<span class="card-title" data-toggle="tooltip" data-html="true" title="<%:=API.Utils.formatContent(album.name, 'HTML', false, false)%>"><%:=API.Utils.formatContent(album.name, "HTML", false, false)%></span>
+									<div class="card-body text-truncate" data-toggle="tooltip" data-html="true" title="<%:=API.Photos.getAlbumBasicInfoTooltip(album)%>">
+										<span class="card-title"><%:=API.Utils.formatContent(album.name, "HTML", false, false, false, false, true)%></span>
 									</div>
 									<div class="pic-num-wrap d-flex justify-content-around">
 										<div class="align-self-end">

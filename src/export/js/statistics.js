@@ -74,7 +74,7 @@ API.Messages.getAllLbs = items => {
             continue;
         }
         // 转发的说说跳过
-        if(item.rt_tid){
+        if (item.rt_tid) {
             continue;
         }
         const lbs = item.lbs;
@@ -376,12 +376,12 @@ API.Statistics.formatterResidentProvince = params => {
 
     if (fisrtItem.module === '说说') {
         const message = fisrtItem.source;
-        const custom_content = API.Common.formatContent(message, "HTML", false, false);
+        const custom_content = API.Common.formatContent(message, "HTML", false, false, false, false, true);
 
         contetns.push('<hr>');
         contetns.push(`最早打卡：<span class="text-primary">${message.custom_create_time}</span><br>`);
         if (!custom_content && message.rt_tid) {
-            contetns.push(`转发了说说：${API.Common.formatContent(message, "HTML", true, false)}<br>`);
+            contetns.push(`转发了说说：${API.Common.formatContent(message, "HTML", true, false, false, false, true)}<br>`);
         } else {
             contetns.push(`发表了说说：${custom_content}<br>`);
         }
@@ -392,12 +392,12 @@ API.Statistics.formatterResidentProvince = params => {
 
     if (latestItem.module === '说说') {
         const message = latestItem.source;
-        const custom_content = API.Common.formatContent(message, "HTML", false, false);
+        const custom_content = API.Common.formatContent(message, "HTML", false, false, false, false, true);
 
         contetns.push('<hr>');
         contetns.push(`最新打卡：<span class="text-primary">${message.custom_create_time}</span><br>`);
         if (!custom_content && message.rt_tid) {
-            contetns.push(`转发了说说：${API.Common.formatContent(message, "HTML", true, false)}<br>`);
+            contetns.push(`转发了说说：${API.Common.formatContent(message, "HTML", true, false, false, false, true)}<br>`);
         } else {
             contetns.push(`发表了说说：${custom_content}<br>`);
         }
@@ -420,12 +420,12 @@ API.Statistics.formatterWayMarker = (params) => {
 
     if (targetItem.module === '说说') {
         const message = targetItem.source;
-        const custom_content = API.Common.formatContent(message, "HTML", false, false);
+        const custom_content = API.Common.formatContent(message, "HTML", false, false, false, false, true);
         contetns.push(`打卡时间：<span class="text-primary">${message.custom_create_time}</span><br>`);
 
         contetns.push('<hr>');
         if (!custom_content && message.rt_tid) {
-            contetns.push(`转发了说说：${API.Common.formatContent(message, "HTML", true, false)}<br>`);
+            contetns.push(`转发了说说：${API.Common.formatContent(message, "HTML", true, false, false, false, true)}<br>`);
         } else {
             contetns.push(`发表了说说：${custom_content}<br>`);
         }
@@ -511,122 +511,6 @@ API.Statistics.getTitle = (mapType, region, count) => {
         left: 'center',
         bottom: "0"
     }]
-}
-
-/**
- * 获取评论人
- * @param {Object} item 
- */
-API.Statistics.getCommentUsers = (item) => {
-    // 评论人
-    const users = [];
-
-    // 说说评论人
-    const comments = item.custom_comments || [];
-    if (_.isEmpty(comments)) {
-        return users;
-    }
-    // 遍历评论
-    for (const comment of comments) {
-        if (_.findIndex(users, ['uin', comment.uin]) > -1) {
-            continue;
-        }
-        users.push({
-            uin: comment.uin || comment.fuin,
-            name: comment.name || comment.nick
-        });
-
-        // 回复
-        const repList = comment.list_3 || [];
-        for (const repItem of repList) {
-            if (_.findIndex(users, ['uin', repItem.uin]) > -1) {
-                continue;
-            }
-            users.push({
-                uin: repItem.uin || repItem.fuin,
-                name: repItem.name || repItem.nick
-            });
-        }
-    }
-    return users;
-}
-
-/**
- * 获取点赞人
- * @param {Object} item 
- */
-API.Statistics.getLikeUsers = (item) => {
-    // 评论人
-    const users = [];
-
-    // 说说点赞人
-    const likes = item.likes || [];
-
-    if (_.isEmpty(likes)) {
-        return users;
-    }
-    // 遍历点赞
-    for (const like of likes) {
-        if (_.findIndex(users, ['uin', like.fuin]) > -1) {
-            continue;
-        }
-
-        users.push({
-            uin: like.uin || like.fuin,
-            name: like.name || like.nick
-        });
-    }
-    return users;
-}
-
-/**
- * 获取浏览者
- * @param {Object} item 
- */
-API.Statistics.getVisitorUsers = (item) => {
-    // 评论人
-    const users = [];
-
-    // 说说访客
-    const custom_visitors = item.custom_visitor.list || [];
-    if (_.isEmpty(custom_visitors)) {
-        return users;
-    }
-    // 遍历点赞
-    for (const visitorItem of custom_visitors) {
-        if (_.findIndex(users, ['uin', visitorItem.uin]) > -1) {
-            continue;
-        }
-
-        users.push({
-            uin: visitorItem.uin || visitorItem.fuin,
-            name: visitorItem.name || visitorItem.nick
-        });
-    }
-
-    return users;
-}
-
-/**
- * 收集说说互动用户
- */
-API.Statistics.getMessagesInteractiveUsers = () => {
-    //  所有的用户
-    const users = [];
-
-    if (_.isEmpty(messages)) {
-        return users;
-    }
-
-    for (const item of messages) {
-        // 说说评论人
-        users.push(...API.Statistics.getCommentUsers(item));
-        // 说说点赞人
-        users.push(...API.Statistics.getLikeUsers(item));
-        // 说说访客
-        users.push(...API.Statistics.getVisitorUsers(item));
-    }
-    return _.uniqBy(users, 'uin');
 }
 
 /**

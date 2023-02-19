@@ -47,7 +47,7 @@ API.Blogs.showTableList = function() {
             return API.Blogs.getBlogLabel(row).join(',');
         }
     }, {
-        field: 'pubtime',
+        field: 'pubTime',
         title: '发布时间',
         align: 'center',
         width: "150",

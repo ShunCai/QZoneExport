@@ -27,6 +27,9 @@ API.Blogs.export = async() => {
         // 获取所有的日志评论
         items = await API.Blogs.getItemsAllCommentList(items);
 
+        // 添加评论的表情下载任务，日志内容的，统一按普通图片下载即可
+        API.Common.addAllCommentEmoticonDownloadTasks(items);
+
         // 获取日志点赞列表
         await API.Blogs.getAllLikeList(items);
 
@@ -66,47 +69,52 @@ API.Blogs.getAllContents = async(items) => {
         }
 
         await API.Blogs.getInfo(item.blogId).then(async(data) => {
-                // 添加成功提示
-                indicator.addSuccess(data);
-                // 加载日志页面
-                const blogPage = jQuery(data);
 
-                // 基于DOM获取详细信息
-                const detailItem = API.Blogs.readDetailInfo(blogPage);
-                item = detailItem && Object.assign(item, detailItem);
+            // 添加成功提示
+            indicator.addSuccess(data);
+            // 加载日志页面
+            const blogPage = jQuery(data);
 
-                // 获得网页中的日志正文
-                const $detailBlog = blogPage.find("#blogDetailDiv:first");
+            // 基于DOM获取详细信息
+            const detailItem = API.Blogs.readDetailInfo(blogPage);
+            item = detailItem && Object.assign(item, detailItem);
 
-                // 是否为模板日志
-                if (API.Blogs.isTemplateBlog(item)) {
-                    // 模板日志，日志内容在变量中
-                    $detailBlog.html(API.Blogs.readTemplateContent(blogPage));
+            // 获得网页中的日志正文
+            const $detailBlog = blogPage.find("#blogDetailDiv:first");
+
+            // 是否为模板日志
+            if (API.Blogs.isTemplateBlog(item)) {
+                // 模板日志，日志内容在变量中
+                let tplContent = API.Blogs.readTemplateContent(blogPage);
+                if (tplContent) {
+                    $detailBlog.html(tplContent);
                 }
+            }
 
-                // 添加原始HTML
-                item.html = API.Utils.utf8ToBase64($detailBlog.html());
+            // 添加原始HTML
+            item.html = API.Utils.utf8ToBase64($detailBlog.html());
 
-                // 处理图片信息
-                await API.Blogs.handerContentImages(item, $detailBlog.find("img"));
+            // 处理图片信息
+            await API.Blogs.handerContentImages(item, $detailBlog.find("img"));
 
-                // 处理视频信息
-                await API.Blogs.handerMedias(item, $detailBlog.find("embed"));
+            // 处理视频信息
+            await API.Blogs.handerMedias(item, $detailBlog.find("embed"));
 
-                // 更改自定义标题
-                item.custom_title = item.title;
-                // 添加自定义HTML
-                item.custom_html = API.Utils.utf8ToBase64($detailBlog.html());
-                // 添加点赞Key
-                item.uniKey = API.Blogs.getUniKey(item.blogid || item.blogId);
+            // 更改自定义标题
+            item.custom_title = item.title;
+            // 添加自定义HTML
+            item.custom_html = API.Utils.utf8ToBase64($detailBlog.html());
+            // 添加点赞Key
+            item.uniKey = API.Blogs.getUniKey(item.blogid || item.blogId);
 
-                items[index] = item;
-            }).catch((e) => {
-                console.error("获取日志内容异常", item, e);
-                // 添加失败提示
-                indicator.addFailed(item);
-            })
-            // 等待一下再请求
+            items[index] = item;
+        }).catch((e) => {
+            console.error("获取日志内容异常", item, e);
+            // 添加失败提示
+            indicator.addFailed(item);
+        })
+
+        // 等待一下再请求
         let min = QZone_Config.Blogs.Info.randomSeconds.min;
         let max = QZone_Config.Blogs.Info.randomSeconds.max;
         let seconds = API.Utils.randomSeconds(min, max);
@@ -129,7 +137,7 @@ API.Blogs.getList = async(pageIndex, indicator) => {
     return await API.Blogs.getBlogs(pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
-        if (data.code < 0) {
+        if (data.code && data.code != 0) {
             // 获取异常
             console.warn('获取日志列表异常：', data);
         }
@@ -159,8 +167,7 @@ API.Blogs.getAllList = async() => {
 
     // 日志状态更新器
     const indicator = new StatusIndicator('Blogs');
-
-    // 开始
+    indicator.setIndex(1);
     indicator.print();
 
     const CONFIG = QZone_Config.Blogs;
@@ -173,7 +180,7 @@ API.Blogs.getAllList = async() => {
         return await API.Blogs.getList(pageIndex, indicator).then(async(dataList) => {
 
             // 设置比较信息
-            dataList = API.Common.setCompareFiledInfo(dataList, 'pubTime', 'pubtime');
+            // dataList = API.Common.setCompareFiledInfo(dataList, 'pubTime', 'pubtime');
 
             // 合并数据
             QZone.Blogs.Data = API.Utils.unionItems(QZone.Blogs.Data, dataList);
@@ -258,7 +265,7 @@ API.Blogs.getItemCommentList = async(item, pageIndex) => {
     return await API.Blogs.getComments(item.blogid, pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
-        if (data.code < 0) {
+        if (data.code && data.code != 0) {
             // 获取异常
             console.warn('获取单条日志的单页评论列表异常：', data);
         }
@@ -370,7 +377,7 @@ API.Blogs.exportToHtml = async(items) => {
         }
 
     } catch (error) {
-        console.error('导出私密日记到HTML异常', error);
+        console.error('导出日记到HTML异常', error);
     }
 
     // 更新进度信息
@@ -427,7 +434,8 @@ API.Blogs.exportToMarkdown = async(items) => {
         // 写入内容到文件
         // 标签
         const labels = API.Blogs.getBlogLabel(item);
-        const date = new Date(item.pubtime * 1000).format('yyyyMMddhhmmss');
+        // const date = new Date(item.pubtime * 1000).format('yyyyMMddhhmmss');
+        const date = (item.pubTime || new Date(item.pubtime * 1000).format('yyyyMMddhhmmss')).replace(' ', '');
         // 序号
         const orderNum = API.Utils.prefixNumber(index + 1, QZone.Blogs.total.toString().length);
         // 文件名
@@ -463,7 +471,7 @@ API.Blogs.getMarkdown = async(item) => {
     // 标题
     contents.push("# " + item.title);
     // 日期
-    contents.push("> " + API.Utils.formatDate(item.pubtime));
+    contents.push("> " + API.Utils.formatDate(item.pubTime || item.pubtime));
     contents.push('\r\n');
     // 内容
     // 根据HTML获取MD内容
@@ -478,11 +486,11 @@ API.Blogs.getMarkdown = async(item) => {
     for (const comment of comments) {
         // 评论人
         let poster = comment.poster.name || QZone.Common.Target.nickname || '';
-        poster = API.Common.formatContent(poster, 'MD');
+        poster = API.Common.formatContent(poster, 'MD', false, false, false, false, true);
         poster = API.Common.getUserLink(comment.poster.id, poster, 'MD', true);
 
         // 评论内容
-        let content = API.Common.formatContent(comment.content, 'MD');
+        let content = API.Common.formatContent(comment.content, 'MD', false, false, false, false, true);
         // 替换换行符
         content = content.replace(/\n/g, "");
 
@@ -494,11 +502,11 @@ API.Blogs.getMarkdown = async(item) => {
         for (const rep of replies) {
             // 回复人
             let repPoster = rep.poster.name || QZone.Common.Target.nickname || '';
-            repPoster = API.Common.formatContent(repPoster, 'MD');
+            repPoster = API.Common.formatContent(repPoster, 'MD', false, false, false, false, true);
             repPoster = API.Common.getUserLink(rep.poster.id, repPoster, 'MD', true);
 
             // 回复内容
-            let repContent = API.Common.formatContent(rep.content, 'MD');
+            let repContent = API.Common.formatContent(rep.content, 'MD', false, false, false, false, true);
             // 替换换行符
             repContent = repContent.replace(/\n/g, "");
 
@@ -519,6 +527,10 @@ API.Blogs.handerListImages = async(items) => {
         return;
     }
     for (const item of items) {
+        if (!API.Common.isNewItem(item)) {
+            // 列表由新到旧，只要遍历到旧项，后续的都是旧的，跳出循环
+            break;
+        }
         const images = item.img || [];
         for (const image of images) {
             // 图片地址
@@ -691,7 +703,9 @@ API.Blogs.sort = (items) => {
     const compare = function(obj1, obj2) {
         const isTop1 = API.Blogs.getBlogLabel(obj1).indexOf('置顶') > -1;
         const isTop2 = API.Blogs.getBlogLabel(obj2).indexOf('置顶') > -1;
-        const res = obj1.pubtime > obj2.pubtime ? 1 : -1;
+        const time1 = obj1.pubTime ? new Date(obj1.pubTime).getTime() : obj1.pubtime;
+        const time2 = obj2.pubTime ? new Date(obj2.pubTime).getTime() : obj2.pubtime;
+        const res = time1 > time2 ? 1 : -1;
         if (isTop1 !== isTop2) {
             if (isTop1) {
                 return -1;
@@ -789,7 +803,7 @@ API.Blogs.getItemAllVisitorsList = async(item) => {
 
         return await API.Blogs.getVisitors(item.blogid, pageIndex).then(async(data) => {
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取单条日志的全部最近访问异常：', data);
             }
@@ -899,7 +913,7 @@ API.Blogs.getAllReadCount = async(items) => {
             // 单独获取日志的阅读数
             let data = await API.Blogs.getReadCount(blogIds);
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取日志阅读数异常：', data);
             }

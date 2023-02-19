@@ -2,9 +2,9 @@
 <html lang="zh">
 
 <head>
-	<link rel="icon" href="https://qzonestyle.gtimg.cn/aoi/img/logo/favicon.ico">
+	<link rel="icon" href="../Common/images/favicon.ico">
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-	<title>QQ空间备份-留言板</title>
+	<title>QQ空间备份-留言</title>
 	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" href="https://cdn.staticfile.org/bootstrap/4.6.1/css/bootstrap.min.css">
 	<link rel="stylesheet" href="https://cdn.staticfile.org/lightgallery/2.3.0/css/lightgallery.min.css">
@@ -22,7 +22,7 @@
 	<script src="https://cdn.staticfile.org/lightgallery/2.3.0/plugins/fullscreen/lg-fullscreen.min.js"></script>
 	<script src="https://cdn.staticfile.org/lightgallery/2.3.0/plugins/autoplay/lg-autoplay.min.js"></script>
 	
-	<script src="https://fastly.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
 	<script src="https://www.lvshuncai.com/custom/js/clicklove.min.js"></script>
 	
 	<script type="text/javascript" src="../Common/json/config.js"></script>
@@ -43,7 +43,7 @@
 				<nav aria-label="breadcrumb">
 					<ol class="breadcrumb bg-dark">
 						<li class="breadcrumb-item"><a href="../index.html">个人中心</a></li>
-						<li class="breadcrumb-item active" aria-current="page">留言板</li>
+						<li class="breadcrumb-item active" aria-current="page">留言</li>
 					</ol>
 				</nav>
 			</div>
@@ -57,7 +57,7 @@
 					<%:=authorInfo.message || '说些寄语，欢迎您的空间访客吧'%>
 				</div>
 			</div>
-			<h4 class="sidebar-h1 mt-3 boards-items" data-tag="h1" data-sidebar="留言板">留言板(<%:=total%>)</h4>
+			<h4 class="sidebar-h1 mt-3 boards-items" data-tag="h1" data-sidebar="访客留言">留言(<%:=total%>)</h4>
 			<%for (const [year, yearMap] of boardMaps) {%>
 				<span class="sidebar-h1" data-tag="h1" data-sidebar='<%:=year%>年<span class="badge badge-primary badge-pill itemSize"><%:=API.Utils.sumYearItemSize(yearMap)%><span>'></span>
 				<%for (const [month, monthItems] of yearMap) {%>
@@ -72,19 +72,19 @@
 										<div class="d-flex justify-content-start ">
 											<div class="comment-avatar">
 												<a class="avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(board.uin)%>">
-													<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(board.uin)%>" >
+													<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoLocalUrl(board.uin, true)%>" >
 												</a>
 											</div>
 											<div class="comment-infos ml-2">
 												<a target="_blank" href="<%:=API.Common.getUserUrl(board.uin)%>">
-													<span><%:=API.Common.formatContent(board.nickname)%></span>
+													<span><%:=API.Common.formatContent(API.Boards.getOwner(board), 'HTML', false, false, false, false, true)%></span>
 												</a>
 												<span class="border-warning border rounded text-warning small p-1" title="当前楼层">#<%:=total + 1 %></span>
 												<div class="text-muted small mt-1"><%:=API.Utils.formatDate(board.pubtime)%></div>
 											</div>
 										</div>
 										<div class="messageText ml-5">
-											<%:=API.Common.formatContent(board.htmlContent,'HTML', false, true)%>
+											<%:=API.Common.formatContent(board.htmlContent,'HTML', false, true, false, false, true)%>
 										</div>
 										<%if(board.replyList && board.replyList.length > 0){%>
 											<hr>
@@ -94,18 +94,18 @@
 														<div class="d-flex justify-content-start ">
 															<div class="comment-avatar">
 																<a class="avatar p-0 m-0" target="_blank" href="<%:=API.Common.getUserUrl(reply.uin)%>">
-																	<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoUrl(reply.uin)%>" >
+																	<img class="lazyload loading w-100 h-100 border rounded-circle" src="<%:=API.Common.getUserLogoLocalUrl(reply.uin, true)%>" >
 																</a>
 															</div>
 															<div class="comment-infos ml-2">
 																<a target="_blank" href="<%:=API.Common.getUserUrl(reply.uin)%>">
-																	<span><%:=API.Common.formatContent(reply.nick)%></span>
+																	<span><%:=API.Common.formatContent(API.Boards.getOwner(reply), 'HTML', false, false, false, false, true)%></span>
 																</a>
 																<div class="text-muted small"><%:=API.Utils.formatDate(reply.time)%></div>
 															</div>
 														</div>
 														<div class="messageText ml-5">
-															<%:=API.Common.formatContent(reply.content)%>
+															<%:=API.Common.formatContent(reply.content, 'HTML', false, false, false, false, true)%>
 														</div>
 													</div>
 												<%}%>

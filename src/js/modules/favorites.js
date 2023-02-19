@@ -1,5 +1,5 @@
 /**
- * QQ空间收藏夹模块导出API
+ * QQ空间收藏模块导出API
  * @author https://lvshuncai.com
  */
 
@@ -47,7 +47,7 @@ API.Favorites.getPageList = async(pageIndex, indicator) => {
     return await API.Favorites.getFavorites(pageIndex).then(data => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
-        if (data.code < 0) {
+        if (data.code && data.code != 0) {
             // 获取异常
             console.warn('获取一页的收藏列表异常：', data);
         }
@@ -74,8 +74,7 @@ API.Favorites.getAllList = async() => {
 
     // 进度更新器
     const indicator = new StatusIndicator('Favorites');
-
-    // 开始
+    indicator.setIndex(1);
     indicator.print();
 
     const CONFIG = QZone_Config.Favorites;
@@ -141,7 +140,7 @@ API.Favorites.exportAllToFiles = async(favorites) => {
 }
 
 /**
- * 导出收藏夹到HTML文件
+ * 导出收藏到HTML文件
  * @param {Array} favorites 数据
  */
 API.Favorites.exportToHtml = async(favorites) => {
@@ -181,7 +180,7 @@ API.Favorites.exportToHtml = async(favorites) => {
         }
         await API.Common.writeHtmlofTpl('favorites', params, moduleFolder + "/index.html");
     } catch (error) {
-        console.error('导出收藏夹到HTML异常', error, favorites);
+        console.error('导出收藏到HTML异常', error, favorites);
     }
 
     // 更新进度信息
@@ -232,7 +231,7 @@ API.Favorites.exportToMarkdown = async(favorites) => {
         // 生成汇总文件
         await API.Utils.writeText(allYearContents.join('\r\n'), API.Common.getModuleRoot('Favorites') + '/Favorites.md');
     } catch (error) {
-        console.error('导出收藏夹到Markdown文件异常', error, videos);
+        console.error('导出收藏到Markdown文件异常', error, videos);
     }
 
     // 完成
@@ -253,9 +252,9 @@ API.Favorites.getMarkdown = (favorite) => {
         case '日志':
             // 日志模板
             let blog_info = favorite.blog_info;
-            let blog_owner_name = API.Common.formatContent(owner.name, "MD");
+            let blog_owner_name = API.Common.formatContent(owner.name, "MD", false, false, false, false, true);
             contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 日志 [{2}]({https://user.qzone.qq.com/{3}/blog/{4}}) 【{5}】'.format(blog_owner_name, blog_info.owner_uin, favorite.title, blog_info.owner_uin, blog_info.id, favorite.custom_create_time));
-            contents.push('> {0}'.format(API.Common.formatContent(favorite.custom_abstract, "MD")));
+            contents.push('> {0}'.format(API.Common.formatContent(favorite.custom_abstract, "MD", false, false, false, false, true)));
             break;
         case '说说':
             // 说说模板
@@ -264,19 +263,19 @@ API.Favorites.getMarkdown = (favorite) => {
             let isRt = shuoshuo_info.forward_flag === 1;
             // 长说说内容
             let content = shuoshuo_info.detail_shuoshuo_info.content || favorite.custom_abstract;
-            let shuoshuo_owner_name = API.Common.formatContent(owner.name, "MD");
+            let shuoshuo_owner_name = API.Common.formatContent(owner.name, "MD", false, false, false, false, true);
             contents.push('[{0}](https://user.qzone.qq.com/{1}) 说说 【{2}】'.format(shuoshuo_owner_name, shuoshuo_info.owner_uin, favorite.custom_create_time));
             if (isRt) {
                 //转发说说添加转发理由
-                contents.push('> {0}'.format(API.Common.formatContent(shuoshuo_info.reason, "MD")));
+                contents.push('> {0}'.format(API.Common.formatContent(shuoshuo_info.reason, "MD", false, false, false, false, true)));
                 contents.push('\r\n');
             }
-            contents.push('> {0}'.format(API.Common.formatContent(content, "MD", isRt, false)));
+            contents.push('> {0}'.format(API.Common.formatContent(content, "MD", isRt, false, false, false, true)));
             break;
         case '分享':
             // 分享模板（通用），暂时不区分分享的类型
             let share_info = favorite.share_info;
-            let share_owner_name = API.Common.formatContent(owner.name, "MD");
+            let share_owner_name = API.Common.formatContent(owner.name, "MD", false, false, false, false, true);
             contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 分享 【{2}】'.format(share_owner_name, share_info.owner_uin, favorite.custom_create_time));
             // 分享类型
             let share_type = share_info.share_type;
@@ -284,17 +283,17 @@ API.Favorites.getMarkdown = (favorite) => {
             let share_reason = share_info.reason;
             if (share_reason) {
                 contents.push('\r\n');
-                contents.push('{0}'.format(API.Common.formatContent(share_reason, "MD")));
+                contents.push('{0}'.format(API.Common.formatContent(share_reason, "MD", false, false, false, false, true)));
             }
             let target_url = share_info.share_url;
-            let share_title_content = API.Common.formatContent(favorite.title, "MD");
+            let share_title_content = API.Common.formatContent(favorite.title, "MD", false, false, false, false, true);
             let share_title = API.Utils.getLink(target_url, share_title_content, "MD");
             switch (share_type) {
                 case 1:
                     // 日志
                     let blog_info = share_info.blog_info;
                     let blog_owner_uin = blog_info.owner_uin;
-                    let _blog_owner_name = API.Common.formatContent(owner.name, "MD");
+                    let _blog_owner_name = API.Common.formatContent(owner.name, "MD", false, false, false, false, true);
 
                     // 日志发布人链接
                     let blog_owner_url = API.Common.getUserLink(blog_owner_uin, _blog_owner_name, "MD");
@@ -309,7 +308,7 @@ API.Favorites.getMarkdown = (favorite) => {
                     // 相册
                     let album_info = share_info.album_info;
                     let album_owner_uin = album_info.owner_uin;
-                    let album_owner_name = API.Common.formatContent(owner.name, "MD");
+                    let album_owner_name = API.Common.formatContent(owner.name, "MD", false, false, false, false, true);
 
                     // 相册创建人链接
                     let album_owner_url = API.Common.getUserLink(album_owner_uin, album_owner_name, "MD");
@@ -351,7 +350,7 @@ API.Favorites.getMarkdown = (favorite) => {
             contents.push('> {0}'.format(share_title));
             if (favorite.custom_abstract && favorite.custom_abstract.trim()) {
                 contents.push('\r\n');
-                contents.push('> {0}'.format(API.Common.formatContent(favorite.custom_abstract, "MD")));
+                contents.push('> {0}'.format(API.Common.formatContent(favorite.custom_abstract, "MD", false, false, false, false, true)));
             }
             break;
         case '本地图片':
@@ -360,12 +359,12 @@ API.Favorites.getMarkdown = (favorite) => {
             break;
         case '照片':
             // 照片模板
-            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 照片 【{2}】'.format(API.Common.formatContent(owner.name, "MD"), owner.uin, favorite.custom_create_time));
+            contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 照片 【{2}】'.format(API.Common.formatContent(owner.name, "MD", false, false, false, false, true), owner.uin, favorite.custom_create_time));
             break;
         case '文字':
             // 文字模板，仅适用一般长度的文字，暂不支持获取文字的全文，没有找到全文的查看地址，暂时不处理
             contents.push('[{0}]({https://user.qzone.qq.com/{1}}) 文字 【{2}】'.format(favorite.custom_name, favorite.custom_uin, favorite.custom_create_time));
-            contents.push('> {0}'.format(API.Common.formatContent(favorite.custom_abstract, "MD")));
+            contents.push('> {0}'.format(API.Common.formatContent(favorite.custom_abstract, "MD", false, false, false, false, true)));
             break;
         case '网页':
             // 网页模板
@@ -432,7 +431,7 @@ API.Favorites.exportToJson = async(favorites) => {
  */
 API.Favorites.addMediaToTasks = async(dataList) => {
     // 下载相对目录
-    let module_dir = 'Favorites/images';
+    const module_dir = 'Favorites/images';
 
     for (const item of dataList) {
 
@@ -441,10 +440,14 @@ API.Favorites.addMediaToTasks = async(dataList) => {
             continue;
         }
 
-        // 下载说说配图
+        // 下载配图
         for (const image of item.custom_images) {
-            let url = image.url;
-            await API.Utils.addDownloadTasks('Favorites', image, url, module_dir, item, QZone.Favorites.FILE_URLS);
+            await API.Utils.addDownloadTasks('Favorites', image, image.url, module_dir, item, QZone.Favorites.FILE_URLS);
+        }
+
+        // 下载配图
+        for (const image of item.custom_origin_images) {
+            await API.Utils.addDownloadTasks('Favorites', image, image.url, module_dir, item, QZone.Favorites.FILE_URLS);
         }
 
         // 下载视频预览图及视频
@@ -452,9 +455,41 @@ API.Favorites.addMediaToTasks = async(dataList) => {
 
         // 下载音乐预览图
         for (const audio of item.custom_audios) {
-            let url = audio.preview_img;
-            await API.Utils.addDownloadTasks('Favorites', audio, url, module_dir, item, QZone.Favorites.FILE_URLS);
+            await API.Utils.addDownloadTasks('Favorites', audio, audio.preview_img, module_dir, item, QZone.Favorites.FILE_URLS);
         }
+
+        // 下载表情
+        API.Favorites.addDownloadEmoticonTasks(item);
+
     }
     return dataList;
+}
+
+/**
+ * 添加下载表情任务
+ * @param {Message} favorite 收藏 
+ */
+API.Favorites.addDownloadEmoticonTasks = (favorite) => {
+    if (API.Common.isQzoneUrl() || !API.Common.isNewItem(favorite)) {
+        // QQ空间外链，跳过
+        return;
+    }
+
+    // 收藏原作者
+    API.Common.formatContent(API.Favorites.getFavoriteOwner(favorite).name, 'HTML', false, false, false, true, false);
+
+    if (favorite.shuoshuo_info && favorite.shuoshuo_info.reason) {
+        API.Common.formatContent(favorite.shuoshuo_info.reason, 'HTML', false, true, false, true, false)
+    }
+
+    if (favorite.share_info && favorite.share_info.reason) {
+        API.Common.formatContent(favorite.share_info.reason, 'HTML', false, true, false, true, false)
+    }
+
+    if (favorite.shuoshuo_info && favorite.shuoshuo_info.detail_shuoshuo_info) {
+        API.Common.formatContent(favorite.shuoshuo_info.detail_shuoshuo_info.content, 'HTML', false, false, false, true, false);
+    }
+
+    API.Common.formatContent(favorite.abstract || favorite.desp, 'HTML', false, true, false, true, false);
+
 }

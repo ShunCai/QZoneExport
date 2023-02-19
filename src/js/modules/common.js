@@ -40,6 +40,9 @@ API.Common.initUserInfo = async() => {
             // 更换用户图片
             userInfo.avatar = API.Common.getUserLogoUrl(userInfo.uin);
 
+            // 是否备份自身空间
+            userInfo.isOwner = QZone.Common.Target.uin === QZone.Common.Owner.uin;
+
         }).catch((error) => {
             console.error("获取用户信息异常", error);
         });
@@ -67,6 +70,9 @@ API.Common.exportOthers = async() => {
 
         // 导出用户信息
         await API.Common.exportUser();
+
+        // 导出用户头像
+        await API.Common.exportUserAvatar();
 
         // 下载助手配置信息
         await API.Common.exportConfigToJson();
@@ -122,6 +128,9 @@ API.Common.exportUser = async() => {
     userInfo.friends = QZone.Friends.Data.length;
     userInfo.visitors = QZone.Visitors.Data.total;
 
+    // 是否备份自身空间
+    userInfo.isOwner = QZone.Common.Target.uin === QZone.Common.Owner.uin;
+
     // 根据导出类型导出数据
     await API.Common.exportUserToJson(userInfo);
 
@@ -165,11 +174,11 @@ API.Common.exportUserToMd = async(userInfo) => {
     hasMd = hasMd || QZone_Config.Blogs.exportType === 'MarkDown';
     // 日记
     hasMd = hasMd || QZone_Config.Diaries.exportType === 'MarkDown';
-    // 留言板
+    // 留言
     hasMd = hasMd || QZone_Config.Boards.exportType === 'MarkDown';
-    // QQ好友
+    // 好友
     hasMd = hasMd || QZone_Config.Friends.exportType === 'MarkDown';
-    // 收藏夹
+    // 收藏
     hasMd = hasMd || QZone_Config.Favorites.exportType === 'MarkDown';
     // 分享
     hasMd = hasMd || QZone_Config.Shares.exportType === 'MarkDown';
@@ -220,11 +229,11 @@ API.Common.exportUserToHtml = async(userInfo) => {
     hasHtml = hasHtml || QZone_Config.Blogs.exportType === 'HTML';
     // 日记
     hasHtml = hasHtml || QZone_Config.Diaries.exportType === 'HTML';
-    // 留言板
+    // 留言
     hasHtml = hasHtml || QZone_Config.Boards.exportType === 'HTML';
-    // QQ好友
+    // 好友
     hasHtml = hasHtml || QZone_Config.Friends.exportType === 'HTML';
-    // 收藏夹
+    // 收藏
     hasHtml = hasHtml || QZone_Config.Favorites.exportType === 'HTML';
     // 分享
     hasHtml = hasHtml || QZone_Config.Shares.exportType === 'HTML';
@@ -297,65 +306,13 @@ API.Common.writeJsonToJs = async(key, object, path) => {
  * @param {string} type 转换类型，默认TEXT,可选HTML,MD
  * @param {boolean} isRt 是否是处理转发内容
  * @param {boolean} isSupportedHtml 内容本身是否支持HTML
+ * @param {boolean} isEscHTML 是否全部转换HTML标签
+ * @param {boolean} isDownloadEmoticon 是否下载表情
+ * @param {boolean} isFormatEmoticonPath 是否转换本地地址
  */
-API.Common.formatContent = (item, type, isRt, isSupportedHtml) => {
-    let content = API.Utils.formatContent(item, type, isRt, isSupportedHtml);
-    try {
-        // 暂时不识别内容图片，这里识别文件名后缀涉及到async，渲染模板暂不支持await，也不能通过URL直接判断，因为文件名可能为GIF，实际类型却为PNG
-        // content = API.Common.handerContentImages("Others",content, type);
-    } catch (error) {
-        console.error('处理内容图片信息异常', error, item, type, isRt, isSupportedHtml);
-    }
+API.Common.formatContent = (item, type, isRt, isSupportedHtml, isEscHTML, isDownloadEmoticon, isFormatEmoticonPath) => {
     // 默认调用原先的内容转换
-    return content;
-}
-
-/**
- * 处理内容中的图片
- * @param {string} module 模块
- * @param {string} content 内容
- * @param {string} type 类型
- */
-API.Common.handerContentImages = (module, content, type) => {
-    if (API.Common.isQzoneUrl() || !content) {
-        // QQ空间外链不处理
-        return content;
-    }
-    // 获取内容中的图片信息（如果说说本身的内容也是HTML/MD代码，也同样处理）
-    if ("MD" === type) {
-        content.replace(/!\[.*?\]\((.+?)\)/g, function(linkmd, url) {
-            let custom_filename = API.Common.addDownloadTask(module, url, content);
-            return linkmd.replace(url, API.Common.getMediaPath(url, 'Common/images/' + custom_filename, "Messages_HTML"));
-        })
-        return content;
-    }
-    // 其他的，目前，只有HTML
-    const _html = jQuery("<div>" + content + "</div>");
-    const images = _html.find("img") || [];
-    for (let i = 0; i < images.length; i++) {
-        const $img = $(images[i]);
-        let url = $img.attr('orgsrc') || $img.attr('src') || '';
-        let custom_filename = API.Common.addDownloadTask(module, url, content);
-        $img.attr('src', API.Common.getMediaPath(url, 'Common/images/' + custom_filename, "Messages_HTML"));
-    }
-    return _html.html();
-}
-
-/**
- * 添加内容中的图片下载任务
- * @param {string} module 模块
- * @param {string} url 链接
- * @param {string} content 内容
- */
-API.Common.addDownloadTask = (module, url, content) => {
-    let custom_filename = QZone.Common.FILE_URLS.get(url);
-    if (!custom_filename) {
-        custom_filename = API.Utils.newSimpleUid(8, 16);
-        // 添加下载任务
-        API.Utils.newDownloadTask(module, url, 'Common/images', custom_filename, content);
-        QZone.Common.FILE_URLS.set(url, custom_filename);
-    }
-    return custom_filename;
+    return API.Utils.formatContent(item, type, isRt, isSupportedHtml, isEscHTML, isDownloadEmoticon, isFormatEmoticonPath);
 }
 
 /**
@@ -406,7 +363,7 @@ API.Common.downloadsByBrowser = async(tasks) => {
     indicator.setTotal(tasks.length);
 
     // 开始下载
-    const _tasks = _.chunk(tasks, 100);
+    const _tasks = _.chunk(tasks, QZone_Config.Common.downloadThread);
     for (let i = 0; i < _tasks.length; i++) {
         const list = _tasks[i];
         for (let j = 0; j < list.length; j++) {
@@ -428,7 +385,7 @@ API.Common.downloadsByBrowser = async(tasks) => {
             })
         }
         // 等待1秒再继续添加
-        await API.Utils.sleep(500);
+        await API.Utils.sleep(QZone_Config.Common.downloadSleep || 1000);
     }
     indicator.complete();
     return true;
@@ -443,23 +400,30 @@ API.Common.downloadByAria2 = async(tasks) => {
     const indicator = new StatusIndicator('Common_Aria2');
     indicator.setTotal(tasks.length);
 
-    // 添加任务
-    for (const task of tasks) {
-        await API.Utils.downloadByAria2(task).then((result) => {
-            if (result.error) {
-                console.error('添加到Aria2异常', result, task);
+    // 开始下载
+    const _tasks = _.chunk(tasks, QZone_Config.Common.downloadThread);
+    for (let i = 0; i < _tasks.length; i++) {
+        const list = _tasks[i];
+        for (let j = 0; j < list.length; j++) {
+            const task = list[j];
+            await API.Utils.downloadByAria2(task).then((result) => {
+                if (result.error) {
+                    console.error('添加到Aria2异常', result, task);
+                    task.setState('interrupted');
+                    indicator.addFailed(task);
+                } else {
+                    task.setState('complete');
+                    // 添加成功
+                    indicator.addSuccess(task);
+                }
+            }).catch((error) => {
+                console.error('添加到Aria2异常', error, task);
                 task.setState('interrupted');
                 indicator.addFailed(task);
-            } else {
-                task.setState('complete');
-                // 添加成功
-                indicator.addSuccess(task);
-            }
-        }).catch((error) => {
-            console.error('添加到Aria2异常', error, task);
-            task.setState('interrupted');
-            indicator.addFailed(task);
-        })
+            })
+        }
+        // 等待1秒再继续添加
+        await API.Utils.sleep((QZone_Config.Common.downloadSleep || 1) * 1000);
     }
 
     // 完成
@@ -878,7 +842,7 @@ API.Common.getOldModuleData = (moduleName) => {
         oldData = module.Album.OLD_Data || [];
     }
     if (['Boards', 'Visitors'].includes(moduleName)) {
-        // 留言板、访客
+        // 留言、访客
         oldData = module.OLD_Data.items || [];
     }
     return oldData;
@@ -900,7 +864,7 @@ API.Common.getNewModuleData = (moduleName) => {
         oldData = module.Album.Data || [];
     }
     if (['Boards', 'Visitors'].includes(moduleName)) {
-        // 留言板、访客
+        // 留言、访客
         oldData = module.Data.items || [];
     }
     return oldData;
@@ -946,7 +910,7 @@ API.Common.isNewExport = (moduleName) => {
         moduleItems = isExportModule ? module.Album.Data : oldData;
     }
     if (['Boards', 'Visitors'].includes(moduleName)) {
-        // 留言板、访客
+        // 留言、访客
         oldData = module.OLD_Data.items || [];
         moduleItems = isExportModule ? module.Data.items : oldData;
     }
@@ -1263,7 +1227,7 @@ API.Common.getModulesLikeList = async(item, moduleConfig) => {
     while (hasNext) {
         await API.Common.getLikeList(item.uniKey, nextUin).then(async(data) => {
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
                 console.warn('获取模块点赞记录异常：', data);
             }
@@ -1308,7 +1272,7 @@ API.Common.downloadUserAvatar = (user) => {
         return;
     }
 
-    API.Utils.newDownloadTask('Friends', avatarUrl, 'Common/images', user.uin + '', user);
+    API.Utils.newDownloadTask('Friends', avatarUrl, 'Common/images', user.uin + '', user, true);
     user.avatar = API.Common.getUserLogoUrl(user.uin);
     user.custom_avatar = API.Common.getUserLogoLocalUrl(user.uin);
 
@@ -1400,4 +1364,39 @@ API.Common.isGetNextPage = (oldItems, pageItems, moduleCfg) => {
         return !API.Common.isPreBackupPos(pageItems, moduleCfg);
     }
     return true;
+}
+
+/**
+ * 导出用户头像
+ * @returns 
+ */
+API.Common.exportUserAvatar = async() => {
+
+    if (API.Common.isQzoneUrl()) {
+        // QQ空间外链，无需导出
+        console.log('QQ空间外链，无需导出');
+        return;
+    }
+
+    // 状态更新器
+    const indicator = new StatusIndicator('User_Avatar_Export');
+    indicator.print();
+
+    try {
+
+        // 收集所有的互动用户
+        const users = API.Statistics.getAllInteractiveUsers();
+
+        // 移除在好友清单中的
+        _.remove(users, u_item => _.findIndex(QZone.Friends.Data, _.findIndex(users, ['uin', u_item.uin])) > -1);
+
+        // 添加目标头像下载任务
+        API.Common.downloadUserAvatars(users);
+
+    } catch (error) {
+        console.error('导出用户头像异常，默认忽略不处理，按道理不会失败！', error);
+    }
+
+    // 完成
+    indicator.complete();
 }

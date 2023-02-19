@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../vendor/jquery-resizable-columns/css/jquery.resizableColumns.css">
     <link rel="stylesheet" href="https://cdn.staticfile.org/bootstrap-table/1.19.1/bootstrap-table.min.css">
     <link rel="stylesheet" href="https://cdn.staticfile.org/tempusdominus-bootstrap-4/5.39.0/css/tempusdominus-bootstrap-4.min.css">
+    <link rel="stylesheet" href="../vendor/bootstrap-select/css/bootstrap-select.min.css">
     <link rel="stylesheet" href="../css/options.css">
     <link rel="icon" href="../img/icon-128.png">
     <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -14,6 +15,8 @@
     <script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.staticfile.org/popper.js/2.9.3/umd/popper.min.js"></script>
     <script src="https://cdn.staticfile.org/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
+    <script src="../vendor/bootstrap-select/js/bootstrap-select.min.js"></script>
+    <script src="../vendor/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
     <script src="../vendor/jquery-resizable-columns/js/jquery.resizableColumns.min.js"></script>
     <script src="https://cdn.staticfile.org/bootstrap-table/1.19.1/bootstrap-table.min.js"></script>
     <script src="https://cdn.staticfile.org/bootstrap-table/1.19.1/locale/bootstrap-table-zh-CN.min.js"></script>
@@ -55,12 +58,12 @@
                         <div class="nav nav-tabs" id="nav-tab" role="tablist">
                             <a class="nav-item nav-link active" id="nav-messages-tab" data-toggle="tab" href="#nav-messages" role="tab" aria-controls="nav-messages" aria-selected="false">说说</a>
                             <a class="nav-item nav-link" id="nav-blogs-tab" data-toggle="tab" href="#nav-blogs" role="tab" aria-controls="nav-blogs" aria-selected="false">日志</a>
-                            <a class="nav-item nav-link" id="nav-diaries-tab" data-toggle="tab" href="#nav-diaries" role="tab" aria-controls="nav-diaries" aria-selected="false">私密日记</a>
+                            <a class="nav-item nav-link" id="nav-diaries-tab" data-toggle="tab" href="#nav-diaries" role="tab" aria-controls="nav-diaries" aria-selected="false">日记</a>
                             <a class="nav-item nav-link" id="nav-photos-tab" data-toggle="tab" href="#nav-photos" role="tab" aria-controls="nav-photos" aria-selected="false">相册</a>
                             <a class="nav-item nav-link" id="nav-videos-tab" data-toggle="tab" href="#nav-videos" role="tab" aria-controls="nav-videos" aria-selected="false">视频</a>
-                            <a class="nav-item nav-link" id="nav-boards-tab" data-toggle="tab" href="#nav-boards" role="tab" aria-controls="nav-boards" aria-selected="false">留言板</a>
+                            <a class="nav-item nav-link" id="nav-boards-tab" data-toggle="tab" href="#nav-boards" role="tab" aria-controls="nav-boards" aria-selected="false">留言</a>
                             <a class="nav-item nav-link" id="nav-friends-tab" data-toggle="tab" href="#nav-friends" role="tab" aria-controls="nav-friends" aria-selected="false">好友</a>
-                            <a class="nav-item nav-link" id="nav-favorites-tab" data-toggle="tab" href="#nav-favorites" role="tab" aria-controls="nav-favorites" aria-selected="false">收藏夹</a>
+                            <a class="nav-item nav-link" id="nav-favorites-tab" data-toggle="tab" href="#nav-favorites" role="tab" aria-controls="nav-favorites" aria-selected="false">收藏</a>
                             <a class="nav-item nav-link" id="nav-shares-tab" data-toggle="tab" href="#nav-shares" role="tab" aria-controls="nav-shares" aria-selected="false">分享</a>
                             <a class="nav-item nav-link" id="nav-visitors-tab" data-toggle="tab" href="#nav-visitors" role="tab" aria-controls="nav-visitors" aria-selected="false">访客</a>
                             <a class="nav-item nav-link " id="nav-common-tab" data-toggle="tab" href="#nav-common" role="tab" aria-controls="nav-common" aria-selected="false">公共</a>
@@ -96,7 +99,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://lvshuncai.com/archives/qzone-export-usage.html#增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="messages_increment_time_row">
@@ -252,6 +255,16 @@
                                         <small id="messages_refreshWeChatLbs_help" class="text-muted">刷新微信朋友圈同步到空间的说说的坐标信息，<span style="color:red">需在开发者中维护腾讯地图Key</span></small>
                                     </div>
                                 </div>
+                                <div class="form-group row">
+                                    <div class="col-sm-auto">语音说说：</div>
+                                    <div class="col-sm-2 custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" data-module="Messages" name="GetVoice" id="messages_GetVoice">
+                                        <label style="margin-left: 14px;" class="custom-control-label" for="messages_GetVoice" aria-describedby="messages_GetVoice_help"></label>
+                                    </div>
+                                    <div class="col-sm-auto">
+                                        <small id="messages_GetVoice_help" class="text-muted">是否获取语音说说，默认为关闭，<span style="color:red">因为QQ空间已下线语音说说功能，且历史数据无法正常下载</span></small>
+                                    </div>
+                                </div>
                                 <h5 style="color:cadetblue">评论选项：</h5>
                                 <hr>
                                 <div class="form-group row">
@@ -367,7 +380,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://lvshuncai.com/archives/qzone-export-usage.html#增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="blogs_increment_time_row">
@@ -560,7 +573,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://lvshuncai.com/archives/qzone-export-usage.html#增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="diaries_increment_time_row">
@@ -722,8 +735,8 @@
                                     <div class="col-sm-2">
                                         <select id="photos_exportFormat" class="custom-select">
 											<option value="HTML" selected>HTML</option>
-											<option value="File">文件</option>
 											<option value="MarkDown">MarkDown</option>
+											<option value="File">文件</option>
 											<option value="JSON">JSON</option>
 										</select>
                                     </div>
@@ -741,7 +754,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://lvshuncai.com/archives/qzone-export-usage.html#增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="photos_increment_time_row">
@@ -897,7 +910,7 @@
                                         </select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">相片备份文件的命名方式</small>
+                                        <small class="text-muted">相片备份文件的命名方式，<span style="color: red;">拍摄地点仅供参考，无法采集精确的拍摄地点</span></small>
                                     </div>
                                 </div>
                                 <div class="form-group row">
@@ -1131,10 +1144,10 @@
                                     <div class="col-sm-2">
                                         <select id="videos_exportFormat" class="custom-select">
 											<option value="HTML" selected>HTML</option>
-											<option value="File">MP4文件</option>
 											<option value="MarkDown">MarkDown</option>
-											<option value="JSON">JSON</option>
+											<option value="File">MP4文件</option>
 											<option value="Link">下载链接</option>
+											<option value="JSON">JSON</option>
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
@@ -1151,7 +1164,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://lvshuncai.com/archives/qzone-export-usage.html#增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="videos_increment_time_row">
@@ -1320,7 +1333,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://lvshuncai.com/archives/qzone-export-usage.html#增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="boards_increment_time_row">
@@ -1387,9 +1400,9 @@
                                     <div class="col-sm-2">
                                         <select id="friends_exportFormat" class="custom-select">
 											<option value="HTML" selected>HTML</option>
+											<option value="MarkDown">MarkDown</option>
 											<option value="Excel">Excel</option>
 											<option value="JSON">JSON</option>
-											<option value="MarkDown">MarkDown</option>
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
@@ -1434,6 +1447,18 @@
                                     </div>
                                 </div>
                                 <div class="form-group row">
+                                    <label for="friends_sortType" class="col-sm-auto col-form-label">分组排序：</label>
+                                    <div class="col-sm-2">
+                                        <select id="friends_sortType" class="custom-select" data-module='Friends' name="SortType">
+											<option value="QQ" selected>QQ排序</option>
+											<option value="default">助手排序</option>
+										</select>
+                                    </div>
+                                    <div class="col-sm-auto">
+                                        <small class="text-muted">QQ分组的排序方式，QQ排序，即使用QQ的排序，助手排序，即使用字母排序</small>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
                                     <div class="col-sm-auto">互动信息：</div>
                                     <div class="col-sm-2 custom-control custom-checkbox">
                                         <input type="checkbox" class="custom-control-input" id="friends_interactive_info">
@@ -1461,6 +1486,23 @@
                                     </div>
                                     <div class="col-sm-auto">
                                         <small id="friends_care_list_help" class="text-muted">是否获取个人的特别关心好友，就是你关心了谁</small>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="friends_special_group" class="col-sm-auto col-form-label">特殊分组：</label>
+                                    <div class="col-sm-2">
+                                        <select id="friends_special_group" class="form-control selectpicker" multiple title="请选择" data-actions-box="true" data-selected-text-format="count > 3">
+                                            <option value="care">特别关心</option>
+                                            <option value="access">无权访问</option>
+                                            <option value="isFriend">单向好友</option>
+                                            <option value="deleted">已删好友</option>
+                                            <option value="5">五年好友</option>
+                                            <option value="10">十年老友</option>
+                                            <option value="20">廿年旧友</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-auto">
+                                        <small class="text-muted">添加特殊分组，部分分组基于互动信息生成，仅适用HTML备份方式</small>
                                     </div>
                                 </div>
                                 <div class="text-center">
@@ -1497,7 +1539,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://lvshuncai.com/archives/qzone-export-usage.html#增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="favorites_increment_time_row">
@@ -1572,7 +1614,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://lvshuncai.com/archives/qzone-export-usage.html#增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="shares_increment_time_row">
@@ -1784,7 +1826,7 @@
 										</select>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small class="text-muted">更多详情，请查看<a href='https://www.lvshuncai.com/qzone-export.html#配置-增量备份'>增量备份配置说明</a></small>
+                                        <small class="text-muted">更多详情，请查看<a href='https://lvshuncai.com/archives/qzone-export-usage.html#增量备份'>增量备份配置说明</a></small>
                                     </div>
                                 </div>
                                 <div class="form-group row" id="visitors_increment_time_row">
@@ -1834,7 +1876,7 @@
                                         <input type="number" class="form-control" id="common_list_retry_count" placeholder="列表重试次数" aria-describedby="common_list_retry_count_help">
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small id="common_list_retry_count_help" class="text-muted">获取QQ空间数据超时、服务器异常时的重试次数，达到指定次数后数据采集失败，值为0时代表不重试。</small>
+                                        <small id="common_list_retry_count_help" class="text-muted">获取QQ空间数据超时、服务器异常时的重试次数，达到指定次数后数据采集失败，配合列表重试间隔使用。</small>
                                     </div>
                                 </div>
                                 <div class="form-group row">
@@ -1844,6 +1886,85 @@
                                     </div>
                                     <div class="col-sm-auto">
                                         <small id="common_list_retry_sleep_help" class="text-muted">每次重试时的间隔秒数</small>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="common_rest_sleep_url" class="col-sm-auto col-form-label">稍候重试接口：</label>
+                                    <div class="col-sm-2">
+                                        <select id="common_rest_sleep_url" class="form-control selectpicker" multiple title="请选择" data-actions-box="true" data-selected-text-format="count > 3">
+                                            <optgroup label="说说相关">
+                                                <option value="MESSAGES_LIST_URL">说说列表</option>
+                                                <option value="MESSAGES_DETAIL_URL">说说全文</option>
+                                                <option value="MESSAGES_IMAGES_URL">更多图片</option>
+                                                <option value="MESSAGES_VOICE_INFO_URL">语音详情</option>
+                                            </optgroup>
+                                            <optgroup label="日志相关">
+                                                <option value="BLOGS_LIST_URL">日志列表</option>
+                                                <option value="BLOGS_INFO_URL">日志全文</option>
+                                                <option value="DIARY_LIST_URL">日记列表</option>
+                                                <option value="DIARY_INFO_URL">日记全文</option>
+                                            </optgroup>
+                                            <optgroup label="相册相关">
+                                                <option value="ALBUM_LIST_URL">相册列表</option>
+                                                <option value="IMAGES_LIST_URL">相片列表</option>
+                                                <option value="IMAGES_INFO_URL">相片详情</option>
+                                            </optgroup>
+                                            <optgroup label="好友相关">
+                                                <option value="FRIENDS_LIST_URL">无序好友</option>
+                                                <option value="FRIENDS_SORT_LIST_URL">有序好友</option>
+                                                <option value="FRIENDSHIP_INFO_URL">互动信息</option>
+                                                <option value="SPECIAL_CARE_LIST_URL">特别关心</option>
+                                            </optgroup>
+                                            <optgroup label="评论相关">
+                                                <option value="MESSAGES_VIDEOS_COMMONTS_URL">说说/视频评论</option>
+                                                <option value="BLOGS_COMMENTS_URL">日志/日记评论</option>
+                                                <option value="ALBUM_PHOTOS_COMMENTS_URL">相册/相片评论</option>
+                                                <option value="SHARE_COMMENTS_URL">分享评论</option>
+                                            </optgroup>
+                                            <optgroup label="访客相关">
+                                                <option value="BLOGS_READ_COUNT_URL">日志阅读</option>
+                                                <option value="VISITOR_SINGLE_LIST_URL">说说/日志浏览</option>
+                                                <option value="VISITOR_SIMPLE_LIST_URL">相册浏览</option>
+                                                <option value="VISITOR_MORE_LIST_URL">空间访客</option>
+                                            </optgroup>
+                                            <optgroup label="其它">
+                                                <option value="BOARD_LIST_URL">留言列表</option>
+                                                <option value="VIDEO_LIST_URL">视频列表</option>
+                                                <option value="FAVORITE_LIST_URL">收藏列表</option>
+                                                <option value="SHARE_LIST_URL">分享列表</option>
+                                                <option value="LIKE_LIST_URL">点赞列表</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-auto">
+                                        <small class="text-muted">配置的接口，才会使用稍候重试间隔，部分有些接口出现稍候重试后，很快解冻的，这些使用列表重试间隔即可，预留功能，一般不建议配置，建议配置模块的查询间隔</small>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="common_wait_count" class="col-sm-auto col-form-label">稍候重试次数：</label>
+                                    <div class="col-sm-2">
+                                        <input type="number" class="form-control" id="common_wait_count" placeholder="稍候重试次数" aria-describedby="common_wait_count_help">
+                                    </div>
+                                    <div class="col-sm-auto">
+                                        <small id="common_wait_count_help" class="text-muted">获取QQ空间数据，空间返回稍候重试时的重试次数，重试指定次数后数据采集失败并忽略，配合稍候重试间隔使用。</small>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="common_wait_time" class="col-sm-auto col-form-label">稍候重试间隔：</label>
+                                    <div class="col-sm-2">
+                                        <input type="number" min="1" class="form-control" id="common_wait_time" placeholder="稍候重试间隔" aria-describedby="common_wait_time_help">
+                                    </div>
+                                    <div class="col-sm-auto">
+                                        <small id="common_wait_time_help" class="text-muted">使用人数过多，稍候重试的时间间隔，单位为秒，建议至少半个小时以上，默认配置3600秒，也就是一个小时</small>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="common_avatar_host" class="col-sm-auto col-form-label">头像下载地址：</label>
+                                    <div class="col-sm-2">
+                                        <input type="number" min="0" class="form-control" id="common_avatar_host" placeholder="头像下载地址" aria-describedby="common_avatar_host_help" data-module='Common' name="AvatarHost">
+                                    </div>
+                                    <div class="col-sm-auto">
+                                        <small id="common_avatar_host_help" class="text-muted">避免头像服务器挂导致无法下载头像，0为随机，非0为固定，目前好像是1到4，比如<a href="https://qlogo1.store.qq.com/qzone/10010/10010/100" target="_blank">地址1</a>和<a href="https://qlogo2.store.qq.com/qzone/10010/10010/100" target="_blank">地址2</a></small>
                                     </div>
                                 </div>
                                 <h5 style="color:cadetblue">文件下载：</h5>
@@ -1874,7 +1995,7 @@
                                         </div>
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small id="common_file_suffix_help" class="text-muted">勾选将自动识别说说、日志、私密日记、留言板、收藏夹图片文件后缀名，将延长备份时间。</small>
+                                        <small id="common_file_suffix_help" class="text-muted">勾选将自动识别说说、日志、日记、留言、收藏图片文件后缀名，将延长备份时间。</small>
                                     </div>
                                 </div>
                                 <div id="common_file_suffix_timeout_row" class="form-group row" style="display: none;">
@@ -1905,14 +2026,24 @@
                                         <small id="common_thunder_task_sleep_help" class="text-muted">每次唤醒迅雷的间隔秒数，唤起迅雷下载时，迅雷会有任务确认弹窗，请在间隔时间内确认任务，否则无法进行下一次的唤醒！</small>
                                     </div>
                                 </div>
-                                <!-- 迅雷、Ajax下载并发数 -->
+                                <!-- 浏览器、Aria2、迅雷下载并发数 -->
                                 <div id="common_download_thread_row" class="form-group row" style="display: none;">
                                     <label for="common_download_thread" class="col-sm-auto col-form-label" aria-describedby="common_download_thread_help">文件下载并发：</label>
                                     <div class="col-sm-2">
-                                        <input type="number" min="5" max="15" class="form-control" id="common_download_thread" placeholder="下载并发量">
+                                        <input type="number" min="5" class="form-control" id="common_download_thread" placeholder="下载并发量">
                                     </div>
                                     <div class="col-sm-auto">
-                                        <small id="common_download_thread_help" class="text-muted">下载方式为非QQ空间外链的同时下载数</small>
+                                        <small id="common_download_thread_help" class="text-muted">下载方式为非QQ空间外链的同时下载文件数，可理解为同时添加任务数，浏览器下载时，建议10以内，原生Aria2建议1000+，Motrix建议100到1000</small>
+                                    </div>
+                                </div>
+                                <!-- 浏览器与Aria2的添加间隔 -->
+                                <div id="common_download_sleep_row" class="form-group row" style="display: none;">
+                                    <label for="common_download_sleep" class="col-sm-auto col-form-label" aria-describedby="common_download_sleep_help">文件下载间隔：</label>
+                                    <div class="col-sm-2">
+                                        <input type="number" class="form-control" id="common_download_sleep" placeholder="下载间隔秒数">
+                                    </div>
+                                    <div class="col-sm-auto">
+                                        <small id="common_download_sleep_help" min="1" class="text-muted">添加下载任务的间隔，单位为秒，避免过快导致崩溃，<span style="color: red;">使用第三方Aria2客户端时，比如Motrix，若相片过多，且原图过多，建议设置大点，可结合文件下载并发使用</span>，原生Aria2可设置小点</small>
                                     </div>
                                 </div>
                                 <!-- 浏览器下载相关配置 -->

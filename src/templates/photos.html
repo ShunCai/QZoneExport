@@ -2,7 +2,7 @@
 <html lang="zh">
 
 <head>
-	<link rel="icon" href="https://qzonestyle.gtimg.cn/aoi/img/logo/favicon.ico">
+	<link rel="icon" href="../Common/images/favicon.ico">
 	<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 	<title>QQ空间备份-相片</title>
 	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -26,8 +26,10 @@
 	<script src="https://cdn.staticfile.org/lightgallery/2.3.0/plugins/autoplay/lg-autoplay.min.js"></script>
 
 	<script src="https://cdn.staticfile.org/jquery_lazyload/2.0.0-rc.2/lazyload.min.js"></script>
-	<script src="https://fastly.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/template_js@2.2.1/dist/index.aio.min.js" integrity="sha256-gnK+GsIXEBgu/mJouMDtUxXvXM3M0jzxNYmjnlsifgY=" crossorigin="anonymous"></script>
 	<script src="https://www.lvshuncai.com/custom/js/clicklove.min.js"></script>
+	
+	<script type="text/javascript" src="../Common/json/config.js"></script>
 
 	<script type="text/javascript" src="../Albums/json/albums.js"></script>
 </head>
@@ -72,17 +74,17 @@
 													</p>
 													<p>
 														<i title="拍摄/上传时间" class="fa fa-clock-o text-primary"><%:=API.Utils.formatDate((photo.rawshoottime || photo.shootTime) || (photo.uploadtime || photo.uploadTime))%></i>
-														<%if(photo.custom_lbs && photo.custom_lbs.name){%>
+														<%if(photo.custom_lbs && (photo.custom_lbs.idname || photo.custom_lbs.name)){%>
 															<a title="拍摄/上传地点" class="ml-2 text-primary" href="<%:=API.Messages.getMapUrl(photo.custom_lbs)%>" target="_blank"><i class="fa fa-map-marker"></i><%:=photo.custom_lbs.idname || photo.custom_lbs.name%></a>
 														<%}%>
 													</p>
 												</div>
 												<div class="col text-center text-truncate">
 													<%if(photo.name){%>
-														<h6 data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(photo.name, 'HTML', false, false)%>"><%:=API.Common.formatContent(photo.name, "HTML", false, false)%></h6>
+														<h6 data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(photo.name, 'HTML', false, false, false, false, true)%>"><%:=API.Common.formatContent(photo.name, "HTML", false, false, false, false, true)%></h6>
 													<%}%>
 													<%if(photo.desc){%>
-														<span class="text-white-50" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(photo.desc, 'HTML', false, false)%>"><%:=API.Common.formatContent(photo.desc, "HTML", false, false)%></span>
+														<span class="text-white-50" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(photo.desc, 'HTML', false, false, false, false, true)%>"><%:=API.Common.formatContent(photo.desc, "HTML", false, false, false, false, true)%></span>
 													<%}%>
 												</div>
 												<div class="col"></div>
@@ -90,17 +92,17 @@
 										</div>
 									<%}%>
 									<%if(photo.is_video && photo.video_info){%>
-										<a class="lightbox" data-video='{"source": [{"src":"<%:=API.Common.getMediaPath(photo.video_info.video_url, photo.custom_filepath, "Photos_HTML")%>", "type":"video/mp4"}],"attributes": {"preload": false, "controls": true}}' 
-											data-poster="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath, 'Photos_HTML')%>" data-toggle="tooltip" data-html="true" title="<%:=API.Common.formatContent(photo.desc || photo.name, 'HTML', false, false)%>" data-sub-html="#<%:=photo.uid%>">
+										<a class="lightbox" data-video='{"source": [{"src":"<%:=API.Common.getMediaPath(photo.video_info.video_url, photo.custom_filepath, true)%>", "type":"video/mp4"}],"attributes": {"preload": false, "controls": true}}' 
+											data-poster="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath, true)%>" data-sub-html="#<%:=photo.uid%>">
 											<span class="photo-video"></span>
 											<%if(photo.isLocal){%>
 												<img class="lazyload loading" />
 											<%}else{%>
-												<img class="lazyload loading" src="../Common/images/loading.gif" data-src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath,'Photos_HTML')%>" />
+												<img class="lazyload loading" src="../Common/images/loading.gif" data-src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath,true)%>" />
 											<%}%>
 										</a>
-										<div class="card-body text-truncate">
-											<span class="card-title" data-toggle="tooltip" data-html="true" title="<%:=(API.Common.formatContent(photo.name, 'HTML', false, false) || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%>"><%:=(API.Common.formatContent(photo.name, 'HTML', false, false) || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%></span>
+										<div class="card-body text-truncate" data-toggle="tooltip" data-html="true" title="<%:=API.Photos.getPhotoBasicInfoTooltip(photo)%>">
+											<span class="card-title"><%:=(API.Common.formatContent(photo.name, 'HTML', false, false, false, false, true) || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%></span>
 										</div>
 										<div class="pic-num-wrap d-flex justify-content-around">
 											<div class="align-self-end">
@@ -111,11 +113,11 @@
 											</div>
 										</div>
 									<%}else{%>
-										<a class="lightbox" href="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, 'Photos_HTML')%>" data-toggle="tooltip" data-html="true" title="<%:=photo.desc || photo.name%>" data-sub-html="#<%:=photo.uid%>">
-											<img class="lazyload loading card-img" height="225px" src="../Common/images/loading.gif" data-src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath || photo.custom_filepath, 'Photos_HTML')%>">
+										<a class="lightbox" href="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_filepath, true)%>" data-sub-html="#<%:=photo.uid%>">
+											<img class="lazyload loading card-img" height="225px" src="../Common/images/loading.gif" data-src="<%:=API.Common.getMediaPath(photo.custom_url, photo.custom_pre_filepath || photo.custom_filepath, true)%>">
 										</a>
-										<div class="card-body  text-truncate">
-											<span class="card-title" data-toggle="tooltip" data-html="true" title="<%:=(API.Common.formatContent(photo.name, 'HTML', false, false) || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%>"><%:=(API.Common.formatContent(photo.name, 'HTML', false, false) || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%></span>
+										<div class="card-body  text-truncate" data-toggle="tooltip" data-html="true" title="<%:=API.Photos.getPhotoBasicInfoTooltip(photo)%>">
+											<span class="card-title"><%:=(API.Common.formatContent(photo.name, 'HTML', false, false, false, false, true) || API.Utils.formatDate(photo.uploadtime || photo.uploadTime))%></span>
 										</div>
 										<div class="pic-num-wrap d-flex justify-content-around">
 											<div class="align-self-end">

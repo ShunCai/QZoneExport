@@ -1,10 +1,10 @@
 /**
- * QQ空间私密日记模块的导出API
+ * QQ空间日记模块的导出API
  * @author https://lvshuncai.com
  */
 
 /**
- * 导出私密日记数据
+ * 导出日记数据
  */
 API.Diaries.export = async() => {
 
@@ -14,16 +14,19 @@ API.Diaries.export = async() => {
 
     try {
 
-        // 获取所有的私密日记数据
+        // 获取所有的日记数据
         let items = await API.Diaries.getAllList();
-        console.log('私密日记列表获取完成，共有日志%i篇', items.length);
+        console.log('日记列表获取完成，共有日志%i篇', items.length);
 
-        // 获取私密日记内容
+        // 获取日记内容
         items = await API.Diaries.getAllContents(items);
-        console.log('私密日记内容列表获取完成，共有日志%i篇', items.length);
+        console.log('日记内容列表获取完成，共有日志%i篇', items.length);
 
-        // 获取所有的私密日记评论，由普通日志转私密日记的，会保留评论
+        // 获取所有的日记评论，由普通日志转日记的，会保留评论
         items = await API.Diaries.getItemsAllCommentList(items);
+
+        // 添加评论的表情下载任务，日记内容的，统一按普通图片下载即可
+        API.Common.addAllCommentEmoticonDownloadTasks(items);
 
         // 获取日志点赞列表
         await API.Diaries.getAllLikeList(items);
@@ -35,7 +38,7 @@ API.Diaries.export = async() => {
         await API.Diaries.exportAllListToFiles(items);
 
     } catch (error) {
-        console.error('私密日记导出异常', error);
+        console.error('日记导出异常', error);
     }
 
     // 完成
@@ -43,8 +46,8 @@ API.Diaries.export = async() => {
 }
 
 /**
- * 获取所有私密日记的内容
- * @param {Array} items 私密日记列表
+ * 获取所有日记的内容
+ * @param {Array} items 日记列表
  */
 API.Diaries.getAllContents = async(items) => {
     // 进度更新器
@@ -94,7 +97,7 @@ API.Diaries.getAllContents = async(items) => {
 
             items[index] = item;
         }).catch((e) => {
-            console.error("获取私密日记内容异常", item, e);
+            console.error("获取日记内容异常", item, e);
             // 添加失败提示
             indicator.addFailed(item);
         })
@@ -113,7 +116,7 @@ API.Diaries.getAllContents = async(items) => {
 
 
 /**
- * 获取单页的私密日记列表
+ * 获取单页的日记列表
  * @param {integer} pageIndex 指定页的索引
  * @param {StatusIndicator} indicator 状态更新器
  */
@@ -123,9 +126,9 @@ API.Diaries.getList = async(pageIndex, indicator) => {
     return await API.Diaries.getDiaries(pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
-        if (data.code < 0) {
+        if (data.code && data.code != 0) {
             // 获取异常
-            console.warn('获取单页的私密日记列表异常：', data);
+            console.warn('获取单页的日记列表异常：', data);
         }
         data = data.data || {};
 
@@ -147,14 +150,13 @@ API.Diaries.getList = async(pageIndex, indicator) => {
 
 
 /**
- * 获取所有私密日记列表
+ * 获取所有日记列表
  */
 API.Diaries.getAllList = async() => {
 
-    // 私密日记状态更新器
+    // 日记状态更新器
     const indicator = new StatusIndicator('Diaries');
-
-    // 开始
+    indicator.setIndex(1);
     indicator.print();
 
     // 配置项
@@ -177,7 +179,7 @@ API.Diaries.getAllList = async() => {
             return await API.Common.callNextPage(nextPageIndex, CONFIG, QZone.Diaries.total, QZone.Diaries.Data, arguments.callee, nextPageIndex, indicator);
 
         }).catch(async(e) => {
-            console.error("获取私密日记列表异常，当前页：", pageIndex + 1, e);
+            console.error("获取日记列表异常，当前页：", pageIndex + 1, e);
             indicator.addFailed(new PageInfo(pageIndex, CONFIG.pageSize));
             // 当前页失败后，跳过继续请求下一页
             // 递归获取下一页
@@ -249,7 +251,7 @@ API.Diaries.getItemCommentList = async(item, pageIndex) => {
     return await API.Diaries.getComments(item.blogid, pageIndex).then(async(data) => {
         // 去掉函数，保留json
         data = API.Utils.toJson(data, /^_Callback\(/);
-        if (data.code < 0) {
+        if (data.code && data.code != 0) {
             // 获取异常
             console.warn('获取单条日志的单页评论列表异常：', data);
         }
@@ -341,7 +343,7 @@ API.Diaries.getAllLikeList = async(items) => {
                 // 获取完成
                 indicator.addSuccess(item);
             }).catch((e) => {
-                console.error("获取私密日记点赞异常：", item, e);
+                console.error("获取日记点赞异常：", item, e);
                 indicator.addFailed(item);
             }));
 
@@ -363,7 +365,7 @@ API.Diaries.getAllLikeList = async(items) => {
 
 
 /**
- * 获取单条私密日记的全部最近访问
+ * 获取单条日记的全部最近访问
  * @param {object} item 说说
  */
 API.Diaries.getItemAllVisitorsList = async(item) => {
@@ -383,9 +385,9 @@ API.Diaries.getItemAllVisitorsList = async(item) => {
 
         return await API.Diaries.getVisitors(item.blogid, pageIndex).then(async(data) => {
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
-                console.warn('获取单条私密日记的全部最近访问异常：', data);
+                console.warn('获取单条日记的全部最近访问异常：', data);
             }
             data = data.data || {};
 
@@ -467,7 +469,7 @@ API.Diaries.getAllVisitorList = async(items) => {
 }
 
 /**
- * 获取私密日记阅读数
+ * 获取日记阅读数
  * @param {Array} items 日志列表
  */
 API.Diaries.getAllReadCount = async(items) => {
@@ -492,9 +494,9 @@ API.Diaries.getAllReadCount = async(items) => {
             // 单独获取日志的阅读数
             let data = await API.Diaries.getReadCount(blogIds);
             data = API.Utils.toJson(data, /^_Callback\(/);
-            if (data.code < 0) {
+            if (data.code && data.code != 0) {
                 // 获取异常
-                console.warn('获取私密日记阅读数异常：', data);
+                console.warn('获取日记阅读数异常：', data);
             }
             data = data.data || {};
 
@@ -513,8 +515,8 @@ API.Diaries.getAllReadCount = async(items) => {
 }
 
 /**
- * 所有私密日记转换成导出文件
- * @param {Array} items 私密日记列表
+ * 所有日记转换成导出文件
+ * @param {Array} items 日记列表
  */
 API.Diaries.exportAllListToFiles = async(items) => {
     // 获取用户配置
@@ -536,7 +538,7 @@ API.Diaries.exportAllListToFiles = async(items) => {
 }
 
 /**
- * 导出私密日记到HTML文件
+ * 导出日记到HTML文件
  * @param {Array} items 日志列表
  */
 API.Diaries.exportToHtml = async(items) => {
@@ -558,7 +560,7 @@ API.Diaries.exportToHtml = async(items) => {
         // 基于模板生成HTML
         await API.Common.writeHtmlofTpl('diaries', undefined, moduleFolder + "/index.html");
 
-        // 生成私密日记详情HTML
+        // 生成日记详情HTML
         await API.Common.writeHtmlofTpl('diaryinfo', undefined, moduleFolder + "/info.html");
 
         // 每篇日记生成单独的HTML
@@ -569,7 +571,7 @@ API.Diaries.exportToHtml = async(items) => {
         }
 
     } catch (error) {
-        console.error('导出私密日记到HTML异常', error, boardInfo);
+        console.error('导出日记到HTML异常', error, boardInfo);
     }
 
     // 更新完成信息
@@ -579,8 +581,8 @@ API.Diaries.exportToHtml = async(items) => {
 
 
 /**
- * 导出私密日记到MarkDown文件
- * @param {Array} items 私密日记列表
+ * 导出日记到MarkDown文件
+ * @param {Array} items 日记列表
  */
 API.Diaries.exportToMarkdown = async(items) => {
     // 进度更新器
@@ -589,7 +591,7 @@ API.Diaries.exportToMarkdown = async(items) => {
 
     for (let index = 0; index < items.length; index++) {
         const item = items[index];
-        // 获取私密日记MD内容
+        // 获取日记MD内容
         let content = await API.Diaries.getMarkdown(item);
         let title = item.title;
         let date = new Date(item.pubtime * 1000).format('yyyyMMddhhmmss');
@@ -599,14 +601,14 @@ API.Diaries.exportToMarkdown = async(items) => {
         let categoryFolder = API.Common.getModuleRoot('Diaries') + "/" + item.category;
         // 创建文件夹
         await API.Utils.createFolder(categoryFolder);
-        // 私密日记文件路径
+        // 日记文件路径
         let filepath = categoryFolder + '/' + filename + ".md";
         await API.Utils.writeText(content, filepath).then(() => {
             // 更新成功信息
             indicator.addSuccess(item);
         }).catch((e) => {
             indicator.addFailed(item);
-            console.error('写入私密日记文件异常', item, e);
+            console.error('写入日记文件异常', item, e);
         })
     }
     // 更新完成信息
@@ -615,8 +617,8 @@ API.Diaries.exportToMarkdown = async(items) => {
 }
 
 /**
- * 获取单篇私密日记的MD内容
- * @param {object} item 私密日记信息
+ * 获取单篇日记的MD内容
+ * @param {object} item 日记信息
  */
 API.Diaries.getMarkdown = async(item) => {
     const contents = [];
@@ -638,11 +640,11 @@ API.Diaries.getMarkdown = async(item) => {
     for (const comment of comments) {
         // 评论人
         let poster = comment.poster.name || QZone.Common.Target.nickname || '';
-        poster = API.Common.formatContent(poster, 'MD');
+        poster = API.Common.formatContent(poster, 'MD', false, false, false, false, true);
         poster = API.Common.getUserLink(comment.poster.id, poster, 'MD', true);
 
         // 评论内容
-        let content = API.Common.formatContent(comment.content, 'MD');
+        let content = API.Common.formatContent(comment.content, 'MD', false, false, false, false, true);
         // 替换换行符
         content = content.replace(/\n/g, "");
 
@@ -654,11 +656,11 @@ API.Diaries.getMarkdown = async(item) => {
         for (const rep of replies) {
             // 回复人
             let repPoster = rep.poster.name || QZone.Common.Target.nickname || '';
-            repPoster = API.Common.formatContent(repPoster, 'MD');
+            repPoster = API.Common.formatContent(repPoster, 'MD', false, false, false, false, true);
             repPoster = API.Common.getUserLink(rep.poster.id, repPoster, 'MD', true);
 
             // 回复内容
-            let repContent = API.Common.formatContent(rep.content, 'MD');
+            let repContent = API.Common.formatContent(rep.content, 'MD', false, false, false, false, true);
             // 替换换行符
             repContent = repContent.replace(/\n/g, "");
 
@@ -803,8 +805,8 @@ API.Diaries.handerMedias = async(item, embeds) => {
 }
 
 /**
- * 导出私密日记到JSON文件
- * @param {Array} items 私密日记列表
+ * 导出日记到JSON文件
+ * @param {Array} items 日记列表
  */
 API.Diaries.exportToJson = async(items) => {
     const indicator = new StatusIndicator('Diaries_Export_Other');

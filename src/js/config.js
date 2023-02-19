@@ -11,6 +11,13 @@ const Default_Config = {
         listRetryCount: 5,
         // 重试间隔
         listRetrySleep: 2,
+        // 稍后次数
+        waitCount: 2,
+        // 稍后间隔
+        waitTime: 3600,
+        RestSleepUrls: [],
+        // 头像下载地址
+        AvatarHost: 1,
         // 文件下载类型
         downloadType: 'Browser',
         Aria2: {
@@ -27,6 +34,8 @@ const Default_Config = {
         thunderTaskSleep: 60,
         // 文件下载并发数        
         downloadThread: 10,
+        // 文件下载间隔        
+        downloadSleep: 2,
         // 是否禁用下载状态栏提醒
         disabledShelf: false,
         // 生成内容是否包含其他空间用户链接
@@ -102,6 +111,7 @@ const Default_Config = {
         ],
         hasThatYearToday: true,
         refreshWeChatLbs: false, // 刷新朋友圈坐标信息
+        GetVoice: false, // 是否获取语音说说
         Like: {
             isGet: false, //是否获取赞
             randomSeconds: {
@@ -144,7 +154,7 @@ const Default_Config = {
         },
         IncrementType: "Full", // 增量备份类型
         IncrementTime: Default_IncrementTime, // 增量时间
-        IncrementField: "pubtime", // 增量字段
+        IncrementField: "pubTime", // 增量字段
         Like: {
             isGet: false, //是否获取赞
             randomSeconds: {
@@ -161,7 +171,7 @@ const Default_Config = {
             }
         }
     },
-    // 私密日记模块
+    // 日记模块
     Diaries: {
         exportType: "HTML", // 内容备份类型
         showType: '1', // HTML查看方式，0:表格视图，1:列表视图
@@ -298,7 +308,7 @@ const Default_Config = {
             }
         }
     },
-    // 留言板模块
+    // 留言模块
     Boards: {
         exportType: "HTML",
         randomSeconds: {
@@ -311,7 +321,7 @@ const Default_Config = {
         IncrementField: "pubtime", // 增量字段
         hasThatYearToday: true
     },
-    // QQ好友模块
+    // 好友模块
     Friends: {
         exportType: "HTML", // 导出类型
         randomSeconds: {
@@ -322,9 +332,11 @@ const Default_Config = {
         Interactive: true, // 是否获取好友互动信息，如亲密度、添加时间、共同好友、共同群组等
         ZoneAccess: true, // 是否判断空间权限
         SpecialCare: true, // 是否获取特别关心
-        isIncrement: false // 是否增量备份
+        isIncrement: false, // 是否增量备份
+        SpecialGroup: ['care', 'access', 'isFriend', 'deleted', '5', '10', '20'], // 特殊分组
+        SortType: 'QQ' // 分组排序，QQ分组（QQ）或助手分组（default）
     },
-    // 收藏夹模块
+    // 收藏模块
     Favorites: {
         exportType: "HTML",
         randomSeconds: {
@@ -604,12 +616,12 @@ const MODULE_NAME_LIST = ['Messages', 'Blogs', 'Diaries', 'Photos', 'Videos', 'B
 const MODULE_NAME_MAPS = {
     Messages: '说说',
     Blogs: '日志',
-    Diaries: '私密日记',
+    Diaries: '日记',
     Photos: '相册',
     Videos: '视频',
-    Boards: '留言板',
+    Boards: '留言',
     Friends: '好友',
-    Favorites: '收藏夹',
+    Favorites: '收藏',
     Shares: '分享',
     Visitors: '访客'
 };
@@ -632,6 +644,9 @@ const ExportFiles = [{
 }, {
     original: 'export/images/loading.gif',
     target: 'Common/images/loading.gif'
+}, {
+    original: 'export/images/favicon.ico',
+    target: 'Common/images/favicon.ico'
 }, {
     original: 'export/js/common.js',
     target: 'Common/js/common.js'
@@ -754,7 +769,7 @@ var QZone = {
         Data: [],
         FILE_URLS: new Map()
     },
-    // 私密日记模块
+    // 日记模块
     Diaries: {
         ROOT: 'Diaries',
         IMAGES_ROOT: 'Diaries/images',
@@ -816,7 +831,7 @@ var QZone = {
         Data: [],
         FILE_URLS: new Map()
     },
-    // 留言板模块
+    // 留言模块
     Boards: {
         ROOT: 'Boards',
         Data: {
@@ -829,13 +844,13 @@ var QZone = {
         },
         FILE_URLS: new Map()
     },
-    // QQ好友模块
+    // 好友模块
     Friends: {
         ROOT: 'Friends',
         total: 0,
         Data: []
     },
-    // 收藏夹模块
+    // 收藏模块
     Favorites: {
         ROOT: 'Favorites',
         IMAGES_ROOT: 'Favorites/images',

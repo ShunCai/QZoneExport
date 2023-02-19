@@ -53,9 +53,12 @@ body {
 }
 
 .header {
-    top: 70px;
-    position: relative;
     text-align: center;
+}
+
+#index_html {
+    margin-top: 70px;
+    margin-bottom: 56px;
 }
 
 .head-info {
@@ -169,7 +172,7 @@ body {
 }
 
 
-/* 留言板样式 */
+/* 留言样式 */
 
 .boards {
     top: 40px;
@@ -693,7 +696,6 @@ pre {
 .timeline2-centered .timeline2-entry .timeline2-entry-inner .timeline2-icon {
     width: 50px;
     height: 50px;
-    border: 1px solid #eaeaea;
     margin-left: 5px;
 }
 
@@ -1096,16 +1098,16 @@ pre {
 
 /* 好友图标下边距 */
 
-
 #friends-type-list .list-inline {
     margin-bottom: 0.3rem;
-	margin-left: 4rem;
+    margin-left: 4rem;
 }
 
-#friends-type-list .align-middle.mb-2 > span{
+#friends-type-list .align-middle.mb-2>span {
     margin-bottom: 0.3rem;
-	margin-left: 1.5rem !important;
+    margin-left: 1.5rem !important;
 }
+
 
 /* 评论人内容 */
 
@@ -1549,4 +1551,8 @@ blockquote.source {
     .videos .pic-num-wrap {
         top: 250px;
     }
+}
+
+.tooltip-inner {
+    max-width: 600px !important;
 }
