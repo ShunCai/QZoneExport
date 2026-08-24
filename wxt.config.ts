@@ -66,7 +66,6 @@ export default defineConfig({
         permissions: [
             'activeTab',
             'alarms',
-            'cookies',
             'notifications',
             'storage',
             'unlimitedStorage',
