@@ -84,6 +84,14 @@ function getUniKey(targetUin: number, tid: string): string {
 }
 
 /**
+ * 判断详情/转发是否还有更多内容（接口可能返回数字 1、字符串 "1" 或布尔 true）
+ * 不能只用 === 1，否则会漏掉长说说导致正文保持截断
+ */
+function hasMoreCon(value: unknown): boolean {
+    return value === 1 || value === true || value === '1';
+}
+
+/**
  * 转换接口数据（移植自 messages.js convert L801-855）
  */
 export function convertMessages(items: MessageItem[], targetUin: number): MessageItem[] {
@@ -443,13 +451,8 @@ export class MessagesCollector implements ModuleCollector {
         for (let i = startIndex; i < items.length; i++) {
             const item = items[i]!;
             await env.tick();
-            // 断点续传：已有全文内容的条目跳过（staging 恢复的已处理项）
-            if (item.content && item.conlist && item.conlist.length > 0) {
-                done++;
-                continue;
-            }
-            // 是否有全文
-            const hasMoreContent = item.has_more_con === 1 || item.rt_has_more_con === 1;
+            // 是否有全文（长说说在列表接口里会被截断，需再请求详情接口取全文）
+            const hasMoreContent = hasMoreCon(item.has_more_con) || hasMoreCon(item.rt_has_more_con);
             if (hasMoreContent && isNewItem(item)) {
                 try {
                     const call = messageFullContent(env.ctx, item.tid);
@@ -458,12 +461,20 @@ export class MessagesCollector implements ModuleCollector {
                     if (data.code && data.code != 0) {
                         env.logger.warn(`获取所有说说的全文内容异常 | tid=${item.tid} | code=${data.code}`, data.msg || '');
                     }
-                    // 自身全文
-                    item.content = data.content;
-                    item.conlist = data.conlist || [];
+                    // 自身全文（仅当确实返回正文时才覆盖，避免异常响应把正文清空）
+                    if (typeof data.content === 'string') {
+                        item.content = data.content;
+                        item.custom_content = data.content;
+                        // 已取到全文，清零标记，断点续传/增量回刷时不再重复请求
+                        item.has_more_con = 0;
+                    }
+                    if (Array.isArray(data.conlist)) {
+                        item.conlist = data.conlist;
+                    }
                     // 转发全文
-                    if (item.rt_tid) {
+                    if (item.rt_tid && data.rt_con !== undefined) {
                         item.rt_con = data.rt_con;
+                        item.rt_has_more_con = 0;
                     }
                 } catch (error) {
                     env.logger.error(`获取说说自身全文异常 | tid=${item.tid}`, error instanceof Error ? error.message : String(error));

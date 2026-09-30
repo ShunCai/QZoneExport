@@ -519,6 +519,32 @@ describe('说说采集器', () => {
         expect(tasks.some((t) => t.module === 'Messages' && t.dir === 'Messages/images')).toBe(true);
     });
 
+    it('长说说：has_more_con 时抓详情全文覆盖列表截断正文（含字符串标记）', async () => {
+        const msglist = JSON.stringify({
+            code: 0, total: 2,
+            msglist: [
+                { tid: 't1', content: '很长的说说…（截断）', conlist: [{ content: 'x' }], has_more_con: 1, created_time: 1600000000 },
+                { tid: 't2', content: '又一条很长的说说…（截断）', has_more_con: '1', created_time: 1500000000 },
+            ],
+        });
+        const { env, files } = makeEnv([
+            { match: 'emotion_cgi_msglist_v6', body: `_preloadCallback(${msglist});` },
+            {
+                match: 'emotion_cgi_msgdetail_v6',
+                body: (url) => {
+                    const tid = url.includes('tid=t1') ? 't1' : 't2';
+                    return `_Callback(${JSON.stringify({ code: 0, content: `${tid} 完整全文`, conlist: [] })});`;
+                },
+            },
+        ]);
+        await new MessagesCollector(env).collect(fakeCtx);
+        const items = (files.get('Messages/json/messages.js')!.data) as any[];
+        expect(items.map((i: any) => i.content)).toEqual(['t1 完整全文', 't2 完整全文']);
+        expect(items[0].custom_content).toBe('t1 完整全文');
+        expect(items[0].has_more_con).toBe(0);
+        expect(items[1].has_more_con).toBe(0);
+    });
+
     it('全量备份（带旧数据+多页）每页媒体都回写 custom_filepath（防逐页内联回归）', async () => {
         const pageOf = (page: number, ids: string[]) => JSON.stringify({
             code: 0, total: 3,
