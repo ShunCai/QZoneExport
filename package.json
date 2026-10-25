@@ -37,7 +37,7 @@
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.65.0",
         "vite": "^7.3.6",
-        "vitest": "^4.1.11",
+        "vitest": "^4.1.12",
         "vue-eslint-parser": "^10.4.1",
         "vue-tsc": "^3.3.9",
         "web-ext": "^10.6.0",
