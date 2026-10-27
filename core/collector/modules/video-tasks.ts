@@ -14,6 +14,8 @@ export interface VideoLike extends IncrementItem {
     url1?: string;
     url2?: string;
     url3?: string;
+    /** 原视频地址（MP4）：qq空间下发于相片/说说的详情接口，列表接口无此字段 */
+    download_url?: string;
     pre?: string;
     preview_img?: string;
     play_url?: string;
@@ -149,9 +151,38 @@ export async function addDownloadTsTasks(
 }
 
 /**
+ * 给视频文件名追加去歧义后缀（方案 A：仅对重名追加，不改动既有文件名）。
+ *
+ * 背景：`buildVideoFileName` 在 RenameType='Name'/'Time' 时以「视频标题」命名，
+ * 而 `filenameValidate` 只替换非法字符、不做唯一化（且会把 `视频:A`/`视频/A`/`视频 A`
+ * 一并归并为 `视频_A`，进一步放大碰撞）。同名视频会得到同一个文件名，
+ * 进而撞同一个任务 id（下载管理器按 `module::dir::name` 去重，**不含 URL**）→
+ * 被 upsert 合并成一个任务，只保留最后一个 URL，其余视频（本体 + 预览图）根本不下载。
+ * （与「224 个视频只下 85 张预览」同机制，只是入口从预览 URL 归一化换成了标题重复。）
+ *
+ * 策略：仅当批内检测到重名时才给第 2 个及之后的视频追加短哈希后缀，第一个保持原名。
+ * 这样绝大多数文件名不变（不引发全量重下），只消解真实碰撞。
+ * 后缀取自「视频身份」（去参 URL，剔除防盗链 token），同一视频稳定得到同一后缀。
+ */
+function disambiguateFileName(filename: string, video: VideoLike, used: Set<string>): string {
+    if (!used.has(filename)) {
+        used.add(filename);
+        return filename;
+    }
+    const identity = video.custom_url || video.url || video.video_url || video.url3 || video.vid || '';
+    const suffix = hashString(normalizeForDedup(identity)).slice(0, 6);
+    const dot = filename.lastIndexOf('.');
+    const unique = dot > 0 ? `${filename.slice(0, dot)}_${suffix}${filename.slice(dot)}` : `${filename}_${suffix}`;
+    used.add(unique);
+    return unique;
+}
+
+/**
  * 登记视频（预览图+视频本体）下载任务
  * 移植自 videos.js addDownloadTasks（L231-298），module 为 'Videos' 时启用
- * 序号命名与分类目录，其余模块（说说/相册/收藏）落到 <module_dir>/images
+ * Videos 模块按 buildVideoFileName 命名（Default=URL哈希/Name=标题/Time=标题_时间），
+ * 其余模块（说说/相册/收藏）落到 <module_dir>/images。
+ * 注：序号命名逻辑已下线，Name/Time 以标题为名可能撞名，故 Videos 分支统一过批内去重（仅重名追加短哈希）。
  */
 export async function addVideoTasks(
     env: CollectorEnv,
@@ -172,6 +203,8 @@ export async function addVideoTasks(
         // QQ空间外链不添加下载任务
         return;
     }
+    // 批内已用文件名集合（配合 disambiguateFileName 消解同名视频碰撞）
+    const usedNames = new Set<string>();
     for (let idx = 0; idx < videos.length; idx++) {
         const video = videos[idx]!;
 
@@ -181,7 +214,8 @@ export async function addVideoTasks(
         }
 
         // 解析视频本体地址（用于命名与下载），提前到预览之前，使预览图文件名绑定「视频身份」
-        video.custom_url = video.url || video.video_url || video.url3;
+        // 优先 download_url（原视频 MP4），缺失时回落 url / video_url / url3（转码播放档）
+        video.custom_url = video.download_url || video.url || video.video_url || video.url3;
 
         // 计算视频文件名基准（不含后缀）：作为「预览图」与「视频本体」的共同基准，保证二者一一对应。
         // —— 关键修复：预览图文件名不再由「预览 URL 哈希」生成。
@@ -192,8 +226,10 @@ export async function addVideoTasks(
         //    改为以「视频身份」作基准：每张视频一份独立预览图，彻底杜绝跨视频碰撞。
         let videoBase: string;
         if (options?.videoFileName) {
-            // Videos 模块：序号命名（唯一），剥离 .mp4 后缀即得基准
-            video.custom_filename = options.videoFileName(video);
+            // Videos 模块：按 buildVideoFileName 的命名规则（Default=URL哈希 / Name=标题 / Time=标题_时间）。
+            // 注意：序号命名逻辑已下线，Name/Time 以「视频标题」为名，标题重复会撞名（历史代码注释曾误标
+            // 其为「唯一」），故此处统一过一遍批内去重，仅对重名者追加短哈希后缀。
+            video.custom_filename = disambiguateFileName(options.videoFileName(video), video, usedNames);
             videoBase = video.custom_filename.replace(/\.mp4$/, '');
         } else {
             // 其它模块（说说/相册/收藏）：以视频地址去参哈希作基准（唯一）；

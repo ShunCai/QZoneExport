@@ -57,6 +57,9 @@ export interface VideoInfo {
     videoid?: string;
     vid?: string;
     url?: string;
+    /** 原视频地址（MP4）：仅浮层接口 cgi_floatview_photo_list_v2 下发，列表接口无此字段 */
+    download_url?: string;
+    /** 播放地址（M3U8/MP4 转码档）：列表接口与浮层接口均有 */
     video_url?: string;
     duration?: number;
     [key: string]: unknown;

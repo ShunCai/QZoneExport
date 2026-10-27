@@ -1121,7 +1121,9 @@ export class PhotosCollector implements ModuleCollector {
         const env = this.env;
         const cfg = env.config.Photos;
         if (cfg.Images.listType === 'Detail') {
-            // 列表类型为详情列表时无需再额外获取详情
+            // 列表类型为详情列表时无需再额外获取详情：
+            // 该模式下相片列表本身即由浮层接口 cgi_floatview_photo_list_v2 递归翻页取得，
+            // 条目已是完整的详情结构（含 video_info.download_url 原视频地址）
             return;
         }
         if (!cfg.Images.Info.isGet && !cfg.Images.isGetVideo) {
@@ -1305,7 +1307,10 @@ export class PhotosCollector implements ModuleCollector {
 
                 // 下载视频
                 photo.custom_filename = filename + '.mp4';
-                registry.newTask(photo.video_info.video_url!, downloadFolder, photo.custom_filename, photo);
+                // 优先取 download_url（浮层接口下发的原视频 MP4）；
+                // 未获取相片详情或接口未下发时回落 video_url（转码播放档，可能为 M3U8）
+                const videoUrl = photo.video_info.download_url || photo.video_info.video_url!;
+                registry.newTask(videoUrl, downloadFolder, photo.custom_filename, photo);
                 photo.custom_filepath = downloadFolder + '/' + photo.custom_filename;
             } else {
                 // 根据配置的清晰度匹配图片

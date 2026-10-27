@@ -126,6 +126,75 @@ describe('视频预览图文件名绑定视频身份（修复串位/少下载）
     });
 });
 
+describe('同名视频去歧义（方案 A：仅重名追加短哈希后缀）', () => {
+    function makeEnv() {
+        const tasks: any[] = [];
+        return {
+            tasks,
+            config: { Common: { downloadType: 'Browser' }, Videos: { fileStructureType: '' } },
+            logger: { info: () => {}, warn: () => {}, error: () => {} },
+            addMediaTask: (t: any) => {
+                tasks.push(t);
+            },
+        } as any;
+    }
+
+    it('RenameType=Name 下同名视频：第 2 个起追加后缀，两个视频都登记（防静默丢视频）', async () => {
+        const env = makeEnv();
+        const registry = new MediaTaskRegistry(env, 'Videos');
+        // 三个同名视频（不同 URL）：文件名原本全是「我的视频.mp4」
+        const mk = (id: string) => ({
+            name: '我的视频',
+            url: `https://photovideo.photo.qq.com/1074_${id}.mp4`,
+            pre: 'https://cover.qpic.cn/same.jpg',
+        }) as VideoLike;
+        const [v1, v2, v3] = [mk('aaaa'), mk('bbbb'), mk('cccc')];
+
+        await addVideoTasks(env, registry, [v1, v2, v3], 'Videos/images', undefined, {
+            videoFileName: (v) => buildVideoFileName(v as any, 'Name'),
+        });
+
+        // 第一个保持原名（不引发既有备份文件名变动 / 全量重下）
+        expect(v1.custom_filename).toBe('我的视频.mp4');
+        // 第 2、3 个追加短哈希后缀，且互不撞名
+        expect(v2.custom_filename).toMatch(/^我的视频_[0-9a-z]{6}\.mp4$/);
+        expect(v3.custom_filename).toMatch(/^我的视频_[0-9a-z]{6}\.mp4$/);
+        expect(new Set([v1.custom_filename, v2.custom_filename, v3.custom_filename]).size).toBe(3);
+        // 预览图与视频本体仍一一对应
+        expect(v2.custom_pre_filename).toBe(v2.custom_filename!.replace(/\.mp4$/, '.jpeg'));
+        // 三个视频本体 + 三张预览图全部登记（修复前同名会被 upsert 折叠，只剩 1 个）
+        expect(env.tasks.filter((t: any) => t.name.endsWith('.mp4')).length).toBe(3);
+        expect(env.tasks.filter((t: any) => t.name.endsWith('.jpeg')).length).toBe(3);
+    });
+
+    it('不同标题不受影响，不追加后缀（方案 A 只动重名者）', async () => {
+        const env = makeEnv();
+        const registry = new MediaTaskRegistry(env, 'Videos');
+        const a = { name: '视频A', url: 'https://photovideo.photo.qq.com/1074_aaaa.mp4' } as VideoLike;
+        const b = { name: '视频B', url: 'https://photovideo.photo.qq.com/1074_bbbb.mp4' } as VideoLike;
+        await addVideoTasks(env, registry, [a, b], 'Videos/images', undefined, {
+            videoFileName: (v) => buildVideoFileName(v as any, 'Name'),
+        });
+        expect(a.custom_filename).toBe('视频A.mp4');
+        expect(b.custom_filename).toBe('视频B.mp4');
+    });
+
+    it('filenameValidate 归并后的碰撞（视频:A / 视频/A / 视频 A）也必须去歧义', async () => {
+        const env = makeEnv();
+        const registry = new MediaTaskRegistry(env, 'Videos');
+        const mk = (n: string, id: string) => ({
+            name: n,
+            url: `https://photovideo.photo.qq.com/1074_${id}.mp4`,
+        }) as VideoLike;
+        const [a, b, c] = [mk('视频:A', 'aaaa'), mk('视频/A', 'bbbb'), mk('视频 A', 'cccc')];
+        await addVideoTasks(env, registry, [a, b, c], 'Videos/images', undefined, {
+            videoFileName: (v) => buildVideoFileName(v as any, 'Name'),
+        });
+        // 三者经 filenameValidate 都会归并成 视频_A.mp4 → 必须靠去歧义分开
+        expect(new Set([a.custom_filename, b.custom_filename, c.custom_filename]).size).toBe(3);
+    });
+});
+
 describe('断点去重键去 token（跨会话续传不重复下载）', () => {
     it('同一视频不同 token：先以下载(token1)写入去重集，再用 token2 续传检查应判「已下载」跳过', async () => {
         const dir = 'Messages/images';
