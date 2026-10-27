@@ -1,6 +1,6 @@
 {
     "name": "qzone-export",
-    "version": "3.0",
+    "version": "3.1",
     "description": "QQ空间导出助手，用于导出备份QQ空间的说说、日志、日记、相册、视频、留言、好友、收藏、分享、访客为文件，便于迁移与保存",
     "private": true,
     "type": "module",
