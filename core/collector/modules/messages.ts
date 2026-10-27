@@ -443,27 +443,33 @@ export class MessagesCollector implements ModuleCollector {
         for (let i = startIndex; i < items.length; i++) {
             const item = items[i]!;
             await env.tick();
-            // 断点续传：已有全文内容的条目跳过（staging 恢复的已处理项）
-            if (item.content && item.conlist && item.conlist.length > 0) {
-                done++;
-                continue;
-            }
             // 是否有全文
+            // 列表接口对长说说会截断 content/conlist 并置 has_more_con=1；
+            // 详情接口 emotion_cgi_msgdetail_v6（not_trunc_con=1）才返回完整正文。
+            // 注意：不能用「conlist 非空」判定「全文已就绪」——列表本身就能返回（截断的）conlist，
+            // 否则会误跳过详情拉取，导致长说说全文丢失（已修复的回归）。
             const hasMoreContent = item.has_more_con === 1 || item.rt_has_more_con === 1;
             if (hasMoreContent && isNewItem(item)) {
                 try {
                     const call = messageFullContent(env.ctx, item.tid);
                     const text = await env.requester.get(call.url, call.params);
                     const data = toJson<any>(text, /^_Callback\(/);
-                    if (data.code && data.code != 0) {
-                        env.logger.warn(`获取所有说说的全文内容异常 | tid=${item.tid} | code=${data.code}`, data.msg || '');
-                    }
-                    // 自身全文
-                    item.content = data.content;
-                    item.conlist = data.conlist || [];
-                    // 转发全文
-                    if (item.rt_tid) {
-                        item.rt_con = data.rt_con;
+                    if (data && data.code && data.code != 0) {
+                        // 接口返回错误（如「使用人数过多」）：保留已有的（截断但存在的）content/conlist，
+                        // 不要把本就有的内容覆盖成 undefined。
+                        env.logger.warn(`获取说说全文内容异常 | tid=${item.tid} | code=${data.code}`, data.msg || '');
+                    } else if (data) {
+                        // 自身全文
+                        item.content = data.content;
+                        item.conlist = data.conlist || [];
+                        // 转发全文
+                        if (item.rt_tid) {
+                            item.rt_con = data.rt_con;
+                        }
+                        // custom_content 在 convertMessages（收页时）就被固定为列表的截断值，
+                        // 而全文是此后才拉取的 —— 必须同步刷新，否则屏蔽词过滤（filterKeyWords）
+                        // 只对截断文本生效，藏在全文后半段的屏蔽词会漏过滤。
+                        item.custom_content = data.content;
                     }
                 } catch (error) {
                     env.logger.error(`获取说说自身全文异常 | tid=${item.tid}`, error instanceof Error ? error.message : String(error));

@@ -519,6 +519,60 @@ describe('说说采集器', () => {
         expect(tasks.some((t) => t.module === 'Messages' && t.dir === 'Messages/images')).toBe(true);
     });
 
+    it('长说说 has_more_con=1 时拉取详情获取完整全文（防 L447 回归）', async () => {
+        // 列表接口对长说说截断 content/conlist 并置 has_more_con=1，但仍返回（截断的）conlist。
+        // 旧代码的「conlist 非空即跳过详情拉取」会误判已就绪而漏抓全文。
+        const truncatedCon = '这是前半段……';
+        const msglist = JSON.stringify({
+            code: 0, total: 1,
+            msglist: [{
+                tid: 't-long', content: truncatedCon, created_time: 1600000000,
+                conlist: [{ type: 2, con: truncatedCon }], has_more_con: 1,
+                cmtnum: 0, commentlist: [],
+            }],
+        });
+        const full = '这是前半段，这是后半段，这是完整全文内容，远超列表截断长度。';
+        const detail = JSON.stringify({ code: 0, content: full, conlist: [{ type: 2, con: full }] });
+        const { env, files, requestedUrls } = makeEnv([
+            { match: 'emotion_cgi_msglist_v6', body: `_preloadCallback(${msglist});` },
+            { match: 'emotion_cgi_msgdetail_v6', body: `_Callback(${detail});` },
+        ]);
+        await new MessagesCollector(env).collect(fakeCtx);
+        const items = (files.get('Messages/json/messages.js')!.data) as any[];
+        const entry = items[0]!;
+        // 关键断言：详情接口返回的完整正文必须写回 content（回归会停留在列表截断值）
+        expect(entry.content).toBe(full);
+        expect(entry.conlist?.[0]?.con).toBe(full);
+        // custom_content 在 convertMessages（收页时）就被固定为截断值，全文拉取后必须同步刷新，
+        // 否则依赖它的屏蔽词过滤只对截断文本生效
+        expect(entry.custom_content).toBe(full);
+        // 且详情接口必须被实际调用
+        expect(requestedUrls.some((u) => u.includes('emotion_cgi_msgdetail_v6'))).toBe(true);
+    });
+
+    it('屏蔽词只出现在长说说全文后半段时也能被过滤掉（custom_content 需随全文刷新）', async () => {
+        // 截断正文里没有屏蔽词，只有详情返回的完整全文后半段才有。
+        // 若 custom_content 停留在截断值，filterKeyWords 会漏过滤，屏蔽词说说被导出。
+        const truncated = '今天天气不错……';
+        const full = '今天天气不错，顺便说一句这是促销广告内容。';
+        const msglist = JSON.stringify({
+            code: 0, total: 1,
+            msglist: [{
+                tid: 't-filter', content: truncated, created_time: 1600000000,
+                conlist: [{ type: 2, con: truncated }], has_more_con: 1,
+                cmtnum: 0, commentlist: [],
+            }],
+        });
+        const detail = JSON.stringify({ code: 0, content: full, conlist: [{ type: 2, con: full }] });
+        const { env, files } = makeEnv([
+            { match: 'emotion_cgi_msglist_v6', body: `_preloadCallback(${msglist});` },
+            { match: 'emotion_cgi_msgdetail_v6', body: `_Callback(${detail});` },
+        ], makeConfig({ Messages: { isFilterKeyword: true, FilterKeyWords: ['促销'] } }));
+        await new MessagesCollector(env).collect(fakeCtx);
+        const items = (files.get('Messages/json/messages.js')!.data) as any[];
+        expect(items.length).toBe(0);
+    });
+
     it('全量备份（带旧数据+多页）每页媒体都回写 custom_filepath（防逐页内联回归）', async () => {
         const pageOf = (page: number, ids: string[]) => JSON.stringify({
             code: 0, total: 3,
