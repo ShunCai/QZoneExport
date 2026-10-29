@@ -32,7 +32,7 @@
         "eslint-plugin-vue": "^10.10.0",
         "fake-indexeddb": "^6.2.5",
         "globals": "^17.8.0",
-        "happy-dom": "^20.11.1",
+        "happy-dom": "^21.0.4",
         "prettier": "^3.8.1",
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.65.0",
