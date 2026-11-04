@@ -97,6 +97,25 @@ function collectFromItems(items: Record<string, any>[], module: string): Interac
  * 收集全站互动用户（去重）
  * 涉及全部模块的数据文件，量可能较大，故由调用方在需要时再触发、并自行缓存结果。
  */
+/**
+ * 「互动好友 / 潜水好友」所依赖的内容模块。
+ *
+ * 这些模块若一个都没备份，collectInteractiveUsers 会返回空数组（而不是 null），
+ * 于是所有好友都会被判成「从不互动」——那是假阴性。调用方据此给出提示，
+ * 而不是假装统计成功（FriendsPage 会禁用这两个选项并注明原因）。
+ */
+export const INTERACTIVE_SOURCE_KEYS = [
+    'messages', 'blogs', 'diaries', 'albums', 'videos', 'boards', 'favorites', 'shares', 'visitors',
+] as const;
+
+/** 是否至少备份了一个能提供互动线索的模块 */
+export async function hasInteractiveSource(): Promise<boolean> {
+    for (const key of INTERACTIVE_SOURCE_KEYS) {
+        if ((await loadData(key)) !== null) return true;
+    }
+    return false;
+}
+
 export async function collectInteractiveUsers(): Promise<InteractiveUser[]> {
     const users: InteractiveUser[] = [];
 

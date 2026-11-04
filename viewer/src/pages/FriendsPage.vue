@@ -5,7 +5,7 @@ import { loadList } from '../data/sources';
 import { getModulePref, savePref, type ShowType } from '../data/displayPrefs';
 import { formatTime, timeValue } from '../data/format';
 import { formatSummary } from '../data/richText';
-import { collectInteractiveUsers, type InteractiveUser } from '../data/interactive';
+import { collectInteractiveUsers, hasInteractiveSource, type InteractiveUser } from '../data/interactive';
 import {
     friendCommonCount,
     friendDisplayName,
@@ -24,8 +24,10 @@ import UserLink from '../components/UserLink.vue';
 const loading = ref(true);
 const list = ref<Record<string, any>[]>([]);
 const keyword = ref('');
-/** 筛选值：'' 全部；'group:xxx' QQ 分组；'special:xxx' 特殊分组 */
-const group = ref('');
+/** QQ 分组筛选：'' = 全部；其余为分组名（'未分组' 也算一个分组） */
+const qqGroup = ref('');
+/** 特殊分组筛选：'' = 全部；其余为 SPECIAL_GROUPS 的 key，另有 'passerby'（空间过客） */
+const special = ref('');
 /** '0' 表格 · '1' 列表（好友为卡片视图，列表即卡片流） */
 const showType = ref<ShowType>('1');
 const sortField = ref(getModulePref('friends').sortField || 'default');
@@ -64,6 +66,7 @@ onMounted(async () => {
     loading.value = false;
     // 互动用户要扫全部模块，量可能大，放到好友渲染之后再算，不阻塞首屏
     try {
+        interactiveSourceOk.value = await hasInteractiveSource();
         const users = await collectInteractiveUsers();
         const friendUins = new Set(list.value.map((item) => String(item.uin)));
         interactiveUins.value = new Set(users.map((user) => user.uin));
@@ -80,6 +83,13 @@ onMounted(async () => {
  */
 const interactiveUins = ref<Set<string> | null>(null);
 const passerby = ref<InteractiveUser[]>([]);
+
+/**
+ * 是否备份了任何可提供互动线索的模块。
+ * 全缺失时「互动好友 / 潜水好友」的判定没有意义（所有人都会被算成潜水），
+ * 此时把这两个选项置灰并注明原因，而不是显示一个看似正常的 0。
+ */
+const interactiveSourceOk = ref(true);
 
 /**
  * 特殊分组
@@ -157,49 +167,96 @@ function matchSpecial(key: string, item: Record<string, any>): boolean {
     }
 }
 
-const groupOptions = computed(() => {
-    const groups = new Set<string>();
+/**
+ * 当前 QQ 分组筛选后的好友集合。
+ * 特殊分组的计数基于它，这样两个条件组合时括号里的数字才是「还能筛出多少个」。
+ */
+const qqGroupScope = computed(() => (
+    qqGroup.value
+        ? list.value.filter((item) => (item.groupName || '未分组') === qqGroup.value)
+        : list.value
+));
+
+/** QQ 分组选项（带计数，按人数降序；分组是好友的稳定属性，口径不随特殊分组变化） */
+const qqGroupOptions = computed(() => {
+    const counts = new Map<string, number>();
     for (const item of list.value) {
-        groups.add(item.groupName || '未分组');
+        const name = item.groupName || '未分组';
+        counts.set(name, (counts.get(name) || 0) + 1);
     }
-    // 空分组不列出来，选了也只是一片空白
-    const specials = SPECIAL_GROUPS
-        .map((special) => ({
-            ...special,
-            total: list.value.filter((item) => matchSpecial(special.value, item)).length,
-        }))
-        .filter((special) => special.total > 0)
-        .map((special) => ({ label: `${special.label}（${special.total}）`, value: 'special:' + special.value }));
-
-    // 空间过客不是好友集合的子集，单独追加
-    if (passerby.value.length > 0) {
-        specials.push({ label: `空间过客（${passerby.value.length}）`, value: 'special:passerby' });
-    }
-
     return [
-        { label: '全部好友', value: '' },
-        {
-            type: 'group',
-            key: 'qq',
-            label: 'QQ 分组',
-            children: [...groups].map((name) => ({ label: name, value: 'group:' + name })),
-        },
-        { type: 'group', key: 'special', label: '特殊分组', children: specials },
+        { label: `全部好友（${list.value.length}）`, value: '' },
+        ...[...counts.entries()]
+            .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+            .map(([name, total]) => ({ label: `${name}（${total}）`, value: name })),
     ];
+});
+
+/** 依赖互动数据的特殊分组：源数据缺失时无法判定 */
+const INTERACTIVE_DEPENDENT = new Set(['intimacy', 'diving']);
+
+/** 特殊分组选项（计数基于当前 QQ 分组范围，联动更新；空分组不列出） */
+const specialOptions = computed(() => {
+    const scope = qqGroupScope.value;
+    const options: { label: string; value: string; disabled?: boolean }[] = [
+        { label: `全部（${scope.length}）`, value: '' },
+    ];
+
+    for (const item of SPECIAL_GROUPS) {
+        const unavailable = INTERACTIVE_DEPENDENT.has(item.value) && !interactiveSourceOk.value;
+        const total = unavailable ? 0 : scope.filter((row) => matchSpecial(item.value, row)).length;
+        // 源数据缺失的两项即使 0 也保留，用作「为什么没有这个筛选」的提示；其余空分组照旧隐藏
+        if (total === 0 && !unavailable) continue;
+        options.push({
+            label: unavailable ? `${item.label}（未备份互动数据）` : `${item.label}（${total}）`,
+            value: item.value,
+            ...(unavailable ? { disabled: true } : {}),
+        });
+    }
+
+    // 空间过客不是好友集合的子集，单独追加（选中时会切换数据源并禁用 QQ 分组）
+    if (passerby.value.length > 0) {
+        options.push({ label: `空间过客（${passerby.value.length}）`, value: 'passerby' });
+    }
+    return options;
+});
+
+/**
+ * 特殊分组选项是按「当前 QQ 分组范围内的计数」动态生成的：
+ * 切换 QQ 分组后某项可能计数归零而被过滤掉，此时 n-select 找不到匹配的 option，
+ * 会把内部 key（如 access）直接当文本显示出来。这里在选中项从选项里消失时同步清空。
+ */
+watch(specialOptions, (options) => {
+    if (special.value && !options.some((option) => option.value === special.value)) {
+        special.value = '';
+    }
+});
+
+/** 是否正在看「空间过客」：此时数据源不是好友列表 */
+const isPasserby = computed(() => special.value === 'passerby');
+
+/**
+ * 过客不是好友的子集，选中时 QQ 分组既无意义也不该继续保留选中值
+ * （否则下拉被禁用却仍显示着「PHP（2）」，等于自相矛盾）。
+ */
+watch(isPasserby, (value) => {
+    if (value) qqGroup.value = '';
 });
 
 /** 选中「空间过客」时展示的是非好友的互动用户，其余情况都是好友列表 */
 const baseList = computed<Record<string, any>[]>(() => (
-    group.value === 'special:passerby' ? (passerby.value as Record<string, any>[]) : list.value
+    isPasserby.value ? (passerby.value as Record<string, any>[]) : list.value
 ));
 
+/**
+ * 两个筛选条件互相独立、按 AND 组合（如「QQ 分组=同学」且「特殊分组=十年老友」）。
+ * 过客不是好友子集，故选中过客时忽略 QQ 分组条件（下拉同时禁用）。
+ */
 const filtered = computed(() => baseList.value.filter((item) => {
-    // passerby 的数据源已是过客列表，无需再走特殊分组谓词
-    if (group.value.startsWith('special:') && group.value !== 'special:passerby'
-        && !matchSpecial(group.value.slice(8), item)) {
+    if (!isPasserby.value && qqGroup.value && (item.groupName || '未分组') !== qqGroup.value) {
         return false;
     }
-    if (group.value.startsWith('group:') && (item.groupName || '未分组') !== group.value.slice(6)) {
+    if (special.value && !isPasserby.value && !matchSpecial(special.value, item)) {
         return false;
     }
     const word = keyword.value.trim().toLowerCase();
@@ -235,7 +292,7 @@ const sorted = computed(() => {
 /** 是否单向好友：isFriend 为 0/false 时表示对方已不是好友 */
 function friendState(row: Record<string, any>): string {
     // 空间过客本就不是好友（无 isFriend 字段），单独标出，不能默认当成互为好友
-    if (group.value === 'special:passerby') {
+    if (isPasserby.value) {
         return '非好友';
     }
     if (row.deleted) {
@@ -378,9 +435,19 @@ const columns: DataTableColumns<Record<string, any>> = [
                         <n-radio-button value="0">表格</n-radio-button>
                     </n-radio-group>
                 </div>
+                <!-- 两个条件拆开：可组合（如「同学」且「十年老友」） -->
                 <div class="toolbar-group">
-                    <span class="toolbar-label">分组</span>
-                    <n-select v-model:value="group" :options="groupOptions" style="width: 180px;" />
+                    <span class="toolbar-label">QQ 分组</span>
+                    <n-select
+                        v-model:value="qqGroup"
+                        :options="qqGroupOptions"
+                        :disabled="isPasserby"
+                        style="width: 160px;"
+                    />
+                </div>
+                <div class="toolbar-group">
+                    <span class="toolbar-label">特殊分组</span>
+                    <n-select v-model:value="special" :options="specialOptions" style="width: 160px;" />
                 </div>
                 <div class="toolbar-group to-right">
                     <span class="toolbar-label">排序</span>
