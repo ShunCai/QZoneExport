@@ -17,6 +17,8 @@ import ThemeToggle from './components/ThemeToggle.vue';
 import { loadData, assetUrl } from './data/sources';
 import { initBackupConfig } from './data/backupConfig';
 import { avatarUrl, avatarFallbackUrl } from './data/content';
+import { usePrivacy } from './composables/usePrivacy';
+import PrivacyToggle from './components/PrivacyToggle.vue';
 import { onMediaError } from './data/mediaFallback';
 import { loadModuleCounts } from './data/counts';
 import { routeName, navigate } from './router';
@@ -121,6 +123,9 @@ function renderLabel(option: MenuOption): ReturnType<typeof h> | string {
     return tip ? h('span', { title: tip }, label) : label;
 }
 
+/** 全局隐私开关：控制侧栏昵称/QQ 号、空间资料各字段、互动页 Top5 的 QQ 号（开关按钮见 PrivacyToggle.vue） */
+const { hidden: hideSensitive } = usePrivacy();
+
 const avatarSrc = computed(() => {
     if (!user.value?.uin) return assetUrl(user.value?.avatar);
     if (_avatarError.value) return avatarFallbackUrl(user.value.uin);
@@ -203,10 +208,12 @@ onUnmounted(() => {
                 @update:collapsed="(value: boolean) => (collapsed = value)"
             >
                 <div class="profile">
+                    <!-- 全局隐私开关：与空间资料、互动页共用同一个组件，图标风格一致 -->
+                    <privacy-toggle class="profile-privacy" />
                     <img v-if="avatarSrc" class="avatar" :src="avatarSrc" alt="头像" @error="() => { if (!_avatarError) _avatarError = true; }" />
                     <user-avatar v-else :uin="user?.uin" :size="64" :link="false" />
-                    <div class="name">{{ user?.nickname || user?.spacename || 'QQ空间备份' }}</div>
-                    <div class="uin">{{ user?.uin }}</div>
+                    <div class="name">{{ hideSensitive ? '●●●' : (user?.nickname || user?.spacename || 'QQ空间备份') }}</div>
+                    <div class="uin">{{ hideSensitive ? '●●●●●●' : user?.uin }}</div>
                     <span v-if="!loading && user" class="space-badge" :class="isOtherSpace ? 'space-badge-other' : 'space-badge-self'">
                         {{ isOtherSpace ? heShe(user?.sex) + '的空间' : '本人备份' }}
                     </span>
@@ -294,8 +301,21 @@ onUnmounted(() => {
     overflow-x: hidden;
 }
 .profile {
+    position: relative; /* 承载右上角的隐私开关 */
     padding: 4px 18px 14px;
     text-align: center;
+}
+/* 只负责定位，按钮外观统一由 PrivacyToggle 提供 */
+.profile-privacy {
+    position: absolute;
+    top: 2px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+}
+.profile-privacy :deep(svg) {
+    width: 13px;
+    height: 13px;
 }
 .avatar {
     width: 56px;

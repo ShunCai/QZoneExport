@@ -10,6 +10,10 @@ import {
 } from '../data/owner-target';
 import { navigate, openInNewTab, routeQuery } from '../router';
 import { heShe } from '../data/pronoun';
+import { loadTopPeople, type TopPerson } from '../data/top-people';
+import { usePrivacy } from '../composables/usePrivacy';
+import { maskName } from '../data/mask';
+import PrivacyToggle from '../components/PrivacyToggle.vue';
 import OwnerTargetInteraction from '../components/OwnerTargetInteraction.vue';
 import MessageItem from '../components/items/MessageItem.vue';
 import ArticleItem from '../components/items/ArticleItem.vue';
@@ -18,6 +22,27 @@ import BoardItem from '../components/items/BoardItem.vue';
 const props = defineProps<{
     user: Record<string, any> | null;
 }>();
+
+/** 入口态的「互动最多的人」：全站聚合，点击直接带入好友 QQ 号，省去手输 */
+const topPeople = ref<TopPerson[]>([]);
+function chooseFriend(p: TopPerson): void {
+    if (!p.uin) return;
+    friendInput.value = p.uin;
+    confirmFriend();
+}
+/** 隐私开关与其它入口共用同一状态：关闭后 Top5 不显示 QQ 号（按钮本身见 PrivacyToggle.vue） */
+const { hidden: hideSensitive } = usePrivacy();
+
+/** Top5 行悬浮提示：赞 / 评论参与排名，访客只作附注 */
+function personTooltip(p: TopPerson): string {
+    const parts = [`赞 ${p.likes}`, `评论 ${p.comments}`];
+    if (p.visits) parts.push(`另访问 ${p.visits} 条内容`);
+    return parts.join(' · ');
+}
+// user 由 App.vue 异步加载，用 immediate watch 覆盖挂载前后两种情况
+watch(() => props.user, async (u) => {
+    topPeople.value = u ? await loadTopPeople(u) : [];
+}, { immediate: true });
 
 /**
  * 是否为「本人备份」（Owner === Target，即备份的是自己的空间）。
@@ -308,6 +333,34 @@ watch(filtered, () => { pulseKey.value++; });
         <div v-if="isSelfMode && !confirmedFriend" class="ip-friend-input">
             <h3 class="ip-fi-title">查看与好友的互动</h3>
             <p class="ip-fi-desc">请输入要查看互动的好友 QQ 号，确认后将统计对方在你空间留下的评论、留言、点赞等往来。</p>
+
+            <!-- 互动最多的人：点击直接带入 QQ 号，避免「不知道该查谁」 -->
+            <div v-if="topPeople.length" class="ip-fi-top">
+                <div class="ip-fi-top-title">
+                    <span>互动 TOP5 <em>（点击直接查看）</em></span>
+                    <privacy-toggle />
+                </div>
+                <button
+                    v-for="(p, i) in topPeople"
+                    :key="p.key"
+                    type="button"
+                    class="ip-fi-person"
+                    :disabled="!p.uin"
+                    :title="personTooltip(p)"
+                    @click="chooseFriend(p)"
+                >
+                    <span class="ip-fi-rank">{{ i + 1 }}</span>
+                    <span class="ip-fi-person-main">
+                        <!-- 隐私模式下昵称脱敏而非全隐：TOP5 要能点选，全盖掉只剩次数就没法用 -->
+                        <span class="ip-fi-name">{{ hideSensitive ? maskName(p.name || p.uin || '未署名') : (p.name || p.uin || '未署名') }}</span>
+                        <!-- 附灰色 QQ 号：昵称可能与他人（含自己的小号）重名，仅靠昵称无法区分 -->
+                        <span v-if="!hideSensitive && p.uin" class="ip-fi-uin">{{ p.uin }}</span>
+                    </span>
+                    <span class="ip-fi-count">{{ p.score }} 次</span>
+                </button>
+                <div v-if="topPeople.some((p) => !p.uin)" class="ip-fi-top-hint">未署名记录缺少 QQ 号，无法直接跳转</div>
+            </div>
+
             <div class="ip-fi-row">
                 <input
                     class="ip-fi-input"
@@ -411,12 +464,8 @@ watch(filtered, () => { pulseKey.value++; });
 /* 本人备份未确认好友时：输入卡片居中 */
 .ip-page-centered {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow-y: hidden; /* 避免出现双滚动条 */
-}
-.ip-page-centered .ip-friend-input {
-    margin: 0; /* 覆盖默认 margin:auto 居中，改用 flex 居中 */
+    flex-direction: column; /* 主轴垂直，配合子元素的 margin:auto 做上下居中 */
+    overflow-y: auto;
 }
 .ip-empty {
     padding: 60px 0;
@@ -424,7 +473,8 @@ watch(filtered, () => { pulseKey.value++; });
 /* 本人备份：好友 QQ 输入卡片 */
 .ip-friend-input {
     max-width: 460px;
-    margin: 40px auto;
+    /* auto 外边距：空间够时上下+左右都居中；内容超高时 auto 退化为 0，从顶部开始且可滚动，不会裁掉顶部 */
+    margin: auto;
     padding: 22px 24px 24px;
     background: var(--bg-primary);
     border: 1px solid var(--border-card);
@@ -443,6 +493,62 @@ watch(filtered, () => { pulseKey.value++; });
     line-height: 1.6;
     color: var(--text-secondary);
 }
+/* 入口态 Top5：紧凑列表，不做卡片堆叠，避免盖住下方的 QQ 号输入框 */
+.ip-fi-top {
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    background: var(--bg-toolbar);
+    border-radius: 8px;
+}
+.ip-fi-top-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.ip-fi-top-title em { font-style: normal; font-weight: 400; color: var(--text-muted); }
+.ip-fi-person {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 6px 4px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    font-size: 13px;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+}
+.ip-fi-person:hover:not(:disabled) { background: var(--bg-tint-blue, #eef3ff); }
+.ip-fi-person:disabled { cursor: default; opacity: 0.6; }
+.ip-fi-rank {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    border-radius: 50%;
+    background: var(--bg-tint-blue, #eef3ff);
+    color: #3370ff;
+    font-size: 11px;
+    text-align: center;
+}
+.ip-fi-person-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+.ip-fi-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ip-fi-uin { flex: none; font-size: 11px; color: var(--text-muted); }
+.ip-fi-count { flex: none; font-size: 12px; color: var(--text-muted); }
+.ip-fi-top-hint { margin-top: 6px; font-size: 11px; color: var(--text-muted); }
 .ip-fi-row {
     display: flex;
     gap: 10px;

@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed } from 'vue';
 import { buildSpaceProfileRows } from '../data/spaceProfile';
+import { usePrivacy } from '../composables/usePrivacy';
+import PrivacyToggle from './PrivacyToggle.vue';
 
 const props = defineProps<{
     /** 个人档原始对象（Common/json/user.js 的 window.userInfo），字段缺失时整段不渲染 */
@@ -10,76 +12,15 @@ const props = defineProps<{
 /** 空间资料渲染行；空数组时不渲染面板 */
 const rows = computed(() => buildSpaceProfileRows(props.user));
 
-// ── 隐私模式：隐藏资料值（标签保留，值以掩码显示，不可选中复制）──
-const STORAGE_KEY = 'qze_space_profile_private';
-const hidden = ref(false);
-
-function loadHidden(): boolean {
-    try {
-        return localStorage.getItem(STORAGE_KEY) === '1';
-    } catch {
-        return false; // file:// 下 localStorage 可能受限，忽略即可
-    }
-}
-function persistHidden(value: boolean): void {
-    try {
-        if (value) localStorage.setItem(STORAGE_KEY, '1');
-        else localStorage.removeItem(STORAGE_KEY);
-    } catch {
-        /* file:// 下 localStorage 可能受限，忽略即可 */
-    }
-}
-
-onMounted(() => {
-    hidden.value = loadHidden();
-});
-
-function toggleHidden(): void {
-    hidden.value = !hidden.value;
-    persistHidden(hidden.value);
-}
+// 隐私模式改为全局状态：这里的眼睛同时控制侧栏昵称/QQ 号、互动页 Top5 的 QQ 号
+const { hidden, toggle } = usePrivacy();
 </script>
 
 <template>
     <div v-if="rows.length" class="space-profile">
         <div class="section-title-sm">
             <span class="sp-icon">👤</span> 空间资料
-            <button
-                class="privacy-toggle"
-                type="button"
-                :aria-label="hidden ? '显示资料隐私信息' : '隐藏资料隐私信息'"
-                :title="hidden ? '显示资料隐私信息' : '隐藏资料隐私信息'"
-                @click="toggleHidden"
-            >
-                <svg
-                    v-if="!hidden"
-                    viewBox="0 0 24 24"
-                    width="16"
-                    height="16"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                </svg>
-                <svg
-                    v-else
-                    viewBox="0 0 24 24"
-                    width="16"
-                    height="16"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                    <line x1="1" y1="1" x2="23" y2="23" />
-                </svg>
-            </button>
+            <privacy-toggle />
         </div>
         <dl class="profile-grid">
             <template v-for="row in rows" :key="row.label">
@@ -112,26 +53,6 @@ function toggleHidden(): void {
 }
 .sp-icon {
     font-size: 15px;
-}
-/* 眼睛按钮：与主题切换按钮同风格，紧贴「空间资料」标题文字右侧 */
-.privacy-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border: 1px solid var(--border-light, var(--border-card));
-    border-radius: 6px;
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-.privacy-toggle:hover {
-    background: var(--bg-toolbar, transparent);
-    color: var(--accent, #2080f0);
-    border-color: var(--accent, #2080f0);
 }
 /* 两列网格：每格 = 标签(小字灰) + 值(主色)；个性签名跨整行 */
 .profile-grid {
