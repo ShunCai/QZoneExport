@@ -249,54 +249,133 @@ export async function loadInteractionStats(): Promise<InteractionStats> {
 export interface MediaStats {
     photos: number;
     videos: number;
+    /** 已登记本地相对路径的条目数（注意：不等于文件确实存在） */
     localPhotos: number;
     localVideos: number;
     externalPhotos: number;
     externalVideos: number;
+    /** 记录里没有任何可用媒体路径，无法判定本地/外链的条目数 */
+    unknownPhotos: number;
+    unknownVideos: number;
+}
+
+/** 媒体路径归类：外链 / 本地相对路径 / 无路径 */
+export function classifyMediaPath(path: unknown): 'external' | 'local' | 'unknown' {
+    if (typeof path !== 'string' || !path.trim()) return 'unknown';
+    return /^(https?:)?\/\//.test(path) ? 'external' : 'local';
+}
+
+/**
+ * 纯计算：按「备份记录里登记的路径」把相片/视频归为本地、外链、未记录三类。
+ *
+ * 口径说明：这里只能判断「记录里写的是本地相对路径还是外链 URL」，
+ * 无法在 file:// 下探测磁盘文件是否真实存在，因此结果不得表述为「可离线打开率」。
+ * 旧实现把「没有路径」的条目一律算作 local，会虚高本地占比，这里单列 unknown。
+ */
+export function computeMediaStats(
+    albums: Record<string, any>[],
+    videoList: Record<string, any>[],
+): MediaStats {
+    const stat: MediaStats = {
+        photos: 0, videos: 0,
+        localPhotos: 0, localVideos: 0,
+        externalPhotos: 0, externalVideos: 0,
+        unknownPhotos: 0, unknownVideos: 0,
+    };
+
+    for (const album of albums) {
+        // 「说说和日志相册」的相片不计入媒体统计（与照片总数口径一致）
+        if (isFeedAlbum(album)) continue;
+        for (const photo of album.photoList || []) {
+            stat.photos++;
+            const path = photo.custom_filepath || photo.custom_pre_filepath || photo.custom_url || photo.url;
+            const kind = classifyMediaPath(path);
+            if (kind === 'external') stat.externalPhotos++;
+            else if (kind === 'local') stat.localPhotos++;
+            else stat.unknownPhotos++;
+        }
+    }
+
+    for (const video of videoList) {
+        stat.videos++;
+        const v = video.video_info || video;
+        if (isExternalVideo(v)) {
+            stat.externalVideos++;
+            continue;
+        }
+        const kind = classifyMediaPath(videoUrl(v));
+        if (kind === 'external') stat.externalVideos++;
+        else if (kind === 'local') stat.localVideos++;
+        else stat.unknownVideos++;
+    }
+
+    return stat;
 }
 
 /** 统计媒体资源及本地/外链占比 */
 export async function loadMediaStats(): Promise<MediaStats> {
-    let photos = 0;
-    let videos = 0;
-    let localPhotos = 0;
-    let localVideos = 0;
-    let externalPhotos = 0;
-    let externalVideos = 0;
+    return computeMediaStats(await loadList('albums'), await loadList('videos'));
+}
 
-    const albums = await loadList('albums');
-    for (const album of albums) {
-        // 「说说和日志相册」的相片不计入媒体统计（与照片总数口径一致，保证 photos == local + external）
-        if (isFeedAlbum(album)) continue;
-        const list = album.photoList || [];
-        for (const photo of list) {
-            photos++;
-            const path = photo.custom_filepath || photo.custom_pre_filepath || photo.custom_url || photo.url;
-            if (path && /^(https?:)?\/\//.test(path)) {
-                externalPhotos++;
-            } else {
-                localPhotos++;
-            }
+/**
+ * 已登记本地路径的媒体占比。
+ * 分母用「全部媒体条目」（含无路径的 unknown），避免把无法判定的条目排除后虚高比例。
+ */
+export function localPathRatio(stat: MediaStats): number {
+    const total = stat.photos + stat.videos;
+    if (total === 0) return 0;
+    return Math.round(((stat.localPhotos + stat.localVideos) / total) * 100);
+}
+
+/** 模块备份状态：区分「数据文件缺失」与「已备份但确实没有内容」 */
+export type ModuleStatus = 'missing' | 'empty' | 'ok';
+
+export interface ModuleStatusEntry {
+    key: string;
+    status: ModuleStatus;
+    total: number;
+}
+
+/**
+ * 纯判定：数据文件是否存在 + 条目数 → 模块状态。
+ * 抽成纯函数便于单测，不必 mock window.* 数据源。
+ */
+export function classifyModuleStatus(hasData: boolean, total: number): ModuleStatus {
+    if (!hasData) return 'missing';
+    return total > 0 ? 'ok' : 'empty';
+}
+
+/** 模块数据键 → 数据源键（相片与相册共用 albums 数据源） */
+const MODULE_DATA_KEYS: { key: keyof ModuleCounts; dataKey: DataKey }[] = [
+    { key: 'messages', dataKey: 'messages' },
+    { key: 'blogs', dataKey: 'blogs' },
+    { key: 'diaries', dataKey: 'diaries' },
+    { key: 'videos', dataKey: 'videos' },
+    { key: 'boards', dataKey: 'boards' },
+    { key: 'shares', dataKey: 'shares' },
+    { key: 'favorites', dataKey: 'favorites' },
+    { key: 'albums', dataKey: 'albums' },
+    { key: 'photos', dataKey: 'albums' },
+    { key: 'friends', dataKey: 'friends' },
+    { key: 'visitors', dataKey: 'visitors' },
+];
+
+/**
+ * 逐模块判定备份状态。loadData 返回 null 表示该 .js 文件不存在或全局变量未挂载，
+ * 即「没有这份数据」；文件存在但 0 条则可能是用户本来就没有该内容。
+ */
+export async function loadModuleStatuses(counts: ModuleCounts): Promise<ModuleStatusEntry[]> {
+    const hasData = new Map<DataKey, boolean>();
+    for (const { dataKey } of MODULE_DATA_KEYS) {
+        if (!hasData.has(dataKey)) {
+            hasData.set(dataKey, (await loadData(dataKey)) !== null);
         }
     }
-
-    const videoList = await loadList('videos');
-    for (const video of videoList) {
-        videos++;
-        const v = video.video_info || video;
-        if (isExternalVideo(v)) {
-            externalVideos++;
-        } else {
-            const url = videoUrl(v);
-            if (url && /^(https?:)?\/\//.test(url)) {
-                externalVideos++;
-            } else {
-                localVideos++;
-            }
-        }
-    }
-
-    return { photos, videos, localPhotos, localVideos, externalPhotos, externalVideos };
+    return MODULE_DATA_KEYS.map(({ key, dataKey }) => {
+        const total = counts[key] ?? 0;
+        // ModuleCounts 带字符串索引签名，keyof 会含 number，显式转字符串以匹配 ModuleStatusEntry
+        return { key: String(key), total, status: classifyModuleStatus(hasData.get(dataKey) ?? false, total) };
+    });
 }
 
 /** 月度活跃度统计（用于热力图） */
@@ -550,7 +629,7 @@ export async function loadTopLocations(n = 5): Promise<TopLocation[]> {
                     latestItem: photoWithAlbum,
                     kind: 'photos',
                     label: PHOTO_LOCATION_FIELDS.label,
-                    route: ROUTE_OF.photos,
+                    route: ROUTE_OF.photos || 'albums',
                 });
             } else {
                 prev.count++;

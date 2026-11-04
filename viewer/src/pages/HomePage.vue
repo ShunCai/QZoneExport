@@ -18,11 +18,14 @@ import {
     loadMediaStats,
     loadMonthlyStats,
     loadModuleCounts,
+    loadModuleStatuses,
+    localPathRatio,
     type TimeRange,
     type InteractionStats,
     type MediaStats,
     type MonthlyStat,
     type ModuleYearStat,
+    type ModuleStatusEntry,
 } from '../data/counts';
 import { formatTime } from '../data/format';
 import { loadOwnerTargetInteraction, type OwnerTargetInteraction as OwnerTargetInteractionData } from '../data/owner-target';
@@ -146,7 +149,10 @@ const timeRange = ref<TimeRange>({ earliest: '', latest: '' });
 const interaction = ref<InteractionStats>({ totalLikes: 0, totalComments: 0, totalViews: 0 });
 
 // 媒体统计
-const media = ref<MediaStats>({ photos: 0, videos: 0, localPhotos: 0, localVideos: 0, externalPhotos: 0, externalVideos: 0 });
+const media = ref<MediaStats>({ photos: 0, videos: 0, localPhotos: 0, localVideos: 0, externalPhotos: 0, externalVideos: 0, unknownPhotos: 0, unknownVideos: 0 });
+
+// 模块备份状态（区分「数据文件缺失」与「已备份但无内容」）；空数组表示尚未加载/旧备份
+const moduleStatuses = ref<ModuleStatusEntry[]>([]);
 
 // 月度热力图
 const monthly = ref<MonthlyStat>({ months: new Map(), firstMonth: '', lastMonth: '' });
@@ -204,20 +210,33 @@ const maxIncludedTotal = computed(() => {
     return Math.max(1, ...included.map(c => c.total));
 });
 
-/** 备份完整度 */
+/**
+ * 备份完整度：不再只看「total===0」，而是按数据文件是否存在区分
+ * 「未备份」与「已备份但确实没有内容」。旧备份/未加载完成时沿用按 0 计数兜底。
+ */
 const completeness = computed(() => {
-    const zeroCards = cards.value.filter(c => c.total === 0);
-    if (zeroCards.length === 0) return { status: 'complete' as const, zeroCards: [] };
-    return { status: 'partial' as const, zeroCards };
+    const entries = moduleStatuses.value;
+    if (entries.length === 0) {
+        const zeroCards = cards.value.filter(c => c.total === 0);
+        return zeroCards.length === 0
+            ? { status: 'complete' as const, tone: 'ok' as const, label: '✓ 备份完整' }
+            : { status: 'partial' as const, tone: 'warn' as const, label: '⚠ 部分模块未备份' };
+    }
+    const missing = entries.filter(e => e.status === 'missing').length;
+    const empty = entries.filter(e => e.status === 'empty').length;
+    if (missing > 0) return { status: 'partial' as const, tone: 'warn' as const, label: `⚠ ${missing} 个模块未备份` };
+    if (empty > 0) return { status: 'complete' as const, tone: 'info' as const, label: `${empty} 个模块无内容` };
+    return { status: 'complete' as const, tone: 'ok' as const, label: '✓ 备份完整' };
 });
 
-/** 本地媒体占比 */
-const localMediaRatio = computed(() => {
-    const totalMedia = media.value.photos + media.value.videos;
-    if (totalMedia === 0) return 0;
-    const local = media.value.localPhotos + media.value.localVideos;
-    return Math.round((local / totalMedia) * 100);
-});
+/** 模块卡片状态（按 key 索引，供卡片 tooltip 使用） */
+const statusByKey = computed(() => new Map(moduleStatuses.value.map(e => [e.key, e.status])));
+
+/** 已登记本地路径的媒体占比：口径收敛在 counts.localPathRatio，便于单测锁住；不代表文件真实存在 */
+const localMediaRatio = computed(() => localPathRatio(media.value));
+
+/** 记录里没有可用媒体路径、无法判定本地/外链的条目数 */
+const unknownMedia = computed(() => media.value.unknownPhotos + media.value.unknownVideos);
 
 /** 年活跃度 */
 const yearStats = ref<ModuleYearStat[]>([]);
@@ -320,6 +339,13 @@ function overviewCellTooltip(item: { key: string; label: string; total: number; 
         visitors: '访客（访问记录）数量',
     };
     let result = tips[item.key] || item.label + '：' + item.total;
+    // 消解「0」的歧义：区分没备份与已备份但确实没有内容
+    const status = statusByKey.value.get(item.key);
+    if (item.total === 0 && status === 'missing') {
+        result += '\n（本次未备份该模块：数据文件不存在）';
+    } else if (item.total === 0 && status === 'empty') {
+        result += '\n（该模块已备份，但备份里没有内容）';
+    }
     if (item.excludeFromTotal) {
         result += '\n（不计入"总条目"统计）';
     }
@@ -355,6 +381,9 @@ onMounted(async () => {
     /* HomePage 本地独立计算的模块条数：父组件未就绪时先用这个，避免模块统计/内容构成"空白失踪" */
     localCounts.value = lc;
 
+    /* 模块状态依赖已算出的 counts；各数据源此时均已加载，命中 sources 缓存 */
+    moduleStatuses.value = await loadModuleStatuses(lc);
+
     loadingExtra.value = false;
 });
 
@@ -379,8 +408,11 @@ watch(
     <div class="page-head">
         <span class="page-title">空间概览</span>
         <!-- 备份状态徽章 -->
-        <span v-if="completeness.status === 'complete'" class="status-badge status-complete">✓ 备份完整</span>
-        <span v-else-if="counts" class="status-badge status-partial">⚠ 部分模块未备份</span>
+        <span
+            v-if="counts && completeness.label"
+            class="status-badge"
+            :class="completeness.tone === 'ok' ? 'status-complete' : completeness.tone === 'info' ? 'status-info' : 'status-partial'"
+        >{{ completeness.label }}</span>
     </div>
     <div class="page-body">
         <div v-if="!user" class="page-alert">
@@ -522,18 +554,23 @@ watch(
                             <div class="stat-value">{{ media.videos.toLocaleString() }}</div>
                             <div class="stat-label">视频</div>
                         </div>
-                        <div class="stat-item" title="本地下载的媒体占比（相对外链引用的媒体）">
+                        <div class="stat-item" title="备份记录中已登记本地路径的媒体占比；按记录里的路径判定，不代表文件确实存在">
                             <div class="stat-value stat-highlight">{{ localMediaRatio }}%</div>
-                            <div class="stat-label">本地媒体</div>
+                            <div class="stat-label">本地路径</div>
                         </div>
                     </div>
                     <div class="media-progress">
                         <div class="progress-bar">
                             <div class="progress-fill" :style="{ width: localMediaRatio + '%' }"></div>
                         </div>
-                        <span class="progress-label" title="本地下载的媒体文件数 / 外链引用的媒体文件数">本地 {{ (media.localPhotos + media.localVideos) }} / 外链 {{ (media.externalPhotos + media.externalVideos) }}</span>
+                        <span class="progress-label" title="按备份记录中的路径分类：本地相对路径 / 外链 URL / 无可用路径">本地 {{ (media.localPhotos + media.localVideos) }} / 外链 {{ (media.externalPhotos + media.externalVideos) }}<template v-if="unknownMedia > 0"> / 未记录 {{ unknownMedia }}</template></span>
                     </div>
                 </div>
+            </div>
+
+            <!-- 指标口径说明：一次性消除三个最容易被误读的数字 -->
+            <div class="metric-footnote">
+                口径说明：总条目不含相册容器、好友与访客，相片不含「说说和日志相册」；「本地路径」按备份记录里登记的路径统计，<strong>不代表文件确实存在</strong>；总浏览不含留言与相片（接口无浏览量）。
             </div>
 
             <!-- 我与 TA 的互动：仅当 Owner ≠ Target（查看他人空间备份）时展示 -->
@@ -704,6 +741,27 @@ watch(
 .status-partial {
     background: var(--bg-tint-yellow);
     color: #f0a020;
+}
+
+/* 已备份但无内容的模块：中性提示，不渲染成警告 */
+.status-info {
+    background: var(--bg-toolbar);
+    color: var(--text-secondary);
+}
+
+/* 指标口径说明：消解总条目 / 本地路径 / 总浏览三个数字的误读 */
+.metric-footnote {
+    margin: -4px 0 18px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--bg-toolbar);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text-muted);
+}
+.metric-footnote strong {
+    color: var(--text-secondary);
+    font-weight: 600;
 }
 .oti-more {
     margin: -8px 0 20px;
