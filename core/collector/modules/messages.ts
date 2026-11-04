@@ -41,10 +41,12 @@ export interface MessageItem extends IncrementItem {
     content?: string;
     conlist?: CommentRecord[];
     created_time?: number;
-    has_more_con?: number;
+    /** 长说说标记：接口可能返回数字 1、字符串 "1" 或布尔 true */
+    has_more_con?: number | string | boolean;
     rt_tid?: string;
     rt_con?: unknown;
-    rt_has_more_con?: number;
+    /** 转发长说说标记：同上，类型不固定 */
+    rt_has_more_con?: number | string | boolean;
     commentlist?: CommentRecord[];
     commenttotal?: number;
     custom_content?: string;
@@ -81,6 +83,15 @@ const MODULE_DIR = 'Messages/images';
 /** 说说点赞Key（移植自 api.js Messages.getUniKey L3167-3169） */
 function getUniKey(targetUin: number, tid: string): string {
     return `http://user.qzone.qq.com/${targetUin}/mood/${tid}`;
+}
+
+/**
+ * 判断详情/转发是否还有更多内容。
+ * 接口可能返回数字 1、字符串 "1" 或布尔 true，不能只用 === 1 判定，
+ * 否则字符串/布尔标记的长说说会被跳过详情拉取，正文永远停留在列表截断值。
+ */
+function hasMoreCon(value: unknown): boolean {
+    return value === 1 || value === true || value === '1';
 }
 
 /**
@@ -444,32 +455,39 @@ export class MessagesCollector implements ModuleCollector {
             const item = items[i]!;
             await env.tick();
             // 是否有全文
-            // 列表接口对长说说会截断 content/conlist 并置 has_more_con=1；
+            // 列表接口对长说说会截断 content/conlist 并置 has_more_con 标记；
             // 详情接口 emotion_cgi_msgdetail_v6（not_trunc_con=1）才返回完整正文。
             // 注意：不能用「conlist 非空」判定「全文已就绪」——列表本身就能返回（截断的）conlist，
             // 否则会误跳过详情拉取，导致长说说全文丢失（已修复的回归）。
-            const hasMoreContent = item.has_more_con === 1 || item.rt_has_more_con === 1;
+            const hasMoreContent = hasMoreCon(item.has_more_con) || hasMoreCon(item.rt_has_more_con);
             if (hasMoreContent && isNewItem(item)) {
                 try {
                     const call = messageFullContent(env.ctx, item.tid);
                     const text = await env.requester.get(call.url, call.params);
                     const data = toJson<any>(text, /^_Callback\(/);
                     if (data && data.code && data.code != 0) {
-                        // 接口返回错误（如「使用人数过多」）：保留已有的（截断但存在的）content/conlist，
-                        // 不要把本就有的内容覆盖成 undefined。
+                        // 接口返回错误（如「使用人数过多」）：整体跳过写入，保留已有的（截断但存在的）
+                        // content/conlist，也避免错误响应里夹带的伪 content 被当成正文写进去。
                         env.logger.warn(`获取说说全文内容异常 | tid=${item.tid} | code=${data.code}`, data.msg || '');
                     } else if (data) {
-                        // 自身全文
-                        item.content = data.content;
-                        item.conlist = data.conlist || [];
-                        // 转发全文
-                        if (item.rt_tid) {
-                            item.rt_con = data.rt_con;
+                        // 字段级校验：异常响应（code=0 但缺正文）不能把已有内容冲掉。
+                        if (typeof data.content === 'string') {
+                            item.content = data.content;
+                            // custom_content 在 convertMessages（收页时）就被固定为列表的截断值，
+                            // 而全文是此后才拉取的 —— 必须同步刷新，否则屏蔽词过滤（filterKeyWords）
+                            // 只对截断文本生效，藏在全文后半段的屏蔽词会漏过滤。
+                            item.custom_content = data.content;
+                            // 全文已取，清零标记：断点续传 / 增量回刷不再重复请求详情接口。
+                            item.has_more_con = 0;
                         }
-                        // custom_content 在 convertMessages（收页时）就被固定为列表的截断值，
-                        // 而全文是此后才拉取的 —— 必须同步刷新，否则屏蔽词过滤（filterKeyWords）
-                        // 只对截断文本生效，藏在全文后半段的屏蔽词会漏过滤。
-                        item.custom_content = data.content;
+                        if (Array.isArray(data.conlist)) {
+                            item.conlist = data.conlist;
+                        }
+                        // 转发全文：仅当接口确实下发该字段时才覆盖，避免把已有值写成 undefined
+                        if (item.rt_tid && data.rt_con !== undefined) {
+                            item.rt_con = data.rt_con;
+                            item.rt_has_more_con = 0;
+                        }
                     }
                 } catch (error) {
                     env.logger.error(`获取说说自身全文异常 | tid=${item.tid}`, error instanceof Error ? error.message : String(error));

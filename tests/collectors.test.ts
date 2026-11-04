@@ -573,6 +573,78 @@ describe('说说采集器', () => {
         expect(items.length).toBe(0);
     });
 
+    it('长说说标记为字符串 "1" / 布尔 true 时也能抓详情全文，并清零标记', async () => {
+        // 接口对 has_more_con 的类型并不稳定，严格 === 1 会静默漏抓正文。
+        const truncated = '截断的正文……';
+        const msglist = JSON.stringify({
+            code: 0, total: 2,
+            msglist: [
+                {
+                    tid: 't-str', content: truncated, conlist: [{ type: 2, con: truncated }],
+                    has_more_con: '1', created_time: 1600000000, cmtnum: 0, commentlist: [],
+                },
+                {
+                    tid: 't-bool', content: truncated, conlist: [{ type: 2, con: truncated }],
+                    has_more_con: true, created_time: 1500000000, cmtnum: 0, commentlist: [],
+                },
+            ],
+        });
+        const { env, files } = makeEnv([
+            { match: 'emotion_cgi_msglist_v6', body: `_preloadCallback(${msglist});` },
+            {
+                match: 'emotion_cgi_msgdetail_v6',
+                body: (url) => {
+                    const tid = url.includes('t-str') ? 't-str' : 't-bool';
+                    return `_Callback(${JSON.stringify({ code: 0, content: `${tid} 完整全文`, conlist: [] })});`;
+                },
+            },
+        ]);
+        await new MessagesCollector(env).collect(fakeCtx);
+        const items = (files.get('Messages/json/messages.js')!.data) as any[];
+        const byTid = Object.fromEntries(items.map((i: any) => [i.tid, i]));
+        expect(byTid['t-str']?.content).toBe('t-str 完整全文');
+        expect(byTid['t-bool']?.content).toBe('t-bool 完整全文');
+        expect(byTid['t-str']?.custom_content).toBe('t-str 完整全文');
+        // 全文已取，标记清零：断点续传 / 增量回刷不再重复请求详情接口
+        expect(items.every((i: any) => i.has_more_con === 0)).toBe(true);
+    });
+
+    it('详情响应缺正文 / 错误码夹带伪 content 时，保留列表已有截断正文', async () => {
+        const truncated = '这是前半段……';
+        const msglist = JSON.stringify({
+            code: 0, total: 2,
+            msglist: [
+                {
+                    tid: 't-missing', content: truncated, conlist: [{ type: 2, con: truncated }],
+                    has_more_con: 1, created_time: 1600000000, cmtnum: 0, commentlist: [],
+                },
+                {
+                    tid: 't-error', content: truncated, conlist: [{ type: 2, con: truncated }],
+                    has_more_con: 1, created_time: 1500000000, cmtnum: 0, commentlist: [],
+                },
+            ],
+        });
+        const { env, files } = makeEnv([
+            { match: 'emotion_cgi_msglist_v6', body: `_preloadCallback(${msglist});` },
+            {
+                match: 'emotion_cgi_msgdetail_v6',
+                body: (url) => (url.includes('t-missing')
+                    ? '_Callback({"code":0,"conlist":[]});'
+                    : '_Callback({"code":-1,"content":"使用人数过多，请稍后再试"});'),
+            },
+        ]);
+        await new MessagesCollector(env).collect(fakeCtx);
+        const items = (files.get('Messages/json/messages.js')!.data) as any[];
+        expect(items).toHaveLength(2);
+        // 两种异常响应都不能把已有正文冲掉、也不能把错误提示当成正文写进去
+        for (const entry of items) {
+            expect(entry.content).toBe(truncated);
+            expect(entry.custom_content).toBe(truncated);
+        }
+        // 没拿到全文，标记保持原值 → 后续仍可重试详情接口
+        expect(items.every((i: any) => i.has_more_con === 1)).toBe(true);
+    });
+
     it('全量备份（带旧数据+多页）每页媒体都回写 custom_filepath（防逐页内联回归）', async () => {
         const pageOf = (page: number, ids: string[]) => JSON.stringify({
             code: 0, total: 3,
