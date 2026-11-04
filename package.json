@@ -27,6 +27,7 @@
         "@types/chrome": "^0.2.7",
         "@types/node": "^26.1.2",
         "@vitejs/plugin-vue": "^6.0.8",
+        "@vue/test-utils": "^2.5.1",
         "@wxt-dev/module-vue": "^1.0.3",
         "eslint": "^10.9.0",
         "eslint-plugin-vue": "^10.10.0",
