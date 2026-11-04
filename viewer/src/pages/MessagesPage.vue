@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { NButton } from 'naive-ui';
+import { NButton, NSelect } from 'naive-ui';
 import { loadList } from '../data/sources';
+import { CONTENT_SHAPE_OPTIONS, matchesContentShape, type ContentShapeFilter } from '../data/contentShape';
 import { useVisitorFilter } from '../data/visitorFilter';
 import { itemComments, likeTotal, locationOf, messageEffectiveTime, messagePublishTime, viewCount } from '../data/content';
 import { timeValue } from '../data/format';
@@ -25,6 +26,12 @@ onMounted(async () => {
 
 /** 按浏览者过滤（互动面板「我浏览过的说说」卡片跳转携带 ?visitor=UIN） */
 const { filter: visitorFilter, hasVisitor, visitorName, visitorUin, clearVisitor } = useVisitorFilter(list);
+
+/** 内容形态筛选（纯文字 / 含图片 / 含视频）；与浏览者过滤是两个正交维度，组合后交 ListPage */
+const shape = ref<ContentShapeFilter>('all');
+const combinedFilter = computed(() => (item: Record<string, any>) =>
+    visitorFilter.value(item) && matchesContentShape(item, shape.value),
+);
 
 /** 详情页：地址形如 #/messages?id=xxx */
 const currentId = computed(() => routeQuery.value.id || '');
@@ -64,7 +71,7 @@ const sorts = [
         title="说说"
         :pref-key="'messages'"
         :items="list"
-        :filter="visitorFilter"
+        :filter="combinedFilter"
         :loading="loading"
         empty-hint="暂无说说内容（本次备份可能未包含说说模块）"
         :time-of="(item) => item.created_time || item.custom_create_time"
@@ -72,6 +79,14 @@ const sorts = [
         :sorts="sorts"
         :text-of="(item) => [item.content, item.rt_con, item.rt_uinname, locationOf(item)].filter(Boolean).join(' ')"
     >
+        <!-- 形态筛选放在工具栏最左侧，与 ListPage 自带的时间/排序/搜索并列 -->
+        <template #toolbar>
+            <div class="shape-filter">
+                <span>形态</span>
+                <n-select v-model:value="shape" :options="CONTENT_SHAPE_OPTIONS" style="width: 120px;" />
+            </div>
+        </template>
+
         <!-- 那年今日（旧版在侧边栏，这里放列表顶部、默认折叠） -->
         <template #lead>
             <div v-if="hasVisitor" class="visitor-filter-bar">
@@ -95,6 +110,15 @@ const sorts = [
 </template>
 
 <style scoped>
+/* 形态筛选：插槽内容由本组件渲染，不能复用 ListPage 的 scoped .toolbar-group */
+.shape-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
 .missing {
     flex: 1;
     display: flex;
