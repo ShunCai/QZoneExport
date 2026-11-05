@@ -5,6 +5,8 @@ import { formatClock, formatTime } from '../../data/format';
 import { imageUrl, visitorTitle } from '../../data/content';
 import { assetUrl } from '../../data/sources';
 import { formatSummary } from '../../data/richText';
+import { usePrivacy } from '../../composables/usePrivacy';
+import { maskName, maskUin, plainName } from '../../data/mask';
 import UserAvatar from '../UserAvatar.vue';
 import UserLink from '../UserLink.vue';
 
@@ -13,6 +15,19 @@ import UserLink from '../UserLink.vue';
  * 抽出来供访客列表页与个人中心的那年今日共用。
  */
 const props = defineProps<{ item: Record<string, any> }>();
+
+const { hidden: hideSensitive } = usePrivacy();
+
+/** 隐私态展示名：剥掉表情 token / HTML 后脱敏；没有昵称时退回打码 QQ，而不是露出原号 */
+function maskedVisitorName(user: Record<string, any> | null | undefined): string {
+    return maskName(plainName(String(user?.name ?? ''))) || maskUin(String(user?.uin ?? ''));
+}
+
+/** 同访卡片的悬浮提示：隐私态只露脱敏名，不露原始昵称 */
+function mateTitle(mate: Record<string, any>): string {
+    if (hideSensitive.value) return maskedVisitorName(mate);
+    return mate.time ? ('访问于 ' + formatTime(mate.time)) : (formatSummary(mate.name) || mate.uin || '');
+}
 
 /**
  * 过滤后的"同访好友"（只保留有有效 uin 的对象，避免空对象/字符串等异常数据混入渲染）
@@ -94,16 +109,20 @@ function entryHref(entry: Record<string, any>, type: 'message' | 'blog' | 'share
 <template>
     <div class="card-item">
         <div class="item-head">
-            <user-avatar :uin="props.item.uin" :size="32" />
-            <!-- 昵称同样可能带表情 token，需富文本渲染 -->
+            <user-avatar :uin="props.item.uin" :size="32" :class="{ 'privacy-blur': hideSensitive }" />
+            <!-- 昵称同样可能带表情 token，需富文本渲染；隐私态改为纯文本脱敏 -->
             <user-link
                 v-if="props.item.uin"
                 class="item-name"
                 :uin="props.item.uin"
             >
-                <span v-html="formatSummary(props.item.name) || props.item.uin"></span>
+                <span v-if="hideSensitive">{{ maskedVisitorName(props.item) }}</span>
+                <span v-else v-html="formatSummary(props.item.name) || props.item.uin"></span>
             </user-link>
-            <span v-else class="item-name" v-html="formatSummary(props.item.name)"></span>
+            <span v-else class="item-name">
+                <span v-if="hideSensitive">{{ maskedVisitorName(props.item) }}</span>
+                <span v-else v-html="formatSummary(props.item.name)"></span>
+            </span>
             <n-tag size="small" :bordered="false" type="info">{{ visitorTitle(props.item) }}</n-tag>
             <span class="item-time">{{ formatTime(props.item.time) }}</span>
         </div>
@@ -185,10 +204,13 @@ function entryHref(entry: Record<string, any>, type: 'message' | 'blog' | 'share
                         :key="idx"
                         class="visited-card"
                         :uin="mate.uin"
-                        :title="mate.time ? ('访问于 ' + formatTime(mate.time)) : (formatSummary(mate.name) || mate.uin || '')"
+                        :title="mateTitle(mate)"
                     >
-                        <user-avatar :uin="mate.uin" :size="48" :link="false" />
-                        <span class="visited-card-name" v-html="formatSummary(mate.name) || mate.uin || '匿名用户'"></span>
+                        <user-avatar :uin="mate.uin" :size="48" :link="false" :class="{ 'privacy-blur': hideSensitive }" />
+                        <span class="visited-card-name">
+                            <span v-if="hideSensitive">{{ maskedVisitorName(mate) || '匿名用户' }}</span>
+                            <span v-else v-html="formatSummary(mate.name) || mate.uin || '匿名用户'"></span>
+                        </span>
                     <span class="visited-card-time">{{ formatClock(mate.time) }}</span>
                 </user-link>
                 </div>
