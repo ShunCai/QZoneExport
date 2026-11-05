@@ -210,8 +210,15 @@ onUnmounted(() => {
                 <div class="profile">
                     <!-- 全局隐私开关：与空间资料、互动页共用同一个组件，图标风格一致 -->
                     <privacy-toggle class="profile-privacy" />
-                    <img v-if="avatarSrc" class="avatar" :src="avatarSrc" alt="头像" @error="() => { if (!_avatarError) _avatarError = true; }" />
-                    <user-avatar v-else :uin="user?.uin" :size="64" :link="false" />
+                    <img
+                        v-if="avatarSrc"
+                        class="avatar"
+                        :class="{ 'privacy-blur': hideSensitive }"
+                        :src="avatarSrc"
+                        alt="头像"
+                        @error="() => { if (!_avatarError) _avatarError = true; }"
+                    />
+                    <user-avatar v-else :uin="user?.uin" :size="64" :link="false" :class="{ 'privacy-blur': hideSensitive }" />
                     <div class="name">{{ hideSensitive ? '●●●' : (user?.nickname || user?.spacename || 'QQ空间备份') }}</div>
                     <div class="uin">{{ hideSensitive ? '●●●●●●' : user?.uin }}</div>
                     <span v-if="!loading && user" class="space-badge" :class="isOtherSpace ? 'space-badge-other' : 'space-badge-self'">
