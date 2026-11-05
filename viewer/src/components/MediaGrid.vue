@@ -2,11 +2,9 @@
 import { computed } from 'vue';
 import PhotoSwipe from 'photoswipe';
 import 'photoswipe/style.css';
-import { formatTime } from '../data/format';
-import { commentUser } from '../data/content';
 import { escapeHtml, formatText } from '../data/richText';
+import { commentEntriesHtml } from '../data/commentHtml';
 import { usePrivacy } from '../composables/usePrivacy';
-import { maskedUserLabel } from '../data/mask';
 import type { MediaItem } from '../data/media';
 const { hidden: hideSensitive } = usePrivacy();
 
@@ -105,8 +103,8 @@ function openOverflow(): void {
     }
 }
 
-/** 评论面板宽度，需与 styles.css 里的 .pswp-comments 保持一致 */
-const PANEL_WIDTH = 300;
+/** 评论面板宽度，需与 styles.css 的 --pswp-comments-width 保持一致 */
+const PANEL_WIDTH = 340;
 
 /**
  * 图片尺寸
@@ -167,25 +165,15 @@ function commentsHtml(index: number): string {
     const list = media?.comments?.length ? media.comments : (props.comments || []);
     const title = media?.comments?.length
         ? (media.type === 'video' ? '这个视频的评论' : '这张图片的评论')
-        : '内容的评论';
+        : '评论';
     // 顶部先展示该媒体自己的信息（名称/拍摄时间/地点）
     const info = infoHtml(media);
     if (list.length === 0) {
         return info + '<div class="pswp-comments-title">评论</div><div class="pswp-comments-empty">没有评论</div>';
     }
-    const items = list.map((comment) => {
-        const user = commentUser(comment);
-        // 这里拼的是 HTML 字符串、不走 Vue 模板，隐私态需手动调用统一出口（含无昵称时打码 QQ）
-        const label = hideSensitive.value
-            ? maskedUserLabel(user)
-            : String(user.name || user.uin || '');
-        return '<div class="pswp-comment">'
-            + `<div class="pswp-comment-head"><span class="pswp-comment-name">${escapeHtml(label)}</span>`
-            + `<span class="pswp-comment-time">${escapeHtml(formatTime(comment.postTime || comment.create_time))}</span></div>`
-            + `<div class="pswp-comment-text">${formatText(comment.content)}</div>`
-            + '</div>';
-    });
-    return info + `<div class="pswp-comments-title">${title}（${list.length}）</div>` + items.join('');
+    // 条目 HTML 抽到 data/commentHtml.ts：支持头像与一层回复，且便于纯函数单测
+    return info + `<div class="pswp-comments-title">${title}（${list.length}）</div>`
+        + commentEntriesHtml(list, hideSensitive.value);
 }
 
 async function openViewer(media: MediaItem): Promise<void> {
@@ -208,17 +196,31 @@ async function openViewer(media: MediaItem): Promise<void> {
         return { src: item.src, width: size.width, height: size.height };
     }));
 
-    // 评论面板占右侧一条：窗口太窄时（与 styles.css 的断点一致）不显示，不能往右留白
-    const withPanel = window.innerWidth > 900;
+    // 评论侧栏默认收起：打开大图先看图，需要时再点顶栏的评论按钮展开
+    // 窗口太窄时（与 styles.css 断点一致）连切换按钮也不注册，避免展开后没地方放
+    const canTogglePanel = window.innerWidth > 900;
+    let commentsVisible = false;
     const pswp = new PhotoSwipe({
         dataSource,
         index,
         bgOpacity: 0.92,
-        // 给面板留出位置，否则图片会铺到面板下面去
-        padding: { top: 0, bottom: 0, left: 0, right: withPanel ? PANEL_WIDTH : 0 },
-        // 用于把关闭按钮与“下一张”箭头向内移，不被面板遮住
-        mainClass: withPanel ? 'pswp--with-comments' : '',
+        // 默认收起，不给右侧留面板宽度；展开后由 applyCommentsVisibility 动态改
+        padding: { top: 0, bottom: 0, left: 0, right: 0 },
+        mainClass: '',
     });
+
+    /** 同步面板可见性到 CSS 类与 PhotoSwipe 的视口 padding */
+    const applyCommentsVisibility = () => {
+        pswp.element?.classList.toggle('pswp--with-comments', commentsVisible);
+        pswp.options.padding = {
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: commentsVisible ? PANEL_WIDTH : 0,
+        };
+        // padding 变了必须强制重算视口，否则当前图片不会立刻让出/占回面板宽度
+        pswp.updateSize(true);
+    };
    // 缩略图条的 HTML（底部画廊导航）
     const thumbsHtml = viewables.value.map((item, i) => {
         const thumb = item.type === 'video' ? (item.poster || '') : (item.thumb || item.src);
@@ -227,6 +229,8 @@ async function openViewer(media: MediaItem): Promise<void> {
             ? `<div class="${cls}" data-index="${i}"><img src="${escapeHtml(thumb)}" /></div>`
             : `<div class="${cls} pswp-thumb--video" data-index="${i}"><span>▶</span></div>`;
     }).join('');
+    /** 是否真的会有底部缩略图条：只有一项时整条不注册（连空横条都不留） */
+    const hasThumbBar = viewables.value.length > 1 && !!thumbsHtml;
 
     pswp.on('uiRegister', () => {
         // 评论面板
@@ -243,8 +247,8 @@ async function openViewer(media: MediaItem): Promise<void> {
                 });
             },
         });
-        // 底部缩略图条（仅多于 1 张时显示）
-        if (viewables.value.length > 1) {
+        // 底部缩略图条：单图时不注册，多图且至少有一个可导航项才显示
+        if (hasThumbBar) {
             pswp.ui?.registerElement({
                 name: 'thumbnails',
                 appendTo: 'root',
@@ -279,6 +283,40 @@ async function openViewer(media: MediaItem): Promise<void> {
                 },
             });
         }
+
+        // 评论面板收起/展开：顶栏里 zoom 是 order 10、close 是 20，取 12 正好在放大镜右侧
+        if (canTogglePanel) {
+            pswp.ui?.registerElement({
+                name: 'commentsToggle',
+                appendTo: 'bar',
+                order: 12,
+                isButton: true,
+                // 默认收起：按钮初始为略暗（off）状态，展开后点亮为主题色
+                className: 'pswp__button--comments-toggle pswp__button--comments-off',
+                title: '展开评论',
+                ariaLabel: '展开评论',
+                html: {
+                    isCustomSVG: true,
+                    // 实心对话气泡 + 三个挖空的圆点（fill-rule=evenodd 让圆点成为洞）。
+                    // 注意坐标必须是 32×32 画布：PhotoSwipe 的图标（close/zoom）都是按 32 写的，
+                    // 之前直接塞 Material 的 24×24 双路径（M20 2H4…）会只占左上 3/4 且整体偏小，
+                    // 远看像个旗子/书签——那才是「看着很奇怪」的真正原因，不是形状选错了。
+                    inner: '<path fill-rule="evenodd" clip-rule="evenodd" d="M10 10h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-6.6L11 24.6V21h-1a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z'
+                        + 'M10.85 16a1.15 1.15 0 1 0 2.3 0 1.15 1.15 0 1 0-2.3 0z'
+                        + 'M14.85 16a1.15 1.15 0 1 0 2.3 0 1.15 1.15 0 1 0-2.3 0z'
+                        + 'M18.85 16a1.15 1.15 0 1 0 2.3 0 1.15 1.15 0 1 0-2.3 0z" id="pswp__icn-comments"/>',
+                    outlineID: 'pswp__icn-comments',
+                },
+                onClick: (_event, element) => {
+                    commentsVisible = !commentsVisible;
+                    applyCommentsVisibility();
+                    const text = commentsVisible ? '收起评论' : '展开评论';
+                    element.title = text;
+                    element.setAttribute('aria-label', text);
+                    element.classList.toggle('pswp__button--comments-off', !commentsVisible);
+                },
+            });
+        }
     });
     // 切页与关闭时暂停视频，否则关闭后声音会继续响
     const pauseAll = () => {
@@ -296,6 +334,9 @@ async function openViewer(media: MediaItem): Promise<void> {
     pswp.init();
     // 初始定位（打开即视频时也需抬高控件）
     syncVideoState();
+    // 只有真的存在缩略图条时才给视频底部留白；单条媒体没有导航条，
+    // 留着那段 80px 会让视频的原生进度条悬在屏幕中间，看着像一条多余的「导航条」
+    pswp.element?.classList.toggle('pswp--has-thumbs', hasThumbBar);
 }
 </script>
 

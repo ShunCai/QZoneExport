@@ -38,12 +38,17 @@
     --shadow-md: rgba(0, 0, 0, 0.08);
     --shadow-lg: rgba(0, 0, 0, 0.2);
 
-    --pswp-bg: rgba(20, 20, 24, 0.86);
-    --pswp-border: rgba(255, 255, 255, 0.12);
-    --pswp-text: #ddd;
-    --pswp-muted: #888;
-    --pswp-label: #777;
-    --pswp-value: #aaa;
+    /* 大图查看器恒为暗场：侧栏用不透光的深灰蓝、比遮罩亮一档以形成层次。
+       半透明黑叠在黑色遮罩上会糊成一片（旧值），纯白又太刺眼、破坏看图的暗适应。 */
+    --pswp-comments-width: 340px;
+    /* 不能叫 --pswp-bg：PhotoSwipe 自带 `.pswp { --pswp-bg:#000 }`，侧栏是 .pswp 的子元素，
+       会就近取到 #000，:root 的定义进不了这棵子树（这就是之前改色不生效的根因）。 */
+    --qze-panel-bg: #2b303b;
+    --pswp-border: rgba(255, 255, 255, 0.14);
+    --pswp-text: #e6e8eb;
+    --pswp-muted: #a4aab3;
+    --pswp-label: #9aa1ab;
+    --pswp-value: #c2c7ce;
     --pswp-highlight: #7cc4ff;
 }
 
@@ -81,12 +86,12 @@
     --shadow-lg: rgba(0, 0, 0, 0.6);
 
     /* PhotoSwipe 在暗色模式下保持深色底 */
-    --pswp-bg: rgba(12, 12, 16, 0.92);
-    --pswp-border: rgba(255, 255, 255, 0.1);
-    --pswp-text: #ccc;
-    --pswp-muted: #777;
-    --pswp-label: #666;
-    --pswp-value: #999;
+    --qze-panel-bg: #242934;
+    --pswp-border: rgba(255, 255, 255, 0.12);
+    --pswp-text: #dfe2e6;
+    --pswp-muted: #9aa1ab;
+    --pswp-label: #8f97a1;
+    --pswp-value: #b8bec6;
     --pswp-highlight: #66b8ff;
 }
 
@@ -295,24 +300,38 @@ body {
     right: 0;
     bottom: 0;
     z-index: 5;
-    width: 300px;
+    width: var(--pswp-comments-width);
     padding: 48px 16px 16px;
     overflow: auto;
     box-sizing: border-box;
-    background: var(--pswp-bg);
+    background: var(--qze-panel-bg);
     border-left: 1px solid var(--pswp-border);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.28);
     color: var(--pswp-text);
     font-size: 13px;
 }
 
+/* 收起后去掉 pswp--with-comments，顶栏/箭头/缩略图条会自动回到全宽；面板本身在此隐藏 */
+.pswp:not(.pswp--with-comments) .pswp-comments {
+    display: none;
+}
+/* 评论面板开合两态的区分：收起时略暗（按钮仍在，只是次于看图），展开后点亮为主题色。
+   不把收起态压到 0.5 以下——面板默认就是收起的，压太暗等于把入口藏起来。 */
+.pswp__button--comments-off {
+    opacity: 0.7;
+}
+.pswp--with-comments .pswp__button--comments-toggle .pswp__icn {
+    fill: var(--pswp-highlight);
+}
+
 .pswp--with-comments .pswp__top-bar {
-    right: 300px;
+    right: var(--pswp-comments-width);
     width: auto;
     left: 0;
 }
 
 .pswp--with-comments .pswp__button--arrow--next {
-    right: 300px;
+    right: var(--pswp-comments-width);
 }
 
 /* PhotoSwipe 弹窗视频 */
@@ -332,8 +351,9 @@ body {
     outline: none;
 }
 
-/* 视频激活时底部留白，避免被缩略图条遮挡 */
-.pswp--video-active .pswp-video {
+/* 视频激活时底部留白，避免被缩略图条遮挡。
+   必须同时满足「有缩略图条」：单条媒体时没有导航条，留白只会让原生进度条悬在半空。 */
+.pswp--video-active.pswp--has-thumbs .pswp-video {
     box-sizing: border-box;
     padding-bottom: 80px;
 }
@@ -401,6 +421,29 @@ body {
     gap: 8px;
 }
 
+/* 大图评论面板：头像与一层回复（与列表页 CommentList 对齐） */
+.pswp-comment-avatar {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--pswp-border);
+}
+.pswp-comment-avatar--empty {
+    display: inline-block;
+    background: var(--pswp-border);
+}
+.pswp-comment-replies {
+    margin: 6px 0 0 30px;
+    padding-left: 8px;
+    border-left: 2px solid var(--pswp-border);
+}
+.pswp-comment-reply .pswp-comment-avatar {
+    width: 20px;
+    height: 20px;
+}
+
 .pswp-comment-name {
     color: var(--pswp-highlight);
 }
@@ -441,7 +484,11 @@ body {
 }
 
 .pswp--with-comments .pswp-thumbnails {
-    right: 300px;
+    right: var(--pswp-comments-width);
+}
+/* 单图或缩略图全部缺失时，不留一条空横条 */
+.pswp-thumbnails:empty {
+    display: none;
 }
 
 .pswp-thumb {
@@ -451,10 +498,11 @@ body {
     border-radius: 4px;
     overflow: hidden;
     cursor: pointer;
-    opacity: 0.55;
+    opacity: 0.7;
     border: 2px solid transparent;
     transition: opacity 0.2s, border-color 0.2s;
-    background: #222;
+    /* 略亮于侧栏：缩略图加载失败时仍能看出格子，不再糊成一条空横条 */
+    background: #2c3038;
 }
 
 .pswp-thumb:hover {
