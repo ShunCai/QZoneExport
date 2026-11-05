@@ -10,6 +10,42 @@
  * 全部盖掉后只剩次数，列表就失去意义；脱敏既能分享截图时保护对方，又保留辨识度。
  * 按 code point 处理，避免 emoji / 生僻字被 surrogate pair 截断。
  */
+/**
+ * QQ 号打码（隐私模式）
+ *
+ * 保留前 3 后 2（不足 6 位时保留前 1 后 1），中间用 * 填充且至少 2 个。
+ * 保留头尾是为了让列表里不同的人仍可区分——全星号就没法对着看了。
+ * 例：1129136924 → 112*****24
+ */
+export function maskUin(uin: string | number | null | undefined): string {
+    const s = String(uin ?? '').trim();
+    if (!s) return '';
+    if (s.length <= 2) return '*'.repeat(s.length);
+    const keepHead = s.length >= 6 ? 3 : 1;
+    const keepTail = s.length >= 6 ? 2 : 1;
+    const stars = Math.max(2, s.length - keepHead - keepTail);
+    return s.slice(0, keepHead) + '*'.repeat(stars) + s.slice(-keepTail);
+}
+
+/**
+ * 取纯文字名（脱敏前先过一遍）
+ *
+ * 昵称里可能混着 QQ 表情 token 与 HTML 标签。maskName 按字符取首尾，
+ * 若不先清掉这些标记，`[em]e100[/em]张三` 会被切成 `[***三`（首字符成了 `[`，真正的姓被吃掉）。
+ *
+ * 这里直接正则剥离，不复用 formatSummary —— 后者是「token → 表情 <img> → DOMParser 剥标签」，
+ * 对脱敏来说绕了一圈，还有解析开销。
+ */
+export function plainName(raw: string | undefined | null): string {
+    return String(raw ?? '')
+        .replace(/\[em\]e\d+\[\/em\]/gi, '')
+        .replace(/<[^>]*>/g, '')
+        // 直接删除而非替换成空格：它是排版产物，留着会把两字名切成三字、影响首尾取字
+        .replace(/&nbsp;/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 export function maskName(name: string | undefined | null): string {
     const s = String(name ?? '').trim();
     if (!s) return '';

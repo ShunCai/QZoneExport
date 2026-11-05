@@ -188,6 +188,11 @@ body {
     font-size: 12px;
 }
 
+/* 隐私模式：模糊含身份信息的图片（好友头像的 URL 本身就按 uin 拼出） */
+.privacy-blur {
+    filter: blur(5px);
+}
+
 /* 列表条目卡片 */
 .card-item {
     position: relative;

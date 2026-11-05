@@ -5,6 +5,8 @@ import { loadList } from '../data/sources';
 import { getModulePref, savePref, type ShowType } from '../data/displayPrefs';
 import { formatTime, timeValue } from '../data/format';
 import { formatSummary } from '../data/richText';
+import { usePrivacy } from '../composables/usePrivacy';
+import { maskName, maskUin, plainName } from '../data/mask';
 import { collectInteractiveUsers, hasInteractiveSource, type InteractiveUser } from '../data/interactive';
 import {
     friendCommonCount,
@@ -58,6 +60,30 @@ const SORT_DIR_OPTIONS = [
  */
 function remarkOf(row: Record<string, any>): string {
     return row.remark || '';
+}
+
+/** 隐私开关：好友列表是「人多、逐个打码不现实」的地方，所以整列表直接脱敏 */
+const { hidden: hideSensitive } = usePrivacy();
+
+/**
+ * 隐私态的展示名：先把名字剥成纯文本再按字符脱敏。
+ * 名字里可能带 [em]e100[/em] 表情 token，直接按原串切会把 [em] 当字符、切出乱码。
+ */
+function maskedNameText(raw: string | null | undefined): string {
+    // 先剥掉表情 token / HTML 标签再按字符脱敏（否则 [em] 会被当成字符切开）
+    return maskName(plainName(raw));
+}
+
+/**
+ * 共同群组脱敏：群名常含学校/公司/班级，逐个脱敏后再拼接
+ * （整串一次性脱敏会被首尾规则吃掉中间，多个群名只剩一个）。
+ */
+function maskedCommonGroups(row: Record<string, any>): string {
+    return commonGroupNames(row)
+        .split('，')
+        .filter(Boolean)
+        .map((name) => maskName(name))
+        .join('，');
 }
 
 onMounted(async () => {
@@ -323,22 +349,48 @@ function commonGroupNames(row: Record<string, any>): string {
         .join('，');
 }
 
-const columns: DataTableColumns<Record<string, any>> = [
-    { title: '', key: 'avatar', width: 52, render: (row) => h(UserAvatar, { uin: row.uin, size: 32, link: false }) },
-    { title: 'QQ', key: 'uin', width: 110, render: (row) => h(UserLink, { uin: row.uin }, { default: () => String(row.uin) }) },
-    {
-        title: '昵称',
-        key: 'nick',
-        ellipsis: { tooltip: true },
-        // 昵称里可能带表情 token，需富文本渲染
-        render: (row) => h('span', { innerHTML: formatSummary(friendNick(row)) }),
-    },
-    {
-        title: '备注',
-        key: 'remark',
-        ellipsis: { tooltip: true },
-        render: (row) => h('span', { innerHTML: formatSummary(remarkOf(row)) }),
-    },
+/**
+ * 列定义用 computed：render 里依赖 hideSensitive，常量数组不会跟着开关刷新。
+ * 隐私态下昵称/备注半脱敏（保留首尾）、QQ 号打码、头像模糊。
+ */
+const columns = computed<DataTableColumns<Record<string, any>>>(() => {
+    const masked = hideSensitive.value;
+    return [
+        {
+            title: '',
+            key: 'avatar',
+            width: 52,
+            // 头像图片本身就是按 uin 取的，模糊掉才不至于一眼认出是谁
+            render: (row) => h(UserAvatar, {
+                uin: row.uin, size: 32, link: false,
+                class: masked ? 'privacy-blur' : '',
+            }),
+        },
+        {
+            title: 'QQ',
+            key: 'uin',
+            width: 110,
+            render: (row) => h(UserLink, { uin: row.uin }, {
+                default: () => (masked ? maskUin(row.uin) : String(row.uin)),
+            }),
+        },
+        {
+            title: '昵称',
+            key: 'nick',
+            ellipsis: { tooltip: true },
+            // 昵称里可能带表情 token，需富文本渲染；隐私态改为纯文本脱敏
+            render: (row) => (masked
+                ? h('span', maskedNameText(friendNick(row)))
+                : h('span', { innerHTML: formatSummary(friendNick(row)) })),
+        },
+        {
+            title: '备注',
+            key: 'remark',
+            ellipsis: { tooltip: true },
+            render: (row) => (masked
+                ? h('span', maskedNameText(remarkOf(row)))
+                : h('span', { innerHTML: formatSummary(remarkOf(row)) })),
+        },
     { title: '分组', key: 'groupName', width: 120, render: (row) => row.groupName || '未分组' },
     {
         title: '特别关心',
@@ -387,13 +439,15 @@ const columns: DataTableColumns<Record<string, any>> = [
         sorter: (a, b) => friendCommonCount(a) - friendCommonCount(b),
         render: (row) => friendCommonCount(row),
     },
-    {
-        title: '共同群组',
-        key: 'commonGroup',
-        ellipsis: { tooltip: true },
-        render: (row) => commonGroupNames(row),
-    },
-];
+        {
+            title: '共同群组',
+            key: 'commonGroup',
+            ellipsis: { tooltip: true },
+            // 群名里常有学校/公司/班级，隐私态逐项脱敏
+            render: (row) => (masked ? maskedCommonGroups(row) : commonGroupNames(row)),
+        },
+    ];
+});
 </script>
 
 <template>
