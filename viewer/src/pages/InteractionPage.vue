@@ -12,7 +12,7 @@ import { navigate, openInNewTab, routeQuery } from '../router';
 import { heShe } from '../data/pronoun';
 import { loadTopPeople, type TopPerson } from '../data/top-people';
 import { usePrivacy } from '../composables/usePrivacy';
-import { maskName } from '../data/mask';
+import { maskName, plainName } from '../data/mask';
 import PrivacyToggle from '../components/PrivacyToggle.vue';
 import OwnerTargetInteraction from '../components/OwnerTargetInteraction.vue';
 import MessageItem from '../components/items/MessageItem.vue';
@@ -391,7 +391,9 @@ watch(filtered, () => { pulseKey.value++; });
         <div v-else-if="data" class="ip-body">
             <!-- 本人备份：显示当前好友 + 可切换 -->
             <div v-if="isSelfMode && confirmedFriend" class="ip-friend-bar">
-                <span>正在查看与 <b>{{ data.ownerName || confirmedFriend }}</b> 的互动</span>
+                <span>正在查看与 <b>{{ hideSensitive
+                    ? maskName(plainName(String(data.ownerName || confirmedFriend || '')))
+                    : (data.ownerName || confirmedFriend) }}</b> 的互动</span>
                 <button class="ip-fi-btn ip-fi-btn-sm" type="button" @click="resetFriend(); reload();">换个好友</button>
             </div>
 

@@ -4,7 +4,10 @@ import { NButton, NModal, NTag } from 'naive-ui';
 import { formatTime } from '../../data/format';
 import { commentReplies, commentUser, imageUrl, itemComments, locationOf, messageSource, shareFromInfo, shareTypeLabel } from '../../data/content';
 import { formatText } from '../../data/richText';
+import { usePrivacy } from '../../composables/usePrivacy';
+import { maskedUserLabel } from '../../data/mask';
 import CommentList from '../CommentList.vue';
+const { hidden: hideSensitive } = usePrivacy();
 import ItemStats from '../ItemStats.vue';
 import UserAvatar from '../UserAvatar.vue';
 import MediaGrid from '../MediaGrid.vue';
@@ -56,8 +59,10 @@ function mediasOf(item: Record<string, any>): { type: 'image' | 'video'; src: st
 <template>
     <div class="card-item">
         <div class="item-head">
-            <user-avatar :uin="props.item.uin" :size="32" />
-            <span class="item-name">{{ props.item.nickname || props.item.uin }}</span>
+            <user-avatar :uin="props.item.uin" :size="32" :class="{ 'privacy-blur': hideSensitive }" />
+            <span class="item-name">{{ hideSensitive
+                ? maskedUserLabel({ uin: props.item.uin, name: props.item.nickname })
+                : (props.item.nickname || props.item.uin) }}</span>
             <span class="share-type-badge" title="分享类型">
                 分享了
                 <n-tag size="small" :bordered="false" type="warning" round>

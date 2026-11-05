@@ -3,7 +3,10 @@ import { computed } from 'vue';
 import { NTag, NCollapse, NCollapseItem } from 'naive-ui';
 import { formatTime } from '../data/format';
 import { heShe } from '../data/pronoun';
+import { usePrivacy } from '../composables/usePrivacy';
+import { maskName, plainName } from '../data/mask';
 import type { OwnerTargetInteraction, InteractionEntry, InteractionCategory } from '../data/owner-target';
+const { hidden: hideSensitive } = usePrivacy();
 import MessageItem from './items/MessageItem.vue';
 import ArticleItem from './items/ArticleItem.vue';
 import BoardItem from './items/BoardItem.vue';
@@ -57,9 +60,14 @@ const statTitles = computed(() => isSelf.value
 
 /** 标题与副标题：随模式切换主语 */
 const titleText = computed(() => isSelf.value ? '🤝 你与好友的互动' : `🤝 我与${t.value}的互动`);
-const headerSub = computed(() => isSelf.value
-    ? `在你的空间里，${d.value.ownerName}（好友）与 你 的往来`
-    : `在 ${d.value.targetName} 的空间里，你（${d.value.ownerName}）与${t.value}的往来`);
+const headerSub = computed(() => {
+    const masked = hideSensitive.value;
+    const owner = masked ? maskName(plainName(String(d.value.ownerName ?? ''))) : d.value.ownerName;
+    const target = masked ? maskName(plainName(String(d.value.targetName ?? ''))) : d.value.targetName;
+    return isSelf.value
+        ? `在你的空间里，${owner}（好友）与 你 的往来`
+        : `在 ${target} 的空间里，你（${owner}）与${t.value}的往来`;
+});
 
 /** 我访问区：本人备份下变为「对方浏览过你的」 */
 const visitsHeadText = computed(() => isSelf.value ? '对方浏览过你的' : `我浏览过${t.value}的`);

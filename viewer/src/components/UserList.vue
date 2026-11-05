@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { NEmpty, NTag } from 'naive-ui';
+import { usePrivacy } from '../composables/usePrivacy';
+import { maskedUserLabel, maskUin } from '../data/mask';
 import UserAvatar from './UserAvatar.vue';
 import UserLink from './UserLink.vue';
+
+const { hidden: hideSensitive } = usePrivacy();
 
 /** 用户列表（点赞名单、最近访问名单共用） */
 const props = defineProps<{
@@ -19,10 +23,10 @@ const props = defineProps<{
             class="user"
             :uin="user.uin"
         >
-            <user-avatar :uin="user.uin" :size="40" :link="false" />
+            <user-avatar :uin="user.uin" :size="40" :link="false" :class="{ 'privacy-blur': hideSensitive }" />
             <div class="meta">
-                <div class="name">{{ user.name || user.uin }}</div>
-                <div class="uin">{{ user.uin }}</div>
+                <div class="name">{{ hideSensitive ? maskedUserLabel(user) : (user.name || user.uin) }}</div>
+                <div class="uin">{{ hideSensitive ? maskUin(user.uin) : user.uin }}</div>
             </div>
             <n-tag :type="user.isFriend ? 'success' : 'default'" size="small">
                 {{ user.isFriend ? '好友' : '路人' }}

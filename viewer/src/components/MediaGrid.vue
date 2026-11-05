@@ -5,7 +5,10 @@ import 'photoswipe/style.css';
 import { formatTime } from '../data/format';
 import { commentUser } from '../data/content';
 import { escapeHtml, formatText } from '../data/richText';
+import { usePrivacy } from '../composables/usePrivacy';
+import { maskedUserLabel } from '../data/mask';
 import type { MediaItem } from '../data/media';
+const { hidden: hideSensitive } = usePrivacy();
 
 /**
  * 媒体网格 + 大图查看
@@ -172,8 +175,12 @@ function commentsHtml(index: number): string {
     }
     const items = list.map((comment) => {
         const user = commentUser(comment);
+        // 这里拼的是 HTML 字符串、不走 Vue 模板，隐私态需手动调用统一出口（含无昵称时打码 QQ）
+        const label = hideSensitive.value
+            ? maskedUserLabel(user)
+            : String(user.name || user.uin || '');
         return '<div class="pswp-comment">'
-            + `<div class="pswp-comment-head"><span class="pswp-comment-name">${escapeHtml(String(user.name || user.uin || ''))}</span>`
+            + `<div class="pswp-comment-head"><span class="pswp-comment-name">${escapeHtml(label)}</span>`
             + `<span class="pswp-comment-time">${escapeHtml(formatTime(comment.postTime || comment.create_time))}</span></div>`
             + `<div class="pswp-comment-text">${formatText(comment.content)}</div>`
             + '</div>';

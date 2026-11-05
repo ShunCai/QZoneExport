@@ -17,7 +17,10 @@ import {
     videoUrl,
 } from '../../data/content';
 import { formatMessageContent } from '../../data/richText';
+import { usePrivacy } from '../../composables/usePrivacy';
+import { maskedUserLabel } from '../../data/mask';
 import CommentList from '../CommentList.vue';
+const { hidden: hideSensitive } = usePrivacy();
 import ItemStats from '../ItemStats.vue';
 import UserAvatar from '../UserAvatar.vue';
 import UserLink from '../UserLink.vue';
@@ -113,8 +116,10 @@ function mediasOf(item: Record<string, any>): MediaItem[] {
 <template>
     <div class="card-item">
         <div class="item-head">
-            <user-avatar :uin="props.item.uin" :size="32" />
-            <span class="item-name">{{ props.item.nickname || props.item.name || props.item.uin }}</span>
+            <user-avatar :uin="props.item.uin" :size="32" :class="{ 'privacy-blur': hideSensitive }" />
+            <span class="item-name">{{ hideSensitive
+                ? maskedUserLabel({ uin: props.item.uin, name: props.item.nickname || props.item.name })
+                : (props.item.nickname || props.item.name || props.item.uin) }}</span>
             <span class="item-time" :title="timeTitle">
                 {{ displayTime }}
             </span>
@@ -127,7 +132,9 @@ function mediasOf(item: Record<string, any>): MediaItem[] {
         <div v-if="props.item.rt_tid" class="forward">
         <div class="forward-name">
             <user-link :uin="props.item.rt_uin">
-                {{ props.item.rt_uinname }}
+                {{ hideSensitive
+                    ? maskedUserLabel({ uin: props.item.rt_uin, name: props.item.rt_uinname })
+                    : props.item.rt_uinname }}
             </user-link>：
         </div>
             <div class="item-content" v-html="formatMessageContent(props.item.rt_con || {})" />

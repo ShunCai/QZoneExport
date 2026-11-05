@@ -5,7 +5,11 @@ import { formatTime } from '../data/format';
 import { imageUrl } from '../data/content';
 import { formatText } from '../data/richText';
 import { openImageLightbox } from '../data/lightbox';
+import { usePrivacy } from '../composables/usePrivacy';
+import { maskedUserLabel } from '../data/mask';
 import UserAvatar from './UserAvatar.vue';
+
+const { hidden: hideSensitive } = usePrivacy();
 
 /**
  * 评论列表（含一层回复）
@@ -44,10 +48,16 @@ function onCommentImageClick(event: MouseEvent): void {
     <div v-if="props.comments.length > 0" class="comments" ref="root">
         <div class="comments-title">评论 {{ props.total ?? props.comments.length }}</div>
         <div v-for="(comment, index) in props.comments" :key="index" class="comment">
-            <user-avatar :uin="props.userOf(comment).uin" :size="32" class="comment-avatar" />
+            <user-avatar
+                :uin="props.userOf(comment).uin"
+                :size="32"
+                :class="['comment-avatar', { 'privacy-blur': hideSensitive }]"
+            />
             <div class="comment-main">
                 <div class="comment-head">
-                    <span class="comment-name">{{ props.userOf(comment).name || props.userOf(comment).uin }}</span>
+                    <span class="comment-name">{{ hideSensitive
+                        ? maskedUserLabel(props.userOf(comment))
+                        : (props.userOf(comment).name || props.userOf(comment).uin) }}</span>
                     <n-tag v-if="comment.private" size="tiny" :bordered="false" type="warning">私密</n-tag>
                     <span class="comment-time">{{ formatTime(comment.postTime || comment.create_time) }}</span>
                 </div>
@@ -61,10 +71,16 @@ function onCommentImageClick(event: MouseEvent): void {
                     :key="replyIndex"
                     class="comment reply"
                 >
-                    <user-avatar :uin="props.userOf(reply).uin" :size="26" class="comment-avatar" />
+                    <user-avatar
+                        :uin="props.userOf(reply).uin"
+                        :size="26"
+                        :class="['comment-avatar', { 'privacy-blur': hideSensitive }]"
+                    />
                     <div class="comment-main">
                         <div class="comment-head">
-                            <span class="comment-name">{{ props.userOf(reply).name || props.userOf(reply).uin }}</span>
+                            <span class="comment-name">{{ hideSensitive
+                                ? maskedUserLabel(props.userOf(reply))
+                                : (props.userOf(reply).name || props.userOf(reply).uin) }}</span>
                             <n-tag v-if="reply.private" size="tiny" :bordered="false" type="warning">私密</n-tag>
                             <span class="comment-time">{{ formatTime(reply.postTime || reply.create_time) }}</span>
                         </div>

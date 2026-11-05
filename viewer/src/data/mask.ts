@@ -46,6 +46,17 @@ export function plainName(raw: string | undefined | null): string {
         .trim();
 }
 
+/**
+ * 名单 / 评论区统一的展示名脱敏出口。
+ *
+ * 各组件模板里普遍写 `user.name || user.uin`——若只脱敏 name，
+ * 没昵称的人会直接露出完整 QQ 号。这里把兜底分支一并打码。
+ */
+export function maskedUserLabel(user: { uin?: string | number; name?: string } | null | undefined): string {
+    const name = maskName(plainName(String(user?.name ?? '')));
+    return name || maskUin(String(user?.uin ?? ''));
+}
+
 export function maskName(name: string | undefined | null): string {
     const s = String(name ?? '').trim();
     if (!s) return '';
