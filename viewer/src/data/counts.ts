@@ -73,7 +73,7 @@ export async function loadModuleCounts(): Promise<ModuleCounts> {
 }
 
 /** 参与「按年分布」统计的模块（取时间的字段各模块不同）
- *  注意：该 MODULES 列表被以下四处复用——时间跨度、年活跃、月度活跃、初识空间、深夜动态——
+ *  注意：该 MODULES 列表被以下四处复用——时间跨度、年活跃、月度活跃、最初的记忆、深夜动态——
  *  一旦修改字段回退链请同时改一处，保证统计口径完全一致，避免出现"同一份数据多处最早年份不一致"。
  */
 export const YEAR_MODULES: {
@@ -90,7 +90,7 @@ export const YEAR_MODULES: {
     { key: 'favorites', label: '收藏', timeOf: (item) => item.custom_create_time || item.create_time },
 ];
 
-/** 相片时间字段（统计时间跨度、月年活跃度、初识空间、深夜动态都需要；与 YEAR_MODULES 同口径） */
+/** 相片时间字段（统计时间跨度、月年活跃度、最初的记忆、深夜动态都需要；与 YEAR_MODULES 同口径） */
 export const PHOTO_TIME_FIELDS = {
     label: '相片',
     timeOf: (photo: Record<string, any>) => resolvePhotoTime(photo, 'upload'),
@@ -563,7 +563,7 @@ export interface TopLocation {
 /**
  * 获取最常访问的 Top N 地点
  *
- * 统计口径（与时间跨度/初识空间一致，复用 YEAR_MODULES + 相片独立处理）：
+ * 统计口径（与时间跨度/最初的记忆一致，复用 YEAR_MODULES + 相片独立处理）：
  *  1. YEAR_MODULES 7 个模块：用 content.locationOf 取地点，回退链 story_info?.lbs → lbs → idname/name
  *  2. 相册相片（photoList）：用 PHOTO_LOCATION_FIELDS，回退链 custom_lbs → lbs → idname/name（与 media.ts 对齐）
  *  3. 空字符串/空白地点直接跳过；同地点名归并计数，保留最新访问时间

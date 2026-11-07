@@ -22,25 +22,31 @@ const comments = [
 ];
 
 describe('大图评论面板：头像与回复', () => {
-    it('每条评论都有头像', () => {
+    it('每条评论都有头像单元格；有 uin 的才叠网络头像', () => {
         const html = commentEntriesHtml(comments, false);
-        expect(html).toMatch(/<img[^>]+class="pswp-comment-avatar"/);
-        // 两个主评论各一个头像 + 一个回复头像
-        expect(html.match(/pswp-comment-avatar/g)).toHaveLength(3);
+        // 两个主评论 + 一个回复 = 3 个头像单元格
+        expect(html.match(/class="pswp-comment-avatar-cell"/g)).toHaveLength(3);
+        expect(html.match(/<img class="pswp-comment-avatar/g)).toHaveLength(3);
+        // 头像加载失败只隐藏图片，底下的首字圆片仍在（离线看备份时不会留下空洞）
+        expect(html).toContain("this.style.display='none'");
+        expect(html).toContain('pswp-comment-avatar-letter');
     });
 
     it('一层回复被渲染，且回复也有头像与时间', () => {
         const html = commentEntriesHtml(comments, false);
+        expect(html).toContain('pswp-comments-list');
         expect(html).toContain('pswp-comment-replies');
         expect(html).toContain('pswp-comment-reply');
         expect(html).toContain('这是一条回复');
         expect(html).toContain('小王');
     });
 
-    it('无 uin 时给空占位，不输出坏图', () => {
+    it('无 uin 时只留首字圆片，不输出坏图', () => {
         const html = commentEntriesHtml([{ name: '匿名', content: 'x' }], false);
-        expect(html).toContain('pswp-comment-avatar--empty');
+        expect(html).toContain('pswp-comment-avatar-cell');
+        expect(html).toContain('>匿<');
         expect(html).not.toMatch(/<img[^>]+src=""/);
+        expect(html).not.toContain('<img');
     });
 
     it('回复不再递归展开自己的回复（避免深层嵌套撑爆面板）', () => {
@@ -50,6 +56,22 @@ describe('大图评论面板：头像与回复', () => {
         }], false);
         expect(html).toContain('y');
         expect(html).not.toContain('z');
+    });
+});
+
+describe('大图评论面板：昵称里的表情', () => {
+    it('昵称里的 [em] token 与正文一样转成表情图', () => {
+        const html = commentEntriesHtml([{
+            uin: 951783523,
+            name: '[em]e258151[/em]勤奋＋脚踏实地[em]e258158[/em]',
+            content: '哈哈',
+        }], false);
+        const name = /<span class="pswp-comment-name">([\s\S]*?)<\/span>/.exec(html)?.[1] || '';
+        expect(name).not.toContain('[em]');
+        expect(name).toContain('class="emoticon"');
+        expect(name).toContain('勤奋＋脚踏实地');
+        // 头像首字不能取成「[」
+        expect(html).toContain('>勤<');
     });
 });
 

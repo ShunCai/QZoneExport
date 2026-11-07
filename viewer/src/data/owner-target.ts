@@ -73,7 +73,7 @@ export interface OwnerTargetInteraction {
 /** 互动动作类别：与统计卡片一一对应（留言/评论/回应/点赞），用于明细筛选与卡片数字同源 */
 export type InteractionCategory = 'board' | 'comment' | 'reply' | 'like';
 
-/** 一条互动条目：带上类型与原始数据，渲染时按 type 分派给对应组件（与那年今日/初识空间一致） */
+/** 一条互动条目：带上类型与原始数据，渲染时按 type 分派给对应组件（与那年今日/最初的记忆一致） */
 export interface InteractionEntry {
     /** 互动类型，决定渲染组件；message/board/blog 复用对应 item 组件，其余类型用紧凑卡片渲染 */
     type: 'message' | 'board' | 'blog' | 'share' | 'video' | 'photo' | 'album';
@@ -175,6 +175,61 @@ export function computeOwnerTargetInteraction(
     const meDedupKeys = new Set<string>();
     const taDedupKeys = new Set<string>();
 
+    /**
+     * 互动条目的「双方视图」
+     *
+     * 展开详情渲染的是完整卡片（说说带整个评论区），但这个页面讲的是**两个人的往来**，
+     * 旁观者的评论混在里面会淹没对话本身。这里把评论/回复过滤成只剩 owner 与 target
+     * 发的内容（原始条目不被修改）。
+     */
+    const bothSidesView = (type: InteractionEntry['type'], item: Record<string, any>): Record<string, any> => {
+        if (type !== 'message' && type !== 'board') return item;
+        const keep = new Set([ownerUin, targetUin].map(toStr));
+
+        if (type === 'message') {
+            // 点赞名单同样只留双方：第三方的赞不属于「我们的往来」
+            const likeList = Array.isArray(item.likes) ? item.likes : [];
+            const likeKept = likeList.filter((l: Record<string, any>) => keep.has(toStr(String(l.fuin ?? l.uin ?? ''))));
+            const likeChanged = likeKept.length !== likeList.length;
+
+            const list = itemComments(item);
+            if (list.length === 0 && !likeChanged) return item;
+            const filtered = list
+                .map((comment) => {
+                    const authorIn = keep.has(toStr(commentUser(comment).uin));
+                    const replies = commentReplies(comment).filter((r) => keep.has(toStr(commentUser(r).uin)));
+                    return { comment, authorIn, replies };
+                })
+                // 绝对规则：只保留双方发出的评论——第三方评论即使被 TA/我回复过也不保留
+                //（早期版本用「x.authorIn || x.replies.length > 0」当对话上下文，实测会放行第三方线程）
+                .filter((x) => x.authorIn)
+                .map((x) => ({
+                    ...x.comment,
+                    // commentReplies 读 replies/list_3：统一写回 replies，回复数按过滤后算
+                    replies: x.replies,
+                    list_3: undefined,
+                }));
+            if (filtered.length === list.length && !likeChanged) return item;
+            return {
+                ...item,
+                ...(likeChanged
+                    ? {
+                          likes: likeKept,
+                          // 原始总赞数（likeTotal）一并删掉：likeTotal() 会回退到过滤后名单的长度，
+                          // 否则条目卡上的「赞 N」仍是含第三方的全量数
+                          likeTotal: undefined,
+                          like_total: undefined,
+                      }
+                    : {}),
+                ...(filtered.length !== list.length ? { custom_comments: filtered, comments: undefined } : {}),
+            };
+        }
+
+        const replies = (item.replyList || []).filter((r: Record<string, any>) => keep.has(toStr(String(r.uin ?? ''))));
+        if (replies.length === (item.replyList || []).length) return item;
+        return { ...item, replyList: replies };
+    };
+
     const addEntry = (
         type: InteractionEntry['type'],
         cat: InteractionCategory,
@@ -197,7 +252,8 @@ export function computeOwnerTargetInteraction(
             }
         }
         // 始终添加条目（不再因 time<=0 跳过），保持事件数与计数器一致
-        entries.push({ type, category: cat, item, time: Math.max(time, 0), dir });
+        // 条目存「双方视图」：展开详情时第三方的评论/回复一律隐藏，只呈现你俩的往来
+        entries.push({ type, category: cat, item: bothSidesView(type, item), time: Math.max(time, 0), dir });
         if (countDir) {
             if (dir === 'me') fromMe++;
             else fromTa++;
@@ -457,9 +513,10 @@ export async function loadOwnerTargetInteraction(
     const ownerUin = opts?.ownerUin !== undefined ? opts.ownerUin : user.ownerUin;
     const ownerMissing = ownerUin === undefined || ownerUin === null || ownerUin === '';
     if (ownerMissing) return null;
-    // 仅未显式指定 ownerUin（他人空间场景）时才要求 owner ≠ target；
-    // 指定后（本人备份 + 查看某好友）以好友 QQ 为 owner，与 target（自己）必然不同。
-    if (opts?.ownerUin === undefined && toStr(ownerUin) === toStr(targetUin)) return null;
+    // owner 与 target 必须不同：一个人与自己没有「往来」可言。
+    // 他人空间下 targetUin 恒为空间主人，故「看 TA 与某人」时若某人正是 TA 本人（或本人备份里
+    // 指定了自己），都在此拦掉，避免算出一份自我互动的假数据。
+    if (toStr(ownerUin) === toStr(targetUin)) return null;
 
     const [messages, boards, blogs, albums, shares, videos] = await Promise.all([
         loadItems('messages'),

@@ -68,13 +68,26 @@ function formatEmoticon(html: string): string {
     ));
 }
 
-/** @{uin:123,nick:张三} → 空间主页链接（受 hasUserLink 门控，关闭时仅显示 @昵称） */
+/**
+ * @{uin:123,nick:张三} → 空间主页链接（受 hasUserLink 门控，关闭时仅显示 @昵称）
+ *
+ * 【顺序约束】必须在 formatEmoticon **之前**执行。昵称里会内嵌 `[em]e258151[/em]`
+ * （QQ 空间把表情直接存进昵称），若先转表情，生成的 `<img ... onerror="...if(){...}">`
+ * 里的 `}` 会被本函数 `nick:([^}]*?)` 当成 token 结尾而提前收尾，
+ * 结果 `</a>` 落进 onerror 属性值里 → 浏览器把后续内容整段吞进一个未闭合的 `<a>`，
+ * 表现为「评论作者名被包成链接、面板撑出横向滚动条」。故顺序为：@ → 表情。
+ */
 function formatMention(html: string): string {
     return html.replace(
         /@\{uin:([^}]*?),nick:([^}]*?)(?:,who:[^}]*?)?(?:,auto:[^}]*?)?\}/g,
-        (_match, uin, name) => hasUserLink.value
-            ? `<a href="https://user.qzone.qq.com/${uin}" target="_blank" rel="noreferrer">@${name}</a>`
-            : `@${name}`,
+        (_match, uin, name) => {
+            // uin 只可能是数字：剔掉异常字符（引号等）再拼进属性。
+            // 不能在这里再 escapeHtml 一次——调用方 formatText 已整体转义过，会变成 &amp;quot;
+            const id = String(uin ?? '').replace(/[^0-9]/g, '');
+            return hasUserLink.value && id
+                ? `<a href="https://user.qzone.qq.com/${id}" target="_blank" rel="noreferrer">@${name}</a>`
+                : `@${name}`;
+        },
     );
 }
 
@@ -112,8 +125,9 @@ export function formatText(text?: string | null): string {
     }
     let html = escapeHtml(text);
     html = formatTopic(html);
-    html = formatEmoticon(html);
+    // 先 @ 后表情：@ 的昵称里可能带 [em]，见 formatMention 上的顺序说明
     html = formatMention(html);
+    html = formatEmoticon(html);
     html = formatWxEmoji(html);
     html = linkify(html);
     return html;
@@ -130,10 +144,24 @@ export function formatHtmlContent(html?: string | null): string {
         return '';
     }
     let out = String(html);
-    out = formatEmoticon(out);
+    // 与 formatText 同一顺序约束：@ 先于表情
     out = formatMention(out);
+    out = formatEmoticon(out);
     out = formatWxEmoji(out);
     return out;
+}
+
+/**
+ * 昵称 / 备注的渲染
+ *
+ * QQ 空间会把表情直接存进昵称，原始值形如 `[em]e258151[/em]勤奋＋脚踏实地[em]e258158[/em]`。
+ * 之前只有访客与好友列表走了转换，评论、说说作者名等直接输出原文 → 同一条评论里
+ * 「@某人」显示成表情图、作者名却是一串 token。这里统一成与正文同一套转换。
+ *
+ * 展示名可能来自脱敏（已是纯文本）或原始数据，两种情况都安全：先转义再识别 token。
+ */
+export function formatNickname(name?: string | null): string {
+    return formatText(name);
 }
 
 /**
