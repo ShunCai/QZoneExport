@@ -80,11 +80,18 @@ function openAlbum(cover: CoverPhoto): void {
             </p>
 
             <div class="hero-signature">
-                <span v-if="signature" class="quote">「{{ hideSensitive ? maskContent(signature) : signature }}」</span>
-                <span class="hero-actions">
-                    <button type="button" class="profile-link" @click="emit('openShare')">分享卡片</button>
-                </span>
+                <blockquote v-if="signature" class="quote">{{ hideSensitive ? maskContent(signature) : signature }}</blockquote>
             </div>
+
+            <!-- 主操作放在签名之后：描述与签名是连续的一组「自我介绍」，读完再给动作 -->
+            <button type="button" class="share-cta" @click="emit('openShare')">
+                <svg class="share-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 16V3" />
+                    <path d="m7 8 5-5 5 5" />
+                    <path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
+                </svg>
+                <span>生成分享卡片</span>
+            </button>
 
             <div class="hero-kpis">
                 <div class="kpi">
@@ -166,39 +173,60 @@ function openAlbum(cover: CoverPhoto): void {
     max-width: 640px;
 }
 .hero-signature {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
     margin-top: 16px;
     min-height: 20px;
 }
+/* 引用式：左侧细竖线 + 缩进 + 衬线，与上面的「空间描述」在层级上分开 */
 .quote {
+    margin: 0;
+    padding: 1px 0 1px 12px;
+    border-left: 2px solid var(--accent);
     font-family: var(--serif);
     font-size: 14px;
-    color: var(--text-primary);
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    max-width: 640px;
+    overflow-wrap: anywhere;
 }
-/* 操作入口靠右，给宽栏一个视觉落点，不再和引文挤在左端 */
-.hero-actions {
-    margin-left: auto;
-    flex: 0 0 auto;
-    display: flex;
-    gap: 12px;
-}
-.profile-link {
-    border: none;
+/* 次要操作：描边而非实心，避免抢走空间名与 KPI 数字的视觉焦点 */
+.share-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    margin-top: 16px;
+    padding: 0 12px;
+    border: 1px solid var(--cta-line);
+    border-radius: 8px;
     background: transparent;
-    font-size: 11px;
-    color: var(--text-muted);
-    flex: 0 0 auto;
-    padding: 0;
+    color: var(--cta-ink);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
     cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
 }
-.profile-link:hover {
-    color: var(--accent-pressed);
+.share-cta:hover {
+    background: var(--bg-tint-blue);
+    border-color: var(--cta-ink);
+}
+.share-cta:active {
+    background: var(--bg-tint-blue);
+}
+.share-cta:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+.share-cta-icon {
+    width: 14px;
+    height: 14px;
+    flex: none;
+}
+@media (max-width: 768px) {
+    .share-cta {
+        height: 44px;
+    }
 }
 .hero-kpis {
     display: grid;

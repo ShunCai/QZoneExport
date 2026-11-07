@@ -33,6 +33,9 @@
     --accent: #2080f0;
     --accent-hover: #409eff;
     --accent-pressed: #1366d6;
+    /* 次要操作（描边按钮）：文字达 AA，描边属图形达 3:1 即可，故两者用不同色 */
+    --cta-ink: #1366d6;
+    --cta-line: #2080f0;
 
     --shadow-sm: rgba(0, 0, 0, 0.04);
     --shadow-md: rgba(0, 0, 0, 0.08);
@@ -83,6 +86,8 @@
     --accent: #409eff;
     --accent-hover: #66b1ff;
     --accent-pressed: #337ecc;
+    --cta-ink: #66b1ff;
+    --cta-line: #337ecc;
 
     --shadow-sm: rgba(0, 0, 0, 0.3);
     --shadow-md: rgba(0, 0, 0, 0.5);
