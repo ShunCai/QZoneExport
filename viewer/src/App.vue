@@ -16,13 +16,18 @@ import { useTheme } from './composables/useTheme';
 import ThemeToggle from './components/ThemeToggle.vue';
 import { loadData, assetUrl } from './data/sources';
 import { initBackupConfig } from './data/backupConfig';
+import { initFriendRemarks } from './data/friendNames';
 import { avatarUrl, avatarFallbackUrl } from './data/content';
 import { usePrivacy } from './composables/usePrivacy';
 import PrivacyToggle from './components/PrivacyToggle.vue';
+import HomeProfileDialog from './components/home/HomeProfileDialog.vue';
+import { useProfileDialog } from './composables/useProfileDialog';
+import { formatNickname } from './data/richText';
 import { onMediaError } from './data/mediaFallback';
 import { loadModuleCounts } from './data/counts';
 import { routeName, navigate } from './router';
 import HomePage from './pages/HomePage.vue';
+import MemoriesPage from './pages/MemoriesPage.vue';
 import InteractionPage from './pages/InteractionPage.vue';
 import MessagesPage from './pages/MessagesPage.vue';
 import ArticlesPage from './pages/ArticlesPage.vue';
@@ -56,24 +61,28 @@ const counts = ref<Record<string, number> | null>(null);
 const { isDark } = useTheme();
 /** 启动时加载一次备份配置（含 hasUserLink），供渲染层按配置决定是否生成用户链接 */
 initBackupConfig();
+// 好友备注表：全站取名统一「备注 > 昵称」，启动时预热一次，渲染层可同步查询
+void initFriendRemarks();
 
-/** 侧边栏条目：key 与路由名一致；count 为实时计数的字段名 */
+/**
+ * 侧边栏条目：key 与路由名一致；count 为实时计数的字段名；group 为分组标题。
+ * 分组语义：空间（内容）/ 关系（好友访客）/ 足迹（互动地图）——替换原先的平铺列表。
+ */
 const MENUS = [
-    { key: 'home', label: '空间概览' },
-    { key: 'timeline', label: '个人动态' },
-    // 「互动」为动态命名（本人空间→与TA相关 / 他人空间→与我相关），实际文案在 menuOptions 中按 isOtherSpace 生成
-    { key: 'interaction', label: '互动' },
-    { key: 'map', label: '足迹地图' },
-    { key: 'messages', label: '说说', count: 'messages' },
-    { key: 'blogs', label: '日志', count: 'blogs' },
-    { key: 'diaries', label: '日记', count: 'diaries' },
-    { key: 'albums', label: '相册', count: 'photos' },
-    { key: 'videos', label: '视频', count: 'videos' },
-    { key: 'boards', label: '留言', count: 'boards' },
-    { key: 'friends', label: '好友', count: 'friends' },
-    { key: 'favorites', label: '收藏', count: 'favorites' },
-    { key: 'shares', label: '分享', count: 'shares' },
-    { key: 'visitors', label: '访客', count: 'visitors' },
+    { key: 'home', label: '概览', group: '空间' },
+    { key: 'timeline', label: '动态', group: '空间' },
+    { key: 'messages', label: '说说', count: 'messages', group: '空间' },
+    { key: 'albums', label: '相册', count: 'photos', group: '空间' },
+    { key: 'videos', label: '视频', count: 'videos', group: '空间' },
+    { key: 'blogs', label: '日志', count: 'blogs', group: '空间' },
+    { key: 'boards', label: '留言', count: 'boards', group: '空间' },
+    { key: 'favorites', label: '收藏', count: 'favorites', group: '空间' },
+    { key: 'shares', label: '分享', count: 'shares', group: '空间' },
+    { key: 'diaries', label: '日记', count: 'diaries', group: '空间' },
+    { key: 'friends', label: '好友', count: 'friends', group: '关系' },
+    { key: 'visitors', label: '访客', count: 'visitors', group: '关系' },
+    { key: 'interaction', label: '互动', group: '足迹' },
+    { key: 'map', label: '地图', group: '足迹' },
 ] as const;
 
 /** 查看他人空间备份时，这些模块不属于对方空间内容，左侧菜单与完整性统计统一排除 */
@@ -88,43 +97,76 @@ const isOtherSpace = computed(() => {
     return owner !== undefined && owner !== null && owner !== '' && String(owner) !== String(target);
 });
 
-const menuOptions = computed(() => {
+const menuOptions = computed<MenuOption[]>(() => {
     const base = MENUS.filter((m) => {
         // 「互动」统一显示：本人备份需先输入好友 QQ 再统计；他人空间备份自动统计
         if (OTHER_SPACE_EXCLUDED.includes(m.key)) return !isOtherSpace.value;
         return true;
     });
-    return base.map((item) => {
-        // 实时计数未就绪时先不显数字（后台算完再填），避免启动阶段拖慢
-        const total = 'count' in item ? Number(counts.value?.[item.count] ?? 0) : 0;
-        const suffix = 'count' in item && total > 0 ? `（${total}）` : '';
+
+    /** 行渲染：圆点 + 名称 + 右对齐数量（数量为 0 不显示，与旧行为一致） */
+    const renderRow = (item: (typeof MENUS)[number]): ReturnType<typeof h> => {
         // 「互动」按当前查看对象动态命名：本人空间（Owner===Target）→ 与TA相关；
-        // 他人空间备份 → 与我相关。与 isOtherSpace 联动，切换查看对象时实时更新。
+        // 他人空间备份 → 与我相关。「个人动态」同理（我的动态 / 他(她)的动态）。
         let label: string = item.label;
-        if (item.key === 'interaction') {
-            label = isOtherSpace.value ? '与我相关' : '与TA相关';
+        const total = 'count' in item ? Number(counts.value?.[item.count] ?? 0) : 0;
+        const count = 'count' in item && total > 0 ? total.toLocaleString() : '';
+        // 相册显示的是照片总数，悬浮提示说明已排除说说和日志相册
+        const tip = item.key === 'albums' ? '相册照片总数（不包含「说说和日志相册」）' : undefined;
+        const row = h('span', { class: 'nav-row', title: tip }, [
+            h('span', { class: 'nav-label' }, label),
+            count ? h('span', { class: 'nav-count' }, count) : null,
+        ]);
+        return tip ? h('span', { title: tip, class: 'nav-row-wrap' }, row) : row;
+    };
+
+    /** 分组：保持首次出现的顺序；被排除模块所在组若为空则整组隐藏 */
+    const groups: { name: string; items: MenuOption[] }[] = [];
+    for (const item of base) {
+        const total = 'count' in item ? Number(counts.value?.[item.count] ?? 0) : 0;
+        void total;
+        let group = groups.find((g) => g.name === item.group);
+        if (!group) {
+            group = { name: item.group, items: [] };
+            groups.push(group);
         }
-        // 「个人动态」按查看对象动态命名：本人空间→我的动态；他人空间→他/她的动态（按目标性别）
-        if (item.key === 'timeline') {
-            label = isOtherSpace.value ? heShe(user.value?.sex) + '的动态' : '我的动态';
-        }
-        // 相册菜单显示的是「照片总数」，悬浮提示说明已排除说说和日志相册
-        const tip = item.key === 'albums'
-            ? '相册照片总数（不包含「说说和日志相册」）'
-            : undefined;
-        return { key: item.key, label: label + suffix, tip };
-    });
+        group.items.push({
+            key: item.key,
+            label: () => renderRow(item),
+        });
+    }
+    // naive 的分组必须是 type:'group' + children——把子项写成平级兄弟，
+    // 组不会真正形成（组标题 DOM 缺失、且「组名」本身变成可点击的普通菜单项）
+    return groups
+        .filter((g) => g.items.length > 0)
+        .map((g) => ({
+            type: 'group' as const,
+            key: `group-${g.name}`,
+            label: g.name,
+            children: g.items,
+        }));
 });
 
-/** 菜单项渲染：带 tip 的项用 span 包一层原生 title，其余原样渲染 */
+/** 菜单项渲染：交给各行自己的 render（nav-row）；带 tip 的项包一层原生 title */
 function renderLabel(option: MenuOption): ReturnType<typeof h> | string {
-    const tip = (option as { tip?: string }).tip;
     const label = typeof option.label === 'function' ? option.label() : option.label ?? '';
+    const tip = (option as { tip?: string }).tip;
     return tip ? h('span', { title: tip }, label) : label;
 }
 
 /** 全局隐私开关：控制侧栏昵称/QQ 号、空间资料各字段、互动页 Top5 的 QQ 号（开关按钮见 PrivacyToggle.vue） */
 const { hidden: hideSensitive } = usePrivacy();
+
+/**
+ * 侧栏展示名（HTML）：昵称里可能内嵌 `[em]e258151[/em]` 表情 token，
+ * 与正文/访客列表同一套转换，避免这里直出一串 token。
+ */
+const ownerNameHtml = computed(() => {
+    if (hideSensitive.value) return '●●●';
+    const label = user.value?.nickname || user.value?.spacename || 'QQ空间备份';
+    return formatNickname(String(label));
+});
+const { open: profileOpen, openProfile, closeProfile } = useProfileDialog();
 
 const avatarSrc = computed(() => {
     if (!user.value?.uin) return assetUrl(user.value?.avatar);
@@ -194,6 +236,7 @@ onUnmounted(() => {
     <n-config-provider :locale="zhCN" :date-locale="dateZhCN" :theme="isDark ? darkTheme : null" :theme-overrides="blueThemeOverrides">
         <!-- 右下角主题切换按钮（避开同侧菜单 FAB，移动端不挡标题） -->
         <theme-toggle class="theme-float" />
+        <home-profile-dialog :open="profileOpen" :user="user" @close="closeProfile" />
         <n-layout has-sider class="shell">
             <n-layout-sider
                 bordered
@@ -209,29 +252,57 @@ onUnmounted(() => {
             >
                 <div class="profile">
                     <!-- 全局隐私开关：与空间资料、互动页共用同一个组件，图标风格一致 -->
-                    <privacy-toggle class="profile-privacy" />
-                    <img
-                        v-if="avatarSrc"
-                        class="avatar"
-                        :class="{ 'privacy-blur': hideSensitive }"
-                        :src="avatarSrc"
-                        alt="头像"
-                        @error="() => { if (!_avatarError) _avatarError = true; }"
-                    />
-                    <user-avatar v-else :uin="user?.uin" :size="64" :link="false" :class="{ 'privacy-blur': hideSensitive }" />
-                    <div class="name">{{ hideSensitive ? '●●●' : (user?.nickname || user?.spacename || 'QQ空间备份') }}</div>
-                    <div class="uin">{{ hideSensitive ? '●●●●●●' : user?.uin }}</div>
-                    <span v-if="!loading && user" class="space-badge" :class="isOtherSpace ? 'space-badge-other' : 'space-badge-self'">
-                        {{ isOtherSpace ? heShe(user?.sex) + '的空间' : '本人备份' }}
-                    </span>
+                    <privacy-toggle class="profile-privacy" @click.stop />
+                    <div
+                        class="profile-open"
+                        role="button"
+                        tabindex="0"
+                        title="查看空间资料"
+                        @click="openProfile"
+                        @keydown.enter="openProfile"
+                        @keydown.space.prevent="openProfile"
+                    >
+                        <img
+                            v-if="avatarSrc"
+                            class="avatar"
+                            :class="{ 'privacy-blur': hideSensitive }"
+                            :src="avatarSrc"
+                            alt="头像"
+                            @error="() => { if (!_avatarError) _avatarError = true; }"
+                        />
+                        <user-avatar v-else :uin="user?.uin" :size="64" :link="false" :class="{ 'privacy-blur': hideSensitive }" />
+                        <div class="name" v-html="ownerNameHtml"></div>
+                        <div class="uin">{{ hideSensitive ? '●●●●●●' : user?.uin }}</div>
+                        <span v-if="!loading && user" class="badge-row">
+                            <span class="space-badge" :class="isOtherSpace ? 'space-badge-other' : 'space-badge-self'">
+                                {{ isOtherSpace ? heShe(user?.sex) + '的空间' : '我的空间' }}
+                            </span>
+                            <!-- 资料卡藏在整张头像卡的点击里，太隐蔽；在徽标旁给一个明确的信息入口 -->
+                            <button
+                                type="button"
+                                class="profile-info"
+                                title="查看空间资料"
+                                aria-label="查看空间资料"
+                                @click.stop="openProfile"
+                            >
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <circle cx="12" cy="12" r="9" />
+                                    <path d="M12 11v5" />
+                                    <path d="M12 8h.01" />
+                                </svg>
+                            </button>
+                        </span>
+                    </div>
                 </div>
-                <n-menu
-                    :value="routeName"
-                    :options="menuOptions"
-                    :indent="18"
-                    :render-label="renderLabel"
-                    @update:value="onMenuSelect"
-                />
+                <div class="sider-scroll">
+                    <n-menu
+                        :value="routeName"
+                        :options="menuOptions"
+                        :indent="8"
+                        :render-label="renderLabel"
+                        @update:value="onMenuSelect"
+                    />
+                </div>
                 <!-- 品牌信息 -->
                 <div class="brand">
                     <a href="https://github.com/ShunCai/QZoneExport" target="_blank" rel="noreferrer">
@@ -255,6 +326,7 @@ onUnmounted(() => {
                 </div>
                 <template v-else>
                     <home-page v-if="routeName === 'home'" :user="user" :counts="counts" />
+                    <memories-page v-else-if="routeName === 'memories'" />
                     <interaction-page v-else-if="routeName === 'interaction'" :user="user" />
                     <timeline-page v-else-if="routeName === 'timeline'" />
                     <messages-page v-else-if="routeName === 'messages'" />
@@ -306,11 +378,38 @@ onUnmounted(() => {
     min-width: 0;
     max-width: 100%;
     overflow-x: hidden;
+    /*
+     * Naive UI 的 n-layout 会写内联 --n-color:#fff，把内容区刷成纯白；
+     * 而卡片也是白色（--bg-primary），两者贴在一起就没有层次。
+     * 设计稿 home-v2.html 里内容画布是 --bg-page 浅灰、卡片才是白色，
+     * 这里把画布改回浅灰，卡片自然浮起来（暗色模式同样生效）。
+     */
+    background: var(--bg-page);
+}
+.main :deep(.n-layout-scroll-container) {
+    background: transparent;
 }
 .profile {
     position: relative; /* 承载右上角的隐私开关 */
     padding: 4px 18px 14px;
     text-align: center;
+}
+.profile-open {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+.profile-open:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: 10px;
 }
 /* 只负责定位，按钮外观统一由 PrivacyToggle 提供 */
 .profile-privacy {
@@ -339,10 +438,35 @@ onUnmounted(() => {
     color: var(--text-muted);
     font-size: 12px;
 }
-/* 空间类型标识：他人空间 / 本人备份 */
+/* 空间类型标识：别人的空间 / 自己的空间 */
+.badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 6px;
+}
+.profile-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.profile-info:hover,
+.profile-info:focus-visible {
+    color: var(--accent);
+    background: var(--bg-chat);
+    outline: none;
+}
 .space-badge {
     display: inline-block;
-    margin-top: 6px;
     padding: 1px 10px;
     font-size: 11px;
     font-weight: 600;
@@ -365,6 +489,16 @@ onUnmounted(() => {
     align-items: center;
     justify-content: center;
 }
+/* 菜单滚动区：撑满头像卡与品牌区之间的剩余高度，内容多时不被裁掉 */
+.sider-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* naive sider 自带滚动条，这里只收窄视觉 */
+    scrollbar-width: thin;
+}
+
 /* 品牌区靠底（侧边条为纵向 flex，margin-top:auto 把它推到底部） */
 .brand {
     margin-top: auto;
@@ -418,4 +552,6 @@ onUnmounted(() => {
 .sidebar-fab:active {
     background: var(--accent-pressed);
 }
+
+
 </style>

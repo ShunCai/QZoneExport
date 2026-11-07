@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+const props = withDefaults(defineProps<{ defaultOpen?: boolean }>(), { defaultOpen: false });
+
+import { computed, onMounted, ref, watch } from 'vue';
 import { NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui';
 import { loadTopLikes, type TopRecord } from '../data/counts';
 import { navigate } from '../router';
@@ -11,12 +13,12 @@ import FavoriteItem from './items/FavoriteItem.vue';
 import VideoItem from './items/VideoItem.vue';
 
 /**
- * 点赞最多 Top 5 独立面板
+ * 最多点赞 Top 5 独立面板
  *
  * 从原「点赞最多和评论最多」父面板中拆出的独立面板，
- * 与「初识空间」「月度活跃度」等面板完全同级：
+ * 与「最初的记忆」「月度活跃度」等面板完全同级：
  * 左边色条 + 柔和背景色 + 内部 NCollapse 默认收起；
- * 子条目样式统一复用 .memory 结构，与初识空间同款。
+ * 子条目样式统一复用 .memory 结构，与最初的记忆同款。
  */
 
 const TOP_N = 5;
@@ -35,6 +37,11 @@ const summary = computed(() => {
     const top = list.value[0];
     return `Top1「${top.label}」，点赞 ${top.likes ?? '—'}`;
 });
+
+/** 把统计上报给「回忆清单」页的外层分组标题：标题只出现一层，数字不丢 */
+const emit = defineEmits<{ summary: [text: string] }>();
+const statText = computed(() => `共 ${list.value.length} 条 · ${summary.value}`);
+watch(statText, (text) => emit('summary', text), { immediate: true });
 </script>
 
 <template>
@@ -42,15 +49,15 @@ const summary = computed(() => {
         <n-spin v-if="loading" size="small" />
         <template v-else-if="!hasData">
             <div class="panel-title">
-                点赞最多
+                最多点赞
                 <span class="panel-note">暂无点赞数据</span>
             </div>
             <p class="empty">暂无点赞记录</p>
         </template>
-        <n-collapse v-else :default-expanded-names="[]">
+        <n-collapse v-else :default-expanded-names="props.defaultOpen ? ['likes'] : []">
             <n-collapse-item name="likes">
                 <template #header>
-                    <span class="panel-title">点赞最多</span>
+                    <span class="panel-title">最多点赞</span>
                     <span class="panel-note">共 {{ list.length }} 条，{{ summary }}</span>
                 </template>
 
@@ -89,7 +96,7 @@ const summary = computed(() => {
 </template>
 
 <style scoped>
-/* —— 与「初识空间」「深夜动态」完全一致的面板外壳：左边色条 + 柔和背景 —— */
+/* —— 与「最初的记忆」「深夜动态」完全一致的面板外壳：左边色条 + 柔和背景 —— */
 .panel {
     margin-bottom: 20px;
     padding: 8px 16px;

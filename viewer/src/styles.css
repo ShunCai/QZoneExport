@@ -40,7 +40,7 @@
 
     /* 大图查看器恒为暗场：侧栏用不透光的深灰蓝、比遮罩亮一档以形成层次。
        半透明黑叠在黑色遮罩上会糊成一片（旧值），纯白又太刺眼、破坏看图的暗适应。 */
-    --pswp-comments-width: 340px;
+    --pswp-comments-width: 352px;
     /* 不能叫 --pswp-bg：PhotoSwipe 自带 `.pswp { --pswp-bg:#000 }`，侧栏是 .pswp 的子元素，
        会就近取到 #000，:root 的定义进不了这棵子树（这就是之前改色不生效的根因）。 */
     --qze-panel-bg: #2b303b;
@@ -50,6 +50,9 @@
     --pswp-label: #9aa1ab;
     --pswp-value: #c2c7ce;
     --pswp-highlight: #7cc4ff;
+    /* @提及的浅蓝底：面板在亮/暗主题下都是深色，但底色深浅不同，各调一档 */
+    --pswp-chip-bg: rgba(124, 196, 255, 0.12);
+    --pswp-chip-bg-hover: rgba(124, 196, 255, 0.2);
 }
 
 /* ===== 暗色模式 ===== */
@@ -93,6 +96,8 @@
     --pswp-label: #8f97a1;
     --pswp-value: #b8bec6;
     --pswp-highlight: #66b8ff;
+    --pswp-chip-bg: rgba(102, 184, 255, 0.14);
+    --pswp-chip-bg-hover: rgba(102, 184, 255, 0.22);
 }
 
 *, *::before, *::after {
@@ -197,6 +202,11 @@ body {
 .privacy-blur {
     filter: blur(5px);
 }
+/* 照片类内容用更强的模糊：5px 对人脸几乎等于没模糊 */
+/* 22px 糊得完全看不出是照片；12px 兼顾——认不出人，但还看得出是照片 */
+.privacy-blur-strong {
+    filter: blur(12px);
+}
 
 /* 列表条目卡片 */
 .card-item {
@@ -292,7 +302,28 @@ body {
 }
 
 /*
+ * 昵称里的表情：昵称字号普遍比正文小（11–13px），22px 的表情会把行高顶起来、
+ * 也会把 nowrap 省略号撑坏，故在名字容器里收小一号。
+ */
+.item-name .emoticon,
+.comment-name .emoticon,
+.person-name .emoticon,
+.ip-fi-name .emoticon,
+.pswp-comment-name .emoticon,
+.pswp-comment-avatar-letter .emoticon,
+.user-list .name .emoticon,
+.oti-sub .emoticon,
+.ip-friend-bar .emoticon {
+    width: 16px;
+    height: 16px;
+    vertical-align: -3px;
+}
+
+/*
  * PhotoSwipe 评论面板（全局，Body 层级）
+ *
+ * 面板自身不留内边距：标题是 sticky 的吸顶条，条目内边距各自给，
+ * 这样滚动时标题的背景能盖满整条（含左右留白），不会在两侧露出条目。
  */
 .pswp-comments {
     position: absolute;
@@ -301,14 +332,38 @@ body {
     bottom: 0;
     z-index: 5;
     width: var(--pswp-comments-width);
-    padding: 48px 16px 16px;
+    padding: 0;
     overflow: auto;
+    overscroll-behavior: contain;
     box-sizing: border-box;
     background: var(--qze-panel-bg);
     border-left: 1px solid var(--pswp-border);
     box-shadow: -8px 0 24px rgba(0, 0, 0, 0.28);
     color: var(--pswp-text);
     font-size: 13px;
+    /* 细滚动条：默认的浅色粗条在深色面板上非常抢眼 */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.26) transparent;
+}
+
+.pswp-comments::-webkit-scrollbar {
+    width: 10px;
+}
+
+.pswp-comments::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.24);
+    background-clip: padding-box;
+}
+
+.pswp-comments::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.38);
+    background-clip: padding-box;
+}
+
+.pswp-comments::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 /* 收起后去掉 pswp--with-comments，顶栏/箭头/缩略图条会自动回到全宽；面板本身在此隐藏 */
@@ -358,16 +413,23 @@ body {
     padding-bottom: 80px;
 }
 
+/* 吸顶标题：滚动时始终能看出这是谁的照片的评论，且不压住顶部留白 */
 .pswp-comments-title {
-    margin-bottom: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0;
+    padding: 14px 16px 10px;
+    background: var(--qze-panel-bg);
+    border-bottom: 1px solid var(--pswp-border);
     color: #fff;
+    font-size: 13px;
     font-weight: 600;
 }
 
 .pswp-media-info {
-    margin-bottom: 14px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--pswp-border);
+    margin: 0;
+    padding: 14px 16px 12px;
 }
 
 .pswp-media-name {
@@ -407,57 +469,155 @@ body {
 }
 
 .pswp-comments-empty {
+    padding: 4px 16px 16px;
     color: var(--pswp-muted);
 }
 
+/* 条目容器：左右留白交给他，滚动时 sticky 标题才不会露边 */
+.pswp-comments-list {
+    padding: 2px 16px 16px;
+}
+
+/*
+ * 一条评论：左边头像列 + 右边名字/时间/正文，与列表页 CommentList.vue 同构。
+ * 主评论之间用细实线分隔；回复之间不给线，靠左侧竖线归组，避免满屏虚线。
+ */
 .pswp-comment {
-    padding: 8px 0;
-    border-bottom: 1px dashed var(--pswp-border);
+    display: flex;
+    gap: 9px;
+    padding: 12px 0;
+}
+
+.pswp-comment + .pswp-comment {
+    border-top: 1px solid rgba(255, 255, 255, 0.075);
+}
+
+.pswp-comment-main {
+    flex: 1;
+    min-width: 0;
 }
 
 .pswp-comment-head {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 8px;
+    min-width: 0;
 }
 
-/* 大图评论面板：头像与一层回复（与列表页 CommentList 对齐） */
-.pswp-comment-avatar {
+/* 头像单元格：底层是首字圆片，网络头像盖在上面（离线时自然露出首字） */
+.pswp-comment-avatar-cell {
+    position: relative;
     flex: none;
-    width: 24px;
-    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    margin-top: 1px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.09);
+}
+
+/* 环画在 ::after 上：网络头像（含 QQ 的灰色默认头像）盖住底层，仍能看出一圈边界 */
+.pswp-comment-avatar-cell::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    pointer-events: none;
+}
+
+.pswp-comment-avatar-letter {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--pswp-value);
+    user-select: none;
+}
+
+.pswp-comment-avatar {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    background: var(--pswp-border);
-}
-.pswp-comment-avatar--empty {
-    display: inline-block;
-    background: var(--pswp-border);
-}
-.pswp-comment-replies {
-    margin: 6px 0 0 30px;
-    padding-left: 8px;
-    border-left: 2px solid var(--pswp-border);
-}
-.pswp-comment-reply .pswp-comment-avatar {
-    width: 20px;
-    height: 20px;
 }
 
 .pswp-comment-name {
-    color: var(--pswp-highlight);
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--pswp-text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .pswp-comment-time {
+    flex: none;
     color: var(--pswp-label);
-    font-size: 12px;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
 }
 
 .pswp-comment-text {
-    margin-top: 2px;
-    line-height: 1.6;
+    margin-top: 3px;
+    color: var(--pswp-value);
+    line-height: 1.65;
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+/* @提及：整块唯一的主题色用法，带浅底，和正文一眼分得开 */
+.pswp-comment-text a {
+    padding: 0 2px;
+    border-radius: 3px;
+    background: var(--pswp-chip-bg);
+    color: var(--pswp-highlight);
+    text-decoration: none;
+}
+
+.pswp-comment-text a:hover {
+    background: var(--pswp-chip-bg-hover);
+}
+
+.pswp-comment-text .emoticon {
+    margin: 0 1px;
+}
+
+/* 回复组：左侧细竖线归组，不再给每条回复画分隔线 */
+.pswp-comment-replies {
+    margin: 8px 0 0;
+    padding-left: 10px;
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.pswp-comment-reply {
+    padding: 8px 0;
+    gap: 8px;
+}
+
+.pswp-comment-reply + .pswp-comment-reply {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pswp-comment-reply .pswp-comment-avatar-cell {
+    width: 22px;
+    height: 22px;
+}
+
+.pswp-comment-reply .pswp-comment-avatar-letter {
+    font-size: 11px;
+}
+
+/* 回复里名字退到次级：主评论的名字才是这个面板的主体 */
+.pswp-comment-reply .pswp-comment-name {
+    font-weight: 400;
+    color: var(--pswp-value);
 }
 
 @media (max-width: 900px) {
@@ -571,4 +731,126 @@ body {
     .list-toolbar .toolbar-group + .toolbar-group::before {
         display: none;
     }
+}
+
+/* ===== 侧栏导航：分组 + 名称 + 右对齐计数 =====
+   注意：这些类由 App.vue 的 renderLabel 在 n-menu 渲染树里创建，
+   scoped 样式的 data-v 属性不会落在它们身上，必须放全局。 */
+.nav-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    /* 子项缩进：与组标题错开 12px，层次感来自这里 */
+    padding-left: 14px;
+}
+.nav-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+}
+.nav-count {
+    flex: none;
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+/* 菜单紧凑：14 项 + 3 组头要在一屏内放下（theme overrides 的 itemHeight 未生效，CSS 直控） */
+.n-menu.n-menu--vertical .n-menu-item {
+    height: 30px;
+}
+.n-menu.n-menu--vertical .n-menu-item-content {
+    height: 30px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* 分组标题：纯标签——不可点、不可选、字号字距都压一档，与子项拉开层次 */
+.n-menu.n-menu--vertical .n-menu-item-group-title {
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin: 14px 0 2px;
+    padding-left: 14px;
+    pointer-events: none;
+    user-select: none;
+}
+.n-menu .n-menu-item-group:first-child .n-menu-item-group-title {
+    margin-top: 0;
+}
+/* 选中态：文字与数量都跟随主题蓝（home-v2 设计稿同款） */
+.n-menu .n-menu-item-content--selected .nav-label {
+    color: var(--accent-pressed);
+    font-weight: 500;
+}
+.n-menu .n-menu-item-content--selected .nav-count {
+    color: var(--accent);
+}
+
+/* ===== 互动页「统计详情」的两张小卡（概览卡片同族）=====
+   这些规则同时作用于 App 渲染树与 OwnerTargetInteraction 内部元素，
+   必须放全局：scoped 的 data-v 不会落在 renderLabel / 子组件 render 的元素上 */
+.ip-mini-card {
+    min-width: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-card);
+    border-radius: 14px;
+    overflow: hidden;
+}
+.ip-mini-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border-light);
+}
+.ip-mini-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+.ip-mini-note {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+/* 面板在迷你卡内脱掉「左色条 + 背景」外壳，标题由迷你卡自己承担 */
+.ip-mini-card .oti-panel {
+    background: transparent;
+    border-left: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+}
+.ip-mini-card .n-collapse .n-collapse-item .n-collapse-item__header {
+    display: none !important;
+}
+.ip-mini-card .n-collapse .n-collapse-item .n-collapse-item__content-inner {
+    padding: 0 !important;
+}
+
+/* ===== 全局滚动条：细、半透明，亮/暗主题都不刺眼 =====
+   交互页等长列表的默认滚动条（宽、亮色轨道）在夜间模式下非常显眼；
+   这里全局收细并降低对比，滚动行为不变。 */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
+}
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.5);
 }

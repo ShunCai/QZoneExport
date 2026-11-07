@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+const props = withDefaults(defineProps<{ defaultOpen?: boolean }>(), { defaultOpen: false });
+
+import { computed, onMounted, ref, watch } from 'vue';
 import { NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui';
 import { loadTopLocations, type TopLocation } from '../data/counts';
 import { navigate } from '../router';
@@ -13,13 +15,13 @@ import VideoItem from './items/VideoItem.vue';
 /**
  * 最常访问地点 Top N
  *
- * 数据来源与统计口径与「时间跨度 / 初识空间 / 年活跃量 / 月度活跃度」完全一致：
+ * 数据来源与统计口径与「时间跨度 / 最初的记忆 / 年活跃量 / 月度活跃度」完全一致：
  *  1. 复用 YEAR_MODULES（7 个内容模块：说说/日志/日记/视频/分享/收藏/留言）
  *  2. 额外统计相册相片（遍历 albums.photoList，取拍摄/上传地点）
  *  3. 同地点名按 count 从大到小排序，默认取前 5 名
  *
  * 视觉风格：
- *  - 外壳：与「空间之最 / 初识空间 / 深夜动态」完全一致的色条+柔和背景+默认收起折叠面板
+ *  - 外壳：与「空间之最 / 最初的记忆 / 深夜动态」完全一致的色条+柔和背景+默认收起折叠面板
  *  - 主体：横向进度条列表（风格与主页「内容构成」统一），每行包含
  *          左侧：彩色圆点 + 地点名 + 所属模块小标签
  *          中间：渐变进度条（长度按最大地点归一化）
@@ -31,7 +33,7 @@ const TOP_N = 5;
 
 /** 地点色板（与主页「内容构成」的 ringColors 色系一致，柔和渐变不刺眼） */
 const LOCATION_COLORS = [
-    '#7c6bc4', // 主紫（与初识空间一致）
+    '#7c6bc4', // 主紫（与最初的记忆一致）
     '#4e9de0', // 蓝
     '#3b82f6', // 绿
     '#e0a04e', // 橙
@@ -67,6 +69,11 @@ function locationFillStyle(idx: number): Record<string, string> {
 function locationDotColor(idx: number): string {
     return LOCATION_COLORS[idx % LOCATION_COLORS.length];
 }
+
+/** 把统计上报给「回忆清单」页的外层分组标题：标题只出现一层，数字不丢 */
+const emit = defineEmits<{ summary: [text: string] }>();
+const statText = computed(() => summary.value);
+watch(statText, (text) => emit('summary', text), { immediate: true });
 </script>
 
 <template>
@@ -79,7 +86,7 @@ function locationDotColor(idx: number): string {
             </div>
             <p class="empty">暂无地点信息（内容里未采集到 lbs 定位数据）</p>
         </template>
-        <n-collapse v-else :default-expanded-names="[]">
+        <n-collapse v-else :default-expanded-names="props.defaultOpen ? ['locs'] : []">
             <n-collapse-item name="locs">
                 <template #header>
                     <span class="panel-title">常驻地点</span>
@@ -151,7 +158,7 @@ function locationDotColor(idx: number): string {
                         <share-item v-else-if="loc.kind === 'shares'" :item="loc.latestItem" />
                         <favorite-item v-else-if="loc.kind === 'favorites'" :item="loc.latestItem" />
                         <video-item v-else-if="loc.kind === 'videos'" :item="loc.latestItem" />
-                        <!-- 相片：与初识空间同款紧凑渲染 -->
+                        <!-- 相片：与最初的记忆同款紧凑渲染 -->
                         <div v-else-if="loc.kind === 'photos'" class="card-item">
                             <div class="photo-mini">
                                 <img
@@ -181,7 +188,7 @@ function locationDotColor(idx: number): string {
 </template>
 
 <style scoped>
-/* —— 与「初识空间」「深夜动态」完全一致的面板外壳：左边色条 + 柔和背景 —— */
+/* —— 与「最初的记忆」「深夜动态」完全一致的面板外壳：左边色条 + 柔和背景 —— */
 .locs-panel {
     margin-bottom: 20px;
     padding: 8px 16px;
@@ -338,7 +345,7 @@ function locationDotColor(idx: number): string {
     background: var(--bg-primary);
 }
 
-/* —— 相片紧凑渲染：与初识空间/深夜动态同款 —— */
+/* —— 相片紧凑渲染：与最初的记忆/深夜动态同款 —— */
 .photo-mini {
     display: flex;
     align-items: flex-start;

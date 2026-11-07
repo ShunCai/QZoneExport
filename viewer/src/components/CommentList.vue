@@ -3,10 +3,11 @@ import { ref } from 'vue';
 import { NTag } from 'naive-ui';
 import { formatTime } from '../data/format';
 import { imageUrl } from '../data/content';
-import { formatText } from '../data/richText';
+import { formatText, formatNickname } from '../data/richText';
 import { openImageLightbox } from '../data/lightbox';
 import { usePrivacy } from '../composables/usePrivacy';
 import { maskedUserLabel } from '../data/mask';
+import { displayName } from '../data/friendNames';
 import UserAvatar from './UserAvatar.vue';
 
 const { hidden: hideSensitive } = usePrivacy();
@@ -25,6 +26,17 @@ const props = defineProps<{
 
 /** 根节点 ref：用于收集本列表内全部评论配图，组成可左右切换的画廊 */
 const root = ref<HTMLElement | null>(null);
+
+/**
+ * 展示名（HTML）：昵称里可能内嵌 `[em]e258151[/em]` 表情 token，与正文同一套转换，
+ * 否则「@某人」是表情图、作者名却是一串 [em]（访客列表早就转了，评论没转）。
+ */
+function nameHtml(comment: Record<string, any>): string {
+    const user = props.userOf(comment);
+    // 备注 > 昵称 > QQ：好友列表里有备注就用我给他起的名字
+    const label = hideSensitive.value ? maskedUserLabel(user) : displayName(user.uin, user.name);
+    return formatNickname(String(label ?? ''));
+}
 
 /**
  * 评论/回复配图点击看大图
@@ -55,9 +67,7 @@ function onCommentImageClick(event: MouseEvent): void {
             />
             <div class="comment-main">
                 <div class="comment-head">
-                    <span class="comment-name">{{ hideSensitive
-                        ? maskedUserLabel(props.userOf(comment))
-                        : (props.userOf(comment).name || props.userOf(comment).uin) }}</span>
+                    <span class="comment-name" v-html="nameHtml(comment)"></span>
                     <n-tag v-if="comment.private" size="tiny" :bordered="false" type="warning">私密</n-tag>
                     <span class="comment-time">{{ formatTime(comment.postTime || comment.create_time) }}</span>
                 </div>
@@ -78,9 +88,7 @@ function onCommentImageClick(event: MouseEvent): void {
                     />
                     <div class="comment-main">
                         <div class="comment-head">
-                            <span class="comment-name">{{ hideSensitive
-                                ? maskedUserLabel(props.userOf(reply))
-                                : (props.userOf(reply).name || props.userOf(reply).uin) }}</span>
+                            <span class="comment-name" v-html="nameHtml(reply)"></span>
                             <n-tag v-if="reply.private" size="tiny" :bordered="false" type="warning">私密</n-tag>
                             <span class="comment-time">{{ formatTime(reply.postTime || reply.create_time) }}</span>
                         </div>

@@ -2,6 +2,7 @@
 import { NEmpty, NTag } from 'naive-ui';
 import { usePrivacy } from '../composables/usePrivacy';
 import { maskedUserLabel, maskUin } from '../data/mask';
+import { formatNickname } from '../data/richText';
 import UserAvatar from './UserAvatar.vue';
 import UserLink from './UserLink.vue';
 
@@ -12,6 +13,11 @@ const props = defineProps<{
     users: { uin?: string | number; name?: string; isFriend?: boolean }[];
     emptyText?: string;
 }>();
+/** 展示名（HTML）：昵称里的 [em] token 与正文同一套转换 */
+function nameOf(user: { uin?: string | number; name?: string }): string {
+    const label = hideSensitive.value ? maskedUserLabel(user) : (user.name || user.uin);
+    return formatNickname(String(label ?? ''));
+}
 </script>
 
 <template>
@@ -25,7 +31,7 @@ const props = defineProps<{
         >
             <user-avatar :uin="user.uin" :size="40" :link="false" :class="{ 'privacy-blur': hideSensitive }" />
             <div class="meta">
-                <div class="name">{{ hideSensitive ? maskedUserLabel(user) : (user.name || user.uin) }}</div>
+                <div class="name" v-html="nameOf(user)"></div>
                 <div class="uin">{{ hideSensitive ? maskUin(user.uin) : user.uin }}</div>
             </div>
             <n-tag :type="user.isFriend ? 'success' : 'default'" size="small">

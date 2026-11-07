@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+const props = withDefaults(defineProps<{ defaultOpen?: boolean }>(), { defaultOpen: false });
+
+import { computed, onMounted, ref, watch } from 'vue';
 import { NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui';
 import { loadItems, loadList, type DataKey } from '../data/sources';
 import { YEAR_MODULES, PHOTO_TIME_FIELDS, isFeedAlbum } from '../data/counts';
@@ -17,7 +19,7 @@ import VideoItem from './items/VideoItem.vue';
  * 深夜动态
  *
  * 统计凌晨 0 点到 5 点之间发布的动态。
- * ⚠️ 统计口径与「时间跨度/年活跃/初识空间」一致：
+ * ⚠️ 统计口径与「时间跨度/年活跃/最初的记忆」一致：
  * - 7个内容模块复用 YEAR_MODULES 的字段回退链
  * - 加入相片（PHOTO_TIME_FIELDS）
  * - 另外保留 visitors 访客（深夜访问也算）
@@ -34,7 +36,7 @@ interface NightItem {
     item: Record<string, any>;
 }
 
-/** 各 DataKey 对应的跳转路由（与初识空间一致） */
+/** 各 DataKey 对应的跳转路由（与最初的记忆一致） */
 const ROUTE_OF: Record<string, string> = {
     messages: 'messages',
     blogs: 'blogs',
@@ -81,7 +83,7 @@ const loading = ref(true);
 const total = ref(0);
 const topItems = ref<NightItem[]>([]);
 const hourBuckets = ref<{ label: string; count: number }[]>([]);
-const defaultExpanded = ref<string[]>([]);
+const defaultExpanded = ref<string[]>(props.defaultOpen ? ['night'] : []);
 
 const maxBucket = computed(() => Math.max(1, ...hourBuckets.value.map((b) => b.count)));
 
@@ -142,6 +144,11 @@ onMounted(async () => {
     hourBuckets.value = buckets.map((count, hour) => ({ label: `${hour}~${hour + 1}点`, count }));
     loading.value = false;
 });
+
+/** 把统计上报给「回忆清单」页的外层分组标题：标题只出现一层，数字不丢 */
+const emit = defineEmits<{ summary: [text: string] }>();
+const statText = computed(() => `凌晨 0–5 点 · 共 ${total.value} 条`);
+watch(statText, (text) => emit('summary', text), { immediate: true });
 </script>
 
 <template>
@@ -161,6 +168,34 @@ onMounted(async () => {
                     <span class="panel-note">凌晨 0:00 – 5:00 共 {{ total }} 条记录</span>
                 </template>
 
+                <!-- 各时段分布放最前：先给全貌，再看具体条目（与「常驻地点」同序） -->
+                <div class="sub-title">各时段分布（共 {{ total }} 条）</div>
+                <div class="hour-bar-chart" title="凌晨各时段发布动态数量：横向条长度按最多时段为基准对比">
+                    <div
+                        v-for="(bucket, idx) in hourBuckets"
+                        :key="bucket.label"
+                        class="hour-bar-row"
+                        :title="bucket.label + '：' + bucket.count + ' 条 · 占深夜动态的 ' + (total > 0 ? Math.round(bucket.count / total * 1000) / 10 : 0) + '%'"
+                    >
+                        <div class="hour-bar-head">
+                            <span class="hour-bar-dot" :style="{ background: NIGHT_COLORS[idx % NIGHT_COLORS.length] }" />
+                            <span class="hour-bar-name">{{ bucket.label }}</span>
+                        </div>
+                        <div class="hour-bar-track">
+                            <div
+                                class="hour-bar-fill"
+                                :style="{
+                                    width: (bucket.count / maxBucket * 100) + '%',
+                                    background: `linear-gradient(90deg, ${NIGHT_COLORS[idx % NIGHT_COLORS.length]}dd 0%, ${NIGHT_COLORS[idx % NIGHT_COLORS.length]} 100%)`,
+                                }"
+                            />
+                        </div>
+                        <div class="hour-bar-tail">
+                            <span class="hour-bar-count">{{ bucket.count }}</span>
+                            <span class="hour-bar-pct">{{ total > 0 ? (Math.round(bucket.count / total * 1000) / 10) + '%' : '—' }}</span>
+                        </div>
+                    </div>
+                </div>
                 <!-- 最晚的几条 -->
                 <div class="sub-title">最晚的 {{ topItems.length }} 条</div>
                 <div v-for="(entry, index) in topItems" :key="index" class="memory">
@@ -189,7 +224,7 @@ onMounted(async () => {
                         <favorite-item v-else-if="entry.kind === 'favorites'" :item="entry.item" />
                         <video-item v-else-if="entry.kind === 'videos'" :item="entry.item" />
                         <visitor-item v-else-if="entry.kind === 'visitors'" :item="entry.item" />
-                        <!-- 相片：与初识空间同款紧凑渲染 -->
+                        <!-- 相片：与最初的记忆同款紧凑渲染 -->
                         <div v-else-if="entry.kind === 'photos'" class="card-item">
                             <div class="photo-mini">
                                 <img
@@ -214,34 +249,6 @@ onMounted(async () => {
                     </div>
                 </div>
 
-                <!-- 各时段分布：横向条形图（时段少，横向展示更紧凑） -->
-                <div class="sub-title">各时段分布（共 {{ total }} 条）</div>
-                <div class="hour-bar-chart" title="凌晨各时段发布动态数量：横向条长度按最多时段为基准对比">
-                    <div
-                        v-for="(bucket, idx) in hourBuckets"
-                        :key="bucket.label"
-                        class="hour-bar-row"
-                        :title="bucket.label + '：' + bucket.count + ' 条 · 占深夜动态的 ' + (total > 0 ? Math.round(bucket.count / total * 1000) / 10 : 0) + '%'"
-                    >
-                        <div class="hour-bar-head">
-                            <span class="hour-bar-dot" :style="{ background: NIGHT_COLORS[idx % NIGHT_COLORS.length] }" />
-                            <span class="hour-bar-name">{{ bucket.label }}</span>
-                        </div>
-                        <div class="hour-bar-track">
-                            <div
-                                class="hour-bar-fill"
-                                :style="{
-                                    width: (bucket.count / maxBucket * 100) + '%',
-                                    background: `linear-gradient(90deg, ${NIGHT_COLORS[idx % NIGHT_COLORS.length]}dd 0%, ${NIGHT_COLORS[idx % NIGHT_COLORS.length]} 100%)`,
-                                }"
-                            />
-                        </div>
-                        <div class="hour-bar-tail">
-                            <span class="hour-bar-count">{{ bucket.count }}</span>
-                            <span class="hour-bar-pct">{{ total > 0 ? (Math.round(bucket.count / total * 1000) / 10) + '%' : '—' }}</span>
-                        </div>
-                    </div>
-                </div>
             </n-collapse-item>
         </n-collapse>
     </div>
@@ -373,7 +380,7 @@ onMounted(async () => {
     text-align: right;
 }
 
-/* —— 深夜动态中的「相片」条目：与初识空间同款紧凑渲染 —— */
+/* —— 深夜动态中的「相片」条目：与最初的记忆同款紧凑渲染 —— */
 .photo-mini {
     display: flex;
     align-items: flex-start;

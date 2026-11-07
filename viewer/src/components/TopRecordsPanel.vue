@@ -14,9 +14,9 @@ import VideoItem from './items/VideoItem.vue';
  * 空间之最
  *
  * 统计点赞最多、评论最多的 Top 5 条内容，两栏并排展示；
- * 整体面板结构与「初识空间」「深夜动态」完全一致：
+ * 整体面板结构与「最初的记忆」「深夜动态」完全一致：
  * 左边色条 + 柔和背景色 + 内部 NCollapse 默认收起；
- * 子条目样式统一复用 .memory 结构，与初识空间同款。
+ * 子条目样式统一复用 .memory 结构，与最初的记忆同款。
  */
 
 const TOP_N = 5;
@@ -137,7 +137,7 @@ const summary = computed(() => {
 </template>
 
 <style scoped>
-/* —— 与「初识空间」「深夜动态」完全一致的面板外壳：左边色条 + 柔和背景 —— */
+/* —— 与「最初的记忆」「深夜动态」完全一致的面板外壳：左边色条 + 柔和背景 —— */
 .top-panel {
     margin-bottom: 20px;
     padding: 8px 16px;
@@ -172,7 +172,7 @@ const summary = computed(() => {
     padding-top: 4px;
 }
 
-/* —— 每个子栏：继续用与初识空间一致的色条风格 —— */
+/* —— 每个子栏：继续用与最初的记忆一致的色条风格 —— */
 .records-panel {
     padding: 8px 16px;
     border-radius: 2px;

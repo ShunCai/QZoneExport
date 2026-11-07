@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+const props = withDefaults(defineProps<{ defaultOpen?: boolean }>(), { defaultOpen: false });
+
+import { computed, onMounted, ref, watch } from 'vue';
 import { NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui';
 import { loadItems, loadList, type DataKey } from '../data/sources';
 import { YEAR_MODULES, PHOTO_TIME_FIELDS, isFeedAlbum } from '../data/counts';
@@ -13,7 +15,7 @@ import FavoriteItem from './items/FavoriteItem.vue';
 import VideoItem from './items/VideoItem.vue';
 
 /**
- * 初识空间
+ * 最初的记忆
  *
  * 统计备份内容中最早的 N 条记录，展示空间最初的足迹。
  * ⚠️ 统计口径严格与「时间跨度 / 年活跃量 / 月度活跃度」保持一致：
@@ -103,6 +105,11 @@ onMounted(async () => {
 });
 
 const earliest = computed(() => items.value.length > 0 ? items.value[0].time.slice(0, 10) : '');
+
+/** 把统计上报给「回忆清单」页的外层分组标题：标题只出现一层，数字不丢 */
+const emit = defineEmits<{ summary: [text: string] }>();
+const statText = computed(() => `始于 ${earliest.value} · ${items.value.length} 条`);
+watch(statText, (text) => emit('summary', text), { immediate: true });
 </script>
 
 <template>
@@ -110,15 +117,15 @@ const earliest = computed(() => items.value.length > 0 ? items.value[0].time.sli
         <n-spin v-if="loading" size="small" />
         <template v-else-if="items.length === 0">
             <div class="panel-title">
-                初识空间
+                最初的记忆
                 <span class="panel-note">最早的 {{ TOP_N }} 条记录</span>
             </div>
             <p class="empty">没有可追溯的记录</p>
         </template>
-        <n-collapse v-else :default-expanded-names="[]">
+        <n-collapse v-else :default-expanded-names="props.defaultOpen ? ['first'] : []">
             <n-collapse-item name="first">
                 <template #header>
-                    <span class="panel-title">初识空间</span>
+                    <span class="panel-title">最初的记忆</span>
                     <span class="panel-note">始于 {{ earliest }}，最早的 {{ items.length }} 条记录</span>
                 </template>
                 <div v-for="(entry, index) in items" :key="index" class="memory">
@@ -225,7 +232,7 @@ const earliest = computed(() => items.value.length > 0 ? items.value[0].time.sli
     background: var(--bg-primary);
 }
 
-/* —— 初识空间中最早的「相片」条目：与其他模块同款卡片的紧凑渲染 —— */
+/* —— 最初的记忆中最早的「相片」条目：与其他模块同款卡片的紧凑渲染 —— */
 .photo-mini {
     display: flex;
     align-items: flex-start;

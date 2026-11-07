@@ -104,7 +104,7 @@ function openOverflow(): void {
 }
 
 /** 评论面板宽度，需与 styles.css 的 --pswp-comments-width 保持一致 */
-const PANEL_WIDTH = 340;
+const PANEL_WIDTH = 352;
 
 /**
  * 图片尺寸

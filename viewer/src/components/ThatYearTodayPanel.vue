@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+const props = withDefaults(defineProps<{ defaultOpen?: boolean }>(), { defaultOpen: false });
+
+import { computed, onMounted, ref, watch } from 'vue';
 import { NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui';
 import { loadItems, type DataKey } from '../data/sources';
 import { formatTime, timeValue } from '../data/format';
@@ -64,7 +66,7 @@ const total = computed(() => groups.value.reduce((sum, group) => sum + group.ite
  * 条目是完整卡片，比原来的单行摘要高得多，
  * 因此默认一律收起，由用户自己点开，避免个人中心一打开就是几屏回忆。
  */
-const defaultExpanded = ref<string[]>([]);
+const defaultExpanded = ref<string[]>(props.defaultOpen ? ['year'] : []);
 
 /** 相片时间：上传优先、拍摄兜底（与时间轴口径一致），共用统一解析 */
 const photoTimeOf = (photo: Record<string, any>): number | string | undefined => resolvePhotoTime(photo, 'upload');
@@ -141,6 +143,11 @@ onMounted(async () => {
 });
 
 const todayText = computed(() => formatTime(Date.now()).slice(5, 10));
+
+/** 把统计上报给「回忆清单」页的外层分组标题：标题只出现一层，数字不丢 */
+const emit = defineEmits<{ summary: [text: string] }>();
+const statText = computed(() => `共 ${total.value} 条 · ${todayText.value}`);
+watch(statText, (text) => emit('summary', text), { immediate: true });
 </script>
 
 <template>

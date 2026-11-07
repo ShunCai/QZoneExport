@@ -16,9 +16,10 @@ import {
     videoPoster,
     videoUrl,
 } from '../../data/content';
-import { formatMessageContent } from '../../data/richText';
+import { formatMessageContent, formatNickname } from '../../data/richText';
 import { usePrivacy } from '../../composables/usePrivacy';
 import { maskedUserLabel } from '../../data/mask';
+import { displayName } from '../../data/friendNames';
 import CommentList from '../CommentList.vue';
 const { hidden: hideSensitive } = usePrivacy();
 import ItemStats from '../ItemStats.vue';
@@ -38,6 +39,15 @@ const props = defineProps<{
     /** 详情页传入：评论全部直接内嵌展开，不走「>15 弹窗」规则 */
     expandComments?: boolean;
 }>();
+
+/**
+ * 展示名（HTML）：昵称里可能内嵌 `[em]e258151[/em]`（QQ 空间把表情直接存进昵称），
+ * 与正文走同一套 token 转换。隐私态先脱敏再转换。
+ */
+function nameHtml(user: { uin?: string | number; name?: string }): string {
+    const label = hideSensitive.value ? maskedUserLabel(user) : displayName(user.uin, user.name);
+    return formatNickname(String(label ?? ''));
+}
 
 /** 展示时间：有修改时间优先显示修改时间，否则发表时间 */
 const displayTime = computed(() => formatTime(messageEffectiveTime(props.item)));
@@ -117,9 +127,8 @@ function mediasOf(item: Record<string, any>): MediaItem[] {
     <div class="card-item">
         <div class="item-head">
             <user-avatar :uin="props.item.uin" :size="32" :class="{ 'privacy-blur': hideSensitive }" />
-            <span class="item-name">{{ hideSensitive
-                ? maskedUserLabel({ uin: props.item.uin, name: props.item.nickname || props.item.name })
-                : (props.item.nickname || props.item.name || props.item.uin) }}</span>
+            <!-- 昵称里的 [em] token 与正文同一套转换（访客列表早就转了，这里原先直出原文） -->
+            <span class="item-name" v-html="nameHtml({ uin: props.item.uin, name: props.item.nickname || props.item.name })"></span>
             <span class="item-time" :title="timeTitle">
                 {{ displayTime }}
             </span>
@@ -132,9 +141,7 @@ function mediasOf(item: Record<string, any>): MediaItem[] {
         <div v-if="props.item.rt_tid" class="forward">
         <div class="forward-name">
             <user-link :uin="props.item.rt_uin">
-                {{ hideSensitive
-                    ? maskedUserLabel({ uin: props.item.rt_uin, name: props.item.rt_uinname })
-                    : props.item.rt_uinname }}
+                <span v-html="nameHtml({ uin: props.item.rt_uin, name: props.item.rt_uinname })"></span>
             </user-link>：
         </div>
             <div class="item-content" v-html="formatMessageContent(props.item.rt_con || {})" />

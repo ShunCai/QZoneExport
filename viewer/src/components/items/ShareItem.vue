@@ -3,9 +3,10 @@ import { computed, ref } from 'vue';
 import { NButton, NModal, NTag } from 'naive-ui';
 import { formatTime } from '../../data/format';
 import { commentReplies, commentUser, imageUrl, itemComments, locationOf, messageSource, shareFromInfo, shareTypeLabel } from '../../data/content';
-import { formatText } from '../../data/richText';
+import { formatNickname, formatText } from '../../data/richText';
 import { usePrivacy } from '../../composables/usePrivacy';
 import { maskedUserLabel } from '../../data/mask';
+import { displayName } from '../../data/friendNames';
 import CommentList from '../CommentList.vue';
 const { hidden: hideSensitive } = usePrivacy();
 import ItemStats from '../ItemStats.vue';
@@ -54,15 +55,20 @@ function mediasOf(item: Record<string, any>): { type: 'image' | 'video'; src: st
         .map((image: Record<string, any>) => ({ type: 'image' as const, src: imageUrl(image) }))
         .filter((media: { src: string }) => !!media.src);
 }
+/** 展示名（HTML）：昵称里的 [em] token 与正文同一套转换 */
+const nameHtml = computed(() => formatNickname(String(
+    hideSensitive.value
+        ? maskedUserLabel({ uin: props.item.uin, name: props.item.nickname })
+        : displayName(props.item.uin, props.item.nickname) || '',
+)));
+
 </script>
 
 <template>
     <div class="card-item">
         <div class="item-head">
             <user-avatar :uin="props.item.uin" :size="32" :class="{ 'privacy-blur': hideSensitive }" />
-            <span class="item-name">{{ hideSensitive
-                ? maskedUserLabel({ uin: props.item.uin, name: props.item.nickname })
-                : (props.item.nickname || props.item.uin) }}</span>
+            <span class="item-name" v-html="nameHtml"></span>
             <span class="share-type-badge" title="分享类型">
                 分享了
                 <n-tag size="small" :bordered="false" type="warning" round>
@@ -98,8 +104,8 @@ function mediasOf(item: Record<string, any>): { type: 'image' | 'video'; src: st
                     :href="sourceFrom.url"
                     target="_blank"
                     rel="noreferrer"
-                >{{ sourceFrom.name }}</a>
-                <template v-else>{{ sourceFrom.name }}</template>
+                 v-html="formatNickname(sourceFrom.name)"></a>
+                <template v-else><span v-html="formatNickname(sourceFrom.name)"></span></template>
                 <template v-if="sourceFrom.count > 0"> &nbsp; </template>
             </span>
             <span v-if="sourceFrom.count > 0" class="source-from-count">

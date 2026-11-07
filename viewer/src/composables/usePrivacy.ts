@@ -19,7 +19,14 @@ function init(): void {
     if (initialized) return;
     initialized = true;
     try {
-        hidden.value = localStorage.getItem(STORAGE_KEY) === '1' || localStorage.getItem(LEGACY_KEY) === '1';
+        const legacy = localStorage.getItem(LEGACY_KEY) === '1';
+        hidden.value = localStorage.getItem(STORAGE_KEY) === '1' || legacy;
+        // 迁移：旧键只在首次读取时生效一次，随后清掉。
+        // 否则「关掉隐私 → 刷新」会被残留的旧键重新点亮，看起来就是开关没记忆。
+        if (legacy) {
+            localStorage.setItem(STORAGE_KEY, '1');
+            localStorage.removeItem(LEGACY_KEY);
+        }
     } catch {
         // file:// 或极端隐私模式下 localStorage 可能受限，忽略即可（保持默认显示）
     }
@@ -31,8 +38,13 @@ export function usePrivacy(): { hidden: typeof hidden; toggle: () => void } {
     function toggle(): void {
         hidden.value = !hidden.value;
         try {
-            if (hidden.value) localStorage.setItem(STORAGE_KEY, '1');
-            else localStorage.removeItem(STORAGE_KEY);
+            if (hidden.value) {
+                localStorage.setItem(STORAGE_KEY, '1');
+            } else {
+                // 两个键一起清：只清新键时，旧键会在下次 init 里把隐私重新打开
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(LEGACY_KEY);
+            }
         } catch {
             // 存不下就只在本次会话生效
         }
