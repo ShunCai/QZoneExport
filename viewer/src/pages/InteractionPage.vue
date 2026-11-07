@@ -10,14 +10,17 @@ import {
 } from '../data/owner-target';
 import { navigate, openInNewTab, routeQuery } from '../router';
 import { heShe } from '../data/pronoun';
-import { loadTopPeople, type TopPerson } from '../data/top-people';
+import { loadInteractionSelection, type CareFriend, type TopPerson } from '../data/top-people';
 import { usePrivacy } from '../composables/usePrivacy';
 import { maskName, plainName } from '../data/mask';
+import { formatNickname } from '../data/richText';
+import { summaryOf } from '../data/summary';
 import PrivacyToggle from '../components/PrivacyToggle.vue';
 import OwnerTargetInteraction from '../components/OwnerTargetInteraction.vue';
 import MessageItem from '../components/items/MessageItem.vue';
 import ArticleItem from '../components/items/ArticleItem.vue';
 import BoardItem from '../components/items/BoardItem.vue';
+import UserAvatar from '../components/UserAvatar.vue';
 
 const props = defineProps<{
     user: Record<string, any> | null;
@@ -25,7 +28,17 @@ const props = defineProps<{
 
 /** 入口态的「互动最多的人」：全站聚合，点击直接带入好友 QQ 号，省去手输 */
 const topPeople = ref<TopPerson[]>([]);
-function chooseFriend(p: TopPerson): void {
+/**
+ * 「特别关心」好友（来自好友列表，与互动量无关）。
+ * 单独成组而不是混进 TOP5：关心是「我在意谁」，互动是「谁留痕多」，
+ * 实测关心好友常排在全站几十名开外，加长榜单也进不来。
+ */
+const careFriends = ref<CareFriend[]>([]);
+/** 超出上限未列出的关心好友数 */
+const careHidden = ref(0);
+/** 关心好友的 uin 全集：TOP5 里若正好是关心好友，挂个「关心」标签 */
+const careUins = ref<Set<string>>(new Set());
+function chooseFriend(p: { uin: string }): void {
     if (!p.uin) return;
     friendInput.value = p.uin;
     confirmFriend();
@@ -39,9 +52,37 @@ function personTooltip(p: TopPerson): string {
     if (p.visits) parts.push(`另访问 ${p.visits} 条内容`);
     return parts.join(' · ');
 }
+/** 他人空间无数据时的说明：主语跟随空间主人的性别（他/她） */
+const emptyText = computed(() => (isGuestView.value
+    ? `未找到${t.value}与这个人的互动记录，可能对方从未在${t.value}空间留下评论、留言或点赞。`
+    : `未找到你与${t.value}的互动记录。`));
+
+/** 好友信息条里的名字（HTML）：处理 [em] token 与脱敏 */
+const friendNameHtml = computed(() => {
+    const plain = plainName(String(data.value?.ownerName || confirmedFriend.value || ''));
+    return formatNickname(hideSensitive.value ? maskName(plain) : plain);
+});
+
+/** 展示名（HTML）：昵称里可能内嵌 `[em]` 表情 token，与正文同一套转换 */
+function nameHtml(name: unknown, uin: unknown): string {
+    const label = hideSensitive.value
+        ? maskName(plainName(String(name ?? ''))) || String(uin ?? '')
+        : (name || uin || '未署名');
+    return formatNickname(String(label));
+}
+
+/** 关心好友行提示：分数为 0 时说明对方确实没留下痕迹，而不是数据缺失 */
+function careTooltip(c: CareFriend): string {
+    if (!c.score) return '未在你的空间留下评论或点赞';
+    return `赞 ${c.likes} · 评论 ${c.comments}`;
+}
 // user 由 App.vue 异步加载，用 immediate watch 覆盖挂载前后两种情况
 watch(() => props.user, async (u) => {
-    topPeople.value = u ? await loadTopPeople(u) : [];
+    const selection = await loadInteractionSelection(u);
+    topPeople.value = selection.top;
+    careFriends.value = selection.care;
+    careHidden.value = selection.careHidden;
+    careUins.value = selection.careUins;
 }, { immediate: true });
 
 /**
@@ -81,19 +122,93 @@ function resetFriend(): void {
     data.value = null;
 }
 
+/**
+ * 他人空间的「查看对象」：
+ * - null   → 入口态（还没选）
+ * - 'me'   → 我 ↔ TA（备份操作者与空间主人）
+ * - 其他串  → 该 QQ ↔ TA（空间里的某位访客与空间主人）
+ *
+ * 数据层只认 (owner, target) 一对，所以「TA 与某人」就是把 owner 传成那个人的 uin、
+ * target 仍是空间主人 —— computeOwnerTargetInteraction 本来就是任意一对，无需改聚合逻辑。
+ */
+const otherPick = ref<string | null>(null);
+const guestInput = ref('');
+const guestError = ref('');
+
+const inEntry = computed(() => (isSelfMode.value ? !confirmedFriend.value : !otherPick.value));
+/** 是否在看「TA 与某人」（而非「我与 TA」） */
+const isGuestView = computed(() => !isSelfMode.value && !!otherPick.value && otherPick.value !== 'me');
+/** 主面板模式：他人空间下再分 other / guest */
+const interactionMode = computed<'self' | 'other' | 'guest'>(() => {
+    if (isSelfMode.value) return 'self';
+    return isGuestView.value ? 'guest' : 'other';
+});
+
+/** 他人空间：看「我 ↔ TA」 */
+function pickMe(): void {
+    otherPick.value = 'me';
+    guestError.value = '';
+    page.value = 1;
+    navigate('interaction', { view: 'me' });
+    reload();
+}
+
+/** 他人空间：看「TA ↔ 某人」。uin 由 TOP5 直传，或取输入框 */
+function pickGuest(uin?: string): void {
+    const v = String(uin ?? guestInput.value).trim();
+    if (!v) { guestError.value = '请输入对方 QQ 号'; return; }
+    if (!/^\d{4,15}$/.test(v)) { guestError.value = 'QQ 号应为 4–15 位数字'; return; }
+    if (String(v) === String(props.user?.uin)) { guestError.value = '这是空间主人本人的 QQ 号'; return; }
+    guestError.value = '';
+    otherPick.value = v;
+    page.value = 1;
+    navigate('interaction', { qq: v });
+    reload();
+}
+
+function resetPick(): void {
+    otherPick.value = null;
+    guestInput.value = '';
+    data.value = null;
+    // 清掉 ?uin / ?view，否则刷新会又跳回刚才那个人
+    navigate('interaction');
+}
+
 /** 他人空间：按空间主人性别取代词（他/她），性别未知回退「TA」 */
 const t = computed(() => heShe(props.user?.sex));
+
+/** 空间主人展示名（脱敏感知）：入口态文案与结果态信息条共用 */
+const ownerName = computed(() => {
+    const plain = plainName(String(props.user?.nickname || props.user?.spacename || ''));
+    return (hideSensitive.value ? maskName(plain) : plain) || 'TA';
+});
+
+/** 空间主人展示名（HTML）：摘要条与 guest 视图共用 */
+const targetNameHtml = computed(() => {
+    const raw = data.value?.targetName || props.user?.nickname || props.user?.spacename || '';
+    const plain = plainName(String(raw));
+    return formatNickname(hideSensitive.value ? maskName(plain) : plain);
+});
+
+/** 「TA 与某人」里那个人的名字：优先用聚合结果里抓到的昵称，加载中先显示 QQ */
+const guestNameHtml = computed(() => {
+    const raw = data.value?.ownerName || otherPick.value || '';
+    const plain = plainName(String(raw));
+    return formatNickname(hideSensitive.value ? maskName(plain) : plain);
+});
 
 /** 方向文案随模式反转：本人备份下「me=对方主动 / ta=我回应」；他人空间按空间主人性别取代词 */
 function dirLabel(dir: 'me' | 'ta'): string {
     if (isSelfMode.value) return dir === 'me' ? '对方主动' : '我回应';
+    // guest：主体是那位访客（对方），客体是空间主人
+    if (isGuestView.value) return dir === 'me' ? '对方主动' : `${t.value}回应`;
     return dir === 'me' ? '我主动' : `${t.value}回应`;
 }
 
 const dirOptions = computed(() => [
     { value: 'all', label: '全部' },
-    { value: 'me', label: isSelfMode.value ? '对方主动' : '我主动' },
-    { value: 'ta', label: isSelfMode.value ? '我回应' : `${t.value}回应` },
+    { value: 'me', label: dirLabel('me') },
+    { value: 'ta', label: dirLabel('ta') },
 ]);
 
 
@@ -204,19 +319,28 @@ function kindLabel(type: string): string {
     return map[type] || type;
 }
 
-/** 紧凑标题：与 OwnerTargetInteraction 的 entryTitle 保持一致 */
+const SUMMARY_KEY: Record<string, string> = {
+    message: 'messages',
+    board: 'boards',
+    blog: 'blogs',
+    share: 'shares',
+    video: 'videos',
+    photo: 'photos',
+    album: 'albums',
+};
+const KIND_FALLBACK: Record<string, string> = { blog: '日志', board: '留言', message: '说说' };
+
+/**
+ * 紧凑行的摘要：走 summaryOf 统一口径（剥 [em]/[img] token、纯表情给「表情 × N」），
+ * 不能直接 slice 原文——紧凑行会把 `[em]e402[/em]` 这类 token 直接暴露出来。
+ */
 function entryTitle(entry: InteractionEntry): string {
     const it = entry.item || {};
-    switch (entry.type) {
-        case 'message': return (it.content || '').slice(0, 60) || '说说';
-        case 'blog': return it.title || '日志';
-        case 'board': return (it.content || '').slice(0, 60) || '留言';
-        case 'share': return (it.content || it.title || '').slice(0, 60) || '分享';
-        case 'video': return it.name || it.title || '视频';
-        case 'photo': return it.name || it.desc || '相片';
-        case 'album': return it.name || '相册';
-        default: return '';
-    }
+    // 注意：entry.type 是单数（message/board/blog…），summaryOf 吃的是复数 DataKey
+    const key = SUMMARY_KEY[entry.type] ?? 'messages';
+    const text = summaryOf(key, it, 60);
+    if (text && text !== '无内容') return text;
+    return it.title || it.name || KIND_FALLBACK[entry.type] || '';
 }
 
 /** 点击条目跳转到对应模块页面，携带来源信息用于返回 */
@@ -275,6 +399,99 @@ const filtered = computed(() => {
     });
 });
 
+/** 各类别条数（基于全量事件，用于筛选 chips 的数字） */
+const categoryCounts = computed(() => {
+    const base: Record<string, number> = { board: 0, comment: 0, reply: 0, like: 0 };
+    for (const e of data.value?.events ?? []) {
+        base[e.category] = (base[e.category] ?? 0) + 1;
+    }
+    return base;
+});
+
+/** 时间线按年月分组：长列表需要锚点，同月不再重复显示月份 */
+const groupedEvents = computed(() => {
+    const groups: { key: string; rows: { e: InteractionEntry; i: number }[] }[] = [];
+    paged.value.forEach((e, i) => {
+        const key = formatTime(e.time).slice(0, 7) || '未知时间';
+        let group = groups[groups.length - 1];
+        if (!group || group.key !== key) {
+            group = { key, rows: [] };
+            groups.push(group);
+        }
+        group.rows.push({ e, i });
+    });
+    return groups;
+});
+
+/** 就地展开的行（按当前页索引；翻页后自然失效） */
+/** 「更多筛选」展开状态：展开行走正常文档流，避免悬浮小窗遮挡 */
+const moreFilterOpen = ref(false);
+const expandedRows = ref<Set<number>>(new Set());
+function toggleRow(i: number): void {
+    const next = new Set(expandedRows.value);
+    if (next.has(i)) next.delete(i);
+    else next.add(i);
+    expandedRows.value = next;
+}
+// 翻页/换筛选后收起所有展开行，避免索引错位
+watch([page, filterType, filterCategory, filterDir], () => { expandedRows.value = new Set(); });
+
+/**
+ * 这条互动的「谁」：
+ * - self（我与好友）      ：me=好友名 / ta=我
+ * - other（我与空间主人）  ：me=我 / ta=空间主人名
+ * - guest（访客与空间主人）：me=访客名 / ta=空间主人名
+ * guest 口径极易写错——「我主动」在这里指的是那位访客，不是备份操作者。
+ */
+function whoOf(e: InteractionEntry): string {
+    if (!data.value) return '';
+    if (isSelfMode.value) {
+        return e.dir === 'me' ? String(data.value.ownerName || '对方') : '我';
+    }
+    if (isGuestView.value) {
+        return e.dir === 'me' ? String(data.value.ownerName || '') : String(data.value.targetName || '');
+    }
+    return e.dir === 'me' ? '我' : String(data.value.targetName || '');
+}
+
+/** 头像对应的 uin：我主动→owner（好友/访客），TA 回应→空间主人 */
+function avatarUin(e: InteractionEntry): string {
+    if (!data.value) return '';
+    return String(e.dir === 'me' ? data.value.ownerUin : data.value.targetUin ?? '');
+}
+
+function whoHtml(e: InteractionEntry): string {
+    const name = whoOf(e);
+    // 「我」不脱敏；对方名字在隐私态打码
+    if (e.dir === 'ta' && isSelfMode.value) return formatNickname('我');
+    if (hideSensitive.value) {
+        return formatNickname(maskName(plainName(name)) || '匿名');
+    }
+    return formatNickname(name);
+}
+
+function actionText(e: InteractionEntry): string {
+    switch (e.category) {
+        case 'comment': return '评论了说说';
+        case 'reply': return '回复了';
+        case 'like': return '点赞了';
+        case 'board': return '留言了';
+        default: return '互动了';
+    }
+}
+
+/** 摘要条的人称：我发起 / TA 回应（他人空间按空间主人性别） */
+function dirShort(dir: 'me' | 'ta'): string {
+    if (isSelfMode.value) return dir === 'me' ? '对方主动' : '我回应';
+    if (isGuestView.value) return dir === 'me' ? '对方主动' : `${t.value}回应`;
+    return dir === 'me' ? '我主动' : `${t.value}回应`;
+}
+const spanText = computed(() => {
+    const first = data.value?.firstTime ? formatTime(data.value.firstTime).slice(0, 7) : '';
+    const last = data.value?.lastTime ? formatTime(data.value.lastTime).slice(0, 7) : '';
+    if (!first && !last) return '';
+    return first === last ? `最近 ${last}` : `${first} → ${last}`;
+});
 const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / PAGE_SIZE)));
 const paged = computed(() => {
     const start = (page.value - 1) * PAGE_SIZE;
@@ -301,9 +518,15 @@ function reload(): void {
             .finally(() => { loading.value = false; });
         return;
     }
-    // 他人空间备份：现有逻辑，自动以「我(备份者) ↔ TA(空间主人)」统计
+    // 他人空间：没选查看对象时停在入口态
+    if (!otherPick.value) {
+        data.value = null;
+        loading.value = false;
+        return;
+    }
+    const opts = otherPick.value === 'me' ? undefined : { ownerUin: otherPick.value };
     loading.value = true;
-    loadOwnerTargetInteraction(props.user)
+    loadOwnerTargetInteraction(props.user, opts)
         .then((stat) => { data.value = stat; if (hasActiveFilter.value) nextTick(scrollToResults); })
         .catch(() => { data.value = null; })
         .finally(() => { loading.value = false; });
@@ -316,11 +539,51 @@ onMounted(() => {
         friendInput.value = qqParam;
         confirmedFriend.value = qqParam;
     }
+    // ?qq=对面那个人：本人空间 → 我与他；他人空间 → TA 与他。
+    // ?uin= 作为旧链接别名保留（语义同 qq）。
+    const person = routeQuery.value.qq || routeQuery.value.uin || '';
+    if (!isSelfMode.value) {
+        if (person && /^\d{4,15}$/.test(person) && String(person) !== String(props.user?.uin)) {
+            otherPick.value = person;
+        } else if (routeQuery.value.view === 'me') {
+            otherPick.value = 'me';
+        }
+    }
     // 从 URL 恢复筛选参数（统计卡片点击跳转时携带 type/dir）
     initFiltersFromQuery();
     reload();
 });
-watch(() => props.user, () => { page.value = 1; confirmedFriend.value = null; friendInput.value = ''; reload(); });
+watch(() => props.user, () => {
+    page.value = 1;
+    confirmedFriend.value = null;
+    friendInput.value = '';
+    otherPick.value = null;
+    guestInput.value = '';
+    reload();
+});
+/**
+ * 同一页面内 hash 变化不会重新挂载组件（概览两个入口互相切换、或手动改 #/interaction?uin=），
+ * 这里把查询参数同步到查看对象上。用值比对做闸门，避免我们自己 navigate 时形成循环。
+ */
+watch(() => routeQuery.value, (q) => {
+    if (!isSelfMode.value) {
+        const person = (q.qq || q.uin || '') && /^\d{4,15}$/.test(q.qq || q.uin) && String(q.qq || q.uin) !== String(props.user?.uin) ? (q.qq || q.uin) : '';
+        const next = person || (q.view === 'me' ? 'me' : '');
+        if (next && next !== otherPick.value) {
+            otherPick.value = next;
+            page.value = 1;
+            reload();
+        }
+        return;
+    }
+    const qq = q.qq && /^\d{4,15}$/.test(q.qq) ? q.qq : '';
+    if (qq && qq !== confirmedFriend.value) {
+        friendInput.value = qq;
+        confirmedFriend.value = qq;
+        page.value = 1;
+        reload();
+    }
+}, { deep: true });
 // 切换筛选条件时回到第一页，避免停留在越界的页码
 watch([filterType, filterCategory, filterDir], () => { page.value = 1; });
 // 筛选结果变化时重放计数脉冲动画（pulseKey 改变 → span 重挂 → CSS 动画重放）
@@ -328,37 +591,63 @@ watch(filtered, () => { pulseKey.value++; });
 </script>
 
 <template>
-    <div class="ip-page" :class="{ 'ip-page-centered': isSelfMode && !confirmedFriend }">
+    <div class="ip-page" :class="{ 'ip-page-centered': inEntry }">
         <!-- 本人备份：先输入待查看互动的好友 QQ 号 -->
         <div v-if="isSelfMode && !confirmedFriend" class="ip-friend-input">
             <h3 class="ip-fi-title">查看与好友的互动</h3>
             <p class="ip-fi-desc">请输入要查看互动的好友 QQ 号，确认后将统计对方在你空间留下的评论、留言、点赞等往来。</p>
 
             <!-- 互动最多的人：点击直接带入 QQ 号，避免「不知道该查谁」 -->
-            <div v-if="topPeople.length" class="ip-fi-top">
+            <div v-if="topPeople.length || careFriends.length" class="ip-fi-top">
                 <div class="ip-fi-top-title">
-                    <span>互动 TOP5 <em>（点击直接查看）</em></span>
+                    <span v-if="topPeople.length">互动 TOP5 <em>（点击直接查看）</em></span>
+                    <span v-else>特别关心 <em>（点击直接查看）</em></span>
                     <privacy-toggle />
                 </div>
-                <button
-                    v-for="(p, i) in topPeople"
-                    :key="p.key"
-                    type="button"
-                    class="ip-fi-person"
-                    :disabled="!p.uin"
-                    :title="personTooltip(p)"
-                    @click="chooseFriend(p)"
-                >
-                    <span class="ip-fi-rank">{{ i + 1 }}</span>
-                    <span class="ip-fi-person-main">
-                        <!-- 隐私模式下昵称脱敏而非全隐：TOP5 要能点选，全盖掉只剩次数就没法用 -->
-                        <span class="ip-fi-name">{{ hideSensitive ? maskName(p.name || p.uin || '未署名') : (p.name || p.uin || '未署名') }}</span>
-                        <!-- 附灰色 QQ 号：昵称可能与他人（含自己的小号）重名，仅靠昵称无法区分 -->
-                        <span v-if="!hideSensitive && p.uin" class="ip-fi-uin">{{ p.uin }}</span>
-                    </span>
-                    <span class="ip-fi-count">{{ p.score }} 次</span>
-                </button>
-                <div v-if="topPeople.some((p) => !p.uin)" class="ip-fi-top-hint">未署名记录缺少 QQ 号，无法直接跳转</div>
+                <template v-if="topPeople.length">
+                    <button
+                        v-for="(p, i) in topPeople"
+                        :key="p.key"
+                        type="button"
+                        class="ip-fi-person"
+                        :disabled="!p.uin"
+                        :title="personTooltip(p)"
+                        @click="chooseFriend(p)"
+                    >
+                        <span class="ip-fi-rank">{{ i + 1 }}</span>
+                        <span class="ip-fi-person-main">
+                            <!-- 隐私模式下昵称脱敏而非全隐：TOP5 要能点选，全盖掉只剩次数就没法用 -->
+                            <span class="ip-fi-name" v-html="nameHtml(p.name, p.uin)"></span>
+                            <!-- 附灰色 QQ 号：昵称可能与他人（含自己的小号）重名，仅靠昵称无法区分 -->
+                            <span v-if="!hideSensitive && p.uin" class="ip-fi-uin">{{ p.uin }}</span>
+                            <span v-if="careUins.has(p.uin)" class="ip-fi-tag">关心</span>
+                        </span>
+                        <span class="ip-fi-count">{{ p.score }} 次</span>
+                    </button>
+                    <div v-if="topPeople.some((p) => !p.uin)" class="ip-fi-top-hint">未署名记录缺少 QQ 号，无法直接跳转</div>
+                </template>
+
+                <!-- 特别关心：独立分组、不参与排名（不带序号），语义是「你在意谁」而非「谁最活跃」 -->
+                <div v-if="careFriends.length" class="ip-fi-care" :class="{ 'ip-fi-care-alone': !topPeople.length }">
+                    <div class="ip-fi-care-title">
+                        <span>特别关心 <em>· {{ careFriends.length }} 位</em></span>
+                    </div>
+                    <button
+                        v-for="c in careFriends"
+                        :key="c.key"
+                        type="button"
+                        class="ip-fi-person ip-fi-person-care"
+                        :title="careTooltip(c)"
+                        @click="chooseFriend(c)"
+                    >
+                        <span class="ip-fi-person-main">
+                            <span class="ip-fi-name" v-html="nameHtml(c.name, c.uin)"></span>
+                            <span v-if="!hideSensitive" class="ip-fi-uin">{{ c.uin }}</span>
+                        </span>
+                        <span class="ip-fi-count">{{ c.score ? `${c.score} 次` : '暂无互动' }}</span>
+                    </button>
+                    <div v-if="careHidden > 0" class="ip-fi-top-hint">还有 {{ careHidden }} 位特别关心好友未列出</div>
+                </div>
             </div>
 
             <div class="ip-fi-row">
@@ -375,6 +664,63 @@ watch(filtered, () => { pulseKey.value++; });
             <div v-if="friendError" class="ip-fi-error">{{ friendError }}</div>
         </div>
 
+        <!-- 他人空间：先选看「谁与 TA」的互动 -->
+        <div v-else-if="!isSelfMode && !otherPick" class="ip-friend-input ip-friend-input-wide">
+            <h3 class="ip-fi-title">查看互动</h3>
+            <p class="ip-fi-desc">
+                这份备份是「{{ ownerName }}」的空间。可以看你在{{ t }}空间留下的痕迹，也可以看{{ t }}与某个人的往来。
+            </p>
+
+            <div class="ip-pick-grid">
+                <button type="button" class="ip-pick-card ip-pick-primary" @click="pickMe()">
+                    <span class="ip-pick-title">我 与 {{ ownerName }}</span>
+                    <span class="ip-pick-desc">我在{{ t }}空间的留言、评论、点赞，以及{{ t }}对我的回应</span>
+                    <span class="ip-pick-go">查看 →</span>
+                </button>
+                <div class="ip-pick-card">
+                    <span class="ip-pick-title">{{ ownerName }} 与 某人</span>
+                    <span class="ip-pick-desc">选一个人，看{{ t }}与这个人的往来</span>
+                    <div class="ip-fi-row">
+                        <input
+                            class="ip-fi-input"
+                            v-model="guestInput"
+                            type="text"
+                            inputmode="numeric"
+                            placeholder="对方 QQ 号"
+                            @keyup.enter="pickGuest()"
+                        />
+                        <button class="ip-fi-btn" type="button" @click="pickGuest()">查看</button>
+                    </div>
+                </div>
+            </div>
+            <div v-if="guestError" class="ip-fi-error">{{ guestError }}</div>
+
+            <!-- TA 互动最多的人：点击直接落「TA 与 TA 的往来」 -->
+            <div v-if="topPeople.length" class="ip-fi-top">
+                <div class="ip-fi-top-title">
+                    <span>{{ t }}互动最多的人 <em>（点击直接查看）</em></span>
+                    <privacy-toggle />
+                </div>
+                <button
+                    v-for="(p, i) in topPeople"
+                    :key="p.key"
+                    type="button"
+                    class="ip-fi-person"
+                    :disabled="!p.uin"
+                    :title="personTooltip(p)"
+                    @click="pickGuest(p.uin)"
+                >
+                    <span class="ip-fi-rank">{{ i + 1 }}</span>
+                    <span class="ip-fi-person-main">
+                        <span class="ip-fi-name" v-html="nameHtml(p.name, p.uin)"></span>
+                        <span v-if="!hideSensitive && p.uin" class="ip-fi-uin">{{ p.uin }}</span>
+                    </span>
+                    <span class="ip-fi-count">{{ p.score }} 次</span>
+                </button>
+                <div v-if="topPeople.some((p) => !p.uin)" class="ip-fi-top-hint">未署名记录缺少 QQ 号，无法直接跳转</div>
+            </div>
+        </div>
+
         <div v-else-if="loading" class="ip-loading"><n-spin size="large" /></div>
 
         <n-empty
@@ -382,76 +728,173 @@ watch(filtered, () => { pulseKey.value++; });
             description="未找到你与该好友的互动记录，可能对方未在你的空间留下评论、留言或点赞。"
             class="ip-empty"
         />
-        <n-empty
-            v-else-if="!data && !isSelfMode"
-            description="该备份不是他人空间备份，没有互动明细。"
-            class="ip-empty"
-        />
+        <n-empty v-else-if="!data && !isSelfMode" :description="emptyText" class="ip-empty" />
 
         <div v-else-if="data" class="ip-body">
-            <!-- 本人备份：显示当前好友 + 可切换 -->
-            <div v-if="isSelfMode && confirmedFriend" class="ip-friend-bar">
-                <span>正在查看与 <b>{{ hideSensitive
-                    ? maskName(plainName(String(data.ownerName || confirmedFriend || '')))
-                    : (data.ownerName || confirmedFriend) }}</b> 的互动</span>
-                <button class="ip-fi-btn ip-fi-btn-sm" type="button" @click="resetFriend(); reload();">换个好友</button>
-            </div>
-
-            <!-- 主面板：概览卡片（含核心指标 / 初见与重逢 / 趋势），事件总数显示在标题行 -->
-            <owner-target-interaction
-                :data="data"
-                :mode="isSelfMode ? 'self' : 'other'"
-                :target-sex="props.user?.sex"
-                :show-entries="true"
-                :show-trend="true"
-                :total-events="data.events.length"
-                :active-stat="activeStat"
-                @stat-click="applyStatFilter"
-                @visit-click="onVisitCardClick"
-            />
-
-            <!-- 筛选 + 时间线：三个正交维度，按「主体类型 / 互动类型 / 互动方向」重排 -->
-            <div class="ip-toolbar" ref="toolbarRef">
-                <span class="ip-field">主体类型
-                    <n-select v-model:value="filterType" :options="TYPE_OPTIONS" style="width: 110px;" />
-                </span>
-                <span class="ip-field">互动类型
-                    <n-select v-model:value="filterCategory" :options="CATEGORY_OPTIONS" style="width: 130px;" />
-                </span>
-                <span class="ip-field">互动方向
-                    <n-select v-model:value="filterDir" :options="dirOptions" style="width: 120px;" />
-                </span>
-                <span class="ip-count" :key="pulseKey">筛选后 {{ filtered.length }} 条</span>
-                <button v-if="hasActiveFilter" class="ip-clear" type="button" @click="clearFilter">清除筛选</button>
-            </div>
-
-            <div class="ip-timeline">
-                <div v-for="(e, i) in paged" :key="i" class="ip-event" :class="e.dir" @click="navToItem(e)">
-                    <div class="ip-event-head">
-                        <n-tag size="small" :bordered="false" :type="e.dir === 'me' ? 'info' : 'success'">
-                            {{ kindLabel(e.type) }}
-                        </n-tag>
-                        <span class="ip-dir" :class="e.dir">{{ dirLabel(e.dir) }}</span>
-                        <span class="ip-time">{{ formatTime(e.time) }}</span>
-                    </div>
-                    <div class="ip-event-body">
-                        <message-item v-if="e.type === 'message'" :item="e.item" />
-                        <article-item v-else-if="e.type === 'blog'" :item="e.item" config-key="Blogs" />
-                        <board-item v-else-if="e.type === 'board'" :item="e.item" />
-                        <div v-else class="ip-compact-entry">
-                            <span class="ip-compact-title">{{ entryTitle(e) }}</span>
-                        </div>
-                    </div>
+            <!-- 吸顶摘要：只有「和谁、多少、多久」，其余交给下面的时间线 -->
+            <div class="ip-summary">
+                <div class="ip-sum-line">
+                    <span v-if="isSelfMode" class="ip-sum-who">与 <b v-html="friendNameHtml"></b> 的互动</span>
+                    <span v-else-if="!isGuestView" class="ip-sum-who">与 <b v-html="targetNameHtml"></b> 的互动</span>
+                    <span v-else class="ip-sum-who">
+                        <b v-html="guestNameHtml"></b> 与 <b v-html="targetNameHtml"></b>
+                    </span>
+                    <span class="ip-sum-meta">
+                        共 {{ data.totalInteractions.toLocaleString() }} 次互动<template v-if="spanText"> · {{ spanText }}</template>
+                    </span>
+                    <button
+                        class="ip-fi-btn ip-fi-btn-sm"
+                        type="button"
+                        @click="isSelfMode ? (resetFriend(), reload()) : (resetPick(), reload())"
+                    >
+                        {{ isSelfMode ? '换个好友' : '换个对象' }}
+                    </button>
+                </div>
+                <div class="ip-sum-stats">
+                    <span>留言 <b>{{ data.myBoards.toLocaleString() }}</b></span>
+                    <span>评论 <b>{{ data.myComments.toLocaleString() }}</b></span>
+                    <span>{{ t }}回应 <b>{{ data.taReplies.toLocaleString() }}</b></span>
+                    <span>点赞 <b>{{ data.myLikes.toLocaleString() }}</b></span>
+                    <span v-if="data.myVisits > 0" class="ip-sum-quiet">我浏览过{{ t }}的 {{ data.myVisits.toLocaleString() }} 条</span>
+                    <span class="ip-sum-quiet">回应率 {{ data.responseRate === null ? '—' : Math.round(data.responseRate * 1000) / 10 + '%' }}</span>
                 </div>
             </div>
 
-            <div class="ip-pager" v-if="totalPages > 1">
-                <n-pagination
-                    :page="page"
-                    :page-count="totalPages"
-                    @update:page="(p: number) => (page = p)"
-                />
+            <!-- 统计详情：一张外卡，里面两张小卡（与概览时间轴的嵌套方式相同）。
+                 不做折叠——吸顶摘要已在最上面，这里直接展示，需要滚一点但层级最浅 -->
+            <details class="ip-stats-card">
+                <summary class="ip-stats-summary">
+                    <span class="ip-stats-title">统计详情</span>
+                    <span class="ip-stats-note">初见与重逢 · 互动频率趋势</span>
+                    <span class="ip-stats-caret">▸</span>
+                </summary>
+                <div class="ip-stat-grid">
+                    <div class="ip-mini-card">
+                        <div class="ip-mini-head">
+                            <span class="ip-mini-title">初见与重逢</span>
+                            <span class="ip-mini-note">我们最初的相遇与最近的问候</span>
+                        </div>
+                        <div class="ip-mini-body">
+                            <owner-target-interaction
+                                :data="data"
+                                :mode="interactionMode"
+                                :target-sex="props.user?.sex"
+                                :show-entries="true"
+                                :parts="{ head: false, stats: false, visits: false, timeline: false, trend: false }"
+                                :active-stat="activeStat"
+                                @stat-click="applyStatFilter"
+                            />
+                        </div>
+                    </div>
+                    <div class="ip-mini-card">
+                        <div class="ip-mini-head">
+                            <span class="ip-mini-title">互动频率趋势</span>
+                            <span class="ip-mini-note">按月互动量</span>
+                        </div>
+                        <div class="ip-mini-body">
+                            <owner-target-interaction
+                                :data="data"
+                                :mode="interactionMode"
+                                :target-sex="props.user?.sex"
+                                :show-trend="true"
+                                :parts="{ head: false, stats: false, visits: false, timeline: false, entries: false }"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- 筛选：类别做成 chips（带条数），结构性筛选收进「更多」 -->
+            <div class="ip-filter">
+                <button
+                    type="button"
+                    class="ip-chip"
+                    :class="{ on: filterCategory === 'all' }"
+                    @click="filterCategory = 'all'; page = 1"
+                >
+                    全部 {{ data.events.length.toLocaleString() }}
+                </button>
+                <button
+                    v-for="opt in CATEGORY_OPTIONS.filter((o) => o.value !== 'all')"
+                    :key="opt.value"
+                    type="button"
+                    class="ip-chip"
+                    :class="{ on: filterCategory === opt.value }"
+                    @click="filterCategory = opt.value as InteractionCategory; page = 1"
+                >
+                    {{ opt.label }} {{ categoryCounts[opt.value] ?? 0 }}
+                </button>
+                <button
+                    type="button"
+                    class="ip-chip ip-chip-more"
+                    :class="{ on: moreFilterOpen || hasActiveFilter }"
+                    @click="moreFilterOpen = !moreFilterOpen"
+                >
+                    更多筛选 ▾
+                </button>
+                <!-- 时间线按主体去重（同一条说说可能「评论 + 点赞」各记一次互动），故条数会小于互动次数 -->
+                <span class="ip-count" :key="pulseKey">时间线 {{ filtered.length.toLocaleString() }} 条</span>
             </div>
+
+            <div v-if="moreFilterOpen" class="ip-more-inline">
+                <span class="ip-field">主体类型
+                    <n-select v-model:value="filterType" :options="TYPE_OPTIONS" style="width: 150px;" />
+                </span>
+                <span class="ip-field">互动方向
+                    <n-select v-model:value="filterDir" :options="dirOptions" style="width: 130px;" />
+                </span>
+                <button v-if="hasActiveFilter" class="ip-clear" type="button" @click="clearFilter">清除筛选</button>
+            </div>
+
+            <!-- 时间线：按年月分组；头像 + 谁 + 动作 + 内容摘要，点行展开完整卡片 -->
+            <div class="ip-timeline">
+                <template v-for="group in groupedEvents" :key="group.key">
+                    <div class="ip-month"><span>{{ group.key }}</span></div>
+                    <div v-for="row in group.rows" :key="row.i" class="ip-ev-wrap">
+                        <button
+                            type="button"
+                            class="ip-ev"
+                            :class="[row.e.dir, { open: expandedRows.has(row.i) }]"
+                            :title="entryTitle(row.e)"
+                            @click="toggleRow(row.i)"
+                        >
+                            <user-avatar
+                                :uin="avatarUin(row.e)"
+                                :size="36"
+                                :link="false"
+                                :class="{ 'privacy-blur': hideSensitive }"
+                            />
+                            <span class="ip-ev-main">
+                                <span class="ip-ev-head">
+                                    <b class="ip-ev-name" v-html="whoHtml(row.e)"></b>
+                                    <span class="ip-ev-act">{{ actionText(row.e) }}</span>
+                                    <span class="ip-ev-time">{{ formatTime(row.e.time).slice(0, 16) }}</span>
+                                </span>
+                                <span class="ip-ev-text" :class="{ 'privacy-blur': hideSensitive }">{{ entryTitle(row.e) }}</span>
+                            </span>
+                            <span class="ip-ev-caret">{{ expandedRows.has(row.i) ? '▾' : '▸' }}</span>
+                        </button>
+                        <div v-if="expandedRows.has(row.i)" class="ip-ev-detail" @click.stop>
+                            <div class="ip-detail-bar">
+                                <button type="button" class="ip-open-origin" @click="navToItem(row.e)">打开原页 →</button>
+                                <button type="button" class="ip-open-origin is-quiet" @click="toggleRow(row.i)">收起</button>
+                            </div>
+                            <message-item v-if="row.e.type === 'message'" :item="row.e.item" />
+                            <article-item v-else-if="row.e.type === 'blog'" :item="row.e.item" config-key="Blogs" />
+                            <board-item v-else-if="row.e.type === 'board'" :item="row.e.item" />
+                            <div v-else class="ip-compact-entry">
+                                <span class="ip-compact-title">{{ entryTitle(row.e) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <p v-if="groupedEvents.length === 0" class="ip-empty-row">没有符合条件的互动</p>
+            </div>
+
+            <div class="ip-pager" v-if="totalPages > 1">
+                <n-pagination :page="page" :page-count="totalPages" @update:page="(p: number) => (page = p)" />
+            </div>
+
         </div>
     </div>
 </template>
@@ -495,6 +938,59 @@ watch(filtered, () => { pulseKey.value++; });
     line-height: 1.6;
     color: var(--text-secondary);
 }
+/* 他人空间入口态：两张并列卡，比本人空间的单输入卡更宽 */
+.ip-friend-input-wide {
+    max-width: 640px;
+}
+.ip-pick-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin: 2px 0 16px;
+}
+.ip-pick-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-separator);
+    border-radius: 10px;
+    background: var(--bg-toolbar);
+    font: inherit;
+    color: inherit;
+    text-align: left;
+}
+button.ip-pick-card {
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+button.ip-pick-card:hover {
+    border-color: var(--accent);
+    background: var(--bg-primary);
+}
+/* 默认项（你 与 TA）用主色描边点出来，但不用 2px 以免点进结果态时布局跳动 */
+.ip-pick-primary {
+    border-color: var(--accent);
+    background: var(--bg-primary);
+}
+.ip-pick-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.ip-pick-desc {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+.ip-pick-go {
+    margin-top: auto;
+    padding-top: 4px;
+    font-size: 12px;
+    color: var(--accent);
+}
+
 /* 入口态 Top5：紧凑列表，不做卡片堆叠，避免盖住下方的 QQ 号输入框 */
 .ip-fi-top {
     margin: 0 0 16px;
@@ -551,6 +1047,36 @@ watch(filtered, () => { pulseKey.value++; });
 .ip-fi-uin { flex: none; font-size: 11px; color: var(--text-muted); }
 .ip-fi-count { flex: none; font-size: 12px; color: var(--text-muted); }
 .ip-fi-top-hint { margin-top: 6px; font-size: 11px; color: var(--text-muted); }
+/* 特别关心：独立分组、虚线分隔、不带序号（语义是「你在意谁」，不是「谁排第 6」） */
+.ip-fi-care {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-light);
+}
+/* TOP5 为空（如只有关心好友、全站无互动）时不画分隔线，避免顶部凭空一条虚线 */
+.ip-fi-care-alone {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}
+.ip-fi-care-title {
+    margin-bottom: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.ip-fi-care-title em { font-style: normal; font-weight: 400; color: var(--text-muted); }
+/* 关心行没有序号占位，昵称直接对齐列表左缘 */
+.ip-fi-person-care { padding-left: 4px; }
+.ip-fi-tag {
+    flex: none;
+    padding: 0 4px;
+    border: 1px solid var(--border-separator);
+    border-radius: 3px;
+    color: var(--text-secondary);
+    font-size: 10px;
+    line-height: 14px;
+}
 .ip-fi-row {
     display: flex;
     gap: 10px;
@@ -738,4 +1264,364 @@ watch(filtered, () => { pulseKey.value++; });
     justify-content: center;
     margin-top: 16px;
 }
+/* ===== 结果态改版：吸顶摘要 + 筛选 chips + 紧凑时间线 ===== */
+.ip-summary {
+    position: sticky;
+    top: -6px;
+    z-index: 3;
+    margin: -6px 0 12px;
+    padding: 14px 16px 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-card);
+    border-radius: 14px;
+    box-shadow: 0 1px 3px var(--shadow-sm);
+}
+.ip-sum-line {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    min-width: 0;
+}
+.ip-sum-who {
+    font-size: 14px;
+    color: var(--text-primary);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ip-sum-who b {
+    font-weight: 600;
+}
+.ip-sum-meta {
+    flex: none;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.ip-sum-line .ip-fi-btn {
+    margin-left: auto;
+}
+.ip-sum-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+/* 每个数字给一块浅底：比一排裸文字更有「统计」的分量 */
+.ip-sum-stats > span {
+    padding: 4px 12px;
+    border-radius: 8px;
+    background: var(--bg-toolbar);
+}
+.ip-sum-stats b {
+    margin-left: 2px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+.ip-sum-quiet {
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+/* 筛选 chips：类别一眼看全，结构性筛选收进「更多」 */
+.ip-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.ip-chip {
+    padding: 3px 10px;
+    border: 1px solid var(--border-card);
+    border-radius: 999px;
+    background: transparent;
+    font: inherit;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+}
+.ip-chip:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+.ip-chip.on {
+    border-color: var(--accent);
+    background: var(--bg-tint-blue);
+    color: var(--accent-pressed);
+}
+.ip-more-filter {
+    position: relative;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.ip-more-filter summary {
+    padding: 3px 10px;
+    border: 1px dashed var(--border-card);
+    border-radius: 999px;
+    cursor: pointer;
+    list-style: none;
+}
+.ip-more-filter summary::-webkit-details-marker {
+    display: none;
+}
+.ip-more-filter[open] summary {
+    border-style: solid;
+    border-color: var(--accent);
+}
+.ip-more-body {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-card);
+    border-radius: 10px;
+    box-shadow: 0 4px 14px var(--shadow-md);
+}
+.ip-filter .ip-count {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* 时间线：月份锚点 + 头像式行 */
+.ip-month {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 0 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.ip-month::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-light);
+}
+.ip-ev-wrap {
+    border-bottom: 1px solid var(--border-light);
+}
+.ip-ev {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 4px 12px 14px;
+    border: none;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+/* 左侧 3px 色条：蓝=我主动，绿=TA 回应，扫一眼就知道方向 */
+.ip-ev::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 16px;
+    bottom: 16px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--border-light);
+}
+.ip-ev.me::before {
+    background: var(--accent);
+}
+.ip-ev.ta::before {
+    background: #1d9e75;
+}
+.ip-ev:hover,
+.ip-ev.open {
+    background: var(--bg-toolbar);
+}
+.ip-ev-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.ip-ev-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+.ip-ev-name {
+    flex: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+.ip-ev.me .ip-ev-name {
+    color: var(--accent-pressed);
+}
+.ip-ev-act {
+    flex: none;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.ip-ev-time {
+    flex: none;
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.ip-ev-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.ip-ev.open .ip-ev-text {
+    white-space: normal;
+}
+.ip-ev-caret {
+    flex: none;
+    align-self: center;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+.ip-ev-detail {
+    padding: 2px 0 14px 62px;
+}
+/* 「更多筛选」展开行：正常文档流，不悬浮遮挡 */
+.ip-more-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    background: var(--bg-toolbar);
+    border-radius: 10px;
+}
+
+/* 展开区的工具条：放在卡片上方，否则要滚过整张卡片才点得到 */
+.ip-detail-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    padding: 2px 0 6px;
+}
+.ip-open-origin {
+    margin-top: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    color: var(--accent);
+    cursor: pointer;
+}
+.ip-open-origin:hover {
+    text-decoration: underline;
+}
+.ip-open-origin.is-quiet {
+    color: var(--text-muted);
+}
+.ip-empty-row {
+    margin: 16px 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* 统计详情：默认收起 */
+.ip-stats {
+    margin-top: 20px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-card);
+}
+.ip-stats > summary {
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    list-style: none;
+}
+.ip-stats > summary::-webkit-details-marker {
+    display: none;
+}
+.ip-stats > summary::before {
+    content: '▸ ';
+    color: var(--text-muted);
+}
+.ip-stats[open] > summary::before {
+    content: '▾ ';
+}
+
+/* 统计详情：外卡 + 两张内卡（与概览时间轴的「外卡包双卡」同族） */
+.ip-stats-card {
+    margin-bottom: 12px;
+}
+.ip-stats-summary {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 13px 16px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+.ip-stats-summary::-webkit-details-marker {
+    display: none;
+}
+.ip-stats-summary:hover {
+    background: var(--bg-toolbar);
+}
+.ip-stats-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+.ip-stats-note {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.ip-stats-caret {
+    flex: none;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+.ip-stats-card[open] > .ip-stats-summary {
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 12px;
+}
+.ip-stats-card[open] .ip-stats-caret::before {
+    content: '▾';
+}
+.ip-stats-card:not([open]) .ip-stats-caret::before {
+    content: '▸';
+}
+.ip-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+
+
+
 </style>

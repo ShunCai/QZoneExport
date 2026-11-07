@@ -5,6 +5,7 @@ import { formatTime } from '../data/format';
 import { heShe } from '../data/pronoun';
 import { usePrivacy } from '../composables/usePrivacy';
 import { maskName, plainName } from '../data/mask';
+import { formatNickname } from '../data/richText';
 import type { OwnerTargetInteraction, InteractionEntry, InteractionCategory } from '../data/owner-target';
 const { hidden: hideSensitive } = usePrivacy();
 import MessageItem from './items/MessageItem.vue';
@@ -17,12 +18,22 @@ const props = defineProps<{
     showTrend?: boolean;
     /** 事件总数（用于互动明细页标题行展示），不传则不显示 */
     totalEvents?: number;
-    /** 'other'=查看他人空间备份；'self'=本人备份+指定好友（统计口径反转） */
-    mode?: 'other' | 'self';
+    /**
+     * other = 查看他人空间备份（我 ↔ 空间主人）
+     * self  = 本人备份 + 指定好友（好友 ↔ 我，统计口径反转）
+     * guest = 他人空间备份 + 指定第三人（那个人 ↔ 空间主人）
+     */
+    mode?: 'other' | 'self' | 'guest';
     /** 被查看空间主人的性别（user.sex，1男 2女），用于把他人空间文案里的「TA」自动替换成他/她 */
     targetSex?: number | string;
     /** 当前被选中的核心指标卡片 key（由父组件根据筛选状态回传），用于点亮卡片形成「点卡片=选中」闭环 */
     activeStat?: 'boards' | 'comments' | 'replies' | 'likes' | null;
+    /**
+     * 区块开关（缺省即 true，向后兼容）。
+     * 摘要条上位后，互动页的「统计详情」只保留「初见与重逢」与「互动频率趋势」，
+     * 其余区块（4 指标 / 访问 / 时间轴）与摘要重复，可关。
+     */
+    parts?: Partial<{ head: boolean; stats: boolean; visits: boolean; timeline: boolean; entries: boolean; trend: boolean }>;
 }>();
 
 /** 卡片点击统一向上 emit，由父组件决定行为：
@@ -36,49 +47,93 @@ const emit = defineEmits<{
 }>();
 
 const d = computed(() => props.data);
+/** 区块开关：未显式关闭的一律显示 */
+function showPart(name: 'head' | 'stats' | 'visits' | 'timeline' | 'entries' | 'trend'): boolean {
+    return props.parts?.[name] ?? true;
+}
+/** 独立卡模式（parts 显式传入）→ 内层折叠默认展开：外层已说明是什么，再收一层要点两次 */
+const autoExpandCollapses = computed(() => props.parts !== undefined);
 const isSelf = computed(() => props.mode === 'self');
+/**
+ * guest：看的是「空间里的某位访客 ↔ 空间主人」。
+ * 此时主体（owner）是那位访客，客体（target）仍是空间主人——文案里的「对方」指访客，
+ * 「他/她」指主人，与 self 模式的主客关系一致（都是 owner=对方、target=本人视角那一侧）。
+ */
+const isGuest = computed(() => props.mode === 'guest');
+/** 主体是否为主人视角之外的「对方」：self 与 guest 都是 */
+const subjectIsOther = computed(() => isSelf.value || isGuest.value);
 /** 他人空间：按空间主人性别取代词（他/她），性别未知回退「TA」 */
 const t = computed(() => heShe(props.targetSex));
 
 /** 4 个核心指标标签：本人备份模式下主语互换（对方/我） */
-const statLabels = computed(() => isSelf.value
-    ? { boards: '对方留言', comments: '对方评论', replies: '我回应', likes: '对方点赞' }
-    : { boards: '我留言', comments: '我评论', replies: `${t.value}回应`, likes: '我点赞' });
-const statTitles = computed(() => isSelf.value
-    ? {
-        boards: '对方（好友）在你留言板留下的留言数',
-        comments: '对方（好友）评论你的说说/日志数',
-        replies: '你回复对方（好友）的留言/评论次数',
-        likes: '对方（好友）点赞你的内容数',
+const statLabels = computed(() => (subjectIsOther.value
+    ? { boards: '对方留言', comments: '对方评论', replies: isSelf.value ? '我回应' : `${t.value}回应`, likes: '对方点赞' }
+    : { boards: '我留言', comments: '我评论', replies: `${t.value}回应`, likes: '我点赞' }));
+const statTitles = computed(() => {
+    if (isSelf.value) {
+        return {
+            boards: '对方（好友）在你留言板留下的留言数',
+            comments: '对方（好友）评论你的说说/日志数',
+            replies: '你回复对方（好友）的留言/评论次数',
+            likes: '对方（好友）点赞你的内容数',
+        };
     }
-    : {
-        boards: `你在${t.value}留言板留下的留言数`,
-        comments: `你评论${t.value}的说说/日志数`,
-        replies: `${t.value}回复你的留言/评论次数`,
-        likes: `你点赞${t.value}的说说数`,
-    });
+    if (isGuest.value) {
+        return {
+            boards: `对方在${t.value}留言板留下的留言数`,
+            comments: `对方评论${t.value}的说说/日志数`,
+            replies: `${t.value}回复对方的留言/评论次数`,
+            likes: `对方点赞${t.value}的说说数`,
+        };
+    }
+    return {
+        boards: `我在${t.value}留言板留下的留言数`,
+        comments: `我评论${t.value}的说说/日志数`,
+        replies: `${t.value}回复我的留言/评论次数`,
+        likes: `我点赞${t.value}的说说数`,
+    };
+});
 
 /** 标题与副标题：随模式切换主语 */
-const titleText = computed(() => isSelf.value ? '🤝 你与好友的互动' : `🤝 我与${t.value}的互动`);
+const titleText = computed(() => {
+    if (isSelf.value) return '🤝 你与好友的互动';
+    if (isGuest.value) return `🤝 对方与${t.value}的互动`;
+    return `🤝 我与${t.value}的互动`;
+});
 const headerSub = computed(() => {
     const masked = hideSensitive.value;
-    const owner = masked ? maskName(plainName(String(d.value.ownerName ?? ''))) : d.value.ownerName;
-    const target = masked ? maskName(plainName(String(d.value.targetName ?? ''))) : d.value.targetName;
-    return isSelf.value
-        ? `在你的空间里，${owner}（好友）与 你 的往来`
-        : `在 ${target} 的空间里，你（${owner}）与${t.value}的往来`;
+    // 昵称里的 [em] 表情 token 与正文同一套转换；脱敏态先剥 token 再打码
+    const nameHtml = (raw: unknown): string => {
+        const plain = plainName(String(raw ?? ''));
+        return formatNickname(masked ? maskName(plain) : plain);
+    };
+    const owner = nameHtml(d.value.ownerName);
+    const target = nameHtml(d.value.targetName);
+    if (isSelf.value) return `在你的空间里，${owner}（好友）与 你 的往来`;
+    if (isGuest.value) return `在 ${target} 的空间里，${owner} 与${t.value}的往来`;
+    return `在 ${target} 的空间里，我（${owner}）与${t.value}的往来`;
 });
 
 /** 我访问区：本人备份下变为「对方浏览过你的」 */
-const visitsHeadText = computed(() => isSelf.value ? '对方浏览过你的' : `我浏览过${t.value}的`);
-const visitsEmptyText = computed(() => isSelf.value
-    ? '这份备份未捕捉到好友浏览你空间具体条目的记录（需各模块开启「最近访问」采集，且抓取时会话追踪到了好友）。'
-    : `这份备份未捕捉到你浏览${t.value}空间具体条目的记录（需各模块开启「最近访问」采集，且抓取时会话追踪到了你）。`);
+const visitsHeadText = computed(() => {
+    if (isSelf.value) return '对方浏览过你的';
+    if (isGuest.value) return `对方浏览过${t.value}的`;
+    return `我浏览过${t.value}的`;
+});
+const visitsEmptyText = computed(() => {
+    if (isSelf.value) {
+        return '这份备份未捕捉到好友浏览你空间具体条目的记录（需各模块开启「最近访问」采集，且抓取时会话追踪到了好友）。';
+    }
+    const who = isGuest.value ? '对方' : '我';
+    return `这份备份未捕捉到${who}浏览${t.value}空间具体条目的记录（需各模块开启「最近访问」采集，且抓取时会话追踪到了${who}）。`;
+});
 
 /** 双向交流 / 无记录空态：随模式切换主语 */
-const conversationsTitle = computed(() => isSelf.value
-    ? '双方均有互动的会话数：好友参与且你回应过的内容线程'
-    : `双方均有互动的会话数：你参与且${t.value}回应过你的内容线程`);
+const conversationsTitle = computed(() => {
+    if (isSelf.value) return '双方均有互动的会话数：好友参与且你回应过的内容线程';
+    if (isGuest.value) return `双方均有互动的会话数：对方参与且${t.value}回应过的内容线程`;
+    return `双方均有互动的会话数：我参与且${t.value}回应过我的内容线程`;
+});
 
 /** 回应率：分子分母随模式反转；分母为 0（无留言且无评论）时显示「—」 */
 const rateText = computed(() => {
@@ -86,13 +141,17 @@ const rateText = computed(() => {
     if (r === null || r === undefined) return '—';
     return Math.round(r * 1000) / 10 + '%';
 });
-const rateTitle = computed(() => isSelf.value
-    ? '你回复好友的次数 ÷（好友给你的留言数 + 评论数）。点赞为单向行为，不计入分母。'
-    : `${t.value}回复你的次数 ÷（你给${t.value}的留言数 + 评论数）。点赞为单向行为，不计入分母。`);
+const rateTitle = computed(() => {
+    if (isSelf.value) return '你回复好友的次数 ÷（好友给你的留言数 + 评论数）。点赞为单向行为，不计入分母。';
+    const who = isGuest.value ? '对方' : '我';
+    return `${t.value}回复${who}的次数 ÷（${who}给${t.value}的留言数 + 评论数）。点赞为单向行为，不计入分母。`;
+});
 
-const entriesEmptyText = computed(() => isSelf.value
-    ? '这份备份里没有捕捉到你与该好友的双向互动记录。'
-    : `这份备份里没有捕捉到你与${t.value}的双向互动记录。`);
+const entriesEmptyText = computed(() => {
+    if (isSelf.value) return '这份备份里没有捕捉到你与该好友的双向互动记录。';
+    if (isGuest.value) return `这份备份里没有捕捉到对方与${t.value}的双向互动记录。`;
+    return `这份备份里没有捕捉到我与${t.value}的双向互动记录。`;
+});
 
 /** 互动频率趋势里的最大月互动量（用于柱长比例） */
 const maxMonthly = computed(() =>
@@ -196,14 +255,14 @@ function onVisitClick(moduleKey: 'message' | 'blog' | 'album' | 'share'): void {
 
 <template>
     <div class="oti-card">
-        <div class="oti-head">
+        <div class="oti-head" v-if="showPart('head')">
             <span class="oti-title">{{ titleText }}</span>
-            <span class="oti-sub">{{ headerSub }}</span>
+            <span class="oti-sub" v-html="headerSub"></span>
             <span v-if="totalEvents != null" class="oti-total-badge">共 {{ totalEvents.toLocaleString() }} 条互动事件</span>
         </div>
 
         <!-- 核心指标：4 个动作维度（可点击跳转明细） -->
-        <div class="oti-stats">
+        <div class="oti-stats" v-if="showPart('stats')">
             <div class="oti-stat oti-stat-me oti-clickable" :class="{ 'oti-stat-active': activeStat === 'boards' }" :title="statTitles.boards" @click="onStatClick('boards')">
                 <div class="oti-stat-value">{{ d.myBoards.toLocaleString() }}</div>
                 <div class="oti-stat-label">{{ statLabels.boards }}</div>
@@ -223,7 +282,7 @@ function onVisitClick(moduleKey: 'message' | 'blog' | 'album' | 'share'): void {
         </div>
 
         <!-- 我访问 TA 的各模块条目（数据来自各条目自身的浏览者名单 custom_visitor.list；4 个模块全部展示，含 0） -->
-        <div class="oti-visits" v-if="d.enabled">
+        <div class="oti-visits" v-if="showPart('visits') && d.enabled">
             <div class="oti-visits-head">
                 <span>{{ visitsHeadText }}</span>
                 <span class="oti-visits-total">共 {{ d.myVisits.toLocaleString() }} 条</span>
@@ -247,7 +306,7 @@ function onVisitClick(moduleKey: 'message' | 'blog' | 'album' | 'share'): void {
         </div>
 
         <!-- 双向交流概览：时间线风格 —— 轨道在上，首末节点在下，指标浮标居中 -->
-        <div class="oti-summary">
+        <div class="oti-summary" v-if="showPart('timeline')">
             <!-- 行1：时间轴 + 指标浮标（PC端横排，移动端纵排） -->
             <div class="tl-row-main">
                 <div class="tl-node-dot tl-dot-first" />
@@ -283,8 +342,8 @@ function onVisitClick(moduleKey: 'message' | 'blog' | 'album' | 'share'): void {
         </div>
 
         <!-- 初见与重逢：统一点赞最多面板风格（左边色条+背景+NCollapse默认收起） -->
-        <div v-if="showEntries && hasEntries" class="oti-panel oti-panel-first">
-            <n-collapse :default-expanded-names="[]">
+        <div v-if="showEntries && showPart('entries') && hasEntries" class="oti-panel oti-panel-first">
+            <n-collapse :default-expanded-names="autoExpandCollapses ? ['first-last'] : []">
                 <n-collapse-item name="first-last">
                     <template #header>
                         <span class="panel-title">初见与重逢</span>
@@ -327,8 +386,8 @@ function onVisitClick(moduleKey: 'message' | 'blog' | 'album' | 'share'): void {
         <n-empty v-else-if="showEntries" :description="entriesEmptyText" class="oti-entries-empty" />
 
         <!-- 互动频率趋势：统一点赞最多面板风格（左边色条+背景+NCollapse默认收起） -->
-        <div class="oti-panel oti-panel-trend" v-if="showTrend && d.monthly.length > 0">
-            <n-collapse :default-expanded-names="[]">
+        <div class="oti-panel oti-panel-trend" v-if="showTrend && showPart('trend') && d.monthly.length > 0">
+            <n-collapse :default-expanded-names="autoExpandCollapses ? ['trend'] : []">
                 <n-collapse-item name="trend">
                     <template #header>
                         <span class="panel-title">互动频率趋势</span>
