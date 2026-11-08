@@ -33,6 +33,13 @@ const props = withDefaults(defineProps<{
     timeOf?: (item: Record<string, any>) => number | string | undefined;
     /** 取条目可搜索文本；不传则不显示搜索框 */
     textOf?: (item: Record<string, any>) => string;
+    /**
+     * 参与搜索的评论内容
+     *
+     * 每条评论/回复返回一段可搜文本；不传则搜索只覆盖正文。
+     * 评论命中时条目也算命中，但高亮只标正文里的关键词（评论区靠蓝底定位）。
+     */
+    commentsOf?: (item: Record<string, any>) => string[];
     /** 模块特有的额外筛选条件 */
     filter?: (item: Record<string, any>) => boolean;
     /**
@@ -202,10 +209,20 @@ const filtered = computed(() => props.items.filter((item) => {
         }
     }
     const word = keyword.value.trim().toLowerCase();
-    if (!word || !props.textOf) {
+    if (!word) {
         return true;
     }
-    return (props.textOf(item) || '').toLowerCase().includes(word);
+    if (!props.textOf && !props.commentsOf) {
+        return true;
+    }
+    // 正文命中或评论命中都算该条命中（列表搜索默认覆盖评论）
+    if (props.textOf && (props.textOf(item) || '').toLowerCase().includes(word)) {
+        return true;
+    }
+    if (props.commentsOf && (props.commentsOf(item) || []).some((text) => (text ?? '').toLowerCase().includes(word))) {
+        return true;
+    }
+    return false;
 }));
 
 /**
