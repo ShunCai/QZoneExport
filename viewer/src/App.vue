@@ -21,6 +21,7 @@ import { avatarUrl, avatarFallbackUrl } from './data/content';
 import { usePrivacy } from './composables/usePrivacy';
 import PrivacyToggle from './components/PrivacyToggle.vue';
 import GlobalSearch from './components/GlobalSearch.vue';
+import { warmupSearchIndex } from './data/search';
 import HomeProfileDialog from './components/home/HomeProfileDialog.vue';
 import { useProfileDialog } from './composables/useProfileDialog';
 import { formatNickname } from './data/richText';
@@ -228,6 +229,8 @@ function handleMediaErrorCapture(event: Event): void {
 onMounted(() => {
     document.addEventListener('error', handleMediaErrorCapture, true);
     window.addEventListener('keydown', onGlobalKeydown);
+    // 空闲时预热全局搜索索引：把首开面板的 ~250ms 构建挪到后台
+    warmupSearchIndex();
 });
 onUnmounted(() => {
     document.removeEventListener('error', handleMediaErrorCapture, true);

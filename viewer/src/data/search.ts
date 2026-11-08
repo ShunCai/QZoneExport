@@ -308,13 +308,34 @@ const MODULES: ModuleDef[] = [
     },
 ];
 
+let cachedRecords: SearchRecord[] | null = null;
+
 /**
- * 构建全量搜索记录
+ * 空闲时预热索引
+ *
+ * 面板首开要同步构建（实测 ~250ms），提前在空闲时算好，开面板就是即时的。
+ * 重复调用安全（只热一次）。
+ */
+export function warmupSearchIndex(): void {
+    const idle = (window as unknown as { requestIdleCallback?: (fn: () => void) => void; }).requestIdleCallback
+        ?? ((fn: () => void) => window.setTimeout(fn, 300));
+    idle(() => {
+        void buildSearchRecords().catch(() => {
+            /* 预热失败不打扰，面板打开时会重试 */
+        });
+    });
+}
+
+/**
+ * 构建全量搜索记录（模块级缓存：一次构建、处处复用）
  *
  * 会顺带把评论拉平成独立记录（含回复）。只保留有文本的记录，
- * 避免索引里堆一堆空正文。调用方应缓存结果（一次构建、多次搜索）。
+ * 避免索引里堆一堆空正文。
  */
 export async function buildSearchRecords(): Promise<SearchRecord[]> {
+    if (cachedRecords) {
+        return cachedRecords;
+    }
     const out: SearchRecord[] = [];
 
     for (const def of MODULES) {
@@ -490,5 +511,6 @@ export async function buildSearchRecords(): Promise<SearchRecord[]> {
         /* 相册模块缺失时跳过 */
     }
 
+    cachedRecords = out;
     return out;
 }

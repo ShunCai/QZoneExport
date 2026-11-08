@@ -53,7 +53,8 @@ const STOP_WORDS = new Set(
         + '如何 多少 几个 两个 三个 今天 明天 昨天 后天 前天 上午 下午 晚上 早上 中午 以前 以后 '
         + '之前 之后 最近 终于 突然 居然 果然 确实 当然 也许 大概 起来 出来 下来 上来 过去 回来 '
         + '进去 出去 开始 结束 最后 第一 第二 第三 我的 你的 他的 她的 它的 我们的 你们的 他们的 '
-        + '的话 而已 之类 等等 某个 某些 真是 只能 很多 的是 不知 是否 以及 并且 而是 只要 无论')
+        + '的话 而已 之类 等等 某个 某些 真是 只能 很多 的是 不知 是否 以及 并且 而是 只要 无论 '
+        + '真的 或许 看来 毕竟 反正 然后 接着 于是 就要 就会 就能 就在 就是说 也就是说')
         .split(' ')
         .filter(Boolean),
 );
@@ -140,10 +141,46 @@ export function countWords(docs: string[], limit = 12): WordCloudResult {
     return { docCount, wordCount: appearances.size, rows };
 }
 
-/** 读各模块正文，统计最常用的词 */
+/**
+ * 会话级缓存
+ *
+ * 分词要几百毫秒，同一次会话里备份内容不会变，算一次就够。
+ * sessionStorage 按 origin 隔离（file:// 下即按目录），每份备份独立；关掉标签页自动清。
+ */
+const CACHE_KEY = 'qze_word_cloud_v1';
+
+function readCache(): WordCloudResult | null {
+    try {
+        const raw = sessionStorage.getItem(CACHE_KEY);
+        if (!raw) {
+            return null;
+        }
+        const parsed = JSON.parse(raw) as WordCloudResult;
+        if (parsed && Array.isArray(parsed.rows)) {
+            return parsed;
+        }
+    } catch {
+        /* 缓存不可用静默跳过 */
+    }
+    return null;
+}
+
+function writeCache(data: WordCloudResult): void {
+    try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    } catch {
+        /* 写不进就算了（如隐私模式配额） */
+    }
+}
+
+/** 读各模块正文，统计最常用的词（优先用会话缓存） */
 export async function loadWordCloud(limit = 12): Promise<WordCloudResult> {
     if (!Segmenter) {
         return { docCount: 0, wordCount: 0, rows: [] };
+    }
+    const cached = readCache();
+    if (cached) {
+        return cached;
     }
     const docs: string[] = [];
     for (const key of WORD_MODULES) {
@@ -160,5 +197,7 @@ export async function loadWordCloud(limit = 12): Promise<WordCloudResult> {
             }
         }
     }
-    return countWords(docs, limit);
+    const data = countWords(docs, limit);
+    writeCache(data);
+    return data;
 }

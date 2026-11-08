@@ -34,9 +34,6 @@ const building = ref(false);
 const inputRef = ref<HTMLInputElement | null>(null);
 const bodyRef = ref<HTMLElement | null>(null);
 
-/** 索引缓存在模块作用域：关闭面板再打开不重建 */
-let cachedRecords: SearchRecord[] | null = null;
-
 const records = ref<SearchRecord[]>([]);
 const result = computed(() => searchRecords(records.value, keyword.value, { kind: kind.value, limitPerGroup: 6 }));
 /** 平铺结果，供键盘上下选择 */
@@ -62,16 +59,10 @@ watch(
             keyword.value = props.seed;
         }
         inputRef.value?.focus();
-        if (cachedRecords) {
-            records.value = cachedRecords;
-            return;
-        }
         building.value = true;
         try {
-            cachedRecords = await buildSearchRecords();
-            records.value = cachedRecords;
+            records.value = await buildSearchRecords();
         } catch {
-            cachedRecords = [];
             records.value = [];
         } finally {
             building.value = false;
