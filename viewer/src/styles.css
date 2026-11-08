@@ -216,6 +216,43 @@ body {
     filter: blur(12px);
 }
 
+/* ===== 条目密度：紧凑档（挂在 .list-content 上，全模块通用） ===== */
+.list-content.is-compact .card-item {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+}
+.list-content.is-compact .item-head {
+    margin-bottom: 6px;
+}
+.list-content.is-compact .item-head img {
+    width: 26px;
+    height: 26px;
+}
+.list-content.is-compact .item-content {
+    font-size: 13px;
+    line-height: 1.5;
+}
+.list-content.is-compact .item-meta {
+    margin-top: 4px;
+}
+.list-content.is-compact .comments {
+    font-size: 12px;
+}
+.list-content.is-compact .comment {
+    margin-bottom: 8px;
+}
+/* 窄屏「更多筛选」弹出面板里的工具组纵向排列 */
+.toolbar-pop {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 260px;
+}
+.toolbar-pop .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 /* 搜索命中高亮：--bg-tint-yellow 近白、截图里看不出，这里用明确的命中色 */
 /* 灯箱评论区里命中的那条（从全局搜索跳转过来） */
 .pswp-comment.is-hit {

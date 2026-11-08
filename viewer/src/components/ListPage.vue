@@ -12,7 +12,7 @@ export interface SortOption {
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { NButton, NEmpty, NInput, NPagination, NRadioButton, NRadioGroup, NSelect, NSpin } from 'naive-ui';
+import { NButton, NEmpty, NInput, NPagination, NPopover, NRadioButton, NRadioGroup, NSelect, NSpin } from 'naive-ui';
 import { formatTime, timeValue } from '../data/format';
 import { getModulePref, savePref } from '../data/displayPrefs';
 import { routeQuery } from '../router';
@@ -132,6 +132,38 @@ watch(layoutMode, (val) => {
     }
 });
 /** 每页条数：默认取调用方给的 pageSize，用户改过则按模块记忆 */
+/** 条目密度：紧凑档把卡片内边距/行高收紧（样式见 styles.css 的 .is-compact 组） */
+const compact = ref(props.prefKey ? getModulePref(props.prefKey).compact : false);
+watch(compact, (value) => {
+    if (props.prefKey) {
+        savePref(props.prefKey, { compact: value });
+    }
+});
+
+/**
+ * 工具栏窄屏折叠
+ *
+ * 内容区 <1200px 时把「月份 / 排序」收进「更多筛选」弹出面板，
+ * 常驻行只留「形态 / 年份 / 布局 / 密度 / 搜索」；宽屏平铺不受影响。
+ * 用 ResizeObserver 量工具栏自身宽度（分屏/改窗口都会触发）。
+ */
+const toolbarNarrow = ref(false);
+const toolbarRef = ref<HTMLElement | null>(null);
+let toolbarResize: ResizeObserver | null = null;
+const moreFilterCount = computed(() => {
+    let count = 0;
+    if (monthNum.value) {
+        count += 1;
+    }
+    if (effectiveSorts.value.length > 1 && sortField.value !== effectiveSorts.value[0]!.value) {
+        count += 1;
+    }
+    if (sortDir.value !== 'desc') {
+        count += 1;
+    }
+    return count;
+});
+
 const pageSize = ref(props.pageSize);
 if (props.prefKey) {
     const saved = getModulePref(props.prefKey).pageSize;
@@ -482,7 +514,35 @@ function onListHotkey(event: KeyboardEvent): void {
 }
 
 onMounted(() => window.addEventListener('keydown', onListHotkey));
-onBeforeUnmount(() => window.removeEventListener('keydown', onListHotkey));
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', onListHotkey);
+    toolbarResize?.disconnect();
+    toolbarResize = null;
+});
+
+/**
+ * 工具栏宽度监测：驱动「更多筛选」折叠
+ *
+ * 用 watch(toolbarRef) 而不是 onMounted：工具栏在 items 加载完成的分支里，
+ * mounted 那一刻还不存在——与瀑布流列数测量是同一个坑。
+ */
+watch(
+    toolbarRef,
+    (el) => {
+        toolbarResize?.disconnect();
+        toolbarResize = null;
+        if (!el) {
+            return;
+        }
+        const measure = (): void => {
+            toolbarNarrow.value = (el.clientWidth || 0) < 1200;
+        };
+        measure();
+        toolbarResize = new ResizeObserver(measure);
+        toolbarResize.observe(el);
+    },
+    { immediate: true, flush: 'post' },
+);
 
 /* ===== 筛选状态与 URL 双向同步 ===== */
 /**
@@ -589,7 +649,7 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
         />
 
         <template v-else>
-            <div v-if="props.timeOf || props.textOf" class="list-toolbar">
+            <div v-if="props.timeOf || props.textOf" ref="toolbarRef" class="list-toolbar" :class="{ 'is-narrow': toolbarNarrow }">
                 <slot name="toolbar" />
                 <div v-if="props.timeOf" class="toolbar-group">
                     <span class="toolbar-label">时间</span>
@@ -599,11 +659,40 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
                         style="width: 110px;"
                     />
                     <n-select
+                        v-if="!toolbarNarrow"
                         v-model:value="monthNum"
                         :options="monthOptions"
                         style="width: 110px;"
                     />
                 </div>
+                <div v-if="props.prefKey" class="toolbar-group">
+                    <span class="toolbar-label">密度</span>
+                    <n-radio-group v-model:value="compact" size="small">
+                        <n-radio-button :value="false">舒适</n-radio-button>
+                        <n-radio-button :value="true">紧凑</n-radio-button>
+                    </n-radio-group>
+                </div>
+                <n-popover v-if="toolbarNarrow && (props.timeOf || effectiveSorts.length > 0)" trigger="click" placement="bottom-end">
+                    <template #trigger>
+                        <n-button size="small" :type="moreFilterCount > 0 ? 'primary' : 'default'" ghost>
+                            更多筛选{{ moreFilterCount > 0 ? ` · ${moreFilterCount}` : '' }}
+                        </n-button>
+                    </template>
+                    <div class="toolbar-pop">
+                        <div v-if="props.timeOf" class="toolbar-group">
+                            <span class="toolbar-label">月份</span>
+                            <n-select v-model:value="monthNum" :options="monthOptions" style="width: 110px;" />
+                        </div>
+                        <div v-if="effectiveSorts.length > 1" class="toolbar-group">
+                            <span class="toolbar-label">排序</span>
+                            <n-select v-model:value="sortField" :options="effectiveSorts.map((s) => ({ label: s.label, value: s.value }))" style="width: 130px;" />
+                        </div>
+                        <div v-if="effectiveSorts.length > 0" class="toolbar-group">
+                            <span class="toolbar-label">方向</span>
+                            <n-select v-model:value="sortDir" :options="dirOptions" style="width: 90px;" />
+                        </div>
+                    </div>
+                </n-popover>
                 <div class="toolbar-group to-right">
                     <div v-if="props.prefKey" class="toolbar-group">
                         <span class="toolbar-label">布局</span>
@@ -612,7 +701,7 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
                             <n-radio-button :value="false">瀑布流</n-radio-button>
                         </n-radio-group>
                     </div>
-                    <template v-if="effectiveSorts.length > 0">
+                    <template v-if="effectiveSorts.length > 0 && !toolbarNarrow">
                         <span class="toolbar-label">排序</span>
                         <n-select
                             v-if="effectiveSorts.length > 1"
@@ -644,7 +733,7 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
 
             <n-empty v-if="filtered.length === 0" description="没有符合条件的内容" class="list-empty" />
 
-            <div v-else ref="contentRef" class="list-content" :class="{ 'is-masonry': !paginate }">
+            <div v-else ref="contentRef" class="list-content" :class="{ 'is-masonry': !paginate, 'is-compact': compact }">
                 <!-- 分页：整宽单列 -->
                 <slot v-if="paginate" :items="paged" :paginate="paginate" />
                 <!-- 瀑布流：多列各自堆叠，追加只长最后一列 -->
