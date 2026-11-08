@@ -5,7 +5,7 @@ import HomeWordComposition from '../components/home/HomeWordComposition.vue';
 import HomeRecentInteractions from '../components/home/HomeRecentInteractions.vue';
 import HomeEmojiStrip from '../components/home/HomeEmojiStrip.vue';
 import HomeWordCloud from '../components/home/HomeWordCloud.vue';
-import HomeLocationStrip from '../components/home/HomeLocationStrip.vue';
+import HomeLocationCard from '../components/home/HomeLocationCard.vue';
 import HomeCareCard from '../components/home/HomeCareCard.vue';
 import HomeNightCard from '../components/home/HomeNightCard.vue';
 import HomeHero from '../components/home/HomeHero.vue';
@@ -613,12 +613,7 @@ watch(
                     <home-list-card title="深夜动态" note="凌晨 0–5 点" :items="rankings.night" more-type="night" empty-text="暂无深夜动态" :loading="memoriesLoading" />
                     <home-list-card title="最多点赞" note="按赞数排序" :items="rankings.likes" more-type="likes" empty-text="暂无数据" :loading="memoriesLoading" />
                     <home-list-card title="最多评论" note="按评论数排序" :items="rankings.comments" more-type="comments" empty-text="暂无数据" :loading="memoriesLoading" />
-                    <home-location-strip
-                        title="常驻地点"
-                        :rows="topLocations"
-                        :loading="locationLoading"
-                        note="发布/拍摄地点分布"
-                    />
+                    <home-location-card :rows="topLocations" :loading="locationLoading" />
                 </div>
             </section>
 
