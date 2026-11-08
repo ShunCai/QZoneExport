@@ -569,25 +569,6 @@ export interface TopLocation {
  *  3. 空字符串/空白地点直接跳过；同地点名归并计数，保留最新访问时间
  *  4. 最终按 count 从大到小排序取 Top N，percent 按「带地点的内容总数」归一化
  */
-/**
- * 从地点串提取「城市」键，用于把「深圳市宝安区」「深圳」归并成同一个地方
- *
- * 规则（中国地名惯用层级，纯字符串处理不引库）：
- * - 先剥「省 / 自治区 / 特别行政区」前缀（广东省深圳市 → 深圳市宝安区）
- * - 再取第一个「市」之前的部分：深圳市宝安区 → 深圳、北京市朝阳区 → 北京
- * - 没有市字样的（深圳、纽约、学校）原样返回
- */
-export function cityKeyOf(location: string): string {
-    const name = String(location ?? '').trim();
-    if (!name) {
-        return '';
-    }
-    const withoutProvince = name.replace(/^.{1,8}?(?:省|自治区|特别行政区)/, '');
-    // 「香港特别行政区」整串就是行政区，剥完为空 → 用原名再剥后缀
-    const base = withoutProvince || name.replace(/特别行政区$/, '');
-    const matched = base.match(/^(.{1,10}?)市/);
-    return matched ? matched[1] : base;
-}
 
 type LocationBucket = { count: number; latestTs: number; latestItem: Record<string, any>; kind: DataKey | 'photos'; label: string; route: string };
 
@@ -675,13 +656,5 @@ function bucketsToTop(buckets: Map<string, LocationBucket>, totalLocated: number
 
 export async function loadTopLocations(n = 5): Promise<TopLocation[]> {
     const { buckets, totalLocated } = await collectLocationBuckets((loc) => loc);
-    return bucketsToTop(buckets, totalLocated, n);
-}
-
-/**
- * 常驻城市：「深圳市宝安区 / 深圳」按城市归并后的 Top N
- */
-export async function loadTopCities(n = 5): Promise<TopLocation[]> {
-    const { buckets, totalLocated } = await collectLocationBuckets((loc) => cityKeyOf(loc));
     return bucketsToTop(buckets, totalLocated, n);
 }

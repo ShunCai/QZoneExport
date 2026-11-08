@@ -39,7 +39,7 @@ import { loadWordCounts, type WordCounts } from '../data/wordCounts';
 import { loadRecentInteractions, type RecentInteraction } from '../data/recentInteractions';
 import { loadEmojiStats, type EmojiCount } from '../data/emojiStats';
 import { loadWordCloud, type WordCloudResult } from '../data/wordCloud';
-import { loadTopCities, loadTopLocations, type TopLocation } from '../data/counts';
+import { loadTopLocations, type TopLocation } from '../data/counts';
 import { loadNightDialogs, type NightDialog } from '../data/nightCompanions';
 import { buildSpaceProfileRows } from '../data/spaceProfile';
 import { loadInteractionSelection, type CareFriend, type TopPerson } from '../data/top-people';
@@ -188,8 +188,7 @@ const emojiLoading = ref(false);
 /** 最常用的词：分词较重（30 万字 ~0.5s），空闲时再算，不挡首屏 */
 const wordCloud = ref<WordCloudResult>({ docCount: 0, wordCount: 0, rows: [] });
 const wordCloudLoading = ref(false);
-/** 常驻城市（深圳市宝安区/深圳 归并）与常驻地点（原始地名）两条 */
-const topCities = ref<TopLocation[]>([]);
+/** 常驻地点（原始地名：深圳 / 茂名市高州市 / 深圳市宝安区…各自计次） */
 const topLocations = ref<TopLocation[]>([]);
 const locationLoading = ref(false);
 const emojiTotal = ref(0);
@@ -463,15 +462,13 @@ onMounted(async () => {
             .catch(() => { wordCloud.value = { docCount: 0, wordCount: 0, rows: [] }; })
             .finally(() => { wordCloudLoading.value = false; });
 
-        // 常驻城市 / 常驻地点：与词条同一批空闲计算
+        // 常驻地点：与词条同一批空闲计算
         locationLoading.value = true;
-        Promise.all([loadTopCities(6), loadTopLocations(6)])
-            .then(([cities, locations]) => {
-                topCities.value = cities;
+        loadTopLocations(6)
+            .then((locations) => {
                 topLocations.value = locations;
             })
             .catch(() => {
-                topCities.value = [];
                 topLocations.value = [];
             })
             .finally(() => {
@@ -610,12 +607,18 @@ watch(
             <section class="home-section">
                 <div class="home-section-head">
                     <h2>榜单</h2>
-                    <span class="note">时段 · 最多点赞 · 最多评论</span>
+                    <span class="note">时段 · 最多点赞 · 最多评论 · 常驻地点</span>
                 </div>
-                <div class="home-grid-3">
+                <div class="home-grid-2">
                     <home-list-card title="深夜动态" note="凌晨 0–5 点" :items="rankings.night" more-type="night" empty-text="暂无深夜动态" :loading="memoriesLoading" />
                     <home-list-card title="最多点赞" note="按赞数排序" :items="rankings.likes" more-type="likes" empty-text="暂无数据" :loading="memoriesLoading" />
                     <home-list-card title="最多评论" note="按评论数排序" :items="rankings.comments" more-type="comments" empty-text="暂无数据" :loading="memoriesLoading" />
+                    <home-location-strip
+                        title="常驻地点"
+                        :rows="topLocations"
+                        :loading="locationLoading"
+                        note="发布/拍摄地点分布"
+                    />
                 </div>
             </section>
 
@@ -633,26 +636,12 @@ watch(
                         @select="onModuleSelect"
                     />
                 </div>
-                <div class="home-grid-2 stat-grid">
-                    <home-emoji-strip :rows="emojiTop" :total="emojiTotal" :loading="emojiLoading" />
-                    <home-word-cloud
-                        :data="wordCloud"
-                        :loading="wordCloudLoading"
-                        @search="(word: string) => emit('searchWord', word)"
-                    />
-                    <home-location-strip
-                        title="常驻城市"
-                        :rows="topCities"
-                        :loading="locationLoading"
-                        note="发布/拍摄地点按城市归并"
-                    />
-                    <home-location-strip
-                        title="常驻地点"
-                        :rows="topLocations"
-                        :loading="locationLoading"
-                        note="发布/拍摄地点（原始地名）"
-                    />
-                </div>
+                <home-emoji-strip :rows="emojiTop" :total="emojiTotal" :loading="emojiLoading" />
+                <home-word-cloud
+                    :data="wordCloud"
+                    :loading="wordCloudLoading"
+                    @search="(word: string) => emit('searchWord', word)"
+                />
             </section>
 
             <section class="home-section">
