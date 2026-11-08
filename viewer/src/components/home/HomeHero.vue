@@ -72,7 +72,18 @@ function openAlbum(cover: CoverPhoto): void {
     <header class="home-hero">
         <div class="hero-main">
             <!-- 空间名同样可能内嵌 [em] token，与正文同一套转换 -->
-            <h1 class="hero-title" v-html="hideSensitive ? maskContent(titleText) : titleHtml"></h1>
+            <div class="hero-head">
+                <h1 class="hero-title" v-html="hideSensitive ? maskContent(titleText) : titleHtml"></h1>
+                <!-- 标题栏工具：与空间名同一水平带，不占内容流里的独立一行 -->
+                <button type="button" class="share-cta" @click="emit('openShare')">
+                    <svg class="share-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 16V3" />
+                        <path d="m7 8 5-5 5 5" />
+                        <path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
+                    </svg>
+                    <span>生成分享卡片</span>
+                </button>
+            </div>
             <p class="hero-lead">
                 {{ hideSensitive
                     ? maskContent(spaceDesc || '这里收录了这些年在 QQ 空间留下的全部痕迹。慢慢翻，像翻开一本属于你自己的书。')
@@ -82,16 +93,6 @@ function openAlbum(cover: CoverPhoto): void {
             <div class="hero-signature">
                 <blockquote v-if="signature" class="quote">{{ hideSensitive ? maskContent(signature) : signature }}</blockquote>
             </div>
-
-            <!-- 主操作放在签名之后：描述与签名是连续的一组「自我介绍」，读完再给动作 -->
-            <button type="button" class="share-cta" @click="emit('openShare')">
-                <svg class="share-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M12 16V3" />
-                    <path d="m7 8 5-5 5 5" />
-                    <path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
-                </svg>
-                <span>生成分享卡片</span>
-            </button>
 
             <div class="hero-kpis">
                 <div class="kpi">
@@ -123,7 +124,7 @@ function openAlbum(cover: CoverPhoto): void {
                 </div>
                 <div class="kpi">
                     <div class="v">{{ formatWan(props.views) }}</div>
-                    <div class="l">累计浏览<span class="info" title="不含留言与相片；接口无浏览量">i</span></div>
+                    <div class="l">累计浏览<span class="info" title="仅统计内容条目的浏览数，不含访客模块；留言与相片接口无该字段">i</span></div>
                 </div>
             </div>
         </div>
@@ -155,15 +156,24 @@ function openAlbum(cover: CoverPhoto): void {
     /* 时间轴窄条紧跟 Hero，两者之间不留大空隙；与下方区块的间距交给窄条自己 */
     margin-bottom: 0;
 }
+/* 标题栏：空间名占满剩余宽度，工具按钮固定右端——不再让按钮单独占内容流的一行 */
+.hero-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
 .hero-title {
     font-family: var(--serif);
     font-size: 36px;
     font-weight: 500;
     line-height: 1.25;
     letter-spacing: -0.02em;
-    margin: 0 0 8px;
+    margin: 0;
     color: var(--text-primary);
-    /* 空间名称可能很长，必须允许换行，不能把九宫格挤出去 */
+    /* 空间名称可能很长：允许换行、给右侧按钮让位，不能把九宫格挤出去 */
+    flex: 1 1 auto;
+    min-width: 0;
     overflow-wrap: anywhere;
 }
 .hero-lead {
@@ -194,7 +204,7 @@ function openAlbum(cover: CoverPhoto): void {
     align-items: center;
     gap: 6px;
     height: 34px;
-    margin-top: 16px;
+    flex: 0 0 auto;
     padding: 0 12px;
     border: 1px solid var(--cta-line);
     border-radius: 8px;

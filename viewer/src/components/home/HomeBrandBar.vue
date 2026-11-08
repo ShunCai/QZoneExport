@@ -1,53 +1,23 @@
 <template>
     <footer class="brand-bar">
-        <span class="brand-mark">Q</span>
-        <span class="brand-name">QQ空间导出助手</span>
-        <span class="brand-sub">QQ空间备份查看器</span>
-        <a
-            class="brand-link"
-            href="https://github.com/ShunCai/QZoneExport"
-            target="_blank"
-            rel="noreferrer"
-        >GitHub · 点个 Star</a>
+        <span class="brand-wish">落叶随风，青春，稍纵即逝。</span>
     </footer>
 </template>
 
 <style scoped>
+/* 侧栏底部已有品牌信息，概览底部只留一句寄语，不重复署名 */
 .brand-bar {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 32px;
-    padding: 12px 18px;
-    border: 1px solid var(--border-card);
-    border-radius: 12px;
-    background: var(--bg-primary);
-    font-size: 12px;
-    color: var(--text-muted);
-}
-.brand-mark {
-    width: 20px;
-    height: 20px;
-    flex: 0 0 20px;
-    border-radius: 6px;
-    background: var(--accent);
-    color: #fff;
-    display: flex;
-    align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 500;
+    margin-top: 32px;
+    padding: 18px 0 6px;
+    border-top: 1px solid var(--border-light);
 }
-.brand-name {
-    font-weight: 500;
+.brand-wish {
+    font-family: Georgia, "Songti SC", "SimSun", serif;
+    font-size: 13px;
+    letter-spacing: 0.06em;
     color: var(--text-secondary);
-}
-.brand-link {
-    margin-left: auto;
-    color: var(--text-muted);
-    text-decoration: none;
-}
-.brand-link:hover {
-    color: var(--accent-pressed);
 }
 </style>
