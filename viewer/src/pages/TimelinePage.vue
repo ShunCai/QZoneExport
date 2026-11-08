@@ -37,6 +37,11 @@ const page = ref(1);
 const PAGE_SIZE = 50;
 /** 布局：true=分页（默认）/ false=瀑布流（滚动加载）。偏好记忆在 localStorage，刷新不丢，与其他模块一致 */
 const paginate = ref(getModulePref('timeline').paginate ?? true);
+/**
+ * 列表体：瀑布流列数按它的实际宽度算
+ * （模板里一直写着 ref="listBodyRef"，但 script 从没声明过，等于没绑上——顺手补掉）
+ */
+const listBodyRef = ref<HTMLElement | null>(null);
 
 const filtered = computed(() => {
     let items = allEntries.value;
@@ -54,6 +59,67 @@ const loadedCount = ref(PAGE_SIZE);
 const visibleForFlow = computed(() => filtered.value.slice(0, loadedCount.value));
 /** 瀑布流是否到底：已加载全部，不再触发加载更多 */
 const flowExhausted = computed(() => loadedCount.value >= filtered.value.length);
+
+/**
+ * 瀑布流列数
+ *
+ * 分页与瀑布流此前只有「有没有分页器」的差别，布局完全一样，切换看不出意义。
+ * 这里让瀑布流真正分多列（与列表页同一套规则：每列 ≥420px、最多 3 列）。
+ */
+const flowCols = ref(1);
+let flowResize: ResizeObserver | null = null;
+
+/** 按行优先分配到各列：追加只长最后一列，不顶走已看过的内容 */
+const flowColumns = computed(() => {
+    const cols = Math.max(1, flowCols.value);
+    const items = visibleForFlow.value;
+    if (cols === 1) {
+        return [items];
+    }
+    const out: TimelineEntry[][] = Array.from({ length: cols }, () => []);
+    items.forEach((entry, index) => {
+        out[index % cols]!.push(entry);
+    });
+    return out;
+});
+
+/** 分页给单列、瀑布流给多列——条目模板只写一份 */
+const displayColumns = computed(() => (paginate.value ? [paged.value] : flowColumns.value));
+
+function setupFlowCols(): void {
+    if (paginate.value) {
+        flowResize?.disconnect();
+        flowResize = null;
+        return;
+    }
+    const el = listBodyRef.value;
+    if (!el) {
+        return;
+    }
+    const measure = (): void => {
+        const width = el.clientWidth || 0;
+        if (width <= 0) {
+            // 还没布局完：保持现值，等 ResizeObserver 下一轮再算
+            return;
+        }
+        flowCols.value = Math.max(1, Math.min(3, Math.floor(width / 420)));
+    };
+    measure();
+    if (!flowResize) {
+        flowResize = new ResizeObserver(measure);
+        flowResize.observe(el);
+    }
+}
+
+// 同时监听条目数与容器 ref：数据异步加载 / 挂载时机，任一晚了都会测到 0 宽
+watch([paginate, () => filtered.value.length, listBodyRef], () => {
+    nextTick(setupFlowCols);
+}, { immediate: true });
+
+onBeforeUnmount(() => {
+    flowResize?.disconnect();
+    flowResize = null;
+});
 
 /** 分页模式实际渲染的当前页 */
 const paged = computed(() => {
@@ -248,14 +314,19 @@ watch(sortOrder, () => {
                 </div>
             </div>
 
-            <!-- 时间轴列表（ref 绑在滚动容器上供瀑布流 Observer 使用；分页/瀑布流共用同一列表体仅条目来源不同） -->
+            <!-- 列表体（ref 绑在滚动容器上供瀑布流 Observer 使用）；分页=单列、瀑布流=多列，条目模板只写一份 -->
             <div ref="listBodyRef" class="tl-timeline">
                 <div
-                    v-for="(entry, i) in paginate ? paged : visibleForFlow"
-                    :key="i"
-                    class="tl-event"
-                    @click="navToItem(entry)"
+                    class="tl-masonry"
+                    :style="{ gridTemplateColumns: `repeat(${paginate ? 1 : flowCols}, minmax(0, 1fr))` }"
                 >
+                    <div v-for="(column, ci) in displayColumns" :key="ci" class="tl-masonry-col">
+                        <div
+                            v-for="(entry, i) in column"
+                            :key="i"
+                            class="tl-event"
+                            @click="navToItem(entry)"
+                        >
                     <div class="tl-event-head">
                         <n-tag size="small" :bordered="false" type="info">
                             {{ kindLabel(entry.module) }}
@@ -304,6 +375,8 @@ watch(sortOrder, () => {
                         <div v-else class="tl-compact-entry">
                             <span class="tl-compact-title">{{ entry.title }}</span>
                             <span v-if="entry.desc" class="tl-compact-desc">{{ entry.desc }}</span>
+                        </div>
+                    </div>
                         </div>
                     </div>
                 </div>
@@ -374,7 +447,18 @@ watch(sortOrder, () => {
 .tl-timeline {
     display: flex;
     flex-direction: column;
+}
+/* 卡片流：分页=1 列、瀑布流=多列（列数由内联 grid-template-columns 给） */
+.tl-masonry {
+    display: grid;
+    gap: 0 8px;
+    align-items: start;
+}
+.tl-masonry-col {
+    display: flex;
+    flex-direction: column;
     gap: 8px;
+    min-width: 0;
 }
 .tl-event {
     padding: 10px 12px;
