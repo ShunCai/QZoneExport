@@ -67,6 +67,10 @@ export interface SearchGroup {
     moduleLabel: string;
     /** 该模块命中总数（可能大于 hits.length） */
     total: number;
+    /** 其中「内容条目」命中数：列表页的搜索只覆盖这部分，跳过去能看到的就是这些 */
+    itemTotal: number;
+    /** 其中「评论」命中数 */
+    commentTotal: number;
     /** 截断后的命中列表 */
     hits: SearchHit[];
 }
@@ -144,10 +148,22 @@ export function searchRecords(
         total += 1;
         let group = byModule.get(record.module);
         if (!group) {
-            group = { module: record.module, moduleLabel: record.moduleLabel, total: 0, hits: [] };
+            group = {
+                module: record.module,
+                moduleLabel: record.moduleLabel,
+                total: 0,
+                itemTotal: 0,
+                commentTotal: 0,
+                hits: [],
+            };
             byModule.set(record.module, group);
         }
         group.total += 1;
+        if (record.kind === 'comment') {
+            group.commentTotal += 1;
+        } else {
+            group.itemTotal += 1;
+        }
         if (group.hits.length < limit) {
             group.hits.push({ record, ...piece });
         }

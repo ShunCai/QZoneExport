@@ -130,6 +130,24 @@ function move(step: number): void {
     });
 }
 
+/** 模块到列表页路由的映射：相片没有独立列表页，落到相册页 */
+const LIST_ROUTE: Record<string, string> = { photos: 'albums' };
+
+/**
+ * 查看该模块的全部命中
+ *
+ * 列表页已支持从 URL 恢复关键词（`?q=`），所以直接跳过去就是筛选好的列表，
+ * 比在面板里分页更符合「我要看全部」的预期。
+ */
+function openGroupAll(group: { module: string }): void {
+    const word = keyword.value.trim();
+    if (!word) {
+        return;
+    }
+    navigate(LIST_ROUTE[group.module] ?? group.module, { q: word });
+    emit('close');
+}
+
 function openHit(hit: SearchHit | undefined): void {
     if (!hit) {
         return;
@@ -197,7 +215,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
                     <section v-for="group in result.groups" :key="group.module" class="gs-group">
                         <div class="gs-group-head">
                             <span class="gs-group-name">{{ group.moduleLabel }}</span>
-                            <span class="gs-group-count">{{ group.total }}</span>
+                            <span class="gs-group-count">
+                                {{ group.total }}<template v-if="group.commentTotal">（内容 {{ group.itemTotal }} · 评论 {{ group.commentTotal }}）</template>
+                            </span>
+                            <button
+                                v-if="group.itemTotal > 0"
+                                type="button"
+                                class="gs-group-all"
+                                :title="`到${group.moduleLabel}列表看全部 ${group.itemTotal} 条内容命中（列表搜索只覆盖正文，不含评论）`"
+                                @click="openGroupAll(group)"
+                            >查看全部 {{ group.itemTotal }} 条内容 →</button>
                         </div>
                         <button
                             v-for="(hit, index) in group.hits"
@@ -226,7 +253,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
 
             <div class="gs-foot">
                 <span>↑↓ 选择 · Enter 打开 · Esc 关闭</span>
-                <span v-if="result.total > flat.length">仅显示部分结果，缩小关键词可更精确</span>
+                <span v-if="result.total > flat.length">每组只列前几条，可点「查看全部」进列表</span>
             </div>
         </div>
     </div>
@@ -349,6 +376,19 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
 }
 .gs-group-count {
     font-variant-numeric: tabular-nums;
+}
+/* 查看该模块全部命中：跳列表页并带上关键词 */
+.gs-group-all {
+    margin-left: auto;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 11px;
+    color: var(--accent-pressed);
+    cursor: pointer;
+}
+.gs-group-all:hover {
+    text-decoration: underline;
 }
 .gs-hit {
     display: flex;
