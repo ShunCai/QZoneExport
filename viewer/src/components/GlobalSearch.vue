@@ -215,8 +215,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
                     <section v-for="group in result.groups" :key="group.module" class="gs-group">
                         <div class="gs-group-head">
                             <span class="gs-group-name">{{ group.moduleLabel }}</span>
-                            <span class="gs-group-count">
-                                {{ group.total }}<template v-if="group.commentTotal">（内容 {{ group.itemTotal }} · 评论 {{ group.commentTotal }}）</template>
+                            <span class="gs-group-count">{{ group.total }}</span>
+                            <span v-if="group.commentTotal" class="gs-group-split">
+                                内容 {{ group.itemTotal }} · 评论 {{ group.commentTotal }}
                             </span>
                             <button
                                 v-if="group.itemTotal > 0"
@@ -360,34 +361,61 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
     color: var(--text-secondary);
 }
 .gs-group {
-    margin-top: 6px;
+    margin-top: 2px;
 }
+/* 分组标题：比条目更明确（13px/600），并用细线与上一组分开；
+   原来 12px 常规字重，比右侧蓝色的「查看全部」还弱，层级是倒的 */
 .gs-group-head {
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    padding: 6px 8px 4px;
-    font-size: 12px;
-    color: var(--text-secondary);
+    gap: 7px;
+    margin-top: 6px;
+    padding: 9px 8px 5px;
+    border-top: 1px solid var(--border-light);
+    /* 滚动时吸顶：多组结果往下翻也不会忘了自己在看哪个模块 */
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg-primary);
+}
+.gs-group:first-child .gs-group-head {
+    border-top: none;
+    margin-top: 0;
 }
 .gs-group-name {
-    font-weight: 500;
+    font-size: 13px;
+    font-weight: 600;
     color: var(--text-primary);
 }
+/* 命中数做成徽标，读起来是「标题 + 数量」而不是一串数字 */
 .gs-group-count {
+    padding: 1px 7px;
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    background: var(--bg-toolbar);
+    font-size: 11px;
+    color: var(--text-secondary);
     font-variant-numeric: tabular-nums;
 }
-/* 查看该模块全部命中：跳列表页并带上关键词 */
+/* 内容/评论拆分：比徽标更淡，作为补充说明 */
+.gs-group-split {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+/* 查看该模块全部命中：跳列表页并带上关键词；次要动作，不用主色抢戏 */
 .gs-group-all {
     margin-left: auto;
     padding: 0;
     border: none;
     background: transparent;
     font-size: 11px;
-    color: var(--accent-pressed);
+    color: var(--text-secondary);
     cursor: pointer;
+    transition: color 0.15s;
 }
 .gs-group-all:hover {
+    color: var(--accent-pressed);
     text-decoration: underline;
 }
 .gs-hit {
