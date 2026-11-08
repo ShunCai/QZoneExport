@@ -52,9 +52,18 @@ const viewables = computed(() => props.medias.filter((media) => (
     media.type === 'image' || (media.type === 'video' && !!media.src && !media.link)
 )));
 
-/** 该媒体在查看器里的位置（不可查看时为 -1） */
+/**
+ * 该媒体在查看器里的位置（不可查看时为 -1）
+ *
+ * 按 key/src 查而不是对象引用：调用方常在模板里 `items.map(videoMediaOf)` 现造数组，
+ * 每轮渲染都是新对象，用 indexOf 会因引用失配返回 -1，灯箱就打不开。
+ */
 function viewIndex(media: MediaItem): number {
-    return viewables.value.indexOf(media);
+    const key = media.key || media.src;
+    if (!key) {
+        return viewables.value.indexOf(media);
+    }
+    return viewables.value.findIndex((item) => (item.key || item.src) === key);
 }
 
 /**

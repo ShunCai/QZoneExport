@@ -4,6 +4,7 @@ import { loadList } from '../data/sources';
 import { itemComments, likeTotal, locationOf } from '../data/content';
 import { timeValue } from '../data/format';
 import { useGridColumns } from '../data/gridColumns';
+import { routeQuery } from '../router';
 import ListPage from '../components/ListPage.vue';
 import MediaGrid from '../components/MediaGrid.vue';
 import ThatYearToday from '../components/ThatYearToday.vue';
@@ -50,6 +51,7 @@ const pageSize = computed(() => Math.max(1, Math.round(60 / gridColumns.value)) 
         title="视频"
         :pref-key="'videos'"
         :items="list"
+        :focus-item="(video: Record<string, any>) => !!routeQuery.vid && String(video.vid || video.uniKey || '') === routeQuery.vid"
         :loading="loading"
         empty-hint="暂无视频内容（本次备份可能未包含视频模块）"
         unit="个"
@@ -73,7 +75,13 @@ const pageSize = computed(() => Math.max(1, Math.round(60 / gridColumns.value)) 
 
         <template #default="{ items, paginate }">
             <div ref="gridWrap">
-                <media-grid :medias="items.map(videoMediaOf)" :masonry="!paginate" :item-width="220" />
+                <media-grid
+                    :medias="items.map(videoMediaOf)"
+                    :masonry="!paginate"
+                    :item-width="220"
+                    :open-key="routeQuery.vid"
+                    :highlight-comment="routeQuery.comment"
+                />
             </div>
         </template>
     </list-page>

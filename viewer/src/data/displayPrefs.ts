@@ -30,6 +30,8 @@ export interface ModuleDisplayPref {
     sortField?: string;
     /** 列表排序方向 */
     sortDir?: SortDir;
+    /** 列表每页条数；0 / 未设置为「用页面自己的默认值」 */
+    pageSize?: number;
 }
 
 /** viewer 侧硬编码默认值（对应已锁定设计：showType=列表、viewType=摘要、paginate=分页） */
@@ -41,6 +43,8 @@ export const DEFAULT_PREFS: Required<ModuleDisplayPref> = {
     albumSort: 'custom',
     sortField: '',
     sortDir: 'desc',
+    // 0 表示没设置过：ListPage 会退回各页自己的 pageSize prop
+    pageSize: 0,
 };
 
 const STORE_KEY = 'qzone_viewer_display_prefs';
@@ -79,6 +83,7 @@ export function getModulePref(key: string): Required<ModuleDisplayPref> {
         albumSort: saved.albumSort ?? DEFAULT_PREFS.albumSort,
         sortField: saved.sortField ?? DEFAULT_PREFS.sortField,
         sortDir: (saved.sortDir as SortDir) ?? DEFAULT_PREFS.sortDir,
+        pageSize: saved.pageSize ?? DEFAULT_PREFS.pageSize,
     };
 }
 

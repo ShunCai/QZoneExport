@@ -15,6 +15,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { NButton, NEmpty, NInput, NPagination, NRadioButton, NRadioGroup, NSelect, NSpin } from 'naive-ui';
 import { formatTime, timeValue } from '../data/format';
 import { getModulePref, savePref } from '../data/displayPrefs';
+import { routeQuery } from '../router';
 
 /**
  * 列表页外壳
@@ -123,6 +124,23 @@ watch(layoutMode, (val) => {
         paginate.value = true;
     }
 });
+/** 每页条数：默认取调用方给的 pageSize，用户改过则按模块记忆 */
+const pageSize = ref(props.pageSize);
+if (props.prefKey) {
+    const saved = getModulePref(props.prefKey).pageSize;
+    if (saved && saved > 0) {
+        pageSize.value = saved;
+    }
+}
+/** 可选的每页条数：把页面自己的默认值也并进来（相册按列数算出来的值不在常规档位里） */
+const sizeOptions = computed(() => [...new Set([20, 50, 100, props.pageSize])].sort((a, b) => a - b));
+watch(pageSize, (value) => {
+    if (props.prefKey) {
+        savePref(props.prefKey, { pageSize: value });
+    }
+    page.value = 1;
+});
+
 /** 年与月分开筛（空串表示不限）：先选年再选月，比一个「yyyy年MM月」长列表好翻 */
 const year = ref('');
 const monthNum = ref('');
@@ -273,7 +291,7 @@ let masonryResize: ResizeObserver | null = null;
  */
 let focusApplied = false;
 watch(
-    [() => props.focusItem, sorted, () => props.pageSize],
+    [() => props.focusItem, sorted, pageSize],
     () => {
         if (focusApplied || !props.focusItem) {
             return;
@@ -284,7 +302,7 @@ watch(
         }
         focusApplied = true;
         if (paginate.value) {
-            page.value = Math.floor(index / props.pageSize) + 1;
+            page.value = Math.floor(index / pageSize.value) + 1;
         } else {
             const need = Math.ceil((index + 1) / MASONRY_CHUNK) * MASONRY_CHUNK;
             masonryRendered.value = Math.max(masonryRendered.value, Math.min(sorted.value.length, need));
@@ -294,7 +312,7 @@ watch(
 );
 
 const paged = computed(() => (paginate.value
-    ? sorted.value.slice((page.value - 1) * props.pageSize, page.value * props.pageSize)
+    ? sorted.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
     : sorted.value.slice(0, masonryRendered.value)));
 
 const masonryColumns = computed(() => {
@@ -376,8 +394,8 @@ watch([keyword, year, monthNum, sortDir, sortField, () => props.filter], () => {
     masonryRendered.value = MASONRY_CHUNK;
 });
 // 每页条数变化（如媒体网格随屏宽调整列数）时，把超出新页数的页码钳回最后一页，避免显示空页
-watch(() => props.pageSize, () => {
-    const maxPage = Math.max(1, Math.ceil(filtered.value.length / props.pageSize));
+watch(pageSize, () => {
+    const maxPage = Math.max(1, Math.ceil(filtered.value.length / pageSize.value));
     if (page.value > maxPage) {
         page.value = maxPage;
     }
@@ -390,6 +408,76 @@ watch(year, () => {
 watch(page, () => {
     document.querySelector('.page-body')?.scrollTo({ top: 0 });
 });
+
+/* ===== 筛选状态与 URL 双向同步 ===== */
+/**
+ * 写回 URL
+ *
+ * 用 replaceState：筛选变化不该堆历史记录，浏览器返回仍回到上一个页面。
+ * 只在参数真正变化时写，避免无谓的 history 操作。
+ * 相册详情的 id / photo 等参数保持不动，只增删自己这几个键。
+ */
+function syncToUrl(): void {
+    const raw = location.hash.replace(/^#\/?/, '');
+    const [path, search = ''] = raw.split('?');
+    if (!path) {
+        return;
+    }
+    const params = new URLSearchParams(search);
+    const put = (key: string, value: string): void => {
+        if (value) {
+            params.set(key, value);
+        } else {
+            params.delete(key);
+        }
+    };
+    put('q', keyword.value.trim());
+    put('year', year.value);
+    put('month', monthNum.value);
+    put('sort', sortField.value);
+    put('dir', sortDir.value === 'asc' ? 'asc' : '');
+    put('layout', paginate.value ? '' : 'flow');
+    const next = params.toString();
+    const target = '#/' + path + (next ? '?' + next : '');
+    if (location.hash !== target) {
+        history.replaceState(null, '', target);
+    }
+}
+
+watch([keyword, year, monthNum, sortField, sortDir, paginate], syncToUrl);
+
+/**
+ * 从 URL 恢复筛选
+ *
+ * 分享链接、刷新、从详情页返回时都能还原筛选；月份放下一帧恢复，
+ * 因为 year 的 watch 会主动清空 month（那是「用户切换年份」的语义）。
+ */
+function restoreFromUrl(): void {
+    const query = routeQuery.value;
+    if (query.q) {
+        keywordInput.value = query.q;
+    }
+    if (query.year) {
+        year.value = query.year;
+    }
+    if (query.sort) {
+        sortField.value = query.sort;
+    }
+    if (query.dir === 'asc' || query.dir === 'desc') {
+        sortDir.value = query.dir;
+    }
+    if (query.layout === 'flow') {
+        layoutMode.value = false;
+    } else if (query.layout === 'page') {
+        layoutMode.value = true;
+    }
+    if (query.month) {
+        nextTick(() => {
+            monthNum.value = query.month ?? '';
+        });
+    }
+}
+restoreFromUrl();
 </script>
 
 <template>
@@ -487,11 +575,14 @@ watch(page, () => {
                     </div>
                 </div>
 
-                <div v-if="paginate && filtered.length > props.pageSize" class="list-pager">
+                <div v-if="paginate && filtered.length > pageSize" class="list-pager">
                     <n-pagination
                         v-model:page="page"
-                        :page-size="props.pageSize"
+                        v-model:page-size="pageSize"
                         :item-count="filtered.length"
+                        :page-sizes="sizeOptions"
+                        show-size-picker
+                        show-quick-jumper
                     />
                 </div>
 

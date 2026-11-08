@@ -121,6 +121,8 @@ export function videoUploadTime(item: Record<string, any>): number | string | un
  */
 export function videoMediaOf(item: Record<string, any>): MediaItem {
     const video = item.video_info || item;
+    // 定位键：vid 优先，退 uniKey（与 search 的视频索引保持一致）
+    const key = String(item.vid || item.uniKey || '');
     const poster = videoPoster(item) || videoPoster(item.video_info);
     const comments = itemComments(item);
     const info = {
@@ -137,6 +139,7 @@ export function videoMediaOf(item: Record<string, any>): MediaItem {
     if (isExternalVideo(video)) {
         return {
             type: 'video',
+            key,
             src: poster,
             poster,
             link: externalVideoUrl(video),
@@ -147,6 +150,7 @@ export function videoMediaOf(item: Record<string, any>): MediaItem {
     }
     return {
         type: 'video',
+        key,
         src: videoUrl(item) || videoUrl(item.video_info),
         poster,
         info,

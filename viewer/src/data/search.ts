@@ -168,7 +168,7 @@ function textOf(value: unknown, max = 4000): string {
 }
 
 /** 没有 `?id=` 深链的模块：命中后只能落到列表 */
-const NO_DEEP_LINK = new Set(['favorites', 'videos']);
+const NO_DEEP_LINK = new Set(['favorites']);
 
 /** 条目 id 的统一兜底链：不同模块的主键字段不同 */
 function pickId(item: Record<string, any>, fields: string[]): string {
@@ -205,6 +205,8 @@ interface ModuleDef {
     route: string;
     /** 评论来源：默认 itemComments(item)；留言的回复挂在 replyList 上，需要单独指定 */
     commentsOf?: (item: Record<string, any>) => Record<string, any>[];
+    /** 跳转参数名，默认 id（视频页用 vid） */
+    queryKey?: string;
 }
 
 /** 说说/留言这类没有标题的：取正文开头当标题 */
@@ -273,8 +275,9 @@ const MODULES: ModuleDef[] = [
         timeOf: (item) => timeValue(item.createTime || item.create_time || item.uploadTime || item.time),
         titleOf: (item) => leadingText(textOf(item.title || item.name)),
         bodyOf: (item) => textOf([item.title, item.name, item.desc, item.custom_desc].filter(Boolean).join(' ')),
-        // 视频页没有 ?id= 深链，结果只能落到列表
         route: 'videos',
+        // 视频页的参数名是 vid（不是 id）
+        queryKey: 'vid',
     },
     {
         module: 'favorites',
@@ -319,8 +322,8 @@ export async function buildSearchRecords(): Promise<SearchRecord[]> {
                     title: title || body.slice(0, 32),
                     body: body || title,
                     route: def.route,
-                    // 收藏与视频没有 ?id= 深链：不带 id，落到列表
-                    query: NO_DEEP_LINK.has(def.module) ? {} : { id: itemId },
+                    // 收藏没有 ?id= 深链：不带 id，落到列表
+                    query: NO_DEEP_LINK.has(def.module) ? {} : { [def.queryKey ?? 'id']: itemId },
                 });
             }
 
@@ -342,7 +345,7 @@ export async function buildSearchRecords(): Promise<SearchRecord[]> {
                         author: plainText(comment.name || comment.nickname),
                         context: leadingText(title || body, 40),
                         route: def.route,
-                        query: NO_DEEP_LINK.has(def.module) ? {} : { id: itemId, comment: cid },
+                        query: NO_DEEP_LINK.has(def.module) ? {} : { [def.queryKey ?? 'id']: itemId, comment: cid },
                     });
                 }
                 const replies = comment.replyList || comment.replies || [];
