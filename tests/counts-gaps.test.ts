@@ -38,7 +38,7 @@ describe('computeGaps', () => {
         expect(result!.activeMonths).toBe(4);
         expect(result!.silentMonths).toBe(45);
         expect(result!.longestGapMonths).toBe(blankMonths([2017, 1], [nowY, nowM]));
-        expect(result!.gapStart).toBe('2017年2月');
+        expect(result!.gapStart).toBe('2017年02月');
         expect(result!.gapEnd).toBe(`${nowY}年${nowM}月`);
         expect(result!.gapOngoing).toBe(true);
         // Top3：尾部第一，中间「2013年3月→2016年10月」第二
