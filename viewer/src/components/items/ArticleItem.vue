@@ -64,10 +64,7 @@ const abstractImages = computed<string[]>(() => (props.item.img || [])
 <template>
     <div class="card-item">
         <div class="item-head">
-            <n-button text class="item-title" @click="emit('open', props.item)">
-                {{ props.item.title || props.item.custom_title || '（无标题）' }}
-            </n-button>
-            <!-- 原创/转载/置顶标识 -->
+            <!-- 原创/转载/置顶标识：放标题左边，与标题的对比更强 -->
             <n-tag
                 v-for="label in blogLabels(props.item)"
                 :key="label"
@@ -76,6 +73,9 @@ const abstractImages = computed<string[]>(() => (props.item.img || [])
                 :type="blogLabelType(label)"
             >{{ label }}</n-tag>
             <n-tag v-if="props.item.category" size="small" :bordered="false">{{ props.item.category }}</n-tag>
+            <n-button text class="item-title" @click="emit('open', props.item)">
+                {{ props.item.title || props.item.custom_title || '（无标题）' }}
+            </n-button>
             <n-tag v-if="props.item.private" size="small" :bordered="false" type="warning">私密</n-tag>
         </div>
         <div class="item-meta">
@@ -111,6 +111,17 @@ const abstractImages = computed<string[]>(() => (props.item.img || [])
 .item-title {
     font-size: 15px;
     font-weight: 600;
+    /* 多列窄卡下长标题（无空格的下划线串/长英文）必须能断行，否则溢出列边界 */
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+    text-align: left;
+}
+/* n-button 默认不换行，长标题下强制恢复 */
+.item-title :deep(.n-button__content) {
+    white-space: normal;
+    text-align: left;
 }
 .item-meta {
     display: flex;
