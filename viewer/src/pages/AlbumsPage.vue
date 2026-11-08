@@ -68,6 +68,12 @@ function syncAlbumUrl(): void {
 
 watch([keyword, year], syncAlbumUrl);
 
+/** 同一路由下改 hash（点侧栏菜单重进相册）不会重建组件，这里跟着 URL 重置筛选 */
+watch(() => routeQuery.value, (query) => {
+    keyword.value = query.q ?? '';
+    year.value = query.year ?? '';
+});
+
 /** 清除全部筛选（关键词 / 年份 / 浏览者），让用户从「0 个结果」回到全部 */
 function clearAlbumFilters(): void {
     keyword.value = '';

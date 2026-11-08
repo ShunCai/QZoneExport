@@ -505,19 +505,17 @@ function syncToUrl(): void {
 watch([keyword, year, monthNum, sortField, sortDir, paginate], syncToUrl);
 
 /**
- * 从 URL 恢复筛选
+ * 用 URL 参数覆盖当前筛选
  *
- * 分享链接、刷新、从详情页返回时都能还原筛选；月份放下一帧恢复，
- * 因为 year 的 watch 会主动清空 month（那是「用户切换年份」的语义）。
+ * 分享链接、刷新、从详情页返回、以及**点左侧菜单重进同一模块**都走这里。
+ * 月份放下一帧恢复，因为 year 的 watch 会主动清空 month（那是「用户切换年份」的语义）。
  */
-function restoreFromUrl(): void {
-    const query = routeQuery.value;
-    if (query.q) {
-        keywordInput.value = query.q;
-    }
-    if (query.year) {
-        year.value = query.year;
-    }
+function applyFromUrl(query: Record<string, string>): void {
+    // 菜单点「说说」会把 hash 改回不带参数的 #/messages，此时必须把筛选清掉，
+    // 否则界面还停在上一次的搜索结果、而 URL 已经干净了，两者对不上
+    keywordInput.value = query.q ?? '';
+    keyword.value = query.q ?? '';
+    year.value = query.year ?? '';
     if (query.sort) {
         sortField.value = query.sort;
     }
@@ -529,13 +527,20 @@ function restoreFromUrl(): void {
     } else if (query.layout === 'page') {
         layoutMode.value = true;
     }
-    if (query.month) {
-        nextTick(() => {
-            monthNum.value = query.month ?? '';
-        });
-    }
+    nextTick(() => {
+        monthNum.value = query.month ?? '';
+    });
 }
-restoreFromUrl();
+
+applyFromUrl(routeQuery.value);
+
+/**
+ * 监听 URL 变化
+ *
+ * 同一路由下改 hash（点侧栏菜单、浏览器前进后退）不会重建组件，
+ * 只靠 setup 里那一次调用会漏掉。自身的 syncToUrl 用 replaceState，不会触发这里，无循环风险。
+ */
+watch(() => routeQuery.value, (query) => applyFromUrl(query));
 </script>
 
 <template>
