@@ -236,7 +236,7 @@ function accessTag(album: Record<string, any>): string {
         <list-page
             v-else
             :pref-key="'albums'"
-            :title="current.name || '相册'"
+            :title="[current.className, current.name].filter(Boolean).join(' / ') || '相册'"
             :items="current.photoList || []"
             :loading="false"
             empty-hint="这个相册还没有相片"
@@ -245,6 +245,7 @@ function accessTag(album: Record<string, any>): string {
             :time-of="photoTimeOf"
             :sorts="photoSorts"
             :text-of="(photo: Record<string, any>) => [photo.name, photo.desc, photoLocation(photo)].filter(Boolean).join(' ')"
+            :comments-of="(photo: Record<string, any>) => itemComments(photo).flatMap((comment: Record<string, any>) => [String(comment.content || ''), ...((comment.replyList || []) as Record<string, any>[]).map((reply: Record<string, any>) => String(reply.content || ''))]).filter(Boolean)"
             :focus-item="(photo: Record<string, any>) => !!routeQuery.photo && String(photo.lloc || photo.name || '') === routeQuery.photo"
         >
             <template #head-prefix>
@@ -258,7 +259,6 @@ function accessTag(album: Record<string, any>): string {
                 <!-- 相册自身的信息与赞/评/浏览 -->
                 <div class="album-info">
                     <div class="album-info-line">
-                        <n-tag v-if="current.className" size="small" :bordered="false">{{ current.className }}</n-tag>
                         <n-tag v-if="accessTag(current)" size="small" :bordered="false" type="warning">
                             {{ accessTag(current) }}
                         </n-tag>

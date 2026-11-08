@@ -4,7 +4,8 @@ import { NButton, NSelect } from 'naive-ui';
 import { loadList } from '../data/sources';
 import { useVisitorFilter } from '../data/visitorFilter';
 import { navigate, routeQuery } from '../router';
-import { shareFromInfo, shareTypeLabel } from '../data/content';
+import { itemComments, shareFromInfo, shareTypeLabel } from '../data/content';
+import { useSearchHighlight } from '../composables/useSearchHighlight';
 import ListPage from '../components/ListPage.vue';
 import ThatYearToday from '../components/ThatYearToday.vue';
 import ShareItem from '../components/items/ShareItem.vue';
@@ -16,6 +17,9 @@ import ShareItem from '../components/items/ShareItem.vue';
  * 详情页地址形如 #/shares?id=xxx，供访客记录等外部链接定位到具体分享。
  */
 const loading = ref(true);
+
+/** 从全局搜索跳进来时，把正文里的命中词标出来 */
+useSearchHighlight();
 const list = ref<Record<string, any>[]>([]);
 
 onMounted(async () => {
@@ -109,6 +113,7 @@ const combinedFilter = computed(() => (item: Record<string, any>) => {
         :filter="combinedFilter"
         sort-label="分享时间"
         :text-of="(item) => [item.desc, item.source?.title, item.source?.desc, item.nickname, shareFromInfo(item).name].filter(Boolean).join(' ')"
+        :comments-of="(item: Record<string, any>) => itemComments(item).flatMap((comment: Record<string, any>) => [String(comment.content || ''), ...((comment.replyList || []) as Record<string, any>[]).map((reply: Record<string, any>) => String(reply.content || ''))]).filter(Boolean)"
     >
         <!-- 那年今日（按分享时间算） -->
         <template #lead>

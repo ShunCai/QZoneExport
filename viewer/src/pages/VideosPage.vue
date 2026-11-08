@@ -60,6 +60,7 @@ const pageSize = computed(() => Math.max(1, Math.round(60 / gridColumns.value)) 
         sort-label="拍摄时间"
         :sorts="sorts"
         :text-of="(item) => [item.name, item.desc, locationOf(item)].filter(Boolean).join(' ')"
+        :comments-of="(item: Record<string, any>) => itemComments(item).flatMap((comment: Record<string, any>) => [String(comment.content || ''), ...((comment.replyList || []) as Record<string, any>[]).map((reply: Record<string, any>) => String(reply.content || ''))]).filter(Boolean)"
     >
         <!-- 那年今日（按上传时间算） -->
         <template #lead>

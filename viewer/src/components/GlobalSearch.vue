@@ -165,7 +165,13 @@ function openHit(hit: SearchHit | undefined): void {
     if (!hit) {
         return;
     }
-    navigate(hit.record.route, hit.record.query);
+    // 详情页要靠 ?q= 做命中词高亮；返回列表时列表页也会按它恢复筛选
+    const query = { ...hit.record.query };
+    const word = keyword.value.trim();
+    if (word) {
+        query.q = word;
+    }
+    navigate(hit.record.route, query);
     emit('close');
 }
 
@@ -200,7 +206,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
                     v-model="keyword"
                     class="gs-input"
                     type="search"
-                    placeholder="搜索说说、日志、留言、评论…"
+                    placeholder="搜索说说、日志、相册、相片、视频、留言、评论…"
                     @keydown.down.prevent="move(1)"
                     @keydown.up.prevent="move(-1)"
                     @keydown.enter.prevent="openActive"

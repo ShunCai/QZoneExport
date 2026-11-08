@@ -4,6 +4,7 @@ import { NButton } from 'naive-ui';
 import { loadData } from '../data/sources';
 import { fixHtmlAssets } from '../data/content';
 import { navigate, routeQuery } from '../router';
+import { useSearchHighlight } from '../composables/useSearchHighlight';
 import ListPage from '../components/ListPage.vue';
 import ThatYearToday from '../components/ThatYearToday.vue';
 import BoardItem from '../components/items/BoardItem.vue';
@@ -15,6 +16,9 @@ import BoardItem from '../components/items/BoardItem.vue';
  * 详情页地址形如 #/boards?id=xxx，供时间轴/互动等外部链接定位到具体留言。
  */
 const loading = ref(true);
+
+/** 从全局搜索跳进来时，把正文里的命中词标出来 */
+useSearchHighlight();
 const list = ref<Record<string, any>[]>([]);
 const slogan = ref('');
 
@@ -60,6 +64,7 @@ const current = computed(() => (
         empty-hint="暂无留言内容（本次备份可能未包含留言模块）"
         :time-of="(item) => item.pubtime || item.pubTime"
         :text-of="(item) => [item.content, item.nickname, item.name].filter(Boolean).join(' ')"
+        :comments-of="(item: Record<string, any>) => ((item.replyList || []) as Record<string, any>[]).map((reply: Record<string, any>) => String(reply.content || '')).filter(Boolean)"
     >
         <!-- 主人寄语（旧留言页顶部同款）与那年今日 -->
         <template #lead>

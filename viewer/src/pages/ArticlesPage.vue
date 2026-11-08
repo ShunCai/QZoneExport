@@ -9,6 +9,7 @@ import { openImageLightbox } from '../data/lightbox';
 import { navigate, routeQuery } from '../router';
 import CommentList from '../components/CommentList.vue';
 import ItemStats from '../components/ItemStats.vue';
+import { useSearchHighlight } from '../composables/useSearchHighlight';
 import ListPage from '../components/ListPage.vue';
 import { useVisitorFilter } from '../data/visitorFilter';
 import ThatYearToday from '../components/ThatYearToday.vue';
@@ -29,6 +30,9 @@ const props = defineProps<{
 }>();
 
 const loading = ref(true);
+
+/** 从全局搜索跳进来时，把正文里的命中词标出来 */
+useSearchHighlight();
 const list = ref<Record<string, any>[]>([]);
 /** 展示偏好键：Blogs/Diaries 对应路由 key（小写），用于按模块记忆偏好 */
 const prefKey = computed(() => props.configKey.toLowerCase());
@@ -247,6 +251,7 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => [
         sort-label="发表时间"
         :sorts="sorts"
         :text-of="(item) => [item.title, item.custom_title, item.category].filter(Boolean).join(' ')"
+        :comments-of="(item: Record<string, any>) => itemComments(item).flatMap((comment: Record<string, any>) => [String(comment.content || ''), ...((comment.replyList || []) as Record<string, any>[]).map((reply: Record<string, any>) => String(reply.content || ''))]).filter(Boolean)"
     >
         <!-- 那年今日（按发表时间算） -->
         <template #lead>

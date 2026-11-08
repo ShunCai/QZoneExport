@@ -222,6 +222,15 @@ body {
     border-radius: 6px;
     background: var(--bg-tint-blue);
 }
+/* 详情页命中词高亮（CSS Custom Highlight API，不动 DOM） */
+::highlight(search-hit) {
+    background-color: #ffe6a1;
+    color: #1f2329;
+}
+:root.dark ::highlight(search-hit) {
+    background-color: #5a4a1c;
+    color: #f5e9c8;
+}
 mark.gs-mark {
     padding: 0 2px;
     margin: 0 1px;

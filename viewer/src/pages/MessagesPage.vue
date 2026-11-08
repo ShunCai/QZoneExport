@@ -7,6 +7,7 @@ import { useVisitorFilter } from '../data/visitorFilter';
 import { itemComments, likeTotal, locationOf, messageEffectiveTime, messagePublishTime, viewCount } from '../data/content';
 import { timeValue } from '../data/format';
 import { navigate, routeQuery } from '../router';
+import { useSearchHighlight } from '../composables/useSearchHighlight';
 import ListPage from '../components/ListPage.vue';
 import ThatYearToday from '../components/ThatYearToday.vue';
 import MessageItem from '../components/items/MessageItem.vue';
@@ -17,6 +18,9 @@ import MessageItem from '../components/items/MessageItem.vue';
  * 详情页地址形如 #/messages?id=xxx（tid），供访客记录等外部链接定位到具体说说。
  */
 const loading = ref(true);
+
+/** 从全局搜索跳进来时，把正文里的命中词标出来 */
+useSearchHighlight();
 const list = ref<Record<string, any>[]>([]);
 
 onMounted(async () => {
@@ -83,6 +87,7 @@ const sorts = [
         sort-label="发表时间"
         :sorts="sorts"
         :text-of="(item) => [item.content, item.rt_con, item.rt_uinname, locationOf(item)].filter(Boolean).join(' ')"
+        :comments-of="(item: Record<string, any>) => itemComments(item).flatMap((comment: Record<string, any>) => [String(comment.content || ''), ...((comment.replyList || []) as Record<string, any>[]).map((reply: Record<string, any>) => String(reply.content || ''))]).filter(Boolean)"
     >
         <!-- 形态筛选放在工具栏最左侧，与 ListPage 自带的时间/排序/搜索并列 -->
         <template #toolbar>
