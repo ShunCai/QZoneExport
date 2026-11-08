@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { GapStats } from '../../data/counts';
 
 /**
@@ -10,6 +11,15 @@ const props = defineProps<{
     stats: GapStats | null;
     loading?: boolean;
 }>();
+
+/** 主指标换算：≥12 个月显示「X 年 Y 个月」，不足一年保持「N 个月」 */
+const hero = computed(() => {
+    const months = props.stats?.longestGapMonths ?? 0;
+    if (months >= 12) {
+        return { years: Math.floor(months / 12), rest: months % 12 };
+    }
+    return null;
+});
 </script>
 
 <template>
@@ -22,8 +32,19 @@ const props = defineProps<{
         <p v-else-if="!props.stats" class="empty">内容太少，谈不上断档</p>
         <template v-else>
             <div class="gap-hero">
-                <span class="gap-num">{{ props.stats.longestGapMonths }}</span>
-                <span class="gap-unit">个月最长沉默</span>
+                <template v-if="hero">
+                    <span class="gap-num">{{ hero.years }}</span>
+                    <span class="gap-unit">年</span>
+                    <template v-if="hero.rest">
+                        <span class="gap-num">{{ hero.rest }}</span>
+                        <span class="gap-unit">个月</span>
+                    </template>
+                </template>
+                <template v-else>
+                    <span class="gap-num">{{ props.stats.longestGapMonths }}</span>
+                    <span class="gap-unit">个月</span>
+                </template>
+                <span class="gap-unit">最长沉默</span>
             </div>
             <div v-if="props.stats.longestGapMonths > 0" class="gap-range">
                 {{ props.stats.gapStart }} →

@@ -491,7 +491,7 @@ export function computeGaps(stats: MonthlyStat): GapStats | null {
         .sort((a, b) => a - b);
 
     // 收集全部断档段（相邻活跃月之间 + 尾部「至今」）
-    const monthAt = (idx: number): string => `${y1 + Math.floor(idx / 12)}年${(idx % 12) + 1}月`;
+    const monthAt = (idx: number): string => `${y1 + Math.floor(idx / 12)}年${String((idx % 12) + 1).padStart(2, '0')}月`;
     const allGaps: { start: string; end: string; months: number; ongoing: boolean }[] = [];
     for (let i = 1; i < idxs.length; i++) {
         const months = idxs[i] - idxs[i - 1] - 1;

@@ -105,6 +105,7 @@ const abstractImages = computed<string[]>(() => (props.item.img || [])
 <style scoped>
 .item-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 10px;
 }
