@@ -639,6 +639,9 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
                 </div>
             </div>
 
+            <!-- 工具栏之后的附加区（如「那年今日」）：放在筛选之下、列表之上，避免被误当筛选条件 -->
+            <slot name="after-toolbar" />
+
             <n-empty v-if="filtered.length === 0" description="没有符合条件的内容" class="list-empty" />
 
             <div v-else ref="contentRef" class="list-content" :class="{ 'is-masonry': !paginate }">

@@ -121,14 +121,6 @@ const combinedFilter = computed(() => (item: Record<string, any>) => {
                 仅显示 <b>{{ visitorName || visitorUin }}</b> 浏览过的分享
                 <button class="visitor-clear" type="button" @click="clearVisitor">清除筛选</button>
             </div>
-            <that-year-today
-                :items="list"
-                :time-of="(item: Record<string, any>) => item.shareTime"
-            >
-                <template #item="{ item }">
-                    <share-item :item="item" />
-                </template>
-            </that-year-today>
         </template>
 
         <!-- 筛选条：类型 + 来源 -->
@@ -156,6 +148,16 @@ const combinedFilter = computed(() => (item: Record<string, any>) => {
         <template #default="{ items }">
             <share-item v-for="(item, index) in items" :key="item.id || index" :item="item" />
         </template>
+    <template #after-toolbar>
+            <that-year-today
+                :items="list"
+                :time-of="(item: Record<string, any>) => item.shareTime"
+            >
+                <template #item="{ item }">
+                    <share-item :item="item" />
+                </template>
+            </that-year-today>
+    </template>
     </list-page>
 </template>
 

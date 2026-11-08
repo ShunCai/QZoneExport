@@ -35,14 +35,6 @@ onMounted(async () => {
     >
         <!-- 那年今日（按访问时间算） -->
         <template #lead>
-            <that-year-today
-                :items="list"
-                :time-of="(item: Record<string, any>) => item.time"
-            >
-                <template #item="{ item }">
-                    <visitor-item :item="item" />
-                </template>
-            </that-year-today>
         </template>
 
         <template #default="{ items }">
@@ -52,5 +44,15 @@ onMounted(async () => {
                 :item="item"
             />
         </template>
+    <template #after-toolbar>
+            <that-year-today
+                :items="list"
+                :time-of="(item: Record<string, any>) => item.time"
+            >
+                <template #item="{ item }">
+                    <visitor-item :item="item" />
+                </template>
+            </that-year-today>
+    </template>
     </list-page>
 </template>

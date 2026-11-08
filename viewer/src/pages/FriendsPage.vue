@@ -487,14 +487,6 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
 
         <template v-else>
             <!-- 那年今日（按相识时间算）；本页不走 ListPage，故直接放在工具栏之前 -->
-            <that-year-today
-                :items="list"
-                :time-of="(item: Record<string, any>) => item.addFriendTime"
-            >
-                <template #item="{ item }">
-                    <friend-item :item="item" />
-                </template>
-            </that-year-today>
 
             <!-- 工具栏按职能分区：【视图】【筛选】在左，【排序+搜索】靠右 -->
             <div class="list-toolbar">
@@ -525,6 +517,15 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
                     <n-input v-model:value="keyword" placeholder="搜索昵称、备注或 QQ" clearable style="width: 220px;" />
                 </div>
             </div>
+            <that-year-today
+                :items="list"
+                :time-of="(item: Record<string, any>) => item.addFriendTime"
+            >
+                <template #item="{ item }">
+                    <friend-item :item="item" />
+                </template>
+            </that-year-today>
+
             <n-data-table
                 v-if="showType === '0'"
                 :columns="columns"

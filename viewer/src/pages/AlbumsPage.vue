@@ -270,14 +270,6 @@ function accessTag(album: Record<string, any>): string {
                 </div>
 
                 <!-- 那年今日：相册本身不算，只算本册相片（按相片上传时间） -->
-                <that-year-today
-                    :items="current.photoList || []"
-                    :time-of="(photo: Record<string, any>) => resolvePhotoTime(photo, 'upload')"
-                >
-                    <template #item="{ item }">
-                        <photo-batch-item :album="current" :photos="[item]" />
-                    </template>
-                </that-year-today>
             </template>
 
             <!-- 点任一张在大图里翻当页，单张相片的评论在大图右侧面板 -->
@@ -293,7 +285,17 @@ function accessTag(album: Record<string, any>): string {
                     />
                 </div>
             </template>
-        </list-page>
+        <template #after-toolbar>
+                <that-year-today
+                    :items="current.photoList || []"
+                    :time-of="(photo: Record<string, any>) => resolvePhotoTime(photo, 'upload')"
+                >
+                    <template #item="{ item }">
+                        <photo-batch-item :album="current" :photos="[item]" />
+                    </template>
+                </that-year-today>
+    </template>
+    </list-page>
     </template>
 
     <!-- 相册列表 -->

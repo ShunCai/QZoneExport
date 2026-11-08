@@ -72,6 +72,11 @@ const current = computed(() => (
                 <div class="slogan-title">主人寄语</div>
                 <div class="slogan-body" v-html="fixHtmlAssets(slogan, 'Boards') || '说些寄语，欢迎您的空间访客吧'" />
             </div>
+        </template>
+        <template #default="{ items }">
+            <board-item v-for="(item, index) in items" :key="item.id || index" :item="item" />
+        </template>
+    <template #after-toolbar>
             <that-year-today
                 :items="list"
                 :time-of="(item: Record<string, any>) => item.pubtime"
@@ -80,10 +85,7 @@ const current = computed(() => (
                     <board-item :item="item" />
                 </template>
             </that-year-today>
-        </template>
-        <template #default="{ items }">
-            <board-item v-for="(item, index) in items" :key="item.id || index" :item="item" />
-        </template>
+    </template>
     </list-page>
 </template>
 

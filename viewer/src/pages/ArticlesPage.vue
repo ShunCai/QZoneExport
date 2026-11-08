@@ -259,14 +259,6 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => [
                 仅显示 <b>{{ visitorName || visitorUin }}</b> 浏览过的{{ props.title }}
                 <button class="visitor-clear" type="button" @click="clearVisitor">清除筛选</button>
             </div>
-            <that-year-today
-                :items="list"
-                :time-of="timeOf"
-            >
-                <template #item="{ item }">
-                    <article-item :item="item" :config-key="props.configKey" :view-type="effectiveViewType" @open="openDetail" />
-                </template>
-            </that-year-today>
         </template>
 
         <!-- 分类筛选与展示方式（展示方式默认取自备份配置，可在此临时切换） -->
@@ -315,6 +307,16 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => [
                 />
             </template>
         </template>
+    <template #after-toolbar>
+            <that-year-today
+                :items="list"
+                :time-of="timeOf"
+            >
+                <template #item="{ item }">
+                    <article-item :item="item" :config-key="props.configKey" :view-type="effectiveViewType" @open="openDetail" />
+                </template>
+            </that-year-today>
+    </template>
     </list-page>
 </template>
 

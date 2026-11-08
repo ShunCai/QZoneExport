@@ -64,14 +64,6 @@ const pageSize = computed(() => Math.max(1, Math.round(60 / gridColumns.value)) 
     >
         <!-- 那年今日（按上传时间算） -->
         <template #lead>
-            <that-year-today
-                :items="list"
-                :time-of="timeOf"
-            >
-                <template #item="{ item }">
-                    <video-item :item="item" />
-                </template>
-            </that-year-today>
         </template>
 
         <template #default="{ items, paginate }">
@@ -85,5 +77,15 @@ const pageSize = computed(() => Math.max(1, Math.round(60 / gridColumns.value)) 
                 />
             </div>
         </template>
+    <template #after-toolbar>
+            <that-year-today
+                :items="list"
+                :time-of="timeOf"
+            >
+                <template #item="{ item }">
+                    <video-item :item="item" />
+                </template>
+            </that-year-today>
+    </template>
     </list-page>
 </template>

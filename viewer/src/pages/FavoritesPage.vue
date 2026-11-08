@@ -49,14 +49,6 @@ const typeFilter = computed(() => (item: Record<string, any>) => (
     >
         <!-- 那年今日（按收藏时间算） -->
         <template #lead>
-            <that-year-today
-                :items="list"
-                :time-of="(item: Record<string, any>) => item.custom_create_time || item.create_time"
-            >
-                <template #item="{ item }">
-                    <favorite-item :item="item" />
-                </template>
-            </that-year-today>
         </template>
 
         <template #toolbar>
@@ -69,5 +61,15 @@ const typeFilter = computed(() => (item: Record<string, any>) => (
         <template #default="{ items }">
             <favorite-item v-for="(item, index) in items" :key="item.id || index" :item="item" />
         </template>
+    <template #after-toolbar>
+            <that-year-today
+                :items="list"
+                :time-of="(item: Record<string, any>) => item.custom_create_time || item.create_time"
+            >
+                <template #item="{ item }">
+                    <favorite-item :item="item" />
+                </template>
+            </that-year-today>
+    </template>
     </list-page>
 </template>

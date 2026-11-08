@@ -103,6 +103,12 @@ const sorts = [
                 仅显示 <b>{{ visitorName || visitorUin }}</b> 浏览过的说说
                 <button class="visitor-clear" type="button" @click="clearVisitor">清除筛选</button>
             </div>
+        </template>
+
+        <template #default="{ items }">
+            <message-item v-for="item in items" :key="item.tid" :item="item" />
+        </template>
+    <template #after-toolbar>
             <that-year-today
                 :items="list"
                 :time-of="(item: Record<string, any>) => item.created_time || item.custom_create_time"
@@ -111,11 +117,7 @@ const sorts = [
                     <message-item :item="item" />
                 </template>
             </that-year-today>
-        </template>
-
-        <template #default="{ items }">
-            <message-item v-for="item in items" :key="item.tid" :item="item" />
-        </template>
+    </template>
     </list-page>
 </template>
 
