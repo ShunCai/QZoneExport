@@ -20,6 +20,7 @@ import { initFriendRemarks } from './data/friendNames';
 import { avatarUrl, avatarFallbackUrl } from './data/content';
 import { usePrivacy } from './composables/usePrivacy';
 import PrivacyToggle from './components/PrivacyToggle.vue';
+import GlobalSearch from './components/GlobalSearch.vue';
 import HomeProfileDialog from './components/home/HomeProfileDialog.vue';
 import { useProfileDialog } from './composables/useProfileDialog';
 import { formatNickname } from './data/richText';
@@ -226,10 +227,21 @@ function handleMediaErrorCapture(event: Event): void {
 }
 onMounted(() => {
     document.addEventListener('error', handleMediaErrorCapture, true);
+    window.addEventListener('keydown', onGlobalKeydown);
 });
 onUnmounted(() => {
     document.removeEventListener('error', handleMediaErrorCapture, true);
+    window.removeEventListener('keydown', onGlobalKeydown);
 });
+
+/** 全局搜索面板：Ctrl/⌘ + K 开关，侧栏也有常驻入口 */
+const searchOpen = ref(false);
+function onGlobalKeydown(event: KeyboardEvent): void {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        searchOpen.value = !searchOpen.value;
+    }
+}
 </script>
 
 <template>
@@ -237,6 +249,7 @@ onUnmounted(() => {
         <!-- 右下角主题切换按钮（避开同侧菜单 FAB，移动端不挡标题） -->
         <theme-toggle class="theme-float" />
         <home-profile-dialog :open="profileOpen" :user="user" @close="closeProfile" />
+        <global-search :open="searchOpen" @close="searchOpen = false" />
         <n-layout has-sider class="shell">
             <n-layout-sider
                 bordered
@@ -294,6 +307,20 @@ onUnmounted(() => {
                         </span>
                     </div>
                 </div>
+                <!-- 全局搜索：常驻入口 + Ctrl/⌘ K；折叠时只留图标 -->
+                <button
+                    type="button"
+                    class="search-entry"
+                    :title="collapsed ? '全局搜索（Ctrl / ⌘ + K）' : '跨模块搜索内容与评论（Ctrl / ⌘ + K）'"
+                    @click="searchOpen = true"
+                >
+                    <svg class="search-entry-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m20 20-3.5-3.5" />
+                    </svg>
+                    <span v-if="!collapsed" class="search-entry-label">搜索</span>
+                    <span v-if="!collapsed" class="search-entry-kbd">Ctrl K</span>
+                </button>
                 <div class="sider-scroll">
                     <n-menu
                         :value="routeName"
@@ -500,6 +527,42 @@ onUnmounted(() => {
 }
 
 /* 品牌区靠底（侧边条为纵向 flex，margin-top:auto 把它推到底部） */
+/* 全局搜索入口：与侧栏其它行同宽，视觉上像输入框而不是菜单项 */
+.search-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 12px 10px;
+    padding: 7px 10px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background: var(--bg-toolbar);
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+.search-entry:hover {
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+}
+.search-entry-icon {
+    width: 14px;
+    height: 14px;
+    flex: none;
+}
+.search-entry-label {
+    flex: 1;
+    text-align: left;
+}
+.search-entry-kbd {
+    flex: none;
+    padding: 1px 5px;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    font-size: 10px;
+    color: var(--text-muted);
+}
 .brand {
     margin-top: auto;
     padding: 12px 18px 4px;

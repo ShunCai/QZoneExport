@@ -213,6 +213,27 @@ body {
     filter: blur(12px);
 }
 
+/* 搜索命中高亮：--bg-tint-yellow 近白、截图里看不出，这里用明确的命中色 */
+/* 灯箱评论区里命中的那条（从全局搜索跳转过来） */
+.pswp-comment.is-hit {
+    margin-left: -6px;
+    padding: 6px;
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    background: var(--bg-tint-blue);
+}
+mark.gs-mark {
+    padding: 0 2px;
+    margin: 0 1px;
+    border-radius: 3px;
+    background: #ffe6a1;
+    color: #1f2329;
+    font-weight: 500;
+}
+:root.dark mark.gs-mark {
+    background: #5a4a1c;
+    color: #f5e9c8;
+}
 /* 列表条目卡片 */
 .card-item {
     position: relative;
