@@ -14,7 +14,7 @@ export interface SortOption {
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { NButton, NEmpty, NInput, NPagination, NPopover, NRadioButton, NRadioGroup, NSelect, NSpin } from 'naive-ui';
 import { formatTime, timeValue } from '../data/format';
-import { getModulePref, savePref } from '../data/displayPrefs';
+import { getModulePref, savePref, type ModuleDisplayPref } from '../data/displayPrefs';
 import { routeQuery } from '../router';
 
 /**
@@ -93,43 +93,41 @@ watch(keywordInput, (value) => {
         keywordTimer = null;
     }, 250);
 });
-/** 分页/瀑布流：传入 prefKey 时从 localStorage 读偏好，否则用 prop 默认 */
-const paginate = ref(props.paginate);
-if (props.prefKey) {
-    paginate.value = getModulePref(props.prefKey).paginate;
-}
 /**
- * 布局切换的「用户意图」：工具栏单选直接绑它，而非直接绑 paginate。
- * 切到瀑布流时先把遮罩（含文案）同步点亮，再延到下一帧执行繁重的瀑布流 DOM 重建，
- * 避免「先卡顿、遮罩才出来」；切回分页是轻量操作，直接落。
+ * 布局三态
+ *
+ * - paged：分页器翻页，单列
+ * - plain：不分页——单列滚动加载（与瀑布流同一套分块，只是恒为 1 列）
+ * - flow ：瀑布流——多列滚动加载，列数按宽度自适应
+ *
+ * plain 与 flow 共用分块逻辑（masonryRendered），差别只在列数；
+ * 「不分页」绝不全量渲染——那是 9 万 DOM 卡顿的根源。
  */
-const layoutMode = ref(paginate.value);
-const masonryBusy = ref(false);
-// 仅负责隐藏：paginate 才是真正驱动渲染的状态，瀑布流首帧渲染完成后撤掉遮罩
-watch(paginate, (value) => {
-    if (value === false) {
-        nextTick().then(() => {
-            requestAnimationFrame(() => requestAnimationFrame(() => { masonryBusy.value = false; }));
-        });
-    } else {
-        masonryBusy.value = false;
+type LayoutMode = 'paged' | 'plain' | 'flow';
+
+function readSavedLayout(key: string | undefined, fallback: boolean): LayoutMode {
+    if (key) {
+        const saved = getModulePref(key) as ModuleDisplayPref & { layout?: string };
+        if (saved.layout === 'paged' || saved.layout === 'plain' || saved.layout === 'flow') {
+            return saved.layout;
+        }
+        // 旧偏好迁移：只有 paginate 布尔的时代，false 即瀑布流
+        if (saved.paginate === false) {
+            return 'flow';
+        }
     }
-});
-watch(layoutMode, (val) => {
+    return fallback ? 'paged' : 'flow';
+}
+
+const layout = ref<LayoutMode>(readSavedLayout(props.prefKey, props.paginate));
+watch(layout, (value) => {
     if (props.prefKey) {
-        savePref(props.prefKey, { paginate: val });
+        savePref(props.prefKey, { layout: value });
     }
-    if (val === false) {
-        // 立即点亮遮罩（同步设 true，本次刷新只多一个轻量节点，浏览器可立即绘制出遮罩与文案）
-        masonryBusy.value = true;
-        // 等遮罩绘制完再重建瀑布流 DOM，把卡顿挡在遮罩之后
-        nextTick().then(() => {
-            requestAnimationFrame(() => requestAnimationFrame(() => { paginate.value = false; }));
-        });
-    } else {
-        masonryBusy.value = false;
-        paginate.value = true;
-    }
+    // 切换后回到第一页 / 第一块
+    page.value = 1;
+    masonryRendered.value = MASONRY_CHUNK;
+    nextTick(setupMasonry);
 });
 /** 每页条数：默认取调用方给的 pageSize，用户改过则按模块记忆 */
 /** 条目密度：紧凑档把卡片内边距/行高收紧（样式见 styles.css 的 .is-compact 组） */
@@ -350,7 +348,7 @@ watch(
             return;
         }
         focusApplied = true;
-        if (paginate.value) {
+        if (layout.value === 'paged') {
             page.value = Math.floor(index / pageSize.value) + 1;
         } else {
             const need = Math.ceil((index + 1) / MASONRY_CHUNK) * MASONRY_CHUNK;
@@ -360,9 +358,13 @@ watch(
     { immediate: true },
 );
 
-const paged = computed(() => (paginate.value
-    ? sorted.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
-    : sorted.value.slice(0, masonryRendered.value)));
+const paged = computed(() => {
+    if (layout.value === 'paged') {
+        return sorted.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value);
+    }
+    // plain 与 flow 都走分块滚动加载，差别只在列数
+    return sorted.value.slice(0, masonryRendered.value);
+});
 
 const masonryColumns = computed(() => {
     const cols = Math.max(1, masonryCols.value);
@@ -376,7 +378,7 @@ const masonryColumns = computed(() => {
     return out;
 });
 
-const hasMoreMasonry = computed(() => !paginate.value && sorted.value.length > paged.value.length);
+const hasMoreMasonry = computed(() => layout.value !== 'paged' && sorted.value.length > paged.value.length);
 
 function loadMoreMasonry(): void {
     masonryRendered.value = Math.min(sorted.value.length, masonryRendered.value + MASONRY_CHUNK);
@@ -385,7 +387,7 @@ function loadMoreMasonry(): void {
 /** 滚动到距底 600px 时预取下一块：滚动监听挂在真正滚动的 .page-body 上 */
 function onMasonryScroll(): void {
     const el = masonryScrollEl;
-    if (!el || paginate.value || !hasMoreMasonry.value) {
+    if (!el || layout.value === 'paged' || !hasMoreMasonry.value) {
         return;
     }
     if (el.scrollHeight - el.scrollTop - el.clientHeight < 600) {
@@ -404,7 +406,7 @@ function teardownMasonry(): void {
 
 function setupMasonry(): void {
     teardownMasonry();
-    if (paginate.value) {
+    if (layout.value === 'paged') {
         return;
     }
     const el = contentRef.value;
@@ -415,6 +417,11 @@ function setupMasonry(): void {
         const width = el.clientWidth || 0;
         if (width <= 0) {
             // 还没布局完：保持现值，等 ResizeObserver 下一轮再算，别把列数压成 1
+            return;
+        }
+        if (layout.value === 'plain') {
+            // 不分页：恒为单列
+            masonryCols.value = 1;
             return;
         }
         // 每列不低于 420px：说说这类图文卡片在 3 列时九宫格会被压得太小，
@@ -436,7 +443,7 @@ function setupMasonry(): void {
  * 结果列数永远是 1（看起来就像普通单列列表）。
  */
 watch(
-    [paginate, () => props.items.length],
+    [() => props.items.length],
     () => {
         masonryRendered.value = MASONRY_CHUNK;
         nextTick(setupMasonry);
@@ -501,7 +508,7 @@ function onListHotkey(event: KeyboardEvent): void {
         target?.blur();
         return;
     }
-    if (typing || !paginate.value) {
+    if (typing || layout.value !== 'paged') {
         return;
     }
     if (event.key === 'ArrowLeft' && page.value > 1) {
@@ -571,7 +578,7 @@ function syncToUrl(): void {
     put('month', monthNum.value);
     put('sort', sortField.value);
     put('dir', sortDir.value === 'asc' ? 'asc' : '');
-    put('layout', paginate.value ? '' : 'flow');
+    put('layout', layout.value === 'paged' ? '' : layout.value);
     const next = params.toString();
     const target = '#/' + path + (next ? '?' + next : '');
     if (location.hash !== target) {
@@ -579,7 +586,7 @@ function syncToUrl(): void {
     }
 }
 
-watch([keyword, year, monthNum, sortField, sortDir, paginate], syncToUrl);
+watch([keyword, year, monthNum, sortField, sortDir, layout], syncToUrl);
 
 /**
  * 用 URL 参数覆盖当前筛选
@@ -599,10 +606,10 @@ function applyFromUrl(query: Record<string, string>): void {
     if (query.dir === 'asc' || query.dir === 'desc') {
         sortDir.value = query.dir;
     }
-    if (query.layout === 'flow') {
-        layoutMode.value = false;
+    if (query.layout === 'flow' || query.layout === 'plain') {
+        layout.value = query.layout;
     } else if (query.layout === 'page') {
-        layoutMode.value = true;
+        layout.value = 'paged';
     }
     nextTick(() => {
         monthNum.value = query.month ?? '';
@@ -696,9 +703,10 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
                 <div class="toolbar-group to-right">
                     <div v-if="props.prefKey" class="toolbar-group">
                         <span class="toolbar-label">布局</span>
-                        <n-radio-group v-model:value="layoutMode" size="small">
-                            <n-radio-button :value="true">分页</n-radio-button>
-                            <n-radio-button :value="false">瀑布流</n-radio-button>
+                        <n-radio-group v-model:value="layout" size="small">
+                            <n-radio-button value="paged">分页</n-radio-button>
+                            <n-radio-button value="plain">不分页</n-radio-button>
+                            <n-radio-button value="flow">瀑布流</n-radio-button>
                         </n-radio-group>
                     </div>
                     <template v-if="effectiveSorts.length > 0 && !toolbarNarrow">
@@ -733,21 +741,21 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
 
             <n-empty v-if="filtered.length === 0" description="没有符合条件的内容" class="list-empty" />
 
-            <div v-else ref="contentRef" class="list-content" :class="{ 'is-masonry': !paginate, 'is-compact': compact }">
-                <!-- 分页：整宽单列 -->
-                <slot v-if="paginate" :items="paged" :paginate="paginate" />
-                <!-- 瀑布流：多列各自堆叠，追加只长最后一列 -->
+            <div v-else ref="contentRef" class="list-content" :class="{ 'is-masonry': layout !== 'paged', 'is-compact': compact }">
+                <!-- 分页：整宽单列 + 分页器 -->
+                <slot v-if="layout === 'paged'" :items="paged" :paginate="true" />
+                <!-- 不分页 / 瀑布流：同一套分块滚动加载，差别只在列数（plain 恒为 1 列） -->
                 <div
                     v-else
                     class="masonry-grid"
-                    :style="{ gridTemplateColumns: `repeat(${masonryCols}, minmax(0, 1fr))` }"
+                    :style="{ gridTemplateColumns: `repeat(${layout === 'plain' ? 1 : masonryCols}, minmax(0, 1fr))` }"
                 >
                     <div v-for="(column, index) in masonryColumns" :key="index" class="masonry-col">
                         <slot :items="column" :paginate="false" />
                     </div>
                 </div>
 
-                <div v-if="paginate && filtered.length > pageSize" class="list-pager" :title="props.textOf ? '按 / 聚焦搜索，Esc 清空，←/→ 翻页' : '←/→ 翻页'">
+                <div v-if="layout === 'paged' && filtered.length > pageSize" class="list-pager" :title="props.textOf ? '按 / 聚焦搜索，Esc 清空，←/→ 翻页' : '←/→ 翻页'">
                     <n-pagination
                         v-model:page="page"
                         v-model:page-size="pageSize"
@@ -765,12 +773,6 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
                     </span>
                     <n-button size="small" @click="loadMoreMasonry">加载更多</n-button>
                 </div>
-            </div>
-
-            <!-- 切换到瀑布流时盖在内容区之上的「处理中」遮罩：点击即点亮（含文案），首帧渲染完成后自动隐藏 -->
-            <div v-if="masonryBusy" class="masonry-mask">
-                <n-spin size="large" />
-                <span class="masonry-mask-text">处理中…</span>
             </div>
         </template>
     </div>
