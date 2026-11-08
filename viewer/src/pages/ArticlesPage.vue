@@ -300,7 +300,7 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => [
             </div>
             <div v-if="categoryOptions.length > 2" class="toolbar-group">
                 <span class="toolbar-label">分类</span>
-                <n-select v-model:value="category" :options="categoryOptions" style="width: 150px;" />
+                <n-select size="small" v-model:value="category" :options="categoryOptions" style="width: 150px;" />
             </div>
         </template>
 

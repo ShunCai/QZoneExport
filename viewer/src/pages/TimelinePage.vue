@@ -295,10 +295,10 @@ watch(sortOrder, () => {
             <!-- 筛选工具栏 -->
             <div class="tl-toolbar">
                 <span class="tl-field">模块
-                    <n-select v-model:value="filterModule" :options="moduleFilterOptions" style="width: 130px;" />
+                    <n-select size="small" v-model:value="filterModule" :options="moduleFilterOptions" style="width: 130px;" />
                 </span>
                 <span class="tl-field">排序
-                    <n-select v-model:value="sortOrder" :options="sortOptions" style="width: 110px;" />
+                    <n-select size="small" v-model:value="sortOrder" :options="sortOptions" style="width: 110px;" />
                 </span>
                 <span class="tl-count">共 {{ filtered.length }} 条动态</span>
                 <!-- 布局切换：分页 / 瀑布流 -->

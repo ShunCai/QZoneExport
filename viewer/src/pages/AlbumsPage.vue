@@ -331,14 +331,14 @@ function accessTag(album: Record<string, any>): string {
                         <button type="button" :class="{ active: viewMode === 'plain' }" @click="viewMode = 'plain'">普通视图</button>
                     </div>
                     <span class="album-toolbar-label">排序</span>
-                    <n-select
+                    <n-select size="small"
                         v-model:value="albumSort"
                         :options="albumSortOptions"
                         style="width: 130px;"
                     />
                     <span class="album-toolbar-label">年份</span>
-                    <n-select v-model:value="year" :options="yearOptions" style="width: 110px;" />
-                    <n-input
+                    <n-select size="small" v-model:value="year" :options="yearOptions" style="width: 110px;" />
+                    <n-input size="small"
                         v-model:value="keyword"
                         placeholder="搜索相册名、描述或分组"
                         clearable

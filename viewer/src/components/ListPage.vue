@@ -496,7 +496,8 @@ function onListHotkey(event: KeyboardEvent): void {
     const typing = !!target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 
     if (event.key === '/' && !typing && props.textOf) {
-        const input = document.querySelector('.list-toolbar input[placeholder="搜索内容"]') as HTMLInputElement | null;
+        // 用包含匹配：placeholder 文案带快捷键提示（「搜索内容（/ 聚焦）」），精确匹配会找不到输入框
+        const input = document.querySelector('.list-toolbar input[placeholder*="搜索内容"]') as HTMLInputElement | null;
         if (input) {
             event.preventDefault();
             input.focus();
@@ -660,12 +661,12 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
                 <slot name="toolbar" />
                 <div v-if="props.timeOf" class="toolbar-group">
                     <span class="toolbar-label">时间</span>
-                    <n-select
+                    <n-select size="small"
                         v-model:value="year"
                         :options="yearOptions"
                         style="width: 110px;"
                     />
-                    <n-select
+                    <n-select size="small"
                         v-if="!toolbarNarrow"
                         v-model:value="monthNum"
                         :options="monthOptions"
@@ -690,15 +691,15 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
                     <div class="toolbar-pop">
                         <div v-if="props.timeOf" class="toolbar-group">
                             <span class="toolbar-label">月份</span>
-                            <n-select v-model:value="monthNum" :options="monthOptions" style="width: 110px;" />
+                            <n-select size="small" v-model:value="monthNum" :options="monthOptions" style="width: 110px;" />
                         </div>
                         <div v-if="effectiveSorts.length > 1" class="toolbar-group">
                             <span class="toolbar-label">排序</span>
-                            <n-select v-model:value="sortField" :options="effectiveSorts.map((s) => ({ label: s.label, value: s.value }))" style="width: 130px;" />
+                            <n-select size="small" v-model:value="sortField" :options="effectiveSorts.map((s) => ({ label: s.label, value: s.value }))" style="width: 130px;" />
                         </div>
                         <div v-if="effectiveSorts.length > 0" class="toolbar-group">
                             <span class="toolbar-label">方向</span>
-                            <n-select v-model:value="sortDir" :options="dirOptions" style="width: 90px;" />
+                            <n-select size="small" v-model:value="sortDir" :options="dirOptions" style="width: 90px;" />
                         </div>
                     </div>
                 </n-popover>
@@ -718,13 +719,13 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
                     </div>
                     <template v-if="effectiveSorts.length > 0 && !toolbarNarrow">
                         <span class="toolbar-label">排序</span>
-                        <n-select
+                        <n-select size="small"
                             v-if="effectiveSorts.length > 1"
                             v-model:value="sortField"
                             :options="effectiveSorts.map((s) => ({ label: s.label, value: s.value }))"
                             style="width: 130px;"
                         />
-                        <n-select
+                        <n-select size="small"
                             v-model:value="sortDir"
                             :options="dirOptions"
                             style="width: 90px;"
@@ -733,7 +734,7 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
                     <span v-if="props.textOf && keyword.trim()" class="match-hint">
                         {{ filtered.length }} {{ props.unit }}
                     </span>
-                    <n-input
+                    <n-input size="small"
                         v-if="props.textOf"
                         v-model:value="keywordInput"
                         placeholder="搜索内容（/ 聚焦）"

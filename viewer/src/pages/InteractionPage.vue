@@ -838,10 +838,10 @@ watch(filtered, () => { pulseKey.value++; });
 
             <div v-if="moreFilterOpen" class="ip-more-inline">
                 <span class="ip-field">主体类型
-                    <n-select v-model:value="filterType" :options="TYPE_OPTIONS" style="width: 150px;" />
+                    <n-select size="small" v-model:value="filterType" :options="TYPE_OPTIONS" style="width: 150px;" />
                 </span>
                 <span class="ip-field">互动方向
-                    <n-select v-model:value="filterDir" :options="dirOptions" style="width: 130px;" />
+                    <n-select size="small" v-model:value="filterDir" :options="dirOptions" style="width: 130px;" />
                 </span>
                 <button v-if="hasActiveFilter" class="ip-clear" type="button" @click="clearFilter">清除筛选</button>
             </div>

@@ -499,7 +499,7 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
                 <!-- 两个条件拆开：可组合（如「同学」且「十年老友」） -->
                 <div class="toolbar-group">
                     <span class="toolbar-label">QQ 分组</span>
-                    <n-select
+                    <n-select size="small"
                         v-model:value="qqGroup"
                         :options="qqGroupOptions"
                         :disabled="isPasserby"
@@ -508,13 +508,13 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
                 </div>
                 <div class="toolbar-group">
                     <span class="toolbar-label">特殊分组</span>
-                    <n-select v-model:value="special" :options="specialOptions" style="width: 160px;" />
+                    <n-select size="small" v-model:value="special" :options="specialOptions" style="width: 160px;" />
                 </div>
                 <div class="toolbar-group to-right">
                     <span class="toolbar-label">排序</span>
-                    <n-select v-model:value="sortField" :options="SORT_FIELD_OPTIONS" style="width: 140px;" />
-                    <n-select v-model:value="sortDir" :options="SORT_DIR_OPTIONS" :disabled="sortField === 'default'" style="width: 90px;" />
-                    <n-input v-model:value="keyword" placeholder="搜索昵称、备注或 QQ" clearable style="width: 220px;" />
+                    <n-select size="small" v-model:value="sortField" :options="SORT_FIELD_OPTIONS" style="width: 140px;" />
+                    <n-select size="small" v-model:value="sortDir" :options="SORT_DIR_OPTIONS" :disabled="sortField === 'default'" style="width: 90px;" />
+                    <n-input size="small" v-model:value="keyword" placeholder="搜索昵称、备注或 QQ" clearable style="width: 220px;" />
                 </div>
             </div>
             <that-year-today

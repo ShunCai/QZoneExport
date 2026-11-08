@@ -93,7 +93,7 @@ const sorts = [
         <template #toolbar>
             <div class="shape-filter">
                 <span>形态</span>
-                <n-select v-model:value="shape" :options="CONTENT_SHAPE_OPTIONS" style="width: 120px;" />
+                <n-select size="small" v-model:value="shape" :options="CONTENT_SHAPE_OPTIONS" style="width: 120px;" />
             </div>
         </template>
 

@@ -54,7 +54,7 @@ const typeFilter = computed(() => (item: Record<string, any>) => (
         <template #toolbar>
             <div class="toolbar-group">
                 <span class="toolbar-label">类型</span>
-                <n-select v-model:value="type" :options="typeOptions" style="width: 130px;" />
+                <n-select size="small" v-model:value="type" :options="typeOptions" style="width: 130px;" />
             </div>
         </template>
 

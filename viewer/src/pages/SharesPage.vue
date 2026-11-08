@@ -127,7 +127,7 @@ const combinedFilter = computed(() => (item: Record<string, any>) => {
         <template #toolbar>
             <div class="toolbar-group">
                 <span class="toolbar-label">类型</span>
-                <n-select
+                <n-select size="small"
                     v-model:value="shareType"
                     :options="shareTypeOptions"
                     style="width: 120px;"
@@ -136,7 +136,7 @@ const combinedFilter = computed(() => (item: Record<string, any>) => {
             </div>
             <div class="toolbar-group">
                 <span class="toolbar-label">来源</span>
-                <n-select
+                <n-select size="small"
                     v-model:value="shareSource"
                     :options="shareSourceOptions"
                     style="width: 150px;"
