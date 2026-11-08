@@ -67,6 +67,32 @@ const effectiveViewType = computed<ViewType>(() => (
 /** 用户选了摘要却无数据时的轻提示（仅日志场景；日记本身无摘要，绝不提示） */
 const summaryFallback = computed(() => isBlog.value && viewType.value === '1' && !hasSummary.value);
 
+/**
+ * 展示方式三组合（方案 A）
+ *
+ * 原本「列表/表格」与「仅标题/含摘要」是两个 radio 组、视觉上像四选一；
+ * 有效组合其实只有 3 种（表格态下详略不起作用）。合并成一个下拉后：
+ *  - 内部仍写回 showType / viewType 两个状态，偏好存储零迁移
+ *  - 无摘要数据时「含摘要列表」置灰，沿用既有 effectiveViewType 回退
+ */
+type ViewPreset = 'list-title' | 'list-summary' | 'table';
+const viewPreset = computed<ViewPreset>({
+    get: () => (showType.value === '0' ? 'table' : (viewType.value === '1' ? 'list-summary' : 'list-title')),
+    set: (value) => {
+        if (value === 'table') {
+            showType.value = '0';
+        } else {
+            showType.value = '1';
+            viewType.value = value === 'list-summary' ? '1' : '0';
+        }
+    },
+});
+const presetOptions = computed(() => [
+    { label: '仅标题列表', value: 'list-title' },
+    { label: '含摘要列表', value: 'list-summary', disabled: isBlog.value && !hasSummary.value },
+    { label: '表格', value: 'table' },
+]);
+
 // 展示方式变更后按模块持久化
 watch(showType, (value) => savePref(prefKey.value, { showType: value }));
 watch(viewType, (value) => savePref(prefKey.value, { viewType: value }));
@@ -264,14 +290,13 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => [
         <!-- 分类筛选与展示方式（展示方式默认取自备份配置，可在此临时切换） -->
         <template #toolbar>
             <div class="toolbar-group">
-                <n-radio-group v-model:value="showType">
-                    <n-radio-button value="1">列表</n-radio-button>
-                    <n-radio-button value="0">表格</n-radio-button>
-                </n-radio-group>
-                <n-radio-group v-if="showType === '1'" v-model:value="viewType">
-                    <n-radio-button value="0">仅标题</n-radio-button>
-                    <n-radio-button value="1">含摘要</n-radio-button>
-                </n-radio-group>
+                <span class="toolbar-label">形态</span>
+                <n-select
+                    v-model:value="viewPreset"
+                    :options="presetOptions"
+                    size="small"
+                    style="width: 132px;"
+                />
             </div>
             <div v-if="categoryOptions.length > 2" class="toolbar-group">
                 <span class="toolbar-label">分类</span>
