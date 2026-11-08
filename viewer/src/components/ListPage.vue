@@ -595,7 +595,7 @@ restoreFromUrl();
                     <n-input
                         v-if="props.textOf"
                         v-model:value="keywordInput"
-                        placeholder="搜索内容"
+                        placeholder="搜索内容（/ 聚焦）"
                         clearable
                         style="width: 200px;"
                     />
@@ -627,6 +627,7 @@ restoreFromUrl();
                         show-size-picker
                         show-quick-jumper
                     />
+                    <span class="pager-hotkey" aria-hidden="true">← / → 翻页</span>
                 </div>
 
                 <div v-if="hasMoreMasonry" class="masonry-more">
@@ -670,9 +671,20 @@ restoreFromUrl();
     align-items: center;
 }
 .list-pager {
+    position: relative;
     display: flex;
     justify-content: center;
     padding: 10px 0 20px;
+}
+/* 快捷键提示：常驻在分页器右侧，避免藏在 title 里没人发现 */
+.pager-hotkey {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: var(--text-secondary);
+    pointer-events: none;
 }
 /* 列表内容区 */
 .list-content {
