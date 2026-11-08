@@ -78,8 +78,10 @@ const cells = computed(() => props.rows.map((row) => ({
     display: flex;
     flex: 1;
     align-items: center;
-    justify-content: flex-end;
-    gap: 18px;
+    /* 与「最常用的词」同向：内容跟在标题后从左排开，不再右对齐挤成一团 */
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px 18px;
     min-width: 0;
 }
 .strip-cell {
