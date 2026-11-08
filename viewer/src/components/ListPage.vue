@@ -364,6 +364,10 @@ function setupMasonry(): void {
     }
     const measure = (): void => {
         const width = el.clientWidth || 0;
+        if (width <= 0) {
+            // 还没布局完：保持现值，等 ResizeObserver 下一轮再算，别把列数压成 1
+            return;
+        }
         // 每列不低于 420px：说说这类图文卡片在 3 列时九宫格会被压得太小，
         // 常规笔记本宽度（内容区 ~1100px）落到 2 列，大屏才 3 列
         masonryCols.value = Math.max(1, Math.min(3, Math.floor(width / 420)));
@@ -375,10 +379,21 @@ function setupMasonry(): void {
     masonryScrollEl?.addEventListener('scroll', onMasonryScroll, { passive: true });
 }
 
-watch(paginate, () => {
-    masonryRendered.value = MASONRY_CHUNK;
-    nextTick(setupMasonry);
-}, { immediate: true });
+/**
+ * 列数测量依赖 DOM
+ *
+ * 必须同时监听 items：从 URL 恢复 layout=flow 时，paginate 在**数据加载完成前**就变成 false，
+ * 那一刻 `.list-content` 还没渲染、contentRef 为 null，setup 直接返回且没挂上 ResizeObserver，
+ * 结果列数永远是 1（看起来就像普通单列列表）。
+ */
+watch(
+    [paginate, () => props.items.length],
+    () => {
+        masonryRendered.value = MASONRY_CHUNK;
+        nextTick(setupMasonry);
+    },
+    { immediate: true },
+);
 
 onBeforeUnmount(() => {
     teardownMasonry();
