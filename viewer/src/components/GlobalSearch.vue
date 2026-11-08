@@ -13,7 +13,11 @@ import { navigate } from '../router';
  * 跨模块检索内容与评论。索引一次性构建后缓存在模块作用域（同一份备份内不重建），
  * 之后每次输入只是线性扫描内存记录——实测万级记录 <10ms，不需要防抖以外的优化。
  */
-const props = defineProps<{ open: boolean }>();
+const props = defineProps<{
+    open: boolean;
+    /** 外部预填的关键词（如点「最常用的词」里的某个词） */
+    seed?: string;
+}>();
 const emit = defineEmits<{ close: [] }>();
 
 const { hidden: hideSensitive } = usePrivacy();
@@ -54,6 +58,9 @@ watch(
             return;
         }
         await nextTick();
+        if (props.seed) {
+            keyword.value = props.seed;
+        }
         inputRef.value?.focus();
         if (cachedRecords) {
             records.value = cachedRecords;

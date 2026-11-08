@@ -4,6 +4,7 @@ import HomeInteractionCard from '../components/home/HomeInteractionCard.vue';
 import HomeWordComposition from '../components/home/HomeWordComposition.vue';
 import HomeRecentInteractions from '../components/home/HomeRecentInteractions.vue';
 import HomeEmojiStrip from '../components/home/HomeEmojiStrip.vue';
+import HomeWordCloud from '../components/home/HomeWordCloud.vue';
 import HomeCareCard from '../components/home/HomeCareCard.vue';
 import HomeNightCard from '../components/home/HomeNightCard.vue';
 import HomeHero from '../components/home/HomeHero.vue';
@@ -36,6 +37,7 @@ import { loadOwnerTargetInteraction, type OwnerTargetInteraction as OwnerTargetI
 import { loadWordCounts, type WordCounts } from '../data/wordCounts';
 import { loadRecentInteractions, type RecentInteraction } from '../data/recentInteractions';
 import { loadEmojiStats, type EmojiCount } from '../data/emojiStats';
+import { loadWordCloud, type WordCloudResult } from '../data/wordCloud';
 import { loadNightDialogs, type NightDialog } from '../data/nightCompanions';
 import { buildSpaceProfileRows } from '../data/spaceProfile';
 import { loadInteractionSelection, type CareFriend, type TopPerson } from '../data/top-people';
@@ -92,6 +94,8 @@ function heatColor(count: number, max: number): string {
     if (ratio < 0.8) return '#1d4ed8';
     return '#1e3a8a';
 }
+
+const emit = defineEmits<{ searchWord: [word: string] }>();
 
 const props = defineProps<{
     user: Record<string, any> | null;
@@ -179,6 +183,9 @@ const recentLoading = ref(false);
 const emojiTop = ref<EmojiCount[]>([]);
 /** 表情横条同样先出结构：数据未到时显示加载占位，不整条缺席 */
 const emojiLoading = ref(false);
+/** 最常用的词：分词较重（30 万字 ~0.5s），空闲时再算，不挡首屏 */
+const wordCloud = ref<WordCloudResult>({ docCount: 0, wordCount: 0, rows: [] });
+const wordCloudLoading = ref(false);
 const emojiTotal = ref(0);
 
 // 空间资料：主流程只显示签名，完整字段进全局弹层
@@ -440,6 +447,16 @@ onMounted(async () => {
     void loadCoverPhotos().then((rows) => { coverPhotos.value = rows; }).catch(() => { coverPhotos.value = []; });
     void loadMemories();
     loadingExtra.value = false;
+
+    // 空闲时统计最常用的词：分词要几百毫秒，不抢首屏
+    wordCloudLoading.value = true;
+    const idle = (window as any).requestIdleCallback || ((fn: () => void) => window.setTimeout(fn, 200));
+    idle(() => {
+        loadWordCloud(12)
+            .then((data) => { wordCloud.value = data; })
+            .catch(() => { wordCloud.value = { docCount: 0, wordCount: 0, rows: [] }; })
+            .finally(() => { wordCloudLoading.value = false; });
+    });
 });
 
 // 我与 TA 的互动看板：仅当备份属于「他人空间」（Owner ≠ Target）时才计算并展示。
@@ -596,6 +613,11 @@ watch(
                     />
                 </div>
                 <home-emoji-strip :rows="emojiTop" :total="emojiTotal" :loading="emojiLoading" />
+                <home-word-cloud
+                    :data="wordCloud"
+                    :loading="wordCloudLoading"
+                    @search="(word: string) => emit('searchWord', word)"
+                />
             </section>
 
             <section class="home-section">

@@ -236,6 +236,8 @@ onUnmounted(() => {
 
 /** 全局搜索面板：Ctrl/⌘ + K 开关，侧栏也有常驻入口 */
 const searchOpen = ref(false);
+/** 从「最常用的词」点进来时的预填关键词 */
+const searchSeed = ref('');
 function onGlobalKeydown(event: KeyboardEvent): void {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
@@ -249,7 +251,7 @@ function onGlobalKeydown(event: KeyboardEvent): void {
         <!-- 右下角主题切换按钮（避开同侧菜单 FAB，移动端不挡标题） -->
         <theme-toggle class="theme-float" />
         <home-profile-dialog :open="profileOpen" :user="user" @close="closeProfile" />
-        <global-search :open="searchOpen" @close="searchOpen = false" />
+        <global-search :open="searchOpen" :seed="searchSeed" @close="searchOpen = false" />
         <n-layout has-sider class="shell">
             <n-layout-sider
                 bordered
@@ -352,7 +354,12 @@ function onGlobalKeydown(event: KeyboardEvent): void {
                     <n-spin size="large" />
                 </div>
                 <template v-else>
-                    <home-page v-if="routeName === 'home'" :user="user" :counts="counts" />
+                    <home-page
+                        v-if="routeName === 'home'"
+                        :user="user"
+                        :counts="counts"
+                        @search-word="(word: string) => { searchSeed = word; searchOpen = true; }"
+                    />
                     <memories-page v-else-if="routeName === 'memories'" />
                     <interaction-page v-else-if="routeName === 'interaction'" :user="user" />
                     <timeline-page v-else-if="routeName === 'timeline'" />
