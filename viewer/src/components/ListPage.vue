@@ -11,8 +11,8 @@ export interface SortOption {
 </script>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
-import { NEmpty, NInput, NPagination, NRadioButton, NRadioGroup, NSelect, NSpin } from 'naive-ui';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { NButton, NEmpty, NInput, NPagination, NRadioButton, NRadioGroup, NSelect, NSpin } from 'naive-ui';
 import { formatTime, timeValue } from '../data/format';
 import { getModulePref, savePref } from '../data/displayPrefs';
 
@@ -59,6 +59,12 @@ const props = withDefaults(defineProps<{
      * 并在工具栏显示「分页 / 瀑布流」切换；不传则使用 paginate prop 默认值且不持久化。
      */
     prefKey?: string;
+    /**
+     * 需要定位到的条目：给出谓词，ListPage 会在**排序后的完整列表**里找到它、
+     * 自动跳到它所在的那一页（瀑布流则追加到包含它的那一块）。
+     * 用于从搜索结果跳进来时落到具体条目（如相册里的某张相片）。
+     */
+    focusItem?: (item: Record<string, any>) => boolean;
 }>(), {
     pageSize: 20,
     unit: '条',
@@ -67,6 +73,18 @@ const props = withDefaults(defineProps<{
 });
 
 const keyword = ref('');
+/** 输入框绑这个，防抖 250ms 后再喂给 keyword：避免每敲一个字就全量重过滤 + 重渲染 */
+const keywordInput = ref('');
+let keywordTimer: number | null = null;
+watch(keywordInput, (value) => {
+    if (keywordTimer !== null) {
+        window.clearTimeout(keywordTimer);
+    }
+    keywordTimer = window.setTimeout(() => {
+        keyword.value = value;
+        keywordTimer = null;
+    }, 250);
+});
 /** 分页/瀑布流：传入 prefKey 时从 localStorage 读偏好，否则用 prop 默认 */
 const paginate = ref(props.paginate);
 if (props.prefKey) {
@@ -234,13 +252,128 @@ const dirOptions = [
     { label: '升序', value: 'asc' },
 ];
 
+/**
+ * 瀑布流分块渲染
+ *
+ * 原先瀑布流是「不分页 = 全量渲染」：3072 条说说会一次铺出 9 万多 DOM，切过去要十几秒。
+ * 现在按块增量渲染，滚动接近底部再追加；卡片仍按行优先分配到各列，
+ * 阅读顺序保持「从左到右、从上到下」，追加时只长最后一列、不会顶走已看过的内容。
+ */
+const MASONRY_CHUNK = 150;
+const masonryRendered = ref(MASONRY_CHUNK);
+/** 列数按容器宽度自适应：每列不低于 420px，最多 3 列 */
+const masonryCols = ref(1);
+const contentRef = ref<HTMLElement | null>(null);
+let masonryScrollEl: HTMLElement | null = null;
+let masonryResize: ResizeObserver | null = null;
+
+/**
+ * 一次性定位：数据到位后跳到目标条目所在页。
+ * 只执行一次——用户之后手动翻页不该被拉回去。
+ */
+let focusApplied = false;
+watch(
+    [() => props.focusItem, sorted, () => props.pageSize],
+    () => {
+        if (focusApplied || !props.focusItem) {
+            return;
+        }
+        const index = sorted.value.findIndex((item) => props.focusItem!(item));
+        if (index < 0) {
+            return;
+        }
+        focusApplied = true;
+        if (paginate.value) {
+            page.value = Math.floor(index / props.pageSize) + 1;
+        } else {
+            const need = Math.ceil((index + 1) / MASONRY_CHUNK) * MASONRY_CHUNK;
+            masonryRendered.value = Math.max(masonryRendered.value, Math.min(sorted.value.length, need));
+        }
+    },
+    { immediate: true },
+);
+
 const paged = computed(() => (paginate.value
     ? sorted.value.slice((page.value - 1) * props.pageSize, page.value * props.pageSize)
-    : sorted.value));
+    : sorted.value.slice(0, masonryRendered.value)));
+
+const masonryColumns = computed(() => {
+    const cols = Math.max(1, masonryCols.value);
+    if (cols === 1) {
+        return [paged.value];
+    }
+    const out: Record<string, any>[][] = Array.from({ length: cols }, () => []);
+    paged.value.forEach((item, index) => {
+        out[index % cols]!.push(item);
+    });
+    return out;
+});
+
+const hasMoreMasonry = computed(() => !paginate.value && sorted.value.length > paged.value.length);
+
+function loadMoreMasonry(): void {
+    masonryRendered.value = Math.min(sorted.value.length, masonryRendered.value + MASONRY_CHUNK);
+}
+
+/** 滚动到距底 600px 时预取下一块：滚动监听挂在真正滚动的 .page-body 上 */
+function onMasonryScroll(): void {
+    const el = masonryScrollEl;
+    if (!el || paginate.value || !hasMoreMasonry.value) {
+        return;
+    }
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 600) {
+        loadMoreMasonry();
+    }
+}
+
+function teardownMasonry(): void {
+    masonryResize?.disconnect();
+    masonryResize = null;
+    if (masonryScrollEl) {
+        masonryScrollEl.removeEventListener('scroll', onMasonryScroll);
+        masonryScrollEl = null;
+    }
+}
+
+function setupMasonry(): void {
+    teardownMasonry();
+    if (paginate.value) {
+        return;
+    }
+    const el = contentRef.value;
+    if (!el) {
+        return;
+    }
+    const measure = (): void => {
+        const width = el.clientWidth || 0;
+        // 每列不低于 420px：说说这类图文卡片在 3 列时九宫格会被压得太小，
+        // 常规笔记本宽度（内容区 ~1100px）落到 2 列，大屏才 3 列
+        masonryCols.value = Math.max(1, Math.min(3, Math.floor(width / 420)));
+    };
+    measure();
+    masonryResize = new ResizeObserver(measure);
+    masonryResize.observe(el);
+    masonryScrollEl = (el.closest('.page-body') as HTMLElement | null) || null;
+    masonryScrollEl?.addEventListener('scroll', onMasonryScroll, { passive: true });
+}
+
+watch(paginate, () => {
+    masonryRendered.value = MASONRY_CHUNK;
+    nextTick(setupMasonry);
+}, { immediate: true });
+
+onBeforeUnmount(() => {
+    teardownMasonry();
+    if (keywordTimer !== null) {
+        window.clearTimeout(keywordTimer);
+    }
+});
 
 // 筛选与排序变化后回到第一页，否则可能停在一个已不存在的页码上
 watch([keyword, year, monthNum, sortDir, sortField, () => props.filter], () => {
     page.value = 1;
+    // 条件变了就回到第一块：否则停下的是「上一次筛选」的深度，容易看到空白
+    masonryRendered.value = MASONRY_CHUNK;
 });
 // 每页条数变化（如媒体网格随屏宽调整列数）时，把超出新页数的页码钳回最后一页，避免显示空页
 watch(() => props.pageSize, () => {
@@ -325,9 +458,12 @@ watch(page, () => {
                             style="width: 90px;"
                         />
                     </template>
+                    <span v-if="props.textOf && keyword.trim()" class="match-hint">
+                        {{ filtered.length }} {{ props.unit }}
+                    </span>
                     <n-input
                         v-if="props.textOf"
-                        v-model:value="keyword"
+                        v-model:value="keywordInput"
                         placeholder="搜索内容"
                         clearable
                         style="width: 200px;"
@@ -337,8 +473,19 @@ watch(page, () => {
 
             <n-empty v-if="filtered.length === 0" description="没有符合条件的内容" class="list-empty" />
 
-            <div v-else class="list-content" :class="{ 'is-masonry': !paginate }">
-                <slot :items="paged" :paginate="paginate" />
+            <div v-else ref="contentRef" class="list-content" :class="{ 'is-masonry': !paginate }">
+                <!-- 分页：整宽单列 -->
+                <slot v-if="paginate" :items="paged" :paginate="paginate" />
+                <!-- 瀑布流：多列各自堆叠，追加只长最后一列 -->
+                <div
+                    v-else
+                    class="masonry-grid"
+                    :style="{ gridTemplateColumns: `repeat(${masonryCols}, minmax(0, 1fr))` }"
+                >
+                    <div v-for="(column, index) in masonryColumns" :key="index" class="masonry-col">
+                        <slot :items="column" :paginate="false" />
+                    </div>
+                </div>
 
                 <div v-if="paginate && filtered.length > props.pageSize" class="list-pager">
                     <n-pagination
@@ -346,6 +493,13 @@ watch(page, () => {
                         :page-size="props.pageSize"
                         :item-count="filtered.length"
                     />
+                </div>
+
+                <div v-if="hasMoreMasonry" class="masonry-more">
+                    <span class="masonry-more-text">
+                        已显示 {{ paged.length }} / {{ sorted.length }} {{ props.unit }}
+                    </span>
+                    <n-button size="small" @click="loadMoreMasonry">加载更多</n-button>
                 </div>
             </div>
 
@@ -389,6 +543,35 @@ watch(page, () => {
 /* 列表内容区 */
 .list-content {
     position: relative;
+}
+/* 瀑布流：多列 grid，每列独立堆叠；列间距交给 grid，卡片自身 margin-bottom 负责行间距 */
+.masonry-grid {
+    display: grid;
+    gap: 0 14px;
+    align-items: start;
+}
+.masonry-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.masonry-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 0 24px;
+}
+.masonry-more-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+/* 搜索命中数：就近反馈在搜索框左侧 */
+.match-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
 }
 /* 内容滚动区作为遮罩的定位容器，遮罩覆盖整个可视区（而非仅当前内容高度） */
 .page-body {

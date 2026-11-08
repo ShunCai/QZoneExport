@@ -165,7 +165,7 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
                                     class="photo-thumb"
                                     :src="loc.latestItem.custom_pre_filepath || loc.latestItem.custom_filepath || loc.latestItem.url || ''"
                                     :alt="loc.latestItem.name || '照片'"
-                                    loading="lazy"
+                                    loading="lazy" decoding="async"
                                     @click="navigate('albums')"
                                 />
                                 <div class="photo-info">

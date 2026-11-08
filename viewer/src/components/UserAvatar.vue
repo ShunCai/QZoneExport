@@ -31,7 +31,7 @@ function onError(event: Event): void {
             :src="avatarUrl(props.uin)"
             :style="{ width: props.size + 'px', height: props.size + 'px' }"
             alt=""
-            loading="lazy"
+            loading="lazy" decoding="async"
             @error="onError"
         />
     </user-link>
@@ -40,7 +40,7 @@ function onError(event: Event): void {
             :src="avatarUrl(props.uin)"
             :style="{ width: props.size + 'px', height: props.size + 'px' }"
             alt=""
-            loading="lazy"
+            loading="lazy" decoding="async"
             @error="onError"
         />
     </span>

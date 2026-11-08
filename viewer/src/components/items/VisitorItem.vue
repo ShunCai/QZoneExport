@@ -140,7 +140,7 @@ function entryHref(entry: Record<string, any>, type: 'message' | 'blog' | 'share
                         v-if="thumbOf(shuoshuo)"
                         class="visited-thumb"
                         :src="thumbOf(shuoshuo)"
-                        loading="lazy"
+                        loading="lazy" decoding="async"
                     />
                 </li>
             </ul>
@@ -168,7 +168,7 @@ function entryHref(entry: Record<string, any>, type: 'message' | 'blog' | 'share
                     class="visited-card"
                     :href="albumHref(photo)"
                 >
-                    <img :src="albumCoverOf(photo)" loading="lazy" />
+                    <img :src="albumCoverOf(photo)" loading="lazy" decoding="async" />
                     <span class="visited-card-name" v-html="nameHtml(photo)"></span>
                 </a>
             </div>
@@ -187,7 +187,7 @@ function entryHref(entry: Record<string, any>, type: 'message' | 'blog' | 'share
                         v-if="thumbOf(share)"
                         class="visited-thumb"
                         :src="thumbOf(share)"
-                        loading="lazy"
+                        loading="lazy" decoding="async"
                     />
                 </li>
             </ul>

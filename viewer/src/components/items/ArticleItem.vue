@@ -94,7 +94,7 @@ const abstractImages = computed<string[]>(() => (props.item.img || [])
                     v-for="(src, index) in abstractImages"
                     :key="index"
                     :src="src"
-                    loading="lazy"
+                    loading="lazy" decoding="async"
                 />
             </div>
             <div class="item-abstract" v-html="abstractHtml" />

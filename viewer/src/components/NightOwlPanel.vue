@@ -231,7 +231,7 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
                                     class="photo-thumb"
                                     :src="entry.item.custom_pre_filepath || entry.item.custom_filepath || entry.item.url || ''"
                                     :alt="entry.item.name || '照片'"
-                                    loading="lazy"
+                                    loading="lazy" decoding="async"
                                     @click="navigate('albums')"
                                 />
                                 <div class="photo-info">

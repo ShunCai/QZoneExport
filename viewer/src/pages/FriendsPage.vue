@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, h, onMounted, ref, watch } from 'vue';
-import { NDataTable, NEmpty, NInput, NRadioButton, NRadioGroup, NSelect, NSpin, NTag, type DataTableColumns } from 'naive-ui';
+import { NButton, NDataTable, NEmpty, NInput, NRadioButton, NRadioGroup, NSelect, NSpin, NTag, type DataTableColumns } from 'naive-ui';
 import { loadList } from '../data/sources';
 import { getModulePref, savePref, type ShowType } from '../data/displayPrefs';
 import { formatTime, timeValue } from '../data/format';
@@ -315,6 +315,21 @@ const sorted = computed(() => {
     });
 });
 
+/** 列表视图分块渲染：435 位全量铺出来是 7 千多节点，上千好友会明显卡；表格视图自带分页不受影响 */
+const CARD_CHUNK = 300;
+const cardRendered = ref(CARD_CHUNK);
+const visibleCards = computed(() => sorted.value.slice(0, cardRendered.value));
+const cardsHasMore = computed(() => showType.value !== '0' && sorted.value.length > visibleCards.value.length);
+
+function loadMoreCards(): void {
+    cardRendered.value = Math.min(sorted.value.length, cardRendered.value + CARD_CHUNK);
+}
+
+// 筛选/排序/切换视图后回到第一块，避免停在上一轮的深度上
+watch([keyword, qqGroup, special, sortField, sortDir, showType], () => {
+    cardRendered.value = CARD_CHUNK;
+});
+
 /** 是否单向好友：isFriend 为 0/false 时表示对方已不是好友 */
 function friendState(row: Record<string, any>): string {
     // 空间过客本就不是好友（无 isFriend 字段），单独标出，不能默认当成互为好友
@@ -519,11 +534,19 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
                 :pagination="{ pageSize: 50 }"
                 size="small"
             />
-            <div v-else class="cards">
-                <div v-for="item in sorted" :key="item.uin" class="friend-cell">
-                    <friend-item :item="item" />
+            <template v-else>
+                <div class="cards">
+                    <div v-for="item in visibleCards" :key="item.uin" class="friend-cell">
+                        <friend-item :item="item" />
+                    </div>
                 </div>
-            </div>
+                <div v-if="cardsHasMore" class="cards-more">
+                    <span class="cards-more-text">
+                        已显示 {{ visibleCards.length }} / {{ sorted.length }} 位
+                    </span>
+                    <n-button size="small" @click="loadMoreCards">加载更多</n-button>
+                </div>
+            </template>
         </template>
     </div>
 </template>
@@ -534,6 +557,19 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 12px;
+}
+/* 分块加载提示与按钮 */
+.cards-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 0 24px;
+}
+.cards-more-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
 }
 /* 单个好友卡片的样式已随渲染一起进了 items/FriendItem.vue */
 .friend-cell {
