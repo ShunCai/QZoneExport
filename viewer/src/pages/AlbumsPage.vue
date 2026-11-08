@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { NAlert, NButton, NEmpty, NSelect, NSpin, NTag } from 'naive-ui';
+import { NAlert, NButton, NEmpty, NInput, NSelect, NSpin, NTag } from 'naive-ui';
 import { loadList, assetUrl } from '../data/sources';
 import { useVisitorFilter } from '../data/visitorFilter';
 import { formatTime, timeValue } from '../data/format';
@@ -32,8 +32,49 @@ onMounted(async () => {
 
 /** 按浏览者过滤（互动面板「我浏览过的相册」卡片跳转携带 ?visitor=UIN） */
 const { filter: visitorFilter, hasVisitor, visitorName, visitorUin, clearVisitor } = useVisitorFilter(albums);
-/** 过滤后的相册（仅当前浏览者浏览过的） */
-const filteredAlbums = computed(() => albums.value.filter(visitorFilter.value));
+/** 相册搜索：名称 / 描述 / 分类名都参与匹配（与全局搜索「查看全部」跳过来时带 ?q= 对应） */
+const keyword = ref(routeQuery.value.q || '');
+/** 年份筛选：按相册创建年份 */
+const year = ref('');
+
+/** 相册的可搜文本 */
+function albumSearchText(album: Record<string, any>): string {
+    return [album.name, album.desc, album.className].filter(Boolean).join(' ');
+}
+
+/** 相册创建年份（取不到时为空串） */
+function albumYearOf(album: Record<string, any>): string {
+    const ts = albumCreate(album);
+    return ts > 0 ? formatTime(ts).slice(0, 4) : '';
+}
+
+/** 年份选项：只列实际出现过的年份 */
+const yearOptions = computed(() => {
+    const years = new Set<string>();
+    for (const album of albums.value) {
+        const value = albumYearOf(album);
+        if (value) {
+            years.add(value);
+        }
+    }
+    return [{ label: '全部年份', value: '' }]
+        .concat([...years].sort().reverse().map((value) => ({ label: value + ' 年', value })));
+});
+
+/** 过滤后的相册：浏览者筛选 + 年份 + 关键词，三者正交 */
+const filteredAlbums = computed(() => albums.value.filter((album) => {
+    if (!visitorFilter.value(album)) {
+        return false;
+    }
+    if (year.value && albumYearOf(album) !== year.value) {
+        return false;
+    }
+    const word = keyword.value.trim().toLowerCase();
+    if (!word) {
+        return true;
+    }
+    return albumSearchText(album).toLowerCase().includes(word);
+}));
 
 const currentId = computed(() => routeQuery.value.id || '');
 const current = computed(() => albums.value.find((item) => String(item.id) === currentId.value) || null);
@@ -214,7 +255,11 @@ function accessTag(album: Record<string, any>): string {
     <template v-else>
         <div class="page-head">
             相册
-            <span v-if="!loading && albums.length > 0" class="head-count">共 {{ albums.length }} 个</span>
+            <span v-if="!loading && albums.length > 0" class="head-count">
+                共 {{ albums.length }} 个{{
+                    filteredAlbums.length !== albums.length ? `，筛选出 ${filteredAlbums.length} 个` : ''
+                }}
+            </span>
         </div>
         <div v-if="hasVisitor" class="visitor-filter-bar">
             仅显示 <b>{{ visitorName || visitorUin }}</b> 浏览过的相册
@@ -233,7 +278,7 @@ function accessTag(album: Record<string, any>): string {
             />
             <n-empty
                 v-else-if="filteredAlbums.length === 0"
-                description="没有该浏览者浏览过的相册"
+                :description="hasVisitor ? '没有该浏览者浏览过的相册' : '没有匹配的相册'"
                 size="large"
                 class="albums-empty"
             />
@@ -250,6 +295,14 @@ function accessTag(album: Record<string, any>): string {
                         v-model:value="albumSort"
                         :options="albumSortOptions"
                         style="width: 130px;"
+                    />
+                    <span class="album-toolbar-label">年份</span>
+                    <n-select v-model:value="year" :options="yearOptions" style="width: 110px;" />
+                    <n-input
+                        v-model:value="keyword"
+                        placeholder="搜索相册名、描述或分组"
+                        clearable
+                        style="width: 210px;"
                     />
                 </div>
 
