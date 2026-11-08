@@ -11,7 +11,7 @@ export interface SortOption {
 </script>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { NButton, NEmpty, NInput, NPagination, NRadioButton, NRadioGroup, NSelect, NSpin } from 'naive-ui';
 import { formatTime, timeValue } from '../data/format';
 import { getModulePref, savePref } from '../data/displayPrefs';
@@ -409,6 +409,49 @@ watch(page, () => {
     document.querySelector('.page-body')?.scrollTo({ top: 0 });
 });
 
+const maxPage = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize.value)));
+
+/**
+ * 键盘快捷键
+ *
+ * `/` 聚焦搜索、`Esc` 清空并失焦、`←/→` 翻页（仅分页态）。
+ * 在输入框里打字时不拦截方向键与斜杠；全局搜索面板打开时也完全让位。
+ */
+function onListHotkey(event: KeyboardEvent): void {
+    if (document.querySelector('.gs-panel')) {
+        return;
+    }
+    const target = event.target as HTMLElement | null;
+    const typing = !!target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+
+    if (event.key === '/' && !typing && props.textOf) {
+        const input = document.querySelector('.list-toolbar input[placeholder="搜索内容"]') as HTMLInputElement | null;
+        if (input) {
+            event.preventDefault();
+            input.focus();
+        }
+        return;
+    }
+    if (event.key === 'Escape' && typing) {
+        keywordInput.value = '';
+        target?.blur();
+        return;
+    }
+    if (typing || !paginate.value) {
+        return;
+    }
+    if (event.key === 'ArrowLeft' && page.value > 1) {
+        event.preventDefault();
+        page.value -= 1;
+    } else if (event.key === 'ArrowRight' && page.value < maxPage.value) {
+        event.preventDefault();
+        page.value += 1;
+    }
+}
+
+onMounted(() => window.addEventListener('keydown', onListHotkey));
+onBeforeUnmount(() => window.removeEventListener('keydown', onListHotkey));
+
 /* ===== 筛选状态与 URL 双向同步 ===== */
 /**
  * 写回 URL
@@ -575,7 +618,7 @@ restoreFromUrl();
                     </div>
                 </div>
 
-                <div v-if="paginate && filtered.length > pageSize" class="list-pager">
+                <div v-if="paginate && filtered.length > pageSize" class="list-pager" :title="props.textOf ? '按 / 聚焦搜索，Esc 清空，←/→ 翻页' : '←/→ 翻页'">
                     <n-pagination
                         v-model:page="page"
                         v-model:page-size="pageSize"
