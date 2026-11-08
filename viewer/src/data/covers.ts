@@ -6,13 +6,17 @@ import { photoThumbUrl } from './media';
 /** Hero 九宫格的一格：本地缩略图 + 分享卡片用的外链 + 所属相册（点击跳该相册详情） */
 export interface CoverPhoto {
     thumb: string;
+    /** 分享卡片主用：相片取原图，视频只取预览图 */
     remote: string;
+    /** 原图加载失败时回退到预览图 */
+    remoteFallback: string;
     albumId: string;
 }
 
 interface AlbumCover {
     url: string;
     remote: string;
+    remoteFallback: string;
     albumId: string;
     /** 该相册最近一次上传的时间，用于「最近上传的相册」排序 */
     latestUpload: number;
@@ -25,21 +29,33 @@ function isVideoPhoto(photo: Record<string, any>): boolean {
 }
 
 /**
- * 分享卡片用的外链地址。
- *
- * 备份里同时存了本地文件和 QQ 图片 CDN 的原始外链；分享卡片在 file:// 下
- * 不能把本地图片画进可导出的 canvas（不透明源会污染画布），但 CDN 会回显
- * Origin，因此用 https + crossOrigin=anonymous 就能导出真图。
- * 视频条目只取预览图（pre / custom_pre_url），绝不取 mp4 流；加载失败时由调用方兜底色块。
+ * 预览图外链：视频主用；相片原图 403 / 超时时由调用方回退到这里。
  */
-function remoteUrl(photo: Record<string, any>): string {
-    // 视频严格只认预览图外链，避免误取到 mp4 / 视频原图
-    const candidates = isVideoPhoto(photo)
-        ? [photo.custom_pre_url, photo.pre]
-        : [photo.custom_pre_url, photo.pre, photo.custom_url, photo.url, photo.yurl];
-    for (const raw of candidates) {
+function previewUrl(photo: Record<string, any>): string {
+    for (const raw of [photo.custom_pre_url, photo.pre]) {
         if (typeof raw !== 'string' || !/^https?:\/\//i.test(raw)) continue;
         if (/\.mp4|\.m3u8|photovideo|f20\.mp4|h265/i.test(raw)) continue;
+        return raw.replace(/^http:\/\//i, 'https://');
+    }
+    return '';
+}
+
+/**
+ * 分享卡片用的外链地址。
+ *
+ * 分享卡片在 file:// 下不能把本地图片画进可导出的 canvas（不透明源会污染画布），
+ * 但 QQ 图片 CDN 会回显 Origin，用 https + crossOrigin=anonymous 即可导出真图。
+ *
+ * 相片优先取**原图**（custom_url / url，QQ CDN 以 /r 结尾的全尺寸图），
+ * 不再用 pre 预览图——预览图放大到满幅格子会明显发糊。
+ * 视频严格只取预览图（custom_pre_url / pre）：它的 custom_url 是 /b&bo= 视频流，绝不能取。
+ */
+function remoteUrl(photo: Record<string, any>): string {
+    if (isVideoPhoto(photo)) return previewUrl(photo);
+    const candidates = [photo.custom_url, photo.url, photo.yurl, photo.custom_pre_url, photo.pre];
+    for (const raw of candidates) {
+        if (typeof raw !== 'string' || !/^https?:\/\//i.test(raw)) continue;
+        if (/\.mp4|\.m3u8|photovideo|f20\.mp4|h265|\/b&bo=/i.test(raw)) continue;
         return raw.replace(/^http:\/\//i, 'https://');
     }
     return '';
@@ -69,6 +85,7 @@ function photoUploadTime(photo: Record<string, any>): number {
 function albumCover(album: Record<string, any>): AlbumCover | null {
     let url = '';
     let remote = '';
+    let remoteFallback = '';
     let latestUpload = 0;
     for (const photo of album.photoList || []) {
         const ts = photoUploadTime(photo);
@@ -77,10 +94,11 @@ function albumCover(album: Record<string, any>): AlbumCover | null {
         if (!candidate) continue;
         url = candidate;
         remote = remoteUrl(photo);
+        remoteFallback = previewUrl(photo);
         latestUpload = ts;
     }
     if (!url) return null;
-    return { url, remote, albumId: String(album.id ?? ''), latestUpload };
+    return { url, remote, remoteFallback, albumId: String(album.id ?? ''), latestUpload };
 }
 
 /**
@@ -99,7 +117,12 @@ export async function loadCoverPhotos(): Promise<CoverPhoto[]> {
     for (const cover of ranked) {
         if (seen.has(cover.url)) continue;
         seen.add(cover.url);
-        out.push({ thumb: cover.url, remote: cover.remote, albumId: cover.albumId });
+        out.push({
+            thumb: cover.url,
+            remote: cover.remote,
+            remoteFallback: cover.remoteFallback,
+            albumId: cover.albumId,
+        });
         if (out.length >= 9) break;
     }
     return out;

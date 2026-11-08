@@ -34,27 +34,38 @@ const emit = defineEmits<{ close: [] }>();
 const { hidden: hideSensitive } = usePrivacy();
 const ratio = ref<'3:4' | '16:9'>('3:4');
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-/** 已成功加载的外链封面图（下标对应九宫格）；加载失败/无外链的格子兜底色块 */
-const coverImages = ref<(HTMLImageElement | null)[]>([]);
+/** 封面槽位：按原顺序占位，加载失败的位置留 null */
+const coverSlots = ref<(HTMLImageElement | null)[]>(Array(9).fill(null));
+/** 只排加载成功的图——不再画固定 9 个方格、也不留白色空格子 */
+const coverImages = computed(() => coverSlots.value.filter((x): x is HTMLImageElement => !!x));
 let loadToken = 0;
 
 function loadCoverImages(): void {
     const token = ++loadToken;
-    coverImages.value = Array(9).fill(null);
-    props.covers.slice(0, 9).forEach((cover, index) => {
-        // 隐私模式也要加载：加载后在画的时候做模糊脱敏，而不是退化成纯色块
-        if (!cover.remote) return;
+    coverSlots.value = Array(9).fill(null);
+    /** 原图 403 / CORS / 超时 → 回退到预览图，避免整格变空 */
+    const place = (cover: CoverPhoto, index: number, src: string, canFallback: boolean): void => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
             if (token !== loadToken) return;
-            const next = [...coverImages.value];
+            const next = [...coverSlots.value];
             next[index] = img;
-            coverImages.value = next;
+            coverSlots.value = next;
             draw();
         };
-        img.onerror = () => { /* 404 / CORS 失败：保留兜底色块 */ };
-        img.src = cover.remote;
+        img.onerror = () => {
+            if (token !== loadToken) return;
+            if (canFallback && cover.remoteFallback && cover.remoteFallback !== src) {
+                place(cover, index, cover.remoteFallback, false);
+            }
+        };
+        img.src = src;
+    };
+    props.covers.slice(0, 9).forEach((cover, index) => {
+        // 隐私模式也要加载：加载后在画的时候做模糊脱敏，而不是退化成纯色块
+        if (!cover.remote) return;
+        place(cover, index, cover.remote, true);
     });
 }
 
@@ -147,46 +158,68 @@ function drawBlurred(
     img: HTMLImageElement,
     x: number,
     y: number,
-    cell: number,
+    w: number,
+    h: number,
 ): void {
     const off = document.createElement('canvas');
-    off.width = Math.max(1, Math.round(cell));
-    off.height = Math.max(1, Math.round(cell));
+    off.width = Math.max(1, Math.round(w));
+    off.height = Math.max(1, Math.round(h));
     const octx = off.getContext('2d');
     if (!octx) return;
-    octx.filter = `blur(${Math.max(8, Math.round(cell * 0.18))}px)`;
-    const scale = Math.max(cell / img.naturalWidth, cell / img.naturalHeight) * 1.15;
+    octx.filter = `blur(${Math.max(8, Math.round(Math.min(w, h) * 0.18))}px)`;
+    const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight) * 1.15;
     const dw = img.naturalWidth * scale;
     const dh = img.naturalHeight * scale;
-    octx.drawImage(img, (cell - dw) / 2, (cell - dh) / 2, dw, dh);
-    ctx.drawImage(off, x, y, cell, cell);
+    octx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    ctx.drawImage(off, x, y, w, h);
 }
 
-function drawMosaic(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number, gap: number): void {
-    for (let i = 0; i < 9; i++) {
-        const col = i % 3;
+/**
+ * 满幅自适应照片墙：按实际张数排版，铺满给定 width × height。
+ *
+ * 旧版固定 3×3 方格居中，在 3:4 里左右各空 249px、16:9 右栏底部空一大块；
+ * 现在行数由张数决定、最后一行不足 3 张时把这几张均分整行宽度，不留空格子。
+ * 一张都没加载出来时画 3×3 柔和色块（仍铺满，不会退化成一片空白）。
+ */
+function drawMosaic(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    gap: number,
+    maxCells = 9,
+): void {
+    const imgs = coverImages.value;
+    const n = Math.min(imgs.length, maxCells);
+    const cells = n > 0 ? n : Math.min(9, maxCells);
+    const rows = Math.max(1, Math.ceil(cells / 3));
+    const cellH = Math.max(1, (height - gap * (rows - 1)) / rows);
+
+    for (let i = 0; i < cells; i++) {
         const row = Math.floor(i / 3);
-        const cx = x + col * (cell + gap);
-        const cy = y + row * (cell + gap);
-        roundRect(ctx, cx, cy, cell, cell, 12);
-        ctx.fillStyle = MOSAIC[i]!;
+        const inRow = Math.min(3, cells - row * 3);
+        const cw = (width - gap * (inRow - 1)) / inRow;
+        const cx = x + (i % 3) * (cw + gap);
+        const cy = y + row * (cellH + gap);
+
+        roundRect(ctx, cx, cy, cw, cellH, 10);
+        ctx.fillStyle = MOSAIC[i % MOSAIC.length]!;
         ctx.fill();
-        const img = coverImages.value[i];
+
+        const img = imgs[i];
         if (!img) continue;
         ctx.save();
-        roundRect(ctx, cx, cy, cell, cell, 12);
+        roundRect(ctx, cx, cy, cw, cellH, 10);
         ctx.clip();
         if (hideSensitive.value) {
-            // 隐私模式：模糊脱敏（仍保留照片墙的视觉形态，只是看不清人脸）
-            drawBlurred(ctx, img, cx, cy, cell);
-            ctx.restore();
-            continue;
+            drawBlurred(ctx, img, cx, cy, cw, cellH);
+        } else {
+            const scale = Math.max(cw / img.naturalWidth, cellH / img.naturalHeight);
+            const dw = img.naturalWidth * scale;
+            const dh = img.naturalHeight * scale;
+            ctx.drawImage(img, cx + (cw - dw) / 2, cy + (cellH - dh) / 2, dw, dh);
         }
-        // object-fit: cover 的等比裁切
-        const scale = Math.max(cell / img.naturalWidth, cell / img.naturalHeight);
-        const dw = img.naturalWidth * scale;
-        const dh = img.naturalHeight * scale;
-        ctx.drawImage(img, cx + (cell - dw) / 2, cy + (cell - dh) / 2, dw, dh);
         ctx.restore();
     }
 }
@@ -254,7 +287,7 @@ function draw(): void {
     if (!canvas) return;
     const portrait = ratio.value === '3:4';
     const w = portrait ? 1080 : 1600;
-    const h = portrait ? 1340 : 900;
+    const h = portrait ? 1440 : 900;
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext('2d');
@@ -267,6 +300,8 @@ function draw(): void {
     const pad = 56;
     const x = cardX + pad;
     const contentW = cardW - pad * 2;
+    /** 两版共用的「顶部下移」基线：空间名不贴顶，右栏照片墙也从这里起 */
+    const topInset = 38;
 
     ctx.fillStyle = C.bg;
     ctx.fillRect(0, 0, w, h);
@@ -307,72 +342,72 @@ function draw(): void {
         const colW = width / 3;
         cells.forEach((k, i) => {
             const cx = cx0 + (i % 3) * colW;
-            const cy = cy0 + Math.floor(i / 3) * (portrait ? 108 : 92);
+            const cy = cy0 + Math.floor(i / 3) * (portrait ? 92 : 104);
             ctx.fillStyle = C.accentInk;
-            ctx.font = kpiFont(portrait ? 50 : 42);
+            ctx.font = kpiFont(42);
             ctx.fillText(k.v, cx, cy);
             ctx.fillStyle = C.muted;
-            ctx.font = labelFont(19);
-            ctx.fillText(k.l, cx, cy + (portrait ? 27 : 24));
+            ctx.font = labelFont(18);
+            ctx.fillText(k.l, cx, cy + 28);
         });
     };
     const drawStories = (cx0: number, cy0: number): number => {
         let sy = cy0;
-        ctx.font = labelFont(portrait ? 26 : 23);
+        ctx.font = labelFont(portrait ? 25 : 23);
         for (const story of stories) {
             ctx.fillStyle = C.accent;
             ctx.fillText('•', cx0 - 4, sy);
             ctx.fillStyle = C.secondary;
             ctx.fillText(story, cx0 + 24, sy);
-            sy += portrait ? 50 : 44;
+            sy += portrait ? 46 : 52;
         }
         return sy;
     };
 
     if (portrait) {
         // ===== 竖版：单栏自上而下 =====
-        let y = cardY + pad + 6;
-        const titleSize = fitTitleFont(ctx, displayTitle.value, contentW, 64, 40);
+        let y = cardY + pad + topInset;
+        const titleSize = fitTitleFont(ctx, displayTitle.value, contentW, 52, 34);
         ctx.font = `500 ${titleSize}px ${SERIF}`;
         ctx.fillStyle = C.text;
-        y = drawWrapped(ctx, displayTitle.value, x, y, contentW, 78, 2);
+        y = drawWrapped(ctx, displayTitle.value, x, y, contentW, 68, 2);
 
         // 空间描述（隐私模式下由 leadText 换成通用文案）
         if (leadText.value) {
             ctx.fillStyle = C.secondary;
-            ctx.font = labelFont(26);
-            y = drawWrapped(ctx, leadText.value, x, y + 14, contentW, 36, 2);
+            ctx.font = labelFont(25);
+            y = drawWrapped(ctx, leadText.value, x, y + 14, contentW, 34, 2);
         }
 
         ctx.fillStyle = C.secondary;
         ctx.font = labelFont(27);
-        y += 34;
+        y += 30;
         ctx.fillText(periodText.value, x, y);
 
-        y += 52;
-        const cell = 126;
-        const gap = 10;
-        const mosaicW = cell * 3 + gap * 2;
-        drawMosaic(ctx, x + (contentW - mosaicW) / 2, y, cell, gap);
-        y += cell * 3 + gap * 2 + 76;
+        y += 48;
+        // 满幅 + 3×2 六格：292×275 近正方形（3:4 画布里 9 格必然被压成横矩形）
+        const mosaicH = 560;
+        drawMosaic(ctx, x, y, contentW, mosaicH, 10, 6);
+        y += mosaicH + 66;
 
         // 细分隔线：把「照片墙」与「数字矩阵」分成两块，避免数字像九宫格的附属
-        ctx.fillStyle = C.border;
-        ctx.fillRect(x, y - 54, contentW, 1);
+        ctx.fillStyle = '#e0e3e9';
+        ctx.fillRect(x, y - 38, contentW, 1);
 
         drawMatrix(x, y, contentW);
-        y += 216;
+        y += 152;
 
         if (stories.length) {
             y = drawStories(x, y + 14) + 10;
         }
 
-        // ===== 底部品牌：全卡唯一一处 =====
-        const footY = Math.max(y, cardY + cardH - pad - 30);
-        // 尾部留白处放一句淡色标语：填补空白，也给卡片一个收尾
+        // ===== 落款区：细线 + 寄语 + 品牌，让底部留白变成有意的收尾 =====
+        const footY = cardY + cardH - 42;
+        ctx.fillStyle = '#e0e3e9';
+        ctx.fillRect(x, footY - 96, contentW, 1);
         ctx.fillStyle = '#c9ccd2';
         ctx.font = `400 28px ${SERIF}`;
-        ctx.fillText('落叶随风，青春，稍纵即逝。', x, footY - 54);
+        ctx.fillText('落叶随风，青春，稍纵即逝。', x, footY - 48);
         drawBrandMark(ctx, x, footY - 15, 20, 10);
         ctx.fillStyle = C.text;
         ctx.font = `500 17px ${SANS}`;
@@ -388,46 +423,51 @@ function draw(): void {
     const rightX = x + leftW + 56;
     const rightW = contentW - leftW - 56;
 
-    let y = cardY + pad + 6;
-    const titleSize = fitTitleFont(ctx, displayTitle.value, leftW, 54, 38);
+    let y = cardY + pad + topInset;
+    const titleSize = fitTitleFont(ctx, displayTitle.value, leftW, 52, 34);
     ctx.font = `500 ${titleSize}px ${SERIF}`;
     ctx.fillStyle = C.text;
-    y = drawWrapped(ctx, displayTitle.value, x, y, leftW, 66, 2);
+    y = drawWrapped(ctx, displayTitle.value, x, y, leftW, 68, 2);
 
     // 空间描述（隐私模式下由 leadText 换成通用文案）
     if (leadText.value) {
         ctx.fillStyle = C.secondary;
-        ctx.font = labelFont(23);
-        y = drawWrapped(ctx, leadText.value, x, y + 12, leftW, 32, 2);
+        ctx.font = labelFont(25);
+        y = drawWrapped(ctx, leadText.value, x, y + 14, leftW, 34, 2);
     }
 
     ctx.fillStyle = C.secondary;
-    ctx.font = labelFont(24);
+    ctx.font = labelFont(27);
     y += 30;
     ctx.fillText(periodText.value, x, y);
 
-    y += 52;
+    // 时间跨度行与 KPI 之间留出呼吸：27px 的说明字与 42px 的数字不能贴边
+    y += 76;
     drawMatrix(x, y, leftW);
-    y += 188;
+    y += 164;
 
     if (stories.length) {
-        y = drawStories(x, y + 12);
+        // 比竖版多下沉一点：左栏内容偏短，把空白从「故事与落款之间」挪到上方。
+        // KPI 区已下移 28px，这里相应少挪 8px，保证故事与落款仍有呼吸
+        y = drawStories(x, y + 40);
     }
 
-    // 右栏：九宫格 + 签名（从栏顶开始，别用左栏累计高度——会把九宫格推出卡外）
-    const cell = 168;
-    const gap = 10;
-    const mosaicW = cell * 3 + gap * 2;
-    const mosaicY = cardY + pad + 6;
-    drawMosaic(ctx, rightX + (rightW - mosaicW) / 2, mosaicY, cell, gap);
+    // 右栏：照片墙从栏顶拉到卡底附近，填满右下角（别用左栏累计高度定位）
+    const mosaicY = cardY + pad + topInset;
+    // 右栏照片墙一直铺到与左栏品牌行齐平，右下不再留空
+    const footY = cardY + cardH - pad;
+    const mosaicH = footY - mosaicY;
+    drawMosaic(ctx, rightX, mosaicY, rightW, mosaicH, 10);
 
-    // 左栏尾部标语：填补下半部留白
+    // 左栏落款：细线 + 寄语，与右栏照片墙底边对齐
+    ctx.fillStyle = '#e0e3e9';
+    ctx.fillRect(x, footY - 96, leftW, 1);
     ctx.fillStyle = '#c9ccd2';
-    ctx.font = `400 26px ${SERIF}`;
-    ctx.fillText('落叶随风，青春，稍纵即逝。', x, cardY + cardH - pad - 78);
+    ctx.font = `400 24px ${SERIF}`;
+    ctx.fillText('落叶随风，青春，稍纵即逝。', x, footY - 48);
 
     // ===== 底部品牌：全卡唯一一处 =====
-    const footY = cardY + cardH - pad - 24;
+
     drawBrandMark(ctx, x, footY - 15, 20, 10);
     ctx.fillStyle = C.text;
     ctx.font = `500 17px ${SANS}`;
