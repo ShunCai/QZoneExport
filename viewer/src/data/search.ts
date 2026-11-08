@@ -167,6 +167,9 @@ function textOf(value: unknown, max = 4000): string {
     return text.length > max ? text.slice(0, max) : text;
 }
 
+/** 没有 `?id=` 深链的模块：命中后只能落到列表 */
+const NO_DEEP_LINK = new Set(['favorites', 'videos']);
+
 /** 条目 id 的统一兜底链：不同模块的主键字段不同 */
 function pickId(item: Record<string, any>, fields: string[]): string {
     for (const field of fields) {
@@ -263,6 +266,17 @@ const MODULES: ModuleDef[] = [
         route: 'shares',
     },
     {
+        module: 'videos',
+        label: '视频',
+        idFields: ['vid', 'uniKey', 'id'],
+        load: () => loadList('videos'),
+        timeOf: (item) => timeValue(item.createTime || item.create_time || item.uploadTime || item.time),
+        titleOf: (item) => leadingText(textOf(item.title || item.name)),
+        bodyOf: (item) => textOf([item.title, item.name, item.desc, item.custom_desc].filter(Boolean).join(' ')),
+        // 视频页没有 ?id= 深链，结果只能落到列表
+        route: 'videos',
+    },
+    {
         module: 'favorites',
         label: '收藏',
         idFields: ['id', 'tid'],
@@ -305,8 +319,8 @@ export async function buildSearchRecords(): Promise<SearchRecord[]> {
                     title: title || body.slice(0, 32),
                     body: body || title,
                     route: def.route,
-                    // 收藏没有深链：不带 id，落到列表
-                    query: def.module === 'favorites' ? {} : { id: itemId },
+                    // 收藏与视频没有 ?id= 深链：不带 id，落到列表
+                    query: NO_DEEP_LINK.has(def.module) ? {} : { id: itemId },
                 });
             }
 
@@ -328,7 +342,7 @@ export async function buildSearchRecords(): Promise<SearchRecord[]> {
                         author: plainText(comment.name || comment.nickname),
                         context: leadingText(title || body, 40),
                         route: def.route,
-                        query: def.module === 'favorites' ? {} : { id: itemId, comment: cid },
+                        query: NO_DEEP_LINK.has(def.module) ? {} : { id: itemId, comment: cid },
                     });
                 }
                 const replies = comment.replyList || comment.replies || [];
@@ -365,10 +379,31 @@ export async function buildSearchRecords(): Promise<SearchRecord[]> {
         for (const album of albums) {
             const albumId = pickId(album, ['id']);
             const albumName = plainText(album.name || album.title);
+            const albumDesc = textOf(album.desc || album.custom_desc, 500);
+            const albumClass = plainText(album.className);
+
+            // 相册本身：名称 / 分组 / 描述都进索引（此前只索引了相片，相册名搜不到）
+            const albumBody = textOf([albumName, albumClass, albumDesc].filter(Boolean).join(' '));
+            if (albumId && albumBody) {
+                out.push({
+                    module: 'albums',
+                    moduleLabel: '相册',
+                    kind: 'item',
+                    itemId: albumId,
+                    time: timeValue(album.createtime || album.createTime),
+                    title: albumName || '相册',
+                    body: albumBody,
+                    route: 'albums',
+                    query: { id: albumId },
+                });
+            }
             for (const photo of album.photoList || []) {
                 // 与 media.ts 的 MediaItem.key 保持同一规则，灯箱才能定位到这一张
                 const photoKey = String(photo.lloc || photo.name || '');
-                const caption = textOf(photo.desc || photo.custom_desc || photo.title, 500);
+                const photoName = plainText(photo.name);
+                const photoDesc = textOf(photo.desc || photo.custom_desc || photo.title, 500);
+                // 相片名称（多为拍摄日期）与描述一起进索引；展示时优先用描述
+                const caption = textOf([photoName, photoDesc].filter(Boolean).join(' '), 500);
                 const photoTime = timeValue(photo.uploadTime || photo.createTime || photo.time);
                 let index = 0;
                 for (const comment of itemComments(photo)) {
@@ -399,7 +434,7 @@ export async function buildSearchRecords(): Promise<SearchRecord[]> {
                         kind: 'item',
                         itemId: albumId,
                         time: photoTime,
-                        title: albumName ? `${albumName} · 相片描述` : '相片描述',
+                        title: [albumName, photoDesc || photoName].filter(Boolean).join(' · ') || '相片',
                         body: caption,
                         route: 'albums',
                         query: { id: albumId, ...(photoKey ? { photo: photoKey } : {}) },
