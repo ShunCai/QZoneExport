@@ -37,6 +37,44 @@ const keyword = ref(routeQuery.value.q || '');
 /** 年份筛选：按相册创建年份 */
 const year = ref('');
 
+/**
+ * 相册列表的筛选写回 URL
+ *
+ * 与各模块列表页保持同一套参数名（q / year），刷新与分享都能还原；
+ * 只增删自己的键，相册详情的 id、?visitor=、?photo= 等保持不动。
+ */
+function syncAlbumUrl(): void {
+    const raw = location.hash.replace(/^#\/?/, '');
+    const [path, search = ''] = raw.split('?');
+    if (!path) {
+        return;
+    }
+    const params = new URLSearchParams(search);
+    const put = (key: string, value: string): void => {
+        if (value) {
+            params.set(key, value);
+        } else {
+            params.delete(key);
+        }
+    };
+    put('q', keyword.value.trim());
+    put('year', year.value);
+    const next = params.toString();
+    const target = '#/' + path + (next ? '?' + next : '');
+    if (location.hash !== target) {
+        history.replaceState(null, '', target);
+    }
+}
+
+watch([keyword, year], syncAlbumUrl);
+
+/** 清除全部筛选（关键词 / 年份 / 浏览者），让用户从「0 个结果」回到全部 */
+function clearAlbumFilters(): void {
+    keyword.value = '';
+    year.value = '';
+    clearVisitor();
+}
+
 /** 相册的可搜文本 */
 function albumSearchText(album: Record<string, any>): string {
     return [album.name, album.desc, album.className].filter(Boolean).join(' ');
@@ -276,13 +314,6 @@ function accessTag(album: Record<string, any>): string {
                 size="large"
                 class="albums-empty"
             />
-            <n-empty
-                v-else-if="filteredAlbums.length === 0"
-                :description="hasVisitor ? '没有该浏览者浏览过的相册' : '没有匹配的相册'"
-                size="large"
-                class="albums-empty"
-            />
-
             <template v-else>
                 <!-- 工具条：视图切换 + 相册排序 -->
                 <div class="album-toolbar">
@@ -305,6 +336,18 @@ function accessTag(album: Record<string, any>): string {
                         style="width: 210px;"
                     />
                 </div>
+
+                <!-- 筛到 0 个时只空内容区：工具栏必须留着，否则用户没法把条件改回来 -->
+                <n-empty
+                    v-if="filteredAlbums.length === 0"
+                    :description="hasVisitor ? '没有该浏览者浏览过的相册' : '没有匹配的相册'"
+                    size="large"
+                    class="albums-empty"
+                >
+                    <template #extra>
+                        <n-button size="small" @click="clearAlbumFilters">清除筛选条件</n-button>
+                    </template>
+                </n-empty>
 
                 <div v-for="g in displayGroups" :key="g[0] ?? 'whole'" class="group" :class="{ 'group-plain': !g[0] }">
                     <div v-if="g[0]" class="group-title">{{ g[0] }}（{{ g[1].length }}）</div>
