@@ -11,6 +11,8 @@ import type { WordCountRow } from '../../data/wordCounts';
 const props = defineProps<{
     rows: WordCountRow[];
     total: number;
+    /** 数据未到时卡片仍挂载，只把结果区换成加载占位 */
+    loading?: boolean;
 }>();
 
 const emit = defineEmits<{ select: [key: string] }>();
@@ -65,6 +67,7 @@ function percentText(percent: number): string {
             </div>
             <p class="word-note">字数不含标题与相片视频；条长 = 占全站文字的百分比</p>
         </template>
+        <p v-else-if="loading" class="empty">正在统计…</p>
         <p v-else class="empty">暂无文字内容</p>
     </div>
 </template>

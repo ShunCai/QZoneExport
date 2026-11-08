@@ -15,7 +15,7 @@ import { actionOf, type RecentInteraction } from '../../data/recentInteractions'
  * 口径限制：点赞没有时间戳，进不了这条时间线——卡片上要写清，否则会被误读成
  * 「最近只有这么几条互动」。
  */
-const props = defineProps<{ items: RecentInteraction[] }>();
+const props = defineProps<{ items: RecentInteraction[]; loading?: boolean }>();
 
 const emit = defineEmits<{ open: [] }>();
 
@@ -58,6 +58,7 @@ const rows = computed(() => props.items.map((row) => ({
             </div>
             <p class="recent-note">点赞没有时间戳，不在上面这条流里</p>
         </template>
+        <p v-else-if="loading" class="empty">正在统计…</p>
         <p v-else class="empty">还没有人在你的空间留下评论或留言</p>
 
         <div class="foot">

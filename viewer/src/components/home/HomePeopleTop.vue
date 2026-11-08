@@ -5,7 +5,7 @@ import type { TopPerson } from '../../data/top-people';
 import { formatNickname } from '../../data/richText';
 import UserAvatar from '../UserAvatar.vue';
 
-const props = defineProps<{ people: TopPerson[] }>();
+const props = defineProps<{ people: TopPerson[]; loading?: boolean }>();
 
 const emit = defineEmits<{ select: [uin: string]; openAll: [] }>();
 
@@ -52,6 +52,7 @@ function nameHtml(person: TopPerson): string {
             </button>
             <button type="button" class="card-link" @click="emit('openAll')">查看完整互动 →</button>
         </template>
+        <p v-else-if="loading" class="empty">正在统计…</p>
         <p v-else class="empty">暂无互动数据</p>
     </div>
 </template>
@@ -88,7 +89,8 @@ function nameHtml(person: TopPerson): string {
 }
 .person-row {
     display: flex;
-    flex: 1 1 auto;
+    /* 卡片可被同行撑高，但行保持自然高度，多余空间留给底部链接 */
+    flex: 0 0 auto;
     align-items: center;
     gap: 10px;
     width: 100%;

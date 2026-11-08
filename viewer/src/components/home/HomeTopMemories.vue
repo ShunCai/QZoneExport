@@ -5,6 +5,8 @@ import { maskContent } from '../../data/mask';
 
 defineProps<{
     items: { title: string; detail: string; route?: string; query?: Record<string, string> }[];
+    /** 统计未完成时先显示加载占位 */
+    loading?: boolean;
 }>();
 
 const { hidden: hideSensitive } = usePrivacy();
@@ -39,6 +41,7 @@ function open(item: { route?: string; query?: Record<string, string> }): void {
                 </div>
             </component>
         </div>
+        <p v-else-if="loading" class="empty">正在统计…</p>
         <p v-else class="empty">暂无回忆数据</p>
         <button type="button" class="card-more" @click="navigate('memories', { from: 'home' })">查看更多 →</button>
     </div>

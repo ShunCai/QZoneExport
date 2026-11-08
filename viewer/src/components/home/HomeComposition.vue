@@ -11,6 +11,8 @@ interface CompositionCard {
 const props = defineProps<{
     cards: CompositionCard[];
     total: number;
+    /** 统计未完成时先显示加载占位，别把「还没算完」说成「没有数据」 */
+    loading?: boolean;
 }>();
 
 const emit = defineEmits<{ select: [key: string] }>();
@@ -110,6 +112,7 @@ function percentText(percent: number): string {
 
             <p class="comp-note">条长 = 占有效内容的百分比；灰色块仅作标识，不参与基数</p>
         </template>
+        <p v-else-if="loading" class="empty">正在统计…</p>
         <p v-else class="empty">暂无内容构成数据</p>
     </div>
 </template>

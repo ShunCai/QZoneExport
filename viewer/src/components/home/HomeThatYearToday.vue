@@ -118,7 +118,7 @@ function open(memory: Memory): void {
                 </span>
             </button>
         </div>
-        <p v-else class="empty">{{ loading ? '正在整理…' : '今天没有往年记录' }}</p>
+        <p v-else class="empty">{{ loading ? '正在统计…' : '今天没有往年记录' }}</p>
         <button type="button" class="card-more" @click="navigate('memories', { type: 'thatYear', from: 'home' })">
             查看更多 →
         </button>
@@ -157,6 +157,7 @@ function open(memory: Memory): void {
 }
 /* 与右侧「回忆之最」同高：行按可用高度均分，避免底部留出一块空白 */
 .list {
+    /* 回忆组三张卡都是固定 5 条清单：行按可用高度均分，三卡行基线才能对齐 */
     flex: 1;
     display: flex;
     flex-direction: column;

@@ -167,11 +167,18 @@ const monthly = ref<MonthlyStat>({ months: new Map(), firstMonth: '', lastMonth:
 
 // 我与 TA 的互动（仅查看他人空间备份时非空）
 const ownerTarget = ref<OwnerTargetInteractionData | null>(null);
+const ownerLoading = ref(false);
 /** 文字量构成（按模块字数）与最近互动流：两张新卡的数据，随 user 变化一起重算 */
 const wordCounts = ref<WordCounts | null>(null);
+/** 加载态单独标记：卡片始终挂载，数据未到时显示「正在统计…」而不是整卡缺席或假空态 */
+const wordLoading = ref(false);
 const recentInteractions = ref<RecentInteraction[]>([]);
+/** 最近互动的加载态：与「互动速览」共用第一格，未就绪时不能显示成假空态 */
+const recentLoading = ref(false);
 /** 最常用表情（横条）与深夜陪我的人（替代原「深夜动态」卡） */
 const emojiTop = ref<EmojiCount[]>([]);
+/** 表情横条同样先出结构：数据未到时显示加载占位，不整条缺席 */
+const emojiLoading = ref(false);
 const emojiTotal = ref(0);
 
 // 空间资料：主流程只显示签名，完整字段进全局弹层
@@ -180,12 +187,17 @@ const signature = computed(() => profileRows.value.find((row) => row.label === '
 
 // 互动 Top5 / Hero 九宫格封面
 const people = ref<TopPerson[]>([]);
+/** 人榜（互动最多 / 在意的人）的加载态 */
+const peopleLoading = ref(false);
 /** 特别关心好友（本人空间才有；他人空间备份没有好友列表，恒为空） */
 const carePeople = ref<CareFriend[]>([]);
 /** 深夜对话（同一线程双方都在 0–5 点发过言）：他人空间里对象只有主人一个，故只用于本人空间 */
 const nightDialogs = ref<NightDialog[]>([]);
+const nightLoading = ref(false);
 const coverPhotos = ref<CoverPhoto[]>([]);
 const topMemories = ref<TopMemory[]>([]);
+/** 回忆组（回忆之最 / 最初的记忆 / 深夜动态 / 最多点赞 / 最多评论）共用 */
+const memoriesLoading = ref(true);
 const rankings = ref<HomeRankings>({ night: [], first: [], likes: [], comments: [] });
 const shareOpen = ref(false);
 /** 分享卡的「回忆故事」素材：全部来自概览已有聚合，隐私模式由卡片内部处理 */
@@ -219,6 +231,7 @@ function formatWan(n: number): string {
 
 /** 人榜与特别关心共用一次全站聚合（loadInteractionSelection 内部已经算好两份名单） */
 function loadPeople(u: Record<string, any> | null): void {
+    peopleLoading.value = true;
     void loadInteractionSelection(u)
         .then((selection) => {
             people.value = selection.top;
@@ -227,10 +240,14 @@ function loadPeople(u: Record<string, any> | null): void {
         .catch(() => {
             people.value = [];
             carePeople.value = [];
+        })
+        .finally(() => {
+            peopleLoading.value = false;
         });
 }
 
 async function loadMemories(): Promise<void> {
+    memoriesLoading.value = true;
     try {
         const data = await loadHomeMemories();
         topMemories.value = data.top;
@@ -241,6 +258,8 @@ async function loadMemories(): Promise<void> {
         rankings.value = await loadHomeRankings();
     } catch {
         rankings.value = { night: [], first: [], likes: [], comments: [] };
+    } finally {
+        memoriesLoading.value = false;
     }
 }
 
@@ -434,21 +453,48 @@ watch(
             carePeople.value = [];
             nightDialogs.value = [];
             wordCounts.value = null;
+            wordLoading.value = false;
             recentInteractions.value = [];
             emojiTop.value = [];
             emojiTotal.value = 0;
+            emojiLoading.value = false;
+            recentLoading.value = false;
+            nightLoading.value = false;
+            ownerLoading.value = false;
+            peopleLoading.value = false;
             return;
         }
         loadPeople(u);
-        loadOwnerTargetInteraction(u).then((stat) => {
-            ownerTarget.value = stat;
-        });
+        ownerLoading.value = true;
+        loadOwnerTargetInteraction(u)
+            .then((stat) => {
+                ownerTarget.value = stat;
+            })
+            .finally(() => {
+                ownerLoading.value = false;
+            });
         // 版式上「构成」与「互动」各要两张卡：字数构成两种空间都有，
         // 最近互动只在本人空间露脸（他人空间那一格换成「互动速览」）
-        loadWordCounts().then((wc) => { wordCounts.value = wc; }).catch(() => { wordCounts.value = null; });
-        loadRecentInteractions(u).then((rows) => { recentInteractions.value = rows; }).catch(() => { recentInteractions.value = []; });
-        loadEmojiStats().then((s2) => { emojiTop.value = s2.rows; emojiTotal.value = s2.total; }).catch(() => { emojiTop.value = []; });
-        loadNightDialogs(u).then((rows) => { nightDialogs.value = rows; }).catch(() => { nightDialogs.value = []; });
+        wordLoading.value = true;
+        loadWordCounts()
+            .then((wc) => { wordCounts.value = wc; })
+            .catch(() => { wordCounts.value = null; })
+            .finally(() => { wordLoading.value = false; });
+        recentLoading.value = true;
+        loadRecentInteractions(u)
+            .then((rows) => { recentInteractions.value = rows; })
+            .catch(() => { recentInteractions.value = []; })
+            .finally(() => { recentLoading.value = false; });
+        emojiLoading.value = true;
+        loadEmojiStats()
+            .then((s2) => { emojiTop.value = s2.rows; emojiTotal.value = s2.total; })
+            .catch(() => { emojiTop.value = []; })
+            .finally(() => { emojiLoading.value = false; });
+        nightLoading.value = true;
+        loadNightDialogs(u)
+            .then((rows) => { nightDialogs.value = rows; })
+            .catch(() => { nightDialogs.value = []; })
+            .finally(() => { nightLoading.value = false; });
     },
     { immediate: true },
 );
@@ -471,6 +517,7 @@ watch(
                 :likes="interaction.totalLikes"
                 :comments="interaction.totalComments"
                 :views="interaction.totalViews"
+                :stats-loading="loadingExtra"
                 @open-share="shareOpen = true"
             />
             <home-share-card-dialog
@@ -485,7 +532,7 @@ watch(
                 @close="shareOpen = false"
             />
 
-            <home-timeline-strip :items="yearChart" :peak-years="peakYears" :milestones="milestones">
+            <home-timeline-strip :items="yearChart" :peak-years="peakYears" :milestones="milestones" :loading="loadingExtra">
                 <div class="home-time-grid">
                     <div class="home-card">
                         <div class="home-card-title">
@@ -493,6 +540,7 @@ watch(
                             <span v-if="peakYearLabel" class="note">峰值 {{ peakYearLabel }}</span>
                         </div>
                         <home-year-chart v-if="yearChart.length > 0" :items="yearChart" :max-total="maxYearTotal" :peak-years="peakYears" />
+                        <p v-else-if="loadingExtra" class="home-empty">正在统计…</p>
                         <p v-else class="home-empty">暂无年度数据</p>
                     </div>
 
@@ -502,6 +550,7 @@ watch(
                             <span v-if="peakMonthLabel" class="note">最活跃 {{ peakMonthLabel }}</span>
                         </div>
                         <home-month-bars v-if="monthBars.some((m) => m.total > 0)" :months="monthBars" />
+                        <p v-else-if="loadingExtra" class="home-empty">正在统计…</p>
                         <p v-else class="home-empty">暂无月度数据</p>
                     </div>
                 </div>
@@ -515,8 +564,8 @@ watch(
                 <div class="home-grid-3">
                     <home-that-year-today />
                     <!-- 「最初的记忆」本质是回忆（空间起点），放在榜单里与「回忆之最」重复 -->
-                    <home-list-card title="最初的记忆" note="各模块最早的记录" :items="rankings.first" more-type="first" empty-text="暂无记录" />
-                    <home-top-memories :items="topMemories" />
+                    <home-list-card title="最初的记忆" note="各模块最早的记录" :items="rankings.first" more-type="first" empty-text="暂无记录" :loading="memoriesLoading" />
+                    <home-top-memories :items="topMemories" :loading="memoriesLoading" />
                 </div>
             </section>
 
@@ -526,9 +575,9 @@ watch(
                     <span class="note">时段 · 最多点赞 · 最多评论</span>
                 </div>
                 <div class="home-grid-3">
-                    <home-list-card title="深夜动态" note="凌晨 0–5 点" :items="rankings.night" more-type="night" empty-text="暂无深夜动态" />
-                    <home-list-card title="最多点赞" note="按赞数排序" :items="rankings.likes" more-type="likes" empty-text="暂无数据" />
-                    <home-list-card title="最多评论" note="按评论数排序" :items="rankings.comments" more-type="comments" empty-text="暂无数据" />
+                    <home-list-card title="深夜动态" note="凌晨 0–5 点" :items="rankings.night" more-type="night" empty-text="暂无深夜动态" :loading="memoriesLoading" />
+                    <home-list-card title="最多点赞" note="按赞数排序" :items="rankings.likes" more-type="likes" empty-text="暂无数据" :loading="memoriesLoading" />
+                    <home-list-card title="最多评论" note="按评论数排序" :items="rankings.comments" more-type="comments" empty-text="暂无数据" :loading="memoriesLoading" />
                 </div>
             </section>
 
@@ -538,15 +587,15 @@ watch(
                     <span class="note">按条数 · 按字数</span>
                 </div>
                 <div class="home-grid-2">
-                    <home-composition :cards="cards" :total="totalItems" @select="onModuleSelect" />
+                    <home-composition :cards="cards" :total="totalItems" :loading="loadingExtra" @select="onModuleSelect" />
                     <home-word-composition
-                        v-if="wordCounts"
-                        :rows="wordCounts.rows"
-                        :total="wordCounts.total"
+                        :rows="wordCounts?.rows ?? []"
+                        :total="wordCounts?.total ?? 0"
+                        :loading="wordLoading"
                         @select="onModuleSelect"
                     />
                 </div>
-                <home-emoji-strip v-if="emojiTop.length" :rows="emojiTop" :total="emojiTotal" />
+                <home-emoji-strip :rows="emojiTop" :total="emojiTotal" :loading="emojiLoading" />
             </section>
 
             <section class="home-section">
@@ -563,19 +612,21 @@ watch(
                         @open-others="navigate('interaction')"
                         @stat="onStatCardClick"
                     />
-                    <home-recent-interactions v-else :items="recentInteractions" @open="navigate('interaction')" />
-                    <home-people-top :people="people" @select="onPersonSelect" @open-all="onOpenInteraction" />
+                    <home-recent-interactions v-else :items="recentInteractions" :loading="recentLoading || ownerLoading" @open="navigate('interaction')" />
+                    <home-people-top :people="people" :loading="peopleLoading" @select="onPersonSelect" @open-all="onOpenInteraction" />
                     <!-- 特别关心独立成卡：只有本人空间有好友列表，他人空间不会渲染 -->
                     <home-care-card
-                        v-if="carePeople.length"
+                        v-if="carePeople.length || peopleLoading"
                         :care="carePeople"
+                        :loading="peopleLoading"
                         @select="onPersonSelect"
                         @open-all="onOpenInteraction"
                     />
                     <!-- 深夜对话：只算「双方都在 0–5 点发过言」的线程 -->
                     <home-night-card
-                        v-if="!ownerTarget && nightDialogs.length"
+                        v-if="!isOtherSpace && (nightDialogs.length || nightLoading)"
                         :people="nightDialogs"
+                        :loading="nightLoading"
                         @select="onPersonSelect"
                         @open-all="onOpenNight"
                     />

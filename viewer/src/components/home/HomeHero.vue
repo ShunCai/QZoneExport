@@ -18,6 +18,8 @@ const props = defineProps<{
     likes?: number;
     comments?: number;
     views?: number;
+    /** 统计未完成：KPI 显示「正在统计…」而不是 0，避免把未就绪读成没有内容 */
+    statsLoading?: boolean;
 }>();
 
 const emit = defineEmits<{ openShare: [] }>();
@@ -96,34 +98,34 @@ function openAlbum(cover: CoverPhoto): void {
 
             <div class="hero-kpis">
                 <div class="kpi">
-                    <div class="v">{{ totalItems.toLocaleString() }}</div>
+                    <div class="v" :class="{ 'is-loading': statsLoading }">{{ statsLoading ? '正在统计…' : totalItems.toLocaleString() }}</div>
                     <div class="l">
                         内容条目
                         <span class="info" title="不含相册容器、好友与访客">i</span>
                     </div>
                 </div>
                 <div class="kpi">
-                    <div class="v">{{ media.photos.toLocaleString() }}</div>
+                    <div class="v" :class="{ 'is-loading': statsLoading }">{{ statsLoading ? '正在统计…' : media.photos.toLocaleString() }}</div>
                     <div class="l">
                         相片
                         <span class="info" title="不含「说说和日志相册」">i</span>
                     </div>
                 </div>
                 <div class="kpi">
-                    <div class="v">{{ media.videos.toLocaleString() }}</div>
+                    <div class="v" :class="{ 'is-loading': statsLoading }">{{ statsLoading ? '正在统计…' : media.videos.toLocaleString() }}</div>
                     <div class="l">视频</div>
                 </div>
                 <!-- 全站累计互动量：与上面三个内容量并列，语义是「这些东西被看了多少」 -->
                 <div class="kpi kpi-shift">
-                    <div class="v">{{ formatWan(props.likes) }}</div>
+                    <div class="v" :class="{ 'is-loading': statsLoading }">{{ statsLoading ? '正在统计…' : formatWan(props.likes) }}</div>
                     <div class="l">累计赞</div>
                 </div>
                 <div class="kpi">
-                    <div class="v">{{ formatWan(props.comments) }}</div>
+                    <div class="v" :class="{ 'is-loading': statsLoading }">{{ statsLoading ? '正在统计…' : formatWan(props.comments) }}</div>
                     <div class="l">累计评论</div>
                 </div>
                 <div class="kpi">
-                    <div class="v">{{ formatWan(props.views) }}</div>
+                    <div class="v" :class="{ 'is-loading': statsLoading }">{{ statsLoading ? '正在统计…' : formatWan(props.views) }}</div>
                     <div class="l">累计浏览<span class="info" title="仅统计内容条目的浏览数，不含访客模块；留言与相片接口无该字段">i</span></div>
                 </div>
             </div>
@@ -266,6 +268,14 @@ function openAlbum(cover: CoverPhoto): void {
     color: var(--accent-pressed);
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
+}
+/* 统计未完成：用文字占位代替 0，行高与 30px 数字对齐，避免 KPI 条跳动 */
+.kpi .v.is-loading {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 33px;
+    letter-spacing: 0;
+    color: var(--text-secondary);
 }
 .kpi .l {
     font-size: 12px;

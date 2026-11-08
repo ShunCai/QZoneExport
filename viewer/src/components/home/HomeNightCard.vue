@@ -12,7 +12,7 @@ import UserAvatar from '../UserAvatar.vue';
  * 只算「同一线程内双方都在 0–5 点发过言」——单向的深夜留言不算，那是「来访」不是「陪」。
  * 因此这张卡比「深夜动态」稀疏得多，但每一条都真的是一次聊起来。
  */
-const props = defineProps<{ people: NightDialog[] }>();
+const props = defineProps<{ people: NightDialog[]; loading?: boolean }>();
 
 const emit = defineEmits<{ select: [uin: string]; openAll: [] }>();
 
@@ -57,6 +57,7 @@ function nameHtml(row: { uin: string; name: string }): string {
             </button>
             <button type="button" class="card-link" @click="emit('openAll')">查看深夜详情 →</button>
         </template>
+        <p v-else-if="loading" class="empty">正在统计…</p>
         <p v-else class="empty">还没有出现过「双方都在深夜」的对话</p>
     </div>
 </template>
@@ -93,7 +94,8 @@ function nameHtml(row: { uin: string; name: string }): string {
 }
 .person-row {
     display: flex;
-    flex: 1 1 auto;
+    /* 卡片可被同行撑高，但行保持自然高度，多余空间留给底部链接 */
+    flex: 0 0 auto;
     align-items: center;
     gap: 10px;
     width: 100%;

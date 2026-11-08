@@ -12,6 +12,8 @@ const props = defineProps<{
     items: { year: string; total: number }[];
     peakYears: string[];
     milestones: { first: string; peak: string; last: string };
+    /** 统计未完成：区间与三个里程碑都显示「正在统计…」，而不是留空 */
+    loading?: boolean;
 }>();
 
 const max = computed(() => Math.max(1, ...props.items.map((item) => item.total)));
@@ -28,7 +30,10 @@ function heightPct(total: number): number {
         <summary class="strip-head">
             <span class="strip-meta">
                 <span class="strip-label">时间轴</span>
-                <span v-if="items.length" class="strip-range">{{ items[0].year }} — {{ items[items.length - 1].year }}</span>
+                <span class="strip-range">
+                    <template v-if="items.length">{{ items[0].year }} — {{ items[items.length - 1].year }}</template>
+                    <template v-else-if="loading">正在统计…</template>
+                </span>
             </span>
             <span class="strip-chart">
                 <span
@@ -45,9 +50,12 @@ function heightPct(total: number): number {
                 </span>
             </span>
             <span class="strip-miles">
-                <span>初识 <b>{{ milestones.first }}</b></span>
-                <span>最活跃 <b>{{ milestones.peak }}</b></span>
-                <span>最近 <b>{{ milestones.last }}</b></span>
+                <!-- 加载中不在右侧重复「正在统计…」：左侧区间位已经提示过一次 -->
+                <template v-if="milestones.first">
+                    <span>初识 <b>{{ milestones.first }}</b></span>
+                    <span>最活跃 <b>{{ milestones.peak }}</b></span>
+                    <span>最近 <b>{{ milestones.last }}</b></span>
+                </template>
             </span>
             <span class="strip-more" />
         </summary>

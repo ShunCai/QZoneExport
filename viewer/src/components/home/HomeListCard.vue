@@ -12,6 +12,8 @@ const props = defineProps<{
     /** 对应 #/memories 里的分组；'all' 表示只打开清单页、不定位 */
     moreType?: string;
     emptyText?: string;
+    /** 统计未完成时先显示加载占位 */
+    loading?: boolean;
 }>();
 
 const { hidden: hideSensitive } = usePrivacy();
@@ -54,6 +56,7 @@ function goMore(): void {
                 <span v-if="row.meta" class="row-meta">{{ row.meta }}</span>
             </component>
         </div>
+        <p v-else-if="loading" class="empty">正在统计…</p>
         <p v-else class="empty">{{ emptyText || '暂无数据' }}</p>
         <button v-if="moreType" type="button" class="card-more" @click="goMore">查看更多 →</button>
     </div>
@@ -90,6 +93,7 @@ function goMore(): void {
     color: var(--text-muted);
 }
 .list {
+    /* 回忆组三张卡都是固定 5 条清单：行按可用高度均分，三卡行基线才能对齐 */
     flex: 1;
     display: flex;
     flex-direction: column;

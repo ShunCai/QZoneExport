@@ -15,7 +15,7 @@ import UserAvatar from '../UserAvatar.vue';
  *
  * 只有本人空间才有这份数据：他人空间备份不含好友列表，所以那张卡不会渲染。
  */
-const props = defineProps<{ care: CareFriend[]; hidden?: number }>();
+const props = defineProps<{ care: CareFriend[]; hidden?: number; loading?: boolean }>();
 
 const emit = defineEmits<{ select: [uin: string]; openAll: [] }>();
 
@@ -50,6 +50,7 @@ const rows = computed(() => props.care.map((row) => {
             </button>
             <button type="button" class="card-link" @click="emit('openAll')">查看完整互动 →</button>
         </template>
+        <p v-else-if="loading" class="empty">正在统计…</p>
         <p v-else class="empty">好友列表里还没有标记特别关心的人</p>
     </div>
 </template>
@@ -86,7 +87,8 @@ const rows = computed(() => props.care.map((row) => {
 }
 .person-row {
     display: flex;
-    flex: 1 1 auto;
+    /* 卡片可被同行撑高，但行保持自然高度，多余空间留给底部链接 */
+    flex: 0 0 auto;
     align-items: center;
     gap: 10px;
     width: 100%;
