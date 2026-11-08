@@ -1267,9 +1267,10 @@ button.ip-pick-card:hover {
 /* ===== 结果态改版：吸顶摘要 + 筛选 chips + 紧凑时间线 ===== */
 .ip-summary {
     position: sticky;
-    top: -6px;
+    /* 同 .list-toolbar：要盖住 page-body 的 16px 上内边距，否则吸顶上方露缝 */
+    top: -16px;
     z-index: 3;
-    margin: -6px 0 12px;
+    margin: -16px 0 12px;
     padding: 14px 16px 12px;
     background: var(--bg-primary);
     border: 1px solid var(--border-card);

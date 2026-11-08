@@ -166,7 +166,10 @@ body {
     border: 1px solid var(--border-toolbar);
     border-radius: 8px;
     position: sticky;
-    top: 0;
+    /* page-body 有 16px 上内边距，sticky top:0 只能贴到内容区——
+       吸顶时那 16px 会变成一条缝，滚动的内容从里面透出来（用户实拍确认）。
+       负 top 让工具栏整个盖住 padding 区，无缝。 */
+    top: -16px;
     z-index: 5;
     box-shadow: 0 2px 6px var(--shadow-sm);
 }
@@ -747,6 +750,7 @@ mark.gs-mark {
     .list-toolbar {
         gap: 8px;
         padding: 8px 10px;
+        top: -12px;
     }
 
     .list-toolbar .toolbar-group {
