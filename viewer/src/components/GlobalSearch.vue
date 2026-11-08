@@ -134,6 +134,19 @@ function move(step: number): void {
 const LIST_ROUTE: Record<string, string> = { photos: 'albums' };
 
 /**
+ * 不支持「查看全部」的模块
+ *
+ * 相片的命中来自「相片描述 / 相片评论」，而相册列表页搜的是「相册名 / 分类 / 相册描述」，
+ * 两者不是一个维度——跳过去搜同一个词必然是 0 个结果。与其给个走不通的入口，不如不显示。
+ */
+const NO_GROUP_ALL = new Set(['photos']);
+
+/** 该分组是否值得提供「查看全部」 */
+function canViewAll(group: { module: string; itemTotal: number }): boolean {
+    return group.itemTotal > 0 && !NO_GROUP_ALL.has(group.module);
+}
+
+/**
  * 查看该模块的全部命中
  *
  * 列表页已支持从 URL 恢复关键词（`?q=`），所以直接跳过去就是筛选好的列表，
@@ -220,7 +233,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
                                 内容 {{ group.itemTotal }} · 评论 {{ group.commentTotal }}
                             </span>
                             <button
-                                v-if="group.itemTotal > 0"
+                                v-if="canViewAll(group)"
                                 type="button"
                                 class="gs-group-all"
                                 :title="`到${group.moduleLabel}列表看全部 ${group.itemTotal} 条内容命中（列表搜索只覆盖正文，不含评论）`"
@@ -352,7 +365,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
     flex: 1;
     min-height: 120px;
     overflow-y: auto;
-    padding: 6px 8px 10px;
+    /* 上内边距必须为 0：sticky 标题贴顶时否则会留一条缝，滚动中内容从缝里透出来 */
+    padding: 0 8px 10px;
 }
 .gs-hint {
     margin: 28px 0;
@@ -369,14 +383,19 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
     display: flex;
     align-items: baseline;
     gap: 7px;
-    margin-top: 6px;
-    padding: 9px 8px 5px;
+    /* 负 margin 抵消 .gs-body 的 8px 内边距，让底色铺满整行 */
+    margin: 6px -8px 0;
+    padding: 9px 16px 7px;
     border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    /* --bg-tint-blue(#ecf5ff) 在白底上几乎看不出，再加一层 10% 品牌蓝；
+       不支持 color-mix 的旧内核会回落到第一行 */
+    background: var(--bg-tint-blue);
+    background: color-mix(in srgb, var(--accent) 10%, var(--bg-primary));
     /* 滚动时吸顶：多组结果往下翻也不会忘了自己在看哪个模块 */
     position: sticky;
     top: 0;
     z-index: 1;
-    background: var(--bg-primary);
 }
 .gs-group:first-child .gs-group-head {
     border-top: none;
