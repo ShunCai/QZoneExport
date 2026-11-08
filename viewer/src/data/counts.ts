@@ -569,9 +569,31 @@ export interface TopLocation {
  *  3. 空字符串/空白地点直接跳过；同地点名归并计数，保留最新访问时间
  *  4. 最终按 count 从大到小排序取 Top N，percent 按「带地点的内容总数」归一化
  */
-export async function loadTopLocations(n = 5): Promise<TopLocation[]> {
-    type Bucket = { count: number; latestTs: number; latestItem: Record<string, any>; kind: DataKey | 'photos'; label: string; route: string };
-    const buckets = new Map<string, Bucket>();
+/**
+ * 从地点串提取「城市」键，用于把「深圳市宝安区」「深圳」归并成同一个地方
+ *
+ * 规则（中国地名惯用层级，纯字符串处理不引库）：
+ * - 先剥「省 / 自治区 / 特别行政区」前缀（广东省深圳市 → 深圳市宝安区）
+ * - 再取第一个「市」之前的部分：深圳市宝安区 → 深圳、北京市朝阳区 → 北京
+ * - 没有市字样的（深圳、纽约、学校）原样返回
+ */
+export function cityKeyOf(location: string): string {
+    const name = String(location ?? '').trim();
+    if (!name) {
+        return '';
+    }
+    const withoutProvince = name.replace(/^.{1,8}?(?:省|自治区|特别行政区)/, '');
+    // 「香港特别行政区」整串就是行政区，剥完为空 → 用原名再剥后缀
+    const base = withoutProvince || name.replace(/特别行政区$/, '');
+    const matched = base.match(/^(.{1,10}?)市/);
+    return matched ? matched[1] : base;
+}
+
+type LocationBucket = { count: number; latestTs: number; latestItem: Record<string, any>; kind: DataKey | 'photos'; label: string; route: string };
+
+/** 内部：遍历全部模块收集地点桶；keyOf 决定按「原始地点」还是「城市」聚合 */
+async function collectLocationBuckets(keyOf: (loc: string) => string): Promise<{ buckets: Map<string, LocationBucket>; totalLocated: number }> {
+    const buckets = new Map<string, LocationBucket>();
     let totalLocated = 0;
 
     const ROUTE_OF: Record<string, string> = {
@@ -579,18 +601,15 @@ export async function loadTopLocations(n = 5): Promise<TopLocation[]> {
         shares: 'shares', favorites: 'favorites', boards: 'boards', photos: 'albums',
     };
 
-    // 1) 7 个普通模块（messages/blogs/diaries/videos/shares/favorites/boards）
-    // 这里复用 YEAR_MODULES 保证模块列表 + 时间字段回退链，与其它 4 处统计一致
     for (const mod of YEAR_MODULES) {
         const items = await loadList(mod.key);
         for (const item of items) {
             const loc = locationOf(item);
             if (!loc || !loc.trim()) continue;
-            const raw = mod.timeOf(item);
-            const ts = timeValue(raw);
+            const ts = timeValue(mod.timeOf(item));
             if (!isValidTimestampMs(ts)) continue;
             totalLocated++;
-            const key = loc.trim();
+            const key = keyOf(loc.trim());
             const prev = buckets.get(key);
             if (!prev || ts > prev.latestTs) {
                 buckets.set(key, {
@@ -607,18 +626,15 @@ export async function loadTopLocations(n = 5): Promise<TopLocation[]> {
         }
     }
 
-    // 2) 相册相片（独立遍历，因为 albums 容器不在 YEAR_MODULES 里，相片挂在 album.photoList 下）
     const albums = await loadList('albums');
     for (const album of albums) {
-        const photos = album.photoList || [];
-        for (const photo of photos) {
+        for (const photo of album.photoList || []) {
             const loc = PHOTO_LOCATION_FIELDS.locationOf(photo);
             if (!loc || !loc.trim()) continue;
-            const raw = PHOTO_LOCATION_FIELDS.timeOf(photo);
-            const ts = timeValue(raw);
+            const ts = timeValue(PHOTO_LOCATION_FIELDS.timeOf(photo));
             if (!isValidTimestampMs(ts)) continue;
             totalLocated++;
-            const key = loc.trim();
+            const key = keyOf(loc.trim());
             // 把所属相册信息挂在 photo 上，方便面板渲染时知道是哪本相册的照片
             const photoWithAlbum = { ...photo, __album: album };
             const prev = buckets.get(key);
@@ -637,8 +653,12 @@ export async function loadTopLocations(n = 5): Promise<TopLocation[]> {
         }
     }
 
-    // 3) 按 count 从大到小排序 → 取 Top N → 填 percent
-    const list = Array.from(buckets.entries())
+    return { buckets, totalLocated };
+}
+
+/** 由桶生成 Top N 列表 */
+function bucketsToTop(buckets: Map<string, LocationBucket>, totalLocated: number, n: number): TopLocation[] {
+    return Array.from(buckets.entries())
         .sort((a, b) => b[1].count - a[1].count)
         .slice(0, n)
         .map(([location, b]) => ({
@@ -651,5 +671,17 @@ export async function loadTopLocations(n = 5): Promise<TopLocation[]> {
             route: b.route,
             latestItem: b.latestItem,
         }));
-    return list;
+}
+
+export async function loadTopLocations(n = 5): Promise<TopLocation[]> {
+    const { buckets, totalLocated } = await collectLocationBuckets((loc) => loc);
+    return bucketsToTop(buckets, totalLocated, n);
+}
+
+/**
+ * 常驻城市：「深圳市宝安区 / 深圳」按城市归并后的 Top N
+ */
+export async function loadTopCities(n = 5): Promise<TopLocation[]> {
+    const { buckets, totalLocated } = await collectLocationBuckets((loc) => cityKeyOf(loc));
+    return bucketsToTop(buckets, totalLocated, n);
 }

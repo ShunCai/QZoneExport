@@ -5,6 +5,7 @@ import HomeWordComposition from '../components/home/HomeWordComposition.vue';
 import HomeRecentInteractions from '../components/home/HomeRecentInteractions.vue';
 import HomeEmojiStrip from '../components/home/HomeEmojiStrip.vue';
 import HomeWordCloud from '../components/home/HomeWordCloud.vue';
+import HomeLocationStrip from '../components/home/HomeLocationStrip.vue';
 import HomeCareCard from '../components/home/HomeCareCard.vue';
 import HomeNightCard from '../components/home/HomeNightCard.vue';
 import HomeHero from '../components/home/HomeHero.vue';
@@ -38,6 +39,7 @@ import { loadWordCounts, type WordCounts } from '../data/wordCounts';
 import { loadRecentInteractions, type RecentInteraction } from '../data/recentInteractions';
 import { loadEmojiStats, type EmojiCount } from '../data/emojiStats';
 import { loadWordCloud, type WordCloudResult } from '../data/wordCloud';
+import { loadTopCities, loadTopLocations, type TopLocation } from '../data/counts';
 import { loadNightDialogs, type NightDialog } from '../data/nightCompanions';
 import { buildSpaceProfileRows } from '../data/spaceProfile';
 import { loadInteractionSelection, type CareFriend, type TopPerson } from '../data/top-people';
@@ -186,6 +188,10 @@ const emojiLoading = ref(false);
 /** 最常用的词：分词较重（30 万字 ~0.5s），空闲时再算，不挡首屏 */
 const wordCloud = ref<WordCloudResult>({ docCount: 0, wordCount: 0, rows: [] });
 const wordCloudLoading = ref(false);
+/** 常驻城市（深圳市宝安区/深圳 归并）与常驻地点（原始地名）两条 */
+const topCities = ref<TopLocation[]>([]);
+const topLocations = ref<TopLocation[]>([]);
+const locationLoading = ref(false);
 const emojiTotal = ref(0);
 
 // 空间资料：主流程只显示签名，完整字段进全局弹层
@@ -456,6 +462,21 @@ onMounted(async () => {
             .then((data) => { wordCloud.value = data; })
             .catch(() => { wordCloud.value = { docCount: 0, wordCount: 0, rows: [] }; })
             .finally(() => { wordCloudLoading.value = false; });
+
+        // 常驻城市 / 常驻地点：与词条同一批空闲计算
+        locationLoading.value = true;
+        Promise.all([loadTopCities(6), loadTopLocations(6)])
+            .then(([cities, locations]) => {
+                topCities.value = cities;
+                topLocations.value = locations;
+            })
+            .catch(() => {
+                topCities.value = [];
+                topLocations.value = [];
+            })
+            .finally(() => {
+                locationLoading.value = false;
+            });
     });
 });
 
@@ -612,12 +633,26 @@ watch(
                         @select="onModuleSelect"
                     />
                 </div>
-                <home-emoji-strip :rows="emojiTop" :total="emojiTotal" :loading="emojiLoading" />
-                <home-word-cloud
-                    :data="wordCloud"
-                    :loading="wordCloudLoading"
-                    @search="(word: string) => emit('searchWord', word)"
-                />
+                <div class="home-grid-2 stat-grid">
+                    <home-emoji-strip :rows="emojiTop" :total="emojiTotal" :loading="emojiLoading" />
+                    <home-word-cloud
+                        :data="wordCloud"
+                        :loading="wordCloudLoading"
+                        @search="(word: string) => emit('searchWord', word)"
+                    />
+                    <home-location-strip
+                        title="常驻城市"
+                        :rows="topCities"
+                        :loading="locationLoading"
+                        note="发布/拍摄地点按城市归并"
+                    />
+                    <home-location-strip
+                        title="常驻地点"
+                        :rows="topLocations"
+                        :loading="locationLoading"
+                        note="发布/拍摄地点（原始地名）"
+                    />
+                </div>
             </section>
 
             <section class="home-section">
