@@ -264,7 +264,8 @@ function accessTag(album: Record<string, any>): string {
                         </n-tag>
                         <span class="album-time">{{ formatTime(current.createtime || current.createTime) }}</span>
                     </div>
-                    <p v-if="current.desc" class="album-desc">{{ current.desc }}</p>
+                    <!-- desc 可能是纯空格（实测「美好的回忆」就是一个空格），trim 后再判 -->
+                    <p v-if="current.desc && String(current.desc).trim()" class="album-desc">{{ current.desc }}</p>
                     <item-stats :item="current" />
                 </div>
 
