@@ -15,7 +15,7 @@ const props = defineProps<{
 <template>
     <div class="home-card">
         <div class="card-title">
-            <span>断档</span>
+            <span>断档时期</span>
             <span class="note">沉默的月份</span>
         </div>
         <p v-if="props.loading" class="empty">正在统计…</p>
@@ -92,8 +92,8 @@ const props = defineProps<{
     justify-content: space-between;
     gap: 8px;
     margin-bottom: 12px;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
     color: var(--text-primary);
 }
 .card-title .note {
