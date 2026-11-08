@@ -222,6 +222,8 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => [
                         :comments="itemComments(current)"
                         :user-of="commentUser"
                         :replies-of="commentReplies"
+                        :highlight-id="routeQuery.comment"
+                        :item-id="keyOf(current)"
                     />
                 </div>
             </template>

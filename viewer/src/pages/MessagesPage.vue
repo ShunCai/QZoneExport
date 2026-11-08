@@ -60,7 +60,12 @@ const sorts = [
             </n-button>
         </div>
         <div class="page-body">
-            <message-item v-if="current" :item="current" :expand-comments="true" />
+            <message-item
+                v-if="current"
+                :item="current"
+                :expand-comments="true"
+                :highlight-comment="routeQuery.comment"
+            />
             <p v-else class="missing">没有找到这条说说，它可能未包含在本次备份中。</p>
         </div>
     </template>

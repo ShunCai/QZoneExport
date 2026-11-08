@@ -38,6 +38,8 @@ const props = defineProps<{
     item: Record<string, any>;
     /** 详情页传入：评论全部直接内嵌展开，不走「>15 弹窗」规则 */
     expandComments?: boolean;
+    /** 从全局搜索结果跳进来时要定位的评论 id */
+    highlightComment?: string;
 }>();
 
 /**
@@ -173,6 +175,8 @@ function mediasOf(item: Record<string, any>): MediaItem[] {
                 :total="commentList.length"
                 :user-of="commentUser"
                 :replies-of="commentReplies"
+                :highlight-id="props.highlightComment"
+                :item-id="String(props.item.tid ?? props.item.id ?? '')"
             />
             <div v-if="!props.expandComments && commentList.length > COMMENT_LIMIT" class="comments-more">
                 <n-button text type="primary" @click="showAllComments = true">

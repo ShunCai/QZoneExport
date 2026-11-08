@@ -41,7 +41,12 @@ function avatarHtml(uin: string | undefined, label: string, hidden: boolean): st
  * 单条评论（或回复）的 HTML。
  * @param isReply 回复不再递归展开自己的回复，避免深层嵌套把 300px 面板挤爆
  */
-function commentEntryHtml(comment: Record<string, any>, hidden: boolean, isReply: boolean): string {
+function commentEntryHtml(
+    comment: Record<string, any>,
+    hidden: boolean,
+    isReply: boolean,
+    highlightId?: string,
+): string {
     const user = commentUser(comment);
     // 备注 > 昵称 > QQ（与列表页评论区同口径）
     const label = hidden ? maskedUserLabel(user) : displayName(user.uin, user.name);
@@ -53,11 +58,15 @@ function commentEntryHtml(comment: Record<string, any>, hidden: boolean, isReply
     const replies = isReply ? [] : commentReplies(comment);
     const repliesHtml = replies.length > 0
         ? `<div class="pswp-comment-replies">${replies
-            .map((reply) => commentEntryHtml(reply, hidden, true))
+            .map((reply) => commentEntryHtml(reply, hidden, true, highlightId))
             .join('')}</div>`
         : '';
+    // 从全局搜索结果跳过来时命中这条评论：加类供 CSS 高亮（无真实 id 的评论不参与定位）
+    const cid = [comment?.tid, comment?.id, comment?.commentid, comment?.commentId]
+        .find((value) => value !== undefined && value !== null && String(value) !== '');
+    const hit = !!highlightId && cid !== undefined && String(cid) === String(highlightId);
 
-    return `<div class="pswp-comment${isReply ? ' pswp-comment-reply' : ''}">`
+    return `<div class="pswp-comment${isReply ? ' pswp-comment-reply' : ''}${hit ? ' is-hit' : ''}">`
         + avatarHtml(String(user.uin ?? ''), label, hidden)
         + '<div class="pswp-comment-main">'
         + '<div class="pswp-comment-head">'
@@ -71,8 +80,8 @@ function commentEntryHtml(comment: Record<string, any>, hidden: boolean, isReply
 }
 
 /** 整批评论（含各自的一层回复）的 HTML */
-export function commentEntriesHtml(list: Record<string, any>[], hidden: boolean): string {
+export function commentEntriesHtml(list: Record<string, any>[], hidden: boolean, highlightId?: string): string {
     return `<div class="pswp-comments-list">${list
-        .map((comment) => commentEntryHtml(comment, hidden, false))
+        .map((comment) => commentEntryHtml(comment, hidden, false, highlightId))
         .join('')}</div>`;
 }

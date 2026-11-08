@@ -71,6 +71,11 @@ export interface MediaInfo {
 
 export interface MediaItem {
     type: 'image' | 'video';
+    /**
+     * 媒体自身的稳定标识（相片取 lloc，缺省退相片名/地址）。
+     * 供「从搜索结果跳进相册灯箱」时定位到具体这一张。
+     */
+    key?: string;
     /** 图片或视频地址（已转为查看器可用的相对路径）；灯箱大图用原图 */
     src: string;
     /**
@@ -237,6 +242,7 @@ export function photoMediaOf(photo: Record<string, any>): MediaItem {
     if (photo.is_video && photo.video_info) {
         return {
             type: 'video',
+            key: String(photo.lloc || photo.name || ''),
             src: videoUrl(photo.video_info) || assetUrl(photo.video_info.video_url),
             // 相册视频的预览图挂在 photo 层级（custom_pre_filepath），video_info 里没有；
             // 回退必须用 preview 优先的 photoThumbUrl，否则会退到 custom_filepath（.mp4 本体）被当图片解码失败
@@ -246,5 +252,13 @@ export function photoMediaOf(photo: Record<string, any>): MediaItem {
             stats,
         };
     }
-    return { type: 'image', src: photoUrl(photo), thumb: photoThumbUrl(photo), info, comments, stats };
+    return {
+        type: 'image',
+        key: String(photo.lloc || photo.name || ''),
+        src: photoUrl(photo),
+        thumb: photoThumbUrl(photo),
+        info,
+        comments,
+        stats,
+    };
 }

@@ -160,6 +160,7 @@ function accessTag(album: Record<string, any>): string {
             :time-of="photoTimeOf"
             :sorts="photoSorts"
             :text-of="(photo: Record<string, any>) => [photo.name, photo.desc, photoLocation(photo)].filter(Boolean).join(' ')"
+            :focus-item="(photo: Record<string, any>) => !!routeQuery.photo && String(photo.lloc || photo.name || '') === routeQuery.photo"
         >
             <template #head-prefix>
                 <n-button text class="back" @click="() => {
@@ -196,7 +197,14 @@ function accessTag(album: Record<string, any>): string {
             <!-- 点任一张在大图里翻当页，单张相片的评论在大图右侧面板 -->
             <template #default="{ items, paginate }">
                 <div ref="gridWrap">
-                    <media-grid :medias="toMedias(items)" :comments="itemComments(current)" :masonry="!paginate" :item-width="220" />
+                    <media-grid
+                        :medias="toMedias(items)"
+                        :comments="itemComments(current)"
+                        :masonry="!paginate"
+                        :item-width="220"
+                        :open-key="routeQuery.photo"
+                        :highlight-comment="routeQuery.comment"
+                    />
                 </div>
             </template>
         </list-page>

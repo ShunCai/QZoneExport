@@ -45,7 +45,7 @@ const current = computed(() => (
             </n-button>
         </div>
         <div class="page-body">
-            <board-item v-if="current" :item="current" />
+            <board-item v-if="current" :item="current"  :highlight-comment="routeQuery.comment" />
             <p v-else class="missing">没有找到这条留言，它可能未包含在本次备份中。</p>
         </div>
     </template>

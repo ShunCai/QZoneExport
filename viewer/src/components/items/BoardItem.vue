@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { formatTime } from '../../data/format';
 import { commentUser, decodeHtml, fixHtmlAssets } from '../../data/content';
 import { formatHtmlContent, formatNickname } from '../../data/richText';
@@ -11,7 +12,42 @@ import UserAvatar from '../UserAvatar.vue';
  * 单条留言（含回复）
  * 抽出来供留言列表页与个人中心的那年今日共用。
  */
-const props = defineProps<{ item: Record<string, any> }>();
+const props = defineProps<{
+    item: Record<string, any>;
+    /** 从全局搜索结果跳进来时要定位的回复 id（留言的「评论」就是 replyList） */
+    highlightComment?: string;
+}>();
+
+/**
+ * 回复的定位 id：与 data/search.ts 的 commentKey 规则一致
+ * （优先真实 id，缺失时退化为「留言 id + 序号」）。
+ */
+function replyIdOf(reply: Record<string, any>, index: number): string {
+    const raw = reply?.tid ?? reply?.id ?? reply?.commentid ?? reply?.commentId;
+    if (raw !== undefined && raw !== null && String(raw) !== '') {
+        return String(raw);
+    }
+    const itemId = String(props.item?.tid ?? props.item?.id ?? '');
+    return itemId ? `${itemId}#${index}` : '';
+}
+
+const highlightedId = computed(() => String(props.highlightComment ?? ''));
+
+/** 从搜索结果进来时把命中的回复滚进视野 */
+const root = ref<HTMLElement | null>(null);
+function scrollToHighlight(): void {
+    if (!highlightedId.value) {
+        return;
+    }
+    nextTick(() => {
+        requestAnimationFrame(() => {
+            const el = root.value?.querySelector('.reply.is-highlight') as HTMLElement | null;
+            el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        });
+    });
+}
+onMounted(scrollToHighlight);
+watch(highlightedId, scrollToHighlight);
 
 const { hidden: hideSensitive } = usePrivacy();
 
@@ -39,7 +75,7 @@ function contentOf(item: Record<string, any>): string {
 </script>
 
 <template>
-    <div class="card-item">
+    <div ref="root" class="card-item">
         <div class="item-head">
             <user-avatar :uin="props.item.uin" :size="32" :class="{ 'privacy-blur': hideSensitive }" />
             <span class="item-name" v-html="nameOf(props.item.nickname || props.item.name, props.item.uin)"></span>
@@ -47,7 +83,12 @@ function contentOf(item: Record<string, any>): string {
         </div>
         <div class="item-content" v-html="contentOf(props.item)" />
 
-        <div v-for="(reply, replyIndex) in props.item.replyList || []" :key="replyIndex" class="reply">
+        <div
+            v-for="(reply, replyIndex) in props.item.replyList || []"
+            :key="replyIndex"
+            class="reply"
+            :class="{ 'is-highlight': !!highlightedId && replyIdOf(reply, Number(replyIndex)) === highlightedId }"
+        >
             <div class="item-head">
                 <user-avatar :uin="commentUser(reply).uin" :size="26" :class="{ 'privacy-blur': hideSensitive }" />
                 <span class="item-name" v-html="nameOf(commentUser(reply).name, commentUser(reply).uin)"></span>
@@ -83,6 +124,14 @@ function contentOf(item: Record<string, any>): string {
     vertical-align: middle;
 }
 /* 回复缩进一层，与空间层级一致 */
+/* 搜索结果命中的回复：底色 + 左侧色条 */
+.reply.is-highlight {
+    margin-left: -8px;
+    padding: 6px 8px;
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    background: var(--bg-tint-blue);
+}
 .reply {
     margin: 8px 0 0 18px;
     padding-left: 10px;

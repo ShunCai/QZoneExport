@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick, watch } from 'vue';
 import PhotoSwipe from 'photoswipe';
 import 'photoswipe/style.css';
 import { escapeHtml, formatText } from '../data/richText';
@@ -37,6 +37,10 @@ const props = defineProps<{
      * 其余模块（说说配图等）不传，维持 160 的紧凑排布。
      */
     itemWidth?: number;
+    /** 从搜索结果跳进来时，要在灯箱里打开的那张相片（对应 MediaItem.key） */
+    openKey?: string;
+    /** 还要展开评论并定位到这条评论 */
+    highlightComment?: string;
 }>();
 
 /**
@@ -52,6 +56,32 @@ const viewables = computed(() => props.medias.filter((media) => (
 function viewIndex(media: MediaItem): number {
     return viewables.value.indexOf(media);
 }
+
+/**
+ * 从搜索结果跳进来：等媒体就绪后自动打开到指定这一张（同一次跳转只开一次）
+ *
+ * 必须放在 viewables 之后：immediate 首次回调就要读它，提前访问会撞 TDZ。
+ */
+let autoOpenedKey = '';
+watch(
+    // 监听数组引用而不是长度：相册翻页后同样是 60 张，长度不变不会触发
+    [() => props.openKey, () => props.medias],
+    () => {
+        const key = props.openKey;
+        if (!key || autoOpenedKey === key) {
+            return;
+        }
+        const media = viewables.value.find((item) => item.key === key);
+        if (!media) {
+            return;
+        }
+        autoOpenedKey = key;
+        nextTick(() => {
+            void openViewer(media, { expandComments: !!props.highlightComment });
+        });
+    },
+    { immediate: true },
+);
 
 /** 统计角标是否需要展示（0 也展示，便于对比；但完全没给 stats 的不占位） */
 function hasStats(media: MediaItem): boolean {
@@ -130,6 +160,22 @@ function measure(src: string): Promise<{ width: number; height: number }> {
 }
 
 /**
+ * 带超时的尺寸测量
+ *
+ * 打开灯箱前要测完当前页所有图的尺寸；从搜索结果跳到相册深处时，
+ * 这一页 60 张全是首次加载，逐张等会拖到十几秒。超时先用默认尺寸占位，
+ * 图真正加载完仍会写进缓存，之后再打开就是准的。
+ */
+function measureWithTimeout(src: string, ms = 1500): Promise<{ width: number; height: number }> {
+    return Promise.race([
+        measure(src),
+        new Promise<{ width: number; height: number }>((resolve) => {
+            setTimeout(() => resolve({ width: 1200, height: 900 }), ms);
+        }),
+    ]);
+}
+
+/**
  * 当前图片自身的信息
  * 名称、说明、属性行分三种样式渲染，而不是堆成一段同样字号的文字。
  */
@@ -173,10 +219,10 @@ function commentsHtml(index: number): string {
     }
     // 条目 HTML 抽到 data/commentHtml.ts：支持头像与一层回复，且便于纯函数单测
     return info + `<div class="pswp-comments-title">${title}（${list.length}）</div>`
-        + commentEntriesHtml(list, hideSensitive.value);
+        + commentEntriesHtml(list, hideSensitive.value, props.highlightComment);
 }
 
-async function openViewer(media: MediaItem): Promise<void> {
+async function openViewer(media: MediaItem, options?: { expandComments?: boolean }): Promise<void> {
     const index = viewIndex(media);
     if (index < 0) {
         return;
@@ -192,14 +238,15 @@ async function openViewer(media: MediaItem): Promise<void> {
                     + '</div>',
             };
         }
-        const size = await measure(item.src);
+        const size = await measureWithTimeout(item.src);
         return { src: item.src, width: size.width, height: size.height };
     }));
 
     // 评论侧栏默认收起：打开大图先看图，需要时再点顶栏的评论按钮展开
     // 窗口太窄时（与 styles.css 断点一致）连切换按钮也不注册，避免展开后没地方放
     const canTogglePanel = window.innerWidth > 900;
-    let commentsVisible = false;
+    // 从搜索结果跳进来时直接展开评论面板，否则保持默认收起
+    let commentsVisible = options?.expandComments === true;
     const pswp = new PhotoSwipe({
         dataSource,
         index,
@@ -295,6 +342,16 @@ async function openViewer(media: MediaItem): Promise<void> {
                 className: 'pswp__button--comments-toggle pswp__button--comments-off',
                 title: '展开评论',
                 ariaLabel: '展开评论',
+                // 从搜索结果跳进来时默认就展开评论：初始化时把面板与按钮状态一起同步
+                onInit: (element: HTMLElement) => {
+                    if (!commentsVisible) {
+                        return;
+                    }
+                    applyCommentsVisibility();
+                    element.title = '收起评论';
+                    element.setAttribute('aria-label', '收起评论');
+                    element.classList.remove('pswp__button--comments-off');
+                },
                 html: {
                     isCustomSVG: true,
                     // 实心对话气泡 + 三个挖空的圆点（fill-rule=evenodd 让圆点成为洞）。
@@ -334,6 +391,15 @@ async function openViewer(media: MediaItem): Promise<void> {
     pswp.init();
     // 初始定位（打开即视频时也需抬高控件）
     syncVideoState();
+    // 命中评论：等面板渲染完再滚过去，否则拿不到节点
+    if (props.highlightComment) {
+        nextTick(() => {
+            setTimeout(() => {
+                const hit = pswp.element?.querySelector('.pswp-comment.is-hit') as HTMLElement | null;
+                hit?.scrollIntoView({ block: 'center' });
+            }, 80);
+        });
+    }
     // 只有真的存在缩略图条时才给视频底部留白；单条媒体没有导航条，
     // 留着那段 80px 会让视频的原生进度条悬在屏幕中间，看着像一条多余的「导航条」
     pswp.element?.classList.toggle('pswp--has-thumbs', hasThumbBar);
@@ -352,7 +418,7 @@ async function openViewer(media: MediaItem): Promise<void> {
                 rel="noreferrer"
                 title="外部视频，点击跳转原站播放（需联网）"
             >
-                <img v-if="media.poster" :src="media.poster" loading="lazy" />
+                <img v-if="media.poster" :src="media.poster" loading="lazy" decoding="async" />
                 <span class="play-badge">▶</span>
                 <span v-if="hasStats(media)" class="media-stats">
                     <span class="stat-item">赞 {{ media.stats?.likes || 0 }}</span>
@@ -366,7 +432,7 @@ async function openViewer(media: MediaItem): Promise<void> {
                 title="点击播放"
                 @click="openViewer(media)"
             >
-                <img v-if="media.poster" :src="media.poster" loading="lazy" />
+                <img v-if="media.poster" :src="media.poster" loading="lazy" decoding="async" />
                 <span v-else class="media-noposter">无封面</span>
                 <span class="play-badge">▶</span>
                 <span v-if="hasStats(media)" class="media-stats">
@@ -376,7 +442,7 @@ async function openViewer(media: MediaItem): Promise<void> {
             </div>
             <!-- 图片：带统计角标时需包一层定位容器 -->
             <div v-else-if="hasStats(media)" class="media media-cover media-playable" @click="openViewer(media)">
-                <img :src="media.thumb || media.src" loading="lazy" />
+                <img :src="media.thumb || media.src" loading="lazy" decoding="async" />
                 <span class="media-stats">
                     <span class="stat-item">赞 {{ media.stats?.likes || 0 }}</span>
                     <span class="stat-item">评论 {{ media.stats?.comments || 0 }}</span>
@@ -386,7 +452,7 @@ async function openViewer(media: MediaItem): Promise<void> {
                 v-else
                 class="media media-image"
                 :src="media.thumb || media.src"
-                loading="lazy"
+                loading="lazy" decoding="async"
                 @click="openViewer(media)"
             />
         </template>

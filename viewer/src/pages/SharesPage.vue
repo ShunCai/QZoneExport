@@ -92,7 +92,7 @@ const combinedFilter = computed(() => (item: Record<string, any>) => {
             </n-button>
         </div>
         <div class="page-body">
-            <share-item v-if="current" :item="current" :expand-comments="true" />
+            <share-item v-if="current" :item="current" :expand-comments="true" :highlight-comment="routeQuery.comment" />
             <p v-else class="missing">没有找到这条分享，它可能未包含在本次备份中。</p>
         </div>
     </template>
