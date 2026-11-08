@@ -416,6 +416,31 @@ export async function buildSearchRecords(): Promise<SearchRecord[]> {
                     query: { id: albumId },
                 });
             }
+
+            // 相册自身的评论（用户在相册页留的评论挂在 album.comments 上，与相片评论是两回事；
+            // 实测「相册的相片评论测试」就在这里，此前漏索引导致搜不到）
+            let albumCmtIndex = 0;
+            for (const comment of itemComments(album)) {
+                const text = textOf(comment.content);
+                if (text && albumId) {
+                    const cid = commentKey(albumId, comment, albumCmtIndex);
+                    out.push({
+                        module: 'albums',
+                        moduleLabel: '相册',
+                        kind: 'comment',
+                        itemId: albumId,
+                        commentId: cid,
+                        time: commentTime(comment) || timeValue(album.createtime || album.createTime),
+                        title: plainText(comment.name || comment.nickname) || '评论',
+                        body: text,
+                        author: plainText(comment.name || comment.nickname),
+                        context: albumName ? `${albumName} · 相册评论` : '相册评论',
+                        route: 'albums',
+                        query: { id: albumId, comment: cid },
+                    });
+                }
+                albumCmtIndex += 1;
+            }
             for (const photo of album.photoList || []) {
                 // 与 media.ts 的 MediaItem.key 保持同一规则，灯箱才能定位到这一张
                 const photoKey = String(photo.lloc || photo.name || '');
