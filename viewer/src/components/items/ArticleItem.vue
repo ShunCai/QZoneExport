@@ -105,15 +105,16 @@ const abstractImages = computed<string[]>(() => (props.item.img || [])
 <style scoped>
 .item-head {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     gap: 10px;
 }
 .item-title {
     font-size: 15px;
     font-weight: 600;
-    /* 多列窄卡下长标题（无空格的下划线串/长英文）必须能断行，否则溢出列边界 */
-    max-width: 100%;
+    /* 关键：min-width:0 允许 flex 收缩（否则长内容把标题撑出列边界）；
+       flex:1 让标题流动填满标签后的剩余行宽，文字超长才在剩余空间内断行 */
+    flex: 1 1 auto;
+    min-width: 0;
     overflow-wrap: anywhere;
     word-break: break-word;
     white-space: normal;
@@ -123,6 +124,8 @@ const abstractImages = computed<string[]>(() => (props.item.img || [])
 .item-title :deep(.n-button__content) {
     white-space: normal;
     text-align: left;
+    /* 标题 flex:1 占满整行后，naive 按钮内容默认居中会显形——强制靠左 */
+    justify-content: flex-start;
 }
 .item-meta {
     display: flex;

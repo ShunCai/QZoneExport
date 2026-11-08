@@ -674,10 +674,12 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
                 </div>
                 <div v-if="props.prefKey" class="toolbar-group">
                     <span class="toolbar-label">密度</span>
-                    <n-radio-group v-model:value="compact" size="small">
-                        <n-radio-button :value="false">舒适</n-radio-button>
-                        <n-radio-button :value="true">紧凑</n-radio-button>
-                    </n-radio-group>
+                    <n-select
+                        v-model:value="compact"
+                        :options="[{ label: '舒适', value: false }, { label: '紧凑', value: true }]"
+                        size="small"
+                        style="width: 88px;"
+                    />
                 </div>
                 <n-popover v-if="toolbarNarrow && (props.timeOf || effectiveSorts.length > 0)" trigger="click" placement="bottom-end">
                     <template #trigger>
@@ -703,11 +705,16 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
                 <div class="toolbar-group to-right">
                     <div v-if="props.prefKey" class="toolbar-group">
                         <span class="toolbar-label">布局</span>
-                        <n-radio-group v-model:value="layout" size="small">
-                            <n-radio-button value="paged">分页</n-radio-button>
-                            <n-radio-button value="plain">不分页</n-radio-button>
-                            <n-radio-button value="flow">瀑布流</n-radio-button>
-                        </n-radio-group>
+                        <n-select
+                            v-model:value="layout"
+                            :options="[
+                                { label: '分页', value: 'paged' },
+                                { label: '不分页', value: 'plain' },
+                                { label: '瀑布流', value: 'flow' },
+                            ]"
+                            size="small"
+                            style="width: 104px;"
+                        />
                     </div>
                     <template v-if="effectiveSorts.length > 0 && !toolbarNarrow">
                         <span class="toolbar-label">排序</span>
