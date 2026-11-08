@@ -115,6 +115,9 @@ const abstractImages = computed<string[]>(() => (props.item.img || [])
        flex:1 让标题流动填满标签后的剩余行宽，文字超长才在剩余空间内断行 */
     flex: 1 1 auto;
     min-width: 0;
+    /* naive 的居中在 button 自身（.n-button { justify-content: center }），
+       不是内部 content——必须覆盖 button，否则 flex:1 占满行后文字仍居中 */
+    justify-content: flex-start;
     overflow-wrap: anywhere;
     word-break: break-word;
     white-space: normal;
