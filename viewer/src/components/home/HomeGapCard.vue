@@ -26,14 +26,38 @@ const props = defineProps<{
                 <span class="gap-unit">个月最长沉默</span>
             </div>
             <div v-if="props.stats.longestGapMonths > 0" class="gap-range">
-                {{ props.stats.gapStart }} → {{ props.stats.gapEnd }}
+                {{ props.stats.gapStart }} →
+                <template v-if="props.stats.gapOngoing">至今</template>
+                <template v-else>{{ props.stats.gapEnd }}</template>
             </div>
+
+            <!-- 断段列表：最长的前 3 段 -->
+            <div v-if="props.stats.topGaps.length" class="gap-list">
+                <div v-for="(g, i) in props.stats.topGaps" :key="i" class="gap-item">
+                    <span class="gap-item-rank">{{ i + 1 }}</span>
+                    <span class="gap-item-range">
+                        {{ g.start }} → <template v-if="g.ongoing">至今</template><template v-else>{{ g.end }}</template>
+                    </span>
+                    <span class="gap-item-months">{{ g.months }} 个月</span>
+                </div>
+            </div>
+
             <div class="gap-row">
                 <span class="gap-label">沉默月</span>
                 <span class="gap-value">
                     {{ props.stats.silentMonths }} / {{ props.stats.totalMonths }} 个月
                     <span class="gap-percent">（{{ props.stats.silentPercent }}%）</span>
                 </span>
+            </div>
+            <div class="gap-row">
+                <span class="gap-label">高峰月</span>
+                <span class="gap-value">
+                    {{ props.stats.peakMonth.month }} · {{ props.stats.peakMonth.count }} 条
+                </span>
+            </div>
+            <div class="gap-row">
+                <span class="gap-label">活跃年份</span>
+                <span class="gap-value">{{ props.stats.activeYearCount }} 个年头</span>
             </div>
             <div class="gap-row">
                 <span class="gap-label">空白年份</span>
@@ -103,6 +127,38 @@ const props = defineProps<{
 .gap-range {
     margin-bottom: 10px;
     font-size: 12px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+/* 断段 Top3 列表 */
+.gap-list {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 8px;
+    border-top: 1px solid var(--border-light);
+}
+.gap-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 12px;
+}
+.gap-item-rank {
+    flex: none;
+    width: 16px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.gap-item-range {
+    flex: 1;
+    min-width: 0;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+.gap-item-months {
+    flex: none;
     color: var(--text-secondary);
     font-variant-numeric: tabular-nums;
 }

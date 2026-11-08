@@ -448,8 +448,16 @@ export interface GapStats {
     longestGapMonths: number;
     /** 断档起点（yyyy年M月） */
     gapStart: string;
-    /** 断档终点 */
+    /** 断档终点（yyyy年M月；尾部断档为当前月） */
     gapEnd: string;
+    /** 断档是否仍在进行（最长断档来自「最后一条内容 → 至今」） */
+    gapOngoing: boolean;
+    /** 最长的前 3 段断档（含尾部「至今」，按空白月数降序） */
+    topGaps: { start: string; end: string; months: number; ongoing: boolean }[];
+    /** 最活跃的月份（单月内容条数最多） */
+    peakMonth: { month: string; count: number };
+    /** 有内容的年份数 */
+    activeYearCount: number;
     /** 跨度内整年无内容的年份（yyyy年） */
     emptyYears: string[];
 }
@@ -482,19 +490,58 @@ export function computeGaps(stats: MonthlyStat): GapStats | null {
         .map(([y, m]) => (y - y1) * 12 + (m - m1))
         .sort((a, b) => a - b);
 
-    let longestGapMonths = 0;
-    let gapStart = '';
-    let gapEnd = '';
+    // 收集全部断档段（相邻活跃月之间 + 尾部「至今」）
+    const monthAt = (idx: number): string => `${y1 + Math.floor(idx / 12)}年${(idx % 12) + 1}月`;
+    const allGaps: { start: string; end: string; months: number; ongoing: boolean }[] = [];
     for (let i = 1; i < idxs.length; i++) {
-        const gap = idxs[i] - idxs[i - 1] - 1;
-        if (gap > longestGapMonths) {
-            longestGapMonths = gap;
-            const sIdx = idxs[i - 1] + 1;
-            const eIdx = idxs[i] - 1;
-            gapStart = `${y1 + Math.floor(sIdx / 12)}年${(sIdx % 12) + 1}月`;
-            gapEnd = `${y1 + Math.floor(eIdx / 12)}年${(eIdx % 12) + 1}月`;
+        const months = idxs[i] - idxs[i - 1] - 1;
+        if (months > 0) {
+            allGaps.push({
+                start: monthAt(idxs[i - 1] + 1),
+                end: monthAt(idxs[i] - 1),
+                months,
+                ongoing: false,
+            });
         }
     }
+
+    // 尾部断档：最后一条内容 → 打开查看器的今天。
+    // 「空间最后更新停在几年前」也是断档，而且它在持续变长。
+    const now = new Date();
+    const nowIdx = (now.getFullYear() - y1) * 12 + (now.getMonth() + 1 - m1);
+    const lastIdx = idxs[idxs.length - 1] ?? 0;
+    if (nowIdx > lastIdx) {
+        const tailGap = nowIdx - lastIdx - 1;
+        if (tailGap > 0) {
+            allGaps.push({
+                start: monthAt(lastIdx + 1),
+                end: `${now.getFullYear()}年${now.getMonth() + 1}月`,
+                months: tailGap,
+                ongoing: true,
+            });
+        }
+    }
+
+    allGaps.sort((a, b) => b.months - a.months);
+    const topGaps = allGaps.slice(0, 3);
+    const longest = allGaps[0];
+    const longestGapMonths = longest ? longest.months : 0;
+    const gapStart = longest ? longest.start : '';
+    const gapEnd = longest ? longest.end : '';
+    const gapOngoing = longest ? longest.ongoing : false;
+
+    // 高峰月：单月内容条数最多
+    let peakMonth = { month: '', count: 0 };
+    for (const [month, count] of stats.months) {
+        if (count > peakMonth.count) {
+            peakMonth = { month, count };
+        }
+    }
+
+    // 有内容的年份数
+    const activeYearCount = new Set(
+        [...stats.months.keys()].map((m) => m.match(/(\d{4})年/)?.[1]).filter(Boolean) as string[],
+    ).size;
 
     // 空白年份：跨度内整年没有任何活跃月
     const activeYears = new Set(
@@ -515,6 +562,10 @@ export function computeGaps(stats: MonthlyStat): GapStats | null {
         longestGapMonths,
         gapStart,
         gapEnd,
+        gapOngoing,
+        topGaps,
+        peakMonth,
+        activeYearCount,
         emptyYears,
     };
 }
