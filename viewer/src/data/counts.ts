@@ -434,6 +434,91 @@ export async function loadMonthlyStats(): Promise<MonthlyStat> {
 }
 
 
+/** 断档统计：跨度内「沉默的月份」与最长空白段 */
+export interface GapStats {
+    /** 首末内容之间的总月数 */
+    totalMonths: number;
+    /** 有内容月数 */
+    activeMonths: number;
+    /** 完全无内容的月数 */
+    silentMonths: number;
+    /** 沉默月占比（0~100 整数） */
+    silentPercent: number;
+    /** 最长断档的空白整月数 */
+    longestGapMonths: number;
+    /** 断档起点（yyyy年M月） */
+    gapStart: string;
+    /** 断档终点 */
+    gapEnd: string;
+    /** 跨度内整年无内容的年份（yyyy年） */
+    emptyYears: string[];
+}
+
+/**
+ * 由月度聚合计算断档
+ *
+ * 口径：断档 = 相邻两个「有内容的月」之间的空白整月数。
+ * 内容不足两个活跃月（如只有一条）时无断档可言，返回 null。
+ * 纯函数，便于单测。
+ */
+export function computeGaps(stats: MonthlyStat): GapStats | null {
+    if (!stats.firstMonth || !stats.lastMonth || stats.months.size < 2) {
+        return null;
+    }
+    const parse = (m: string): [number, number] => {
+        const match = m.match(/(\d{4})年(\d{1,2})月/);
+        return match ? [Number(match[1]), Number(match[2])] : [0, 0];
+    };
+    const [y1, m1] = parse(stats.firstMonth);
+    const [y2, m2] = parse(stats.lastMonth);
+    const totalMonths = (y2 - y1) * 12 + (m2 - m1) + 1;
+    const activeMonths = stats.months.size;
+    const silentMonths = Math.max(0, totalMonths - activeMonths);
+
+    // 活跃月在跨度内的索引（0 起）
+    const idxs = [...stats.months.keys()]
+        .map(parse)
+        .filter(([y, m]) => y > 0)
+        .map(([y, m]) => (y - y1) * 12 + (m - m1))
+        .sort((a, b) => a - b);
+
+    let longestGapMonths = 0;
+    let gapStart = '';
+    let gapEnd = '';
+    for (let i = 1; i < idxs.length; i++) {
+        const gap = idxs[i] - idxs[i - 1] - 1;
+        if (gap > longestGapMonths) {
+            longestGapMonths = gap;
+            const sIdx = idxs[i - 1] + 1;
+            const eIdx = idxs[i] - 1;
+            gapStart = `${y1 + Math.floor(sIdx / 12)}年${(sIdx % 12) + 1}月`;
+            gapEnd = `${y1 + Math.floor(eIdx / 12)}年${(eIdx % 12) + 1}月`;
+        }
+    }
+
+    // 空白年份：跨度内整年没有任何活跃月
+    const activeYears = new Set(
+        [...stats.months.keys()].map((m) => m.match(/(\d{4})年/)?.[1]).filter(Boolean) as string[],
+    );
+    const emptyYears: string[] = [];
+    for (let y = y1; y <= y2; y++) {
+        if (!activeYears.has(String(y))) {
+            emptyYears.push(`${y}年`);
+        }
+    }
+
+    return {
+        totalMonths,
+        activeMonths,
+        silentMonths,
+        silentPercent: totalMonths > 0 ? Math.round((silentMonths / totalMonths) * 100) : 0,
+        longestGapMonths,
+        gapStart,
+        gapEnd,
+        emptyYears,
+    };
+}
+
 /** 空间之最：点赞最多/评论最多的条目 */
 export interface TopRecord {
     kind: DataKey;

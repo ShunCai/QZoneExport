@@ -6,6 +6,7 @@ import HomeRecentInteractions from '../components/home/HomeRecentInteractions.vu
 import HomeEmojiStrip from '../components/home/HomeEmojiStrip.vue';
 import HomeWordCloud from '../components/home/HomeWordCloud.vue';
 import HomeLocationCard from '../components/home/HomeLocationCard.vue';
+import HomeGapCard from '../components/home/HomeGapCard.vue';
 import HomeCareCard from '../components/home/HomeCareCard.vue';
 import HomeNightCard from '../components/home/HomeNightCard.vue';
 import HomeHero from '../components/home/HomeHero.vue';
@@ -39,7 +40,7 @@ import { loadWordCounts, type WordCounts } from '../data/wordCounts';
 import { loadRecentInteractions, type RecentInteraction } from '../data/recentInteractions';
 import { loadEmojiStats, type EmojiCount } from '../data/emojiStats';
 import { loadWordCloud, type WordCloudResult } from '../data/wordCloud';
-import { loadTopLocations, type TopLocation } from '../data/counts';
+import { computeGaps, loadTopLocations, type TopLocation } from '../data/counts';
 import { loadNightDialogs, type NightDialog } from '../data/nightCompanions';
 import { buildSpaceProfileRows } from '../data/spaceProfile';
 import { loadInteractionSelection, type CareFriend, type TopPerson } from '../data/top-people';
@@ -191,6 +192,8 @@ const wordCloudLoading = ref(false);
 /** 常驻地点（原始地名：深圳 / 茂名市高州市 / 深圳市宝安区…各自计次） */
 const topLocations = ref<TopLocation[]>([]);
 const locationLoading = ref(false);
+/** 断档统计：直接由已加载的月度聚合推导，零额外成本 */
+const gapStats = computed(() => computeGaps(monthly.value));
 const emojiTotal = ref(0);
 
 // 空间资料：主流程只显示签名，完整字段进全局弹层
@@ -594,13 +597,14 @@ watch(
             <section class="home-section">
                 <div class="home-section-head">
                     <h2>回忆</h2>
-                    <span class="note">那年今日 · 最初的记忆 · 回忆之最</span>
+                    <span class="note">那年今日 · 最初的记忆 · 回忆之最 · 断档</span>
                 </div>
-                <div class="home-grid-3">
+                <div class="home-grid-2">
                     <home-that-year-today />
                     <!-- 「最初的记忆」本质是回忆（空间起点），放在榜单里与「回忆之最」重复 -->
                     <home-list-card title="最初的记忆" note="各模块最早的记录" :items="rankings.first" more-type="first" empty-text="暂无记录" :loading="memoriesLoading" />
                     <home-top-memories :items="topMemories" :loading="memoriesLoading" />
+                    <home-gap-card :stats="gapStats" :loading="memoriesLoading" />
                 </div>
             </section>
 
