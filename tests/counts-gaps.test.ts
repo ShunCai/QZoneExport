@@ -58,6 +58,22 @@ describe('computeGaps', () => {
         expect(result!.emptyYears).not.toContain('2013年');
     });
 
+    it('首月不是 1 月时，断档区间的年月不能偏移（回归）', () => {
+        // 首个内容月是 2010年10月：索引零点是 10 月，不是 1 月。
+        // 曾用 floor(idx/12) 还原，导致区间整体偏移 9 个月（把 2024年9月显示成 2023年12月）。
+        const result = computeGaps(
+            stat([
+                ['2010年10月', 1],
+                ['2010年11月', 1],
+                ['2016年12月', 1],
+            ]),
+        );
+        // 中间断档：2010年11月 之后到 2016年12月 之前 = 2010年12月 ~ 2016年11月（72 个月）
+        expect(result!.topGaps.some((g) => g.start === '2010年12月' && g.end === '2016年11月' && g.months === 72)).toBe(true);
+        // 不能出现偏移后的错误年月
+        expect(result!.topGaps.some((g) => g.start === '2010年3月' || g.end === '2016年2月')).toBe(false);
+    });
+
     it('中间断档长于尾部时取中间', () => {
         // 活跃：2013-01、2020-01、当前月 → 尾部 0，最长 = 2013年02月 → 2019年12月
         const result = computeGaps(

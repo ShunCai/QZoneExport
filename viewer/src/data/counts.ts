@@ -497,7 +497,14 @@ export function computeGaps(stats: MonthlyStat): GapStats | null {
         .sort((a, b) => a - b);
 
     // 收集全部断档段（相邻活跃月之间 + 尾部「至今」）
-    const monthAt = (idx: number): string => `${y1 + Math.floor(idx / 12)}年${String((idx % 12) + 1).padStart(2, '0')}月`;
+    // idx 的零点是「首个内容月」（y1 年 m1 月），不是 y1 年 1 月——
+    // 直接 floor(idx/12) 会让区间整体偏移 (m1-1) 个月（曾导致「2024年9月的断档显示成 2023年12月」）。
+    const monthAt = (idx: number): string => {
+        const monthsFromJan = (m1 - 1) + idx;
+        const year = y1 + Math.floor(monthsFromJan / 12);
+        const month = (monthsFromJan % 12) + 1;
+        return `${year}年${String(month).padStart(2, '0')}月`;
+    };
     const allGaps: { start: string; end: string; months: number; ongoing: boolean }[] = [];
     for (let i = 1; i < idxs.length; i++) {
         const months = idxs[i] - idxs[i - 1] - 1;
