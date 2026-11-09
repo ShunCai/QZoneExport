@@ -50,6 +50,7 @@ describe('computeGaps', () => {
         // Top3：尾部第一，中间「2013年3月→2016年10月」第二
         expect(result!.topGaps[0]!.ongoing).toBe(true);
         expect(result!.topGaps[1]!.months).toBe(blankMonths([2013, 2], [2016, 11]));
+        expect(result!.totalGaps).toBeGreaterThanOrEqual(result!.topGaps.length);
         // 尾部断档跨过的年份也算空白年份
         expect(result!.emptyYears).toContain('2014年');
         expect(result!.emptyYears).toContain('2015年');

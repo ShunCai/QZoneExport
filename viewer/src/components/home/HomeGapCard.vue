@@ -62,6 +62,9 @@ const hero = computed(() => {
                     <span class="gap-item-months">{{ g.months }} 个月</span>
                 </div>
             </div>
+            <div v-if="props.stats.totalGaps > props.stats.topGaps.length" class="gap-more">
+                共 {{ props.stats.totalGaps }} 段空白，仅显示最长的 {{ props.stats.topGaps.length }} 段
+            </div>
 
             <div class="gap-row">
                 <span class="gap-label">沉默月</span>
@@ -157,6 +160,11 @@ const hero = computed(() => {
     flex-direction: column;
     margin-bottom: 8px;
     border-top: 1px solid var(--border-light);
+}
+.gap-more {
+    margin: -2px 0 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
 }
 .gap-item {
     display: flex;

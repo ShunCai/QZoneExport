@@ -454,6 +454,8 @@ export interface GapStats {
     gapOngoing: boolean;
     /** 最长的前 3 段断档（含尾部「至今」，按空白月数降序） */
     topGaps: { start: string; end: string; months: number; ongoing: boolean }[];
+    /** 全部断档段数（卡片只展示前 3 段，用于提示还剩多少） */
+    totalGaps: number;
     /** 最活跃的月份（单月内容条数最多） */
     peakMonth: { month: string; count: number };
     /** 有内容的年份数 */
@@ -564,6 +566,7 @@ export function computeGaps(stats: MonthlyStat): GapStats | null {
         gapEnd,
         gapOngoing,
         topGaps,
+        totalGaps: allGaps.length,
         peakMonth,
         activeYearCount,
         emptyYears,
