@@ -56,6 +56,7 @@ const pageSize = computed(() => Math.max(1, Math.round(60 / gridColumns.value)) 
         empty-hint="暂无视频内容（本次备份可能未包含视频模块）"
         unit="个"
         :page-size="pageSize"
+        self-masonry
         :time-of="timeOf"
         sort-label="拍摄时间"
         :sorts="sorts"
@@ -68,12 +69,11 @@ const pageSize = computed(() => Math.max(1, Math.round(60 / gridColumns.value)) 
 
         <template #default="{ items, paginate }">
             <div ref="gridWrap">
-                <!-- 视频封面等高，不需要 CSS 多列错落；且 ListPage 已按列分配 items，
-                     再开 MediaGrid 内部 columns 会两层分列叠加：列内只有 1 个视频时，
-                     CSS 多列会生成空白列（表现为多一个空白块）。这里用规整 220px 网格平铺。 -->
+                <!-- 竖屏/横屏视频高度不同，需要 CSS 多列错落；
+                     self-masonry 让 ListPage 不分列，避免两层分列叠加产生空白列 -->
                 <media-grid
                     :medias="items.map(videoMediaOf)"
-                    :masonry="false"
+                    :masonry="!paginate"
                     :item-width="220"
                     :open-key="routeQuery.vid"
                     :highlight-comment="routeQuery.comment"

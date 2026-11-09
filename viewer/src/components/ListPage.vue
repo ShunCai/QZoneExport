@@ -55,6 +55,11 @@ const props = withDefaults(defineProps<{
      */
     sorts?: SortOption[];
     pageSize?: number;
+    /**
+     * 页面自管瀑布流：不把 items 按列拆分，整块交给 slot，由页面自己的多列布局
+     * （如 MediaGrid 的 CSS columns）实现错落；滚动分块（masonryRendered）仍生效。
+     */
+    selfMasonry?: boolean;
     /** 单位量词，如「条」「个」 */
     unit?: string;
     /**
@@ -367,6 +372,10 @@ const paged = computed(() => {
 });
 
 const masonryColumns = computed(() => {
+    // 页面自管瀑布流时只给一个整块，避免「ListPage 分列 + 页面内 CSS 多列」两层叠加
+    if (props.selfMasonry) {
+        return [paged.value];
+    }
     const cols = Math.max(1, masonryCols.value);
     if (cols === 1) {
         return [paged.value];
@@ -756,7 +765,7 @@ watch(() => routeQuery.value, (query) => applyFromUrl(query));
                 <div
                     v-else
                     class="masonry-grid"
-                    :style="{ gridTemplateColumns: `repeat(${layout === 'plain' ? 1 : masonryCols}, minmax(0, 1fr))` }"
+                    :style="{ gridTemplateColumns: `repeat(${layout === 'plain' || props.selfMasonry ? 1 : masonryCols}, minmax(0, 1fr))` }"
                 >
                     <div v-for="(column, index) in masonryColumns" :key="index" class="masonry-col">
                         <slot :items="column" :paginate="false" />

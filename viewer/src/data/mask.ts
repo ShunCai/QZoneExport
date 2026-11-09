@@ -72,13 +72,17 @@ export function maskName(name: string | undefined | null): string {
  * 昵称/QQ 号打码还不够：概览卡片里的摘要（留言、说说正文、日志标题、地名）本身就是私密内容，
  * 截图分享就会直接泄漏。
  *
- * 用不定长的 `*` 串：所有摘要都是一模一样的固定圆点太假，看着不像脱敏而像占位符；
- * 长度随原文变化（3~8 个），既能看出是脱敏内容，又不会还原出精确字数。
+ * 不定式的部分打码：**保留首尾字符**（与 maskName 同一套风格），中间用不定长的 `*`：
+ * - 不全部盖掉——全星号/全圆点都只是占位符，列表会失去辨识度
+ * - 星号数量随原文长度在 3~8 之间变化，不固定、也还原不出精确字数
+ * 按 code point 处理，避免 emoji / 生僻字被截断。
  */
 export function maskContent(text: string | undefined | null): string {
     const t = String(text ?? '').trim();
     if (!t) return '';
-    const len = Array.from(t).length;
-    const stars = Math.max(3, Math.min(8, Math.round(len / 3) + 2));
-    return '*'.repeat(stars);
+    const chars = Array.from(t);
+    if (chars.length === 1) return chars[0]!;
+    if (chars.length === 2) return chars[0] + '*';
+    const stars = Math.max(3, Math.min(8, Math.round(chars.length / 4) + 2));
+    return chars[0] + '*'.repeat(stars) + chars[chars.length - 1];
 }

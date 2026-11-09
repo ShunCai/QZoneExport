@@ -126,8 +126,15 @@ const gridStyle = computed(() => {
         return { gridTemplateColumns: `repeat(${c}, minmax(0, 1fr))`, maxWidth };
     }
     if (props.masonry === true) {
-        // 多列等高流式布局：列宽自适应，图片按原始比例错落排列
-        return { display: 'block', columns: '220px', columnGap: '8px' };
+        // 多列流式布局：列宽自适应，图片/视频按原始比例错落排列。
+        // column-count 上限设为媒体数：只写 column-width 时浏览器按容器宽度生成列，
+        // 媒体少（如 4 个视频）时会多出空列，视觉上就是「多一个空白块」。
+        return {
+            display: 'block',
+            columns: '220px',
+            columnCount: String(Math.max(1, Math.min(props.medias.length, 8))),
+            columnGap: '8px',
+        };
     }
     const w = props.itemWidth ?? 160;
     return { gridTemplateColumns: `repeat(auto-fill, ${w}px)` };
