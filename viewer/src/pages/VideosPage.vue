@@ -68,9 +68,12 @@ const pageSize = computed(() => Math.max(1, Math.round(60 / gridColumns.value)) 
 
         <template #default="{ items, paginate }">
             <div ref="gridWrap">
+                <!-- 视频封面等高，不需要 CSS 多列错落；且 ListPage 已按列分配 items，
+                     再开 MediaGrid 内部 columns 会两层分列叠加：列内只有 1 个视频时，
+                     CSS 多列会生成空白列（表现为多一个空白块）。这里用规整 220px 网格平铺。 -->
                 <media-grid
                     :medias="items.map(videoMediaOf)"
-                    :masonry="!paginate"
+                    :masonry="false"
                     :item-width="220"
                     :open-key="routeQuery.vid"
                     :highlight-comment="routeQuery.comment"
