@@ -22,11 +22,14 @@ node_modules/
 # 开发用样例数据
 /viewer/mock/
 
-# 项目资料（设计文档 / 发布物料 / 素材，本地维护，不入版本控制）
+# 项目资料（设计稿 / 评审报告 / 发版物料 / 素材 / 参考文件，本地维护，不入版本控制）
 /resources/
+/design/
+/docs/
+/.reference/
 
-# 参考文件不入版本控制
-.reference/
+# 临时探测目录
+/.tsprobe/
 
 # IDE / Agent 工作数据（本地维护，不入版本控制）
 .codebuddy/

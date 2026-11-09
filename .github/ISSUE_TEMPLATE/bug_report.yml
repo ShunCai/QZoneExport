@@ -1,0 +1,111 @@
+name: 🐛 问题反馈
+description: 备份、下载、进度面板或离线查看器出现异常时填写
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前请先确认：
+        - 使用的是[官方渠道](https://github.com/ShunCai/QZoneExport#-快速开始)安装的最新版本，且**已重新加载扩展**（MV3 的后台脚本容易残留旧版本）；
+        - 已查阅 [Wiki 常见问题](https://github.com/ShunCai/QZoneExport/wiki)；
+        - 若与备份数据有关，请勿在 issue 中粘贴含有个人隐私的原始内容（说说正文、QQ 号、头像 URL 等），截图请打码。
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 问题发生在
+      options:
+        - 备份过程（采集 / 进度面板 / 断点续传）
+        - 媒体下载（图片 / 视频 / 表情 / 头像）
+        - 离线查看器（打开备份目录的 index.html）
+        - 安装与加载扩展
+        - 商店 / 权限 / 审核
+        - 其他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: 浏览器
+      options:
+        - Chrome
+        - Edge
+        - 360 等 Chromium 内核浏览器
+        - Firefox
+        - 其他 / 多浏览器均出现
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: 版本信息
+      description: 扩展版本（chrome://extensions 或 about:addons 可见）+ 浏览器版本 + 操作系统
+      placeholder: "例：扩展 3.1 / Chrome 142.0.7444.60 / Windows 11"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 备份范围
+      options:
+        - 全量备份
+        - 增量备份
+        - 不确定
+    validations:
+      required: true
+
+  - type: dropdown
+    id: downloader
+    attributes:
+      label: 媒体下载方式
+      description: 在「配置 → 公共 → 文件下载方式」中查看；Firefox 无「助手直写目录」
+      options:
+        - 助手直写目录（File System Access）
+        - 浏览器下载器
+        - Aria2
+        - 未涉及媒体 / 不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 从哪一步开始、点了什么、期望什么、实际什么
+      placeholder: |
+        1. 登录 QQ 空间，打开备份窗口
+        2. 勾选「相册」，选择「增量备份」并开始
+        3. 期望：跳过已备份相片
+        4. 实际：全部重新下载
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 日志与截图
+      description: |
+        请尽量提供：① 备份面板的报错/状态截图；② 浏览器控制台日志（F12 → Console）；
+        ③ 若是媒体 403 / Failed to fetch，附上失败的资源 URL（可打码）。
+        大段日志请折叠或用附件，不要直接刷屏。
+      render: shell
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: 补充信息
+      description: 备份的是自己的空间还是他人空间？空间数据量大约多少？是否换过浏览器/目录/账号？是否重新备份过？
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 确认
+      options:
+        - label: 我已确认不是旧版本缓存导致（重新加载过扩展 / 强刷过查看器）
+          required: true
+        - label: 我已检查提交内容不含个人隐私数据
+          required: true

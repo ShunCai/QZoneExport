@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 使用帮助与常见问题
+    url: https://github.com/ShunCai/QZoneExport/wiki
+    about: 配置说明、备份流程、常见报错，提问前建议先查
+  - name: 📦 版本说明与离线安装包
+    url: https://github.com/ShunCai/QZoneExport/releases
+    about: 查看最新版本、更新日志与离线包
+  - name: 💬 讨论区
+    url: https://github.com/ShunCai/QZoneExport/discussions
+    about: 使用心得、非 bug 类讨论与想法交流
