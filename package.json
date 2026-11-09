@@ -12,7 +12,7 @@
         "build": "npm run build:viewer && wxt build",
         "build:firefox": "npm run build:viewer && wxt build -b firefox --mv3",
         "zip": "npm run build:viewer && wxt zip",
-        "zip:firefox": "npm run build:viewer && wxt zip -b firefox --mv3",
+        "zip:firefox": "npm run build:viewer && wxt zip -b firefox --mv3 && node scripts/check-sources.mjs",
         "sign:firefox": "npm run build:firefox && node scripts/sign-firefox.mjs",
         "dev:viewer": "node scripts/gen-viewer-mock.mjs && vite --config viewer/vite.config.ts",
         "build:viewer": "vite build --config viewer/vite.config.ts",
@@ -20,7 +20,8 @@
         "compile:viewer": "vue-tsc --noEmit -p viewer/tsconfig.json",
         "test": "vitest run",
         "lint": "eslint .",
-        "format": "prettier --write ."
+        "format": "prettier --write .",
+        "check:sources": "node scripts/check-sources.mjs"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",

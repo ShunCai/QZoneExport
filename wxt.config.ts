@@ -14,6 +14,27 @@ export default defineConfig({
     entrypointsDir: 'entrypoints',
     publicDir: 'public',
     outDir: '.output',
+    /**
+     * Firefox（AMO）源码包的内容控制。
+     *
+     * WXT 默认只排除 node_modules / .output / 测试文件，点开头的目录靠 dotSources=false 自然排除；
+     * 但 resources/（Wiki 截图、营销封面、历史发布包）、design/、docs/ 等本地资料会被一并打进
+     * sources.zip——曾打进 38 MB（其中 resources/ 就 29 MB）。
+     * 这里显式排除，保证源码包只含可复现构建所需的代码与静态资源。
+     */
+    zip: {
+        excludeSources: [
+            'resources/**',
+            'design/**',
+            'docs/**',
+            // viewer 构建产物：源码在 viewer/，public/viewer 是 `npm run build:viewer` 生成
+            'public/viewer/**',
+            // 双保险：历史发布包与日志无论如何都不该进源码包
+            '**/*.zip',
+            '**/*.crx',
+            '**/*.log',
+        ],
+    },
     // 输出子目录名：固定项目名前缀并保留 {{browser}}/{{manifestVersion}} 占位，
     // 使 chrome / firefox 分别产出到不同目录，避免互相同目录覆盖。
     // （WXT 0.21 每次构建只针对单个浏览器，由 -b 选定，无法一次出双产物；
