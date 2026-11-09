@@ -20,6 +20,10 @@ const nowM = new Date().getMonth() + 1;
 function blankMonths(from: [number, number], to: [number, number]): number {
     return (to[0] - from[0]) * 12 + (to[1] - from[1]) - 1;
 }
+/** 从 (年,月) 到今天的总月数（computeGaps 的跨度口径：含首尾、含尾部断档） */
+function spanFrom(y: number, m: number): number {
+    return (nowY - y) * 12 + (nowM - m) + 1;
+}
 
 describe('computeGaps', () => {
     it('中间断档与尾部断档并列取最长（尾部 117 > 中间 43）', () => {
@@ -34,9 +38,11 @@ describe('computeGaps', () => {
             ]),
         );
         expect(result).not.toBeNull();
-        expect(result!.totalMonths).toBe(49); // 首末内容间跨度（不含尾部）
+        // 跨度 = 首条内容 → 今天（尾部断档计入），不再只到末条内容
+        const span = spanFrom(2013, 1);
+        expect(result!.totalMonths).toBe(span);
         expect(result!.activeMonths).toBe(4);
-        expect(result!.silentMonths).toBe(45);
+        expect(result!.silentMonths).toBe(span - 4);
         expect(result!.longestGapMonths).toBe(blankMonths([2017, 1], [nowY, nowM]));
         expect(result!.gapStart).toBe('2017年02月');
         expect(result!.gapEnd).toBe(`${nowY}年${nowM}月`);
@@ -44,7 +50,11 @@ describe('computeGaps', () => {
         // Top3：尾部第一，中间「2013年3月→2016年10月」第二
         expect(result!.topGaps[0]!.ongoing).toBe(true);
         expect(result!.topGaps[1]!.months).toBe(blankMonths([2013, 2], [2016, 11]));
-        expect(result!.emptyYears).toEqual(['2014年', '2015年']);
+        // 尾部断档跨过的年份也算空白年份
+        expect(result!.emptyYears).toContain('2014年');
+        expect(result!.emptyYears).toContain('2015年');
+        expect(result!.emptyYears).toContain(`${nowY}年`);
+        expect(result!.emptyYears).not.toContain('2013年');
     });
 
     it('中间断档长于尾部时取中间', () => {
@@ -60,15 +70,18 @@ describe('computeGaps', () => {
         expect(result!.longestGapMonths).toBe(blankMonths([2013, 1], [2020, 1]));
     });
 
-    it('沉默占比取整（不含尾部）', () => {
+    it('沉默占比按「首条 → 今天」口径计算', () => {
         const result = computeGaps(
             stat([
                 ['2013年01月', 1],
                 ['2013年04月', 1],
             ]),
         );
-        // 跨 4 个月（2013-01~04），活跃 2，沉默 2 → 50%（silentMonths 只算首末之间）
-        expect(result!.silentPercent).toBe(50);
+        const span = spanFrom(2013, 1);
+        expect(result!.totalMonths).toBe(span);
+        expect(result!.silentMonths).toBe(span - 2);
+        expect(result!.silentPercent).toBe(Math.round(((span - 2) / span) * 100));
+        expect(result!.emptyYears).toContain(`${nowY}年`);
     });
 
     it('活跃月不足 2 个返回 null', () => {
@@ -96,6 +109,8 @@ describe('computeGaps', () => {
         );
         expect(result!.peakMonth).toEqual({ month: '2016年11月', count: 9 });
         expect(result!.activeYearCount).toBe(2);
-        expect(result!.emptyYears).toEqual(['2014年', '2015年']);
+        expect(result!.emptyYears).toContain('2014年');
+        expect(result!.emptyYears).toContain('2015年');
+        expect(result!.emptyYears).toContain(`${nowY}年`);
     });
 });

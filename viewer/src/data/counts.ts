@@ -436,7 +436,7 @@ export async function loadMonthlyStats(): Promise<MonthlyStat> {
 
 /** 断档统计：跨度内「沉默的月份」与最长空白段 */
 export interface GapStats {
-    /** 首末内容之间的总月数 */
+    /** 首条内容到「打开查看器的今天」的总月数（尾部断档也计入） */
     totalMonths: number;
     /** 有内容月数 */
     activeMonths: number;
@@ -478,8 +478,12 @@ export function computeGaps(stats: MonthlyStat): GapStats | null {
         return match ? [Number(match[1]), Number(match[2])] : [0, 0];
     };
     const [y1, m1] = parse(stats.firstMonth);
-    const [y2, m2] = parse(stats.lastMonth);
-    const totalMonths = (y2 - y1) * 12 + (m2 - m1) + 1;
+    const now = new Date();
+    const nowY = now.getFullYear();
+    const nowM = now.getMonth() + 1;
+    // 跨度统一为「首条内容 → 今天」：尾部断档（末条之后到至今）也是空间历史的一部分，
+    // 否则会出现「最长沉默 2 年」但「沉默月只占 7%」「2025/2026 不算空白年份」这类自相矛盾。
+    const totalMonths = (nowY - y1) * 12 + (nowM - m1) + 1;
     const activeMonths = stats.months.size;
     const silentMonths = Math.max(0, totalMonths - activeMonths);
 
@@ -505,17 +509,15 @@ export function computeGaps(stats: MonthlyStat): GapStats | null {
         }
     }
 
-    // 尾部断档：最后一条内容 → 打开查看器的今天。
-    // 「空间最后更新停在几年前」也是断档，而且它在持续变长。
-    const now = new Date();
-    const nowIdx = (now.getFullYear() - y1) * 12 + (now.getMonth() + 1 - m1);
+    // 尾部断档：最后一条内容 → 今天，且在持续变长
+    const nowIdx = (nowY - y1) * 12 + (nowM - m1);
     const lastIdx = idxs[idxs.length - 1] ?? 0;
     if (nowIdx > lastIdx) {
         const tailGap = nowIdx - lastIdx - 1;
         if (tailGap > 0) {
             allGaps.push({
                 start: monthAt(lastIdx + 1),
-                end: `${now.getFullYear()}年${now.getMonth() + 1}月`,
+                end: `${nowY}年${nowM}月`,
                 months: tailGap,
                 ongoing: true,
             });
@@ -538,17 +540,15 @@ export function computeGaps(stats: MonthlyStat): GapStats | null {
         }
     }
 
-    // 有内容的年份数
-    const activeYearCount = new Set(
-        [...stats.months.keys()].map((m) => m.match(/(\d{4})年/)?.[1]).filter(Boolean) as string[],
-    ).size;
-
-    // 空白年份：跨度内整年没有任何活跃月
+    // 有内容的年份
     const activeYears = new Set(
         [...stats.months.keys()].map((m) => m.match(/(\d{4})年/)?.[1]).filter(Boolean) as string[],
     );
+    const activeYearCount = activeYears.size;
+
+    // 空白年份：从首条内容到「今年」为止，整年没有任何活跃月的都算（含尾部断档跨过的年份）
     const emptyYears: string[] = [];
-    for (let y = y1; y <= y2; y++) {
+    for (let y = y1; y <= nowY; y++) {
         if (!activeYears.has(String(y))) {
             emptyYears.push(`${y}年`);
         }
