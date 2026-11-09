@@ -390,10 +390,9 @@ function draw(): void {
         drawMosaic(ctx, x, y, contentW, mosaicH, 10, 6);
         y += mosaicH + 66;
 
-        // 细分隔线：把「照片墙」与「数字矩阵」分成两块，避免数字像九宫格的附属
-        ctx.fillStyle = '#e0e3e9';
-        ctx.fillRect(x, y - 38, contentW, 1);
-
+        // 照片墙与数字矩阵靠 66px 留白分隔即可：这里原本有一条 1px 细线（y-38），
+        // 但 42px 数字的的字顶约在 y-42，线几乎贴着数字，观感很差，故去掉。
+        // 16:9 横版本来也没有这条线，去掉后两版更一致。
         drawMatrix(x, y, contentW);
         y += 152;
 
