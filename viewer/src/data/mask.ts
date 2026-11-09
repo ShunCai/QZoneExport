@@ -69,14 +69,16 @@ export function maskName(name: string | undefined | null): string {
 /**
  * 隐私模式下的**内容摘要**打码
  *
- * 昵称/QQ 号打码还不够：概览卡片里的摘要（留言、说说正文、日志标题）本身就是私密内容，
+ * 昵称/QQ 号打码还不够：概览卡片里的摘要（留言、说说正文、日志标题、地名）本身就是私密内容，
  * 截图分享就会直接泄漏。
  *
- * 用**固定个数**的圆点而不是按原文长度变化：长度变化会让人一眼看出「这行原文更长」，
- * 既不整齐、也等于泄露了长度信息——统一占位反而更像真实的脱敏处理。
+ * 用不定长的 `*` 串：所有摘要都是一模一样的固定圆点太假，看着不像脱敏而像占位符；
+ * 长度随原文变化（3~8 个），既能看出是脱敏内容，又不会还原出精确字数。
  */
 export function maskContent(text: string | undefined | null): string {
     const t = String(text ?? '').trim();
     if (!t) return '';
-    return '●'.repeat(6);
+    const len = Array.from(t).length;
+    const stars = Math.max(3, Math.min(8, Math.round(len / 3) + 2));
+    return '*'.repeat(stars);
 }

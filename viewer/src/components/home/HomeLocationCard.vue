@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { navigate } from '../../router';
+import { usePrivacy } from '../../composables/usePrivacy';
+import { maskContent } from '../../data/mask';
 import type { TopLocation } from '../../data/counts';
 
 /**
@@ -11,6 +13,12 @@ const props = defineProps<{
     rows: TopLocation[];
     loading?: boolean;
 }>();
+
+/** 地名属于位置信息，隐私模式下与其它摘要一样打码；次数是数字，保留 */
+const { hidden: hideSensitive } = usePrivacy();
+function labelOf(location: string): string {
+    return hideSensitive.value ? maskContent(location) : location;
+}
 
 function open(row: TopLocation): void {
     if (row.route) navigate(row.route);
@@ -35,11 +43,11 @@ function goMore(): void {
                 class="row"
                 :class="{ clickable: !!row.route }"
                 :type="row.route ? 'button' : undefined"
-                :title="`${row.location}（${row.percent}%）· 最近 ${row.latestTime}`"
+                :title="`${labelOf(row.location)}（${row.percent}%）· 最近 ${row.latestTime}`"
                 @click="open(row)"
             >
                 <span class="row-label">{{ row.label }}</span>
-                <span class="row-text">{{ row.location }}</span>
+                <span class="row-text">{{ labelOf(row.location) }}</span>
                 <span class="row-meta">{{ row.count }} 次</span>
             </component>
         </div>
