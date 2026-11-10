@@ -1,6 +1,6 @@
 import { loadList } from './sources';
 import { imageUrl, videoPoster } from './content';
-import { photoUrl, photoTimeOf } from './media';
+import { photoThumbUrl, photoUrl, photoTimeOf } from './media';
 import { formatMessageContent, formatText } from './richText';
 
 export interface Footprint {
@@ -24,6 +24,11 @@ export interface Footprint {
     cityHint?: string;
     /** 首图/视频封面 URL（无则空串） */
     thumb: string;
+    /**
+     * 地图相片图层用的缩略图地址（只有相片来源才给；用预览图而非原图，
+     * 地图上最多同时铺 200 张，原图会明显拖慢渲染）
+     */
+    preview?: string;
 }
 
 /**
@@ -133,6 +138,7 @@ export async function collectFootprints(): Promise<Footprint[]> {
                 content: caption,
                 html: formatText(caption),
                 thumb: photoUrl(photo),
+                preview: photoThumbUrl(photo),
             });
         }
     }

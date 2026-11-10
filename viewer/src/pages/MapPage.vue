@@ -10,7 +10,8 @@ import { useTheme } from '../composables/useTheme';
 import { usePrivacy } from '../composables/usePrivacy';
 import { maskContent } from '../data/mask';
 import { assignRegions, countByCity, countByRegion, type RegionCount } from '../data/mapRegions';
-import { loadChinaCitiesGeoJson, mergeCityCounts } from '../data/cityStats';
+import { ensureCityMapRegistered, loadChinaCitiesGeoJson, mergeCityCounts } from '../data/cityStats';
+import { pickPhotoMarkers, type PhotoMarker } from '../data/photoMarkers';
 
 /**
  * 足迹面板
@@ -33,6 +34,7 @@ interface EChartsInstance {
     on(event: string, handler: (params: any) => void): void;
     dispatchAction(payload: any): void;
     getOption(): any;
+    convertToPixel(finder: any, value: any): number[] | null;
 }
 interface EChartsStatic {
     init(el: HTMLElement, theme?: unknown, opts?: { width?: number; height?: number }): EChartsInstance;
@@ -109,6 +111,48 @@ function focusTopPlace(): void {
     }
 }
 
+// —— 相片图层：缩略图与散点共存，随缩放联动（放大后自动变密） ——
+/** 全量上限：再多就既拖渲染也没可读性 */
+const PHOTO_LIMIT = 200;
+/** 当前 geo 的缩放值（漫游/缩放后由 georoam 回写） */
+const geoZoomNow = ref(1.5);
+/**
+ * 等效缩放：省级/市级地图每张都是独立 bbox，默认 zoom=1 看的就已经是一座城，
+ * 所以按 1 ≈ 全国图的 3.2 折算，避免进了市级视图反而看不到相片。
+ */
+const photoZoom = computed(() => (provinceMap.value ? Math.max(geoZoomNow.value, 1) * 3.2 : geoZoomNow.value));
+/** 缩略图边长：放大后同步变大，最多 40px（再大就挡地图了） */
+const photoSize = computed(() => Math.round(Math.min(40, Math.max(22, 18 + photoZoom.value * 2.2))));
+/**
+ * 允许的最小像素间距系数：缩得很小时按整张缩略图排（摊得开），
+ * 放大后逐步放宽到 0.62 张，让常驻地点自然堆成一小摞——密度就是这么随缩放长出来的。
+ */
+const photoGapRatio = computed(() => {
+    const zoom = photoZoom.value;
+    if (zoom >= 6) {
+        return 0.62;
+    }
+    if (zoom <= 3) {
+        return 1;
+    }
+    return 1 - ((zoom - 3) / 3) * 0.38;
+});
+/** 本次最多铺几张：随缩放递增（24 → 200），上限 200 */
+const photoQuota = computed(() => Math.min(PHOTO_LIMIT, Math.max(24, Math.round(photoZoom.value * 12))));
+/** 铺在地图上的相片（near = 被挤到同一位置的相片张数，>1 时 tooltip 提示） */
+interface ShownPhoto extends PhotoMarker {
+    near: number;
+}
+/** 候选池上限：只防极端数据（上万张带坐标的相片），真正的显示上限是 PHOTO_LIMIT */
+const PHOTO_POOL_LIMIT = 5000;
+/** 所有可上图的相片（隐私模式下不上图：位置数据只留在本地） */
+const photoPool = computed(() => (hideSensitive.value ? [] : pickPhotoMarkers(mapPoints.value, PHOTO_POOL_LIMIT)));
+/**
+ * 实际铺在地图上的相片：按「屏幕像素间距」抽稀，避免缩略图叠成一坨。
+ * near = 被挤到同一位置的总张数（tooltip 里告诉用户这里还有多少张）。
+ */
+const photoShown = shallowRef<ShownPhoto[]>([]);
+
 /** 展开全文的 tid 集合 */
 const expandedIds = ref<Set<string>>(new Set());
 
@@ -147,6 +191,7 @@ function clearDrill(): void {
 
 /** 从全国市级地图（china-cities）里按省级归属切出该省的市/区，注册成临时地图 */
 function sliceProvince(adcode: string): void {
+    ensureCityMapRegistered();
     const all = echarts.getMap('china-cities')?.geoJson;
     const features = (all?.features || []).filter(
         (f: any) => String(f.properties?.parent?.adcode) === adcode,
@@ -255,6 +300,8 @@ function backOneLevel(): void {
  */
 async function applyCityParam(cityName: string): Promise<void> {
     const cities = await loadChinaCitiesGeoJson();
+    // 首页先加载过市级地图（当时无 echarts）时，这里补注册，否则下面的城市归属表为空
+    ensureCityMapRegistered();
     const feature = cities?.features?.find((f: any) => f.properties?.name === cityName);
     const adcode = feature?.properties?.adcode ? String(feature.properties.adcode) : '';
     const parentAdcode = feature?.properties?.parent?.adcode ? String(feature.properties.parent.adcode) : '';
@@ -457,13 +504,22 @@ const mapPoints = computed(() => {
 });
 
 let lastHighlighted: number | null = null;
+let lastHighlightedPhoto: number | null = null;
 function clearMapFocus(): void {
-    if (!chart.value || lastHighlighted == null) {
+    if (!chart.value) {
         return;
     }
-    chart.value.dispatchAction({ type: 'downplay', seriesIndex: 0, dataIndex: lastHighlighted });
-    chart.value.dispatchAction({ type: 'hideTip' });
-    lastHighlighted = null;
+    if (lastHighlighted != null) {
+        chart.value.dispatchAction({ type: 'downplay', seriesIndex: 0, dataIndex: lastHighlighted });
+    }
+    if (lastHighlightedPhoto != null) {
+        chart.value.dispatchAction({ type: 'downplay', seriesIndex: PHOTO_SERIES_INDEX, dataIndex: lastHighlightedPhoto });
+        lastHighlightedPhoto = null;
+    }
+    if (lastHighlighted != null) {
+        chart.value.dispatchAction({ type: 'hideTip' });
+        lastHighlighted = null;
+    }
 }
 
 function canExpand(item: Footprint): boolean {
@@ -507,6 +563,130 @@ function regionSignature(points: Footprint[]): string {
 }
 
 const pointIndexById = new Map<string, number>();
+/** 相片图层：ECharts 系列 id（缩放时只增量更新这一层，不整体 setOption） */
+const PHOTO_SERIES_ID = 'photo-layer';
+/** 系列顺序：0 散点 · 1 途径区域（visualMap.seriesIndex 依赖此下标）· 2 相片 */
+const PHOTO_SERIES_INDEX = 2;
+const photoIndexById = new Map<string, number>();
+
+function photoSeriesData(): any[] {
+    photoIndexById.clear();
+    return photoShown.value.map((marker, index) => {
+        photoIndexById.set(marker.tid, index);
+        return {
+            name: marker.item.name,
+            value: [marker.posX, marker.posY],
+            item: marker.item,
+            preview: marker.preview,
+            near: marker.near,
+            albumId: marker.albumId,
+        };
+    });
+}
+
+/** 相片层只更新自己这一个系列，不重算区域统计、不重置视野 */
+function syncPhotoLayer(): void {
+    const instance = chart.value;
+    if (!instance) {
+        return;
+    }
+    instance.setOption({
+        series: [{
+            id: PHOTO_SERIES_ID,
+            symbolSize: photoSize.value,
+            data: photoSeriesData(),
+        }],
+    });
+}
+
+/**
+ * 相片坐标 → 当前地图坐标系。
+ * 与散点同口径：世界地图要转 WGS84，否则整体偏移；省级/市级地图仍是 GCJ02。
+ */
+function photoPlotPoint(x: number, y: number): [number, number] {
+    if (mapType.value === 'world' && !provinceMap.value) {
+        const [tx, ty] = coordtransform.gcj02towgs84(x, y);
+        return [tx, ty];
+    }
+    return [x, y];
+}
+
+/**
+ * 重挑当前视野能铺下的相片。
+ *
+ * 按时间倒序遍历候选，逐个换算成屏幕像素：与已选点的间距不足「边距 × 系数」就跳过，
+ * 并把被挤掉的张数记到最近那张头上（tooltip 里显示「此处共 N 张」）。
+ * 系数随缩放放宽 + 配额随放大提高，于是「放大 → 露出更多相片」自然成立。
+ */
+function refreshPhotoLayer(): void {
+    const instance = chart.value;
+    if (!instance) {
+        photoShown.value = [];
+        return;
+    }
+    const pool = photoPool.value;
+    if (pool.length === 0) {
+        photoShown.value = [];
+        syncPhotoLayer();
+        return;
+    }
+    const gap = Math.max(8, photoSize.value * photoGapRatio.value);
+    const gapSq = gap * gap;
+    const quota = photoQuota.value;
+    const picked: ShownPhoto[] = [];
+    const px: Array<{ x: number; y: number }> = [];
+    for (const marker of pool) {
+        if (picked.length >= quota) {
+            break;
+        }
+        const [plotX, plotY] = photoPlotPoint(marker.posX, marker.posY);
+        let point: number[] | null = null;
+        try {
+            point = instance.convertToPixel({ geoIndex: 0 }, [plotX, plotY]);
+        } catch {
+            point = null;
+        }
+        if (!point || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) {
+            continue;
+        }
+        const x = point[0] as number;
+        const y = point[1] as number;
+        let nearest = -1;
+        for (let i = 0; i < px.length; i++) {
+            const dx = px[i]!.x - x;
+            const dy = px[i]!.y - y;
+            if (dx * dx + dy * dy < gapSq) {
+                nearest = i;
+                break;
+            }
+        }
+        if (nearest >= 0) {
+            picked[nearest]!.near++;
+            continue;
+        }
+        px.push({ x, y });
+        picked.push({ ...marker, posX: plotX, posY: plotY, near: 1 });
+    }
+    photoShown.value = picked;
+    syncPhotoLayer();
+}
+
+let zoomTimer: number | undefined;
+/** georoam 会高频触发：合并到 160ms 一次 */
+function schedulePhotoLayerSync(): void {
+    window.clearTimeout(zoomTimer);
+    zoomTimer = window.setTimeout(() => {
+        const raw = Number(chart.value?.getOption()?.geo?.[0]?.zoom);
+        if (Number.isFinite(raw)) {
+            const next = Math.round(raw * 100) / 100;
+            if (Math.abs(next - geoZoomNow.value) >= 0.01) {
+                geoZoomNow.value = next;
+            }
+        }
+        // 纯平移也会改变屏幕间距，所以 zoom 没变也要重挑
+        refreshPhotoLayer();
+    }, 160);
+}
 
 /**
  * 渲染地图
@@ -545,6 +725,8 @@ async function render(): Promise<void> {
                 selectFootprint(item, params?.data?.count ?? 0);
             }
         });
+        // 缩放 → 相片图层密度/尺寸联动（只在缩放变化后更新相片层）
+        chart.value.on('georoam', () => schedulePhotoLayerSync());
     }
 
     // 省级地图（数据驱动下钻）用原始市级名称，不做简称映射
@@ -580,6 +762,8 @@ async function render(): Promise<void> {
     // tid → 市名：始终按全国市级地图算（与当前视图无关），
     // 这样「从首页跳转到某市」和「省级视图点市」都能按同一个口径筛列表
     const citySig = `${footprints.value.length}`;
+    // 首页可能已加载过市级地图但当时没有 echarts：每帧补一次注册，保证城市归属口径可用
+    ensureCityMapRegistered();
     const cities = echarts.getMap('china-cities')?.geoJson;
     if (cities && citySig !== cityAssignSig) {
         cityOf.value = assignRegions(
@@ -652,6 +836,8 @@ async function render(): Promise<void> {
         value: Math.log1p(region.value),
         raw: region.value,
     }));
+    // 本次渲染的初始缩放：漫游过后 geoZoomNow 会被 georoam 回写，重绘时按新视图重置
+    geoZoomNow.value = provinceMap.value ? 1 : geoZoom;
     // 同一坐标的多次打卡聚成一个气泡：大小反映密度，避免千点糊成一团
     const clusterMap = new Map<string, { item: Footprint; count: number; tids: string[] }>();
     for (const item of plotted) {
@@ -799,22 +985,69 @@ async function render(): Promise<void> {
                 },
                 data: regionData,
             },
+            {
+                // 相片图层：缩略图直接贴在地图上，与散点共存。
+                // data 先留空，setOption 之后再按屏幕间距抽稀填充（见 refreshPhotoLayer）
+                id: PHOTO_SERIES_ID,
+                name: '相片',
+                type: 'scatter',
+                coordinateSystem: 'geo',
+                geoIndex: 0,
+                z: 10,
+                symbol: (_value: any, params: any) => `image://${params?.data?.preview || ''}`,
+                symbolSize: photoSize.value,
+                itemStyle: {
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    shadowBlur: 8,
+                    shadowColor: 'rgba(0, 0, 0, 0.28)',
+                },
+                emphasis: { itemStyle: { borderColor: '#1f5a99', borderWidth: 3 } },
+                tooltip: {
+                    formatter: (params: any) => {
+                        const item: Footprint = params.data.item;
+                        const lines = [
+                            `我的相片：<b>${displayPlace(item.name)}</b>`,
+                            `时间：${formatTime(item.time)}`,
+                        ];
+                        if ((params.data.near || 0) > 1) {
+                            lines.push(`此处共 <b>${params.data.near}</b> 张相片，放大可分开看`);
+                        }
+                        lines.push('<span style="opacity:.7">点击查看大图</span>');
+                        return lines.join('<br>');
+                    },
+                },
+                data: [],
+            },
         ],
     }, { notMerge: true });
+    // 视野刚变过：按新的像素间距重挑相片（缩略图不叠、放大更密）
+    refreshPhotoLayer();
 }
 
 /** 列表 hover / 选中时，让地图对应散点高亮并弹 tip（tid → dataIndex） */
 function focusOnMap(tid: string): void {
-    const idx = pointIndexById.get(tid);
-    if (idx == null || !chart.value) {
+    if (!chart.value) {
         return;
     }
-    if (lastHighlighted != null && lastHighlighted !== idx) {
-        chart.value.dispatchAction({ type: 'downplay', seriesIndex: 0, dataIndex: lastHighlighted });
+    const idx = pointIndexById.get(tid);
+    if (idx != null) {
+        if (lastHighlighted != null && lastHighlighted !== idx) {
+            chart.value.dispatchAction({ type: 'downplay', seriesIndex: 0, dataIndex: lastHighlighted });
+        }
+        chart.value.dispatchAction({ type: 'highlight', seriesIndex: 0, dataIndex: idx });
+        chart.value.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: idx });
+        lastHighlighted = idx;
     }
-    chart.value.dispatchAction({ type: 'highlight', seriesIndex: 0, dataIndex: idx });
-    chart.value.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: idx });
-    lastHighlighted = idx;
+    // 相片层也一起亮：列表里 hover 一张相片时，地图上的缩略图要能被找到
+    const photoIdx = photoIndexById.get(tid);
+    if (photoIdx != null) {
+        if (lastHighlightedPhoto != null && lastHighlightedPhoto !== photoIdx) {
+            chart.value.dispatchAction({ type: 'downplay', seriesIndex: PHOTO_SERIES_INDEX, dataIndex: lastHighlightedPhoto });
+        }
+        chart.value.dispatchAction({ type: 'highlight', seriesIndex: PHOTO_SERIES_INDEX, dataIndex: photoIdx });
+        lastHighlightedPhoto = photoIdx;
+    }
 }
 
 function onResize(): void {
@@ -1180,6 +1413,13 @@ watch(isDark, async () => {
                 <!-- 模块 D：地图（概览） -->
                 <section class="foot-map">
                     <div v-show="mapPoints.length > 0" ref="chartEl" class="map" />
+                    <div
+                        v-if="!hideSensitive && photoPool.length && !mapLoading"
+                        class="map-photo-hint"
+                    >
+                        <template v-if="photoShown.length === 0">放大可见相片</template>
+                        <template v-else>相片 {{ photoShown.length }} 张 · 放大更密</template>
+                    </div>
                     <div
                         class="map-footer"
                         :title="'底图来自阿里云 DataV.GeoAtlas（数据源高德开放平台，版本 2021.5）；文件不附审图号、页面声明仅供学习交流。公开使用含地图的截图或衍生产品前，请对照自然资源部标准地图核对国界、台湾与南海诸岛等要素。'"

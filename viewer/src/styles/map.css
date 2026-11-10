@@ -348,6 +348,23 @@
 }
 
 
+/* 相片图层提示：贴在地图左上角，只做说明不拦截地图交互 */
+.map-photo-hint {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    line-height: 18px;
+    color: var(--text-secondary, #666);
+    background: var(--bg-primary, #fff);
+    border: 1px solid var(--border-light, #e8ebf0);
+    box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.08));
+    pointer-events: none;
+}
+
 /* 底图数据来源：贴在地图容器底部的版权条（不覆盖地图内容、不与南海诸岛标注冲突） */
 .map-footer {
     flex: 0 0 auto;
