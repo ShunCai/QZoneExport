@@ -126,6 +126,8 @@ const provinceName = ref('');
 const levels = ref<Array<{ adcode: string; name: string }>>([]);
 /** 省级视图里再点市 → 按市筛（tid → 市名） */
 const cityOf = ref<Map<string, string>>(new Map());
+/** tid → 区县名（仅市级视图里按当前地图算，供「点区县」筛选） */
+const countyOf = ref<Map<string, string>>(new Map());
 const cityFilter = ref('');
 /** tid → 区域显示名（全量点算一次，避免筛选后归属缺失） */
 const regionOf = ref<Map<string, string>>(new Map());
@@ -356,7 +358,9 @@ const filtered = computed(() => {
         if (drillRegion.value && !matchesDrill(item)) {
             return false;
         }
-        if (cityFilter.value && cityOf.value.get(item.tid) !== cityFilter.value) {
+        if (cityFilter.value
+            && cityOf.value.get(item.tid) !== cityFilter.value
+            && countyOf.value.get(item.tid) !== cityFilter.value) {
             return false;
         }
         if (word && !`${item.name} ${item.content}`.toLowerCase().includes(word)) {
@@ -493,6 +497,7 @@ function openDetail(fp: Footprint): void {
  */
 let regionAssignSig = '';
 let cityAssignSig = '';
+let countyAssignSig = '';
 const regionCache = new Map<string, RegionCount[]>();
 function regionSignature(points: Footprint[]): string {
     return [
@@ -583,6 +588,21 @@ async function render(): Promise<void> {
             {},
         );
         cityAssignSig = citySig;
+    }
+    // 市级视图（当前地图不是省级）里按当前地图建立 tid → 区县名，供「点区县」筛选。
+    // 注意不能用 levels 长度判断：从首页直接跳某市时 levels 只有 1 层（省这一层被跳过）。
+    const countyView = !!provinceMap.value && !isProvinceAdcode(provinceMap.value);
+    const countySig = `${activeMap}|${footprints.value.length}`;
+    if (countyView && countySig !== countyAssignSig) {
+        countyOf.value = assignRegions(
+            footprints.value.map((item) => ({ tid: item.tid, posX: item.posX, posY: item.posY })),
+            geoJson,
+            {},
+        );
+        countyAssignSig = countySig;
+    } else if (!countyView && countyOf.value.size > 0) {
+        countyOf.value = new Map();
+        countyAssignSig = '';
     }
     const cacheKey = `${regionSignature(points)}|${activeMap}`;
     let regions = regionCache.get(cacheKey);
