@@ -78,6 +78,17 @@ const REWARD_IMAGES = [
             <b>从任何第三方地址安装，后果自负</b>。
         </p>
 
+        <n-divider title-placement="left">数据来源</n-divider>
+        <p class="hint block-hint">
+            足迹地图底图来自
+            <a href="https://datav.aliyun.com/portal/school/atlas/area_selector" target="_blank" rel="noreferrer">阿里云 DataV.GeoAtlas</a>
+            （数据源自高德开放平台，版本 2021.5），随备份离线内置（含南海诸岛要素），点地图省份可查看下级市。
+            该数据文件不附审图号，页面声明「仅供学习交流使用」；
+            <b>公开使用含地图的截图或衍生产品前</b>，请对照
+            <a href="http://bzdt.ch.mnr.gov.cn/" target="_blank" rel="noreferrer">自然资源部标准地图服务</a>
+            核对国界、台湾与南海诸岛等要素。
+        </p>
+
         <n-divider title-placement="left">沟通交流</n-divider>
         <div class="images">
             <figure>

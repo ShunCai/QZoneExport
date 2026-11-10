@@ -61,7 +61,7 @@ Firefox 现已正式支持（Manifest V3），可从 [Firefox 扩展商店（AMO
 ## 📖 用户文档
 
 - 使用帮助 / 配置说明 / 常见问题 / 隐私政策：项目 [Wiki](https://github.com/ShunCai/QZoneExport/wiki)
-- 足迹地图底图：阿里云 [DataV.GeoAtlas](https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json) 中国行政区划数据，随查看器离线内置（含南海诸岛要素）
+- 足迹地图底图：阿里云 [DataV.GeoAtlas 范围选择器](https://datav.aliyun.com/portal/school/atlas/area_selector) 中国行政区划数据（数据源自高德开放平台，版本 2021.5），随查看器离线内置（含南海诸岛要素）。该数据文件不附审图号，页面声明「仅供学习交流使用」；公开使用含地图的截图或衍生产品前，请对照 [自然资源部标准地图服务](http://bzdt.ch.mnr.gov.cn/) 核对国界、台湾与南海诸岛等要素
 - 版本说明与离线包：GitHub [Releases](https://github.com/ShunCai/QZoneExport/releases)
 
 ---
