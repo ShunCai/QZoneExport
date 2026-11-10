@@ -22,6 +22,8 @@ function copyMapVendor(): Plugin {
         ['../viewer/map-vendor/maps/config.js', 'Common/vendor/maps/config.js'],
         ['../viewer/map-vendor/maps/world.js', 'Common/vendor/maps/world.js'],
         ['../viewer/map-vendor/maps/china.js', 'Common/vendor/maps/china.js'],
+        // 全国市级地图（点省看下级市用）：随扩展内置，备份时本地复制，避免备份阶段依赖网络
+        ['../viewer/map-vendor/maps/china-cities.js', 'Common/vendor/maps/china-cities.js'],
         ['../viewer/map-vendor/images/favicon.ico', 'Common/images/favicon.ico'],
         ['../viewer/map-vendor/images/media_missing.png', 'Common/images/media_missing.png'],
         ['../viewer/map-vendor/images/no_cover.gif', 'Common/images/no_cover.gif'],

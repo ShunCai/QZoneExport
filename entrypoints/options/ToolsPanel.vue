@@ -708,13 +708,14 @@ const VIEWER_FILES = [
     { from: 'viewer/index.html', to: 'index.html' },
     { from: 'viewer/Common/js/index.js', to: 'Common/js/index.js' },
     { from: 'viewer/Common/css/index.css', to: 'Common/css/index.css' },
-    { from: 'viewer/images/no_cover.gif', to: 'Common/images/no_cover.gif' },
-    { from: 'viewer/images/media_missing.png', to: 'Common/images/media_missing.png' },
-    { from: 'viewer/vendor/echarts.min.js', to: 'Common/vendor/echarts.min.js' },
-    { from: 'viewer/vendor/coordtransform.min.js', to: 'Common/vendor/coordtransform.min.js' },
-    { from: 'viewer/vendor/maps/config.js', to: 'Common/vendor/maps/config.js' },
-    { from: 'viewer/vendor/maps/china.js', to: 'Common/vendor/maps/china.js' },
-    { from: 'viewer/vendor/maps/world.js', to: 'Common/vendor/maps/world.js' },
+    { from: 'viewer/Common/images/no_cover.gif', to: 'Common/images/no_cover.gif' },
+    { from: 'viewer/Common/images/media_missing.png', to: 'Common/images/media_missing.png' },
+    { from: 'viewer/Common/vendor/echarts.min.js', to: 'Common/vendor/echarts.min.js' },
+    { from: 'viewer/Common/vendor/coordtransform.min.js', to: 'Common/vendor/coordtransform.min.js' },
+    { from: 'viewer/Common/vendor/maps/config.js', to: 'Common/vendor/maps/config.js' },
+    { from: 'viewer/Common/vendor/maps/china.js', to: 'Common/vendor/maps/china.js' },
+    { from: 'viewer/Common/vendor/maps/world.js', to: 'Common/vendor/maps/world.js' },
+    { from: 'viewer/Common/vendor/maps/china-cities.js', to: 'Common/vendor/maps/china-cities.js' },
 ];
 
 const UPGRADES: BackupUpgrade[] = [

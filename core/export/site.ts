@@ -27,6 +27,7 @@
  */
 
 import type { FileWriter } from '../fs/writer';
+import { exportChinaCitiesMap } from './province-maps';
 import type { ModuleBackupRow } from '../store/backup-db';
 
 /** 个人档信息（必填字段最小化，多余字段原样透传） */
@@ -88,15 +89,18 @@ const VIEWER_FILES: ViewerFile[] = [
     { original: 'viewer/Common/js/index.js', target: 'Common/js/index.js', required: true },
     { original: 'viewer/Common/css/index.css', target: 'Common/css/index.css', required: true },
     // 足迹地图依赖：查看器按 './Common/vendor/' 动态加载，缺失只影响地图页
-    { original: 'viewer/vendor/echarts.min.js', target: 'Common/vendor/echarts.min.js' },
-    { original: 'viewer/vendor/coordtransform.min.js', target: 'Common/vendor/coordtransform.min.js' },
-    { original: 'viewer/vendor/maps/config.js', target: 'Common/vendor/maps/config.js' },
-    { original: 'viewer/vendor/maps/china.js', target: 'Common/vendor/maps/china.js' },
-    { original: 'viewer/vendor/maps/world.js', target: 'Common/vendor/maps/world.js' },
+    // 注意：扩展包内查看器资源已统一到 Common/ 下（见 viewer/vite.config.ts 的 copyMapVendor）
+    { original: 'viewer/Common/vendor/echarts.min.js', target: 'Common/vendor/echarts.min.js' },
+    { original: 'viewer/Common/vendor/coordtransform.min.js', target: 'Common/vendor/coordtransform.min.js' },
+    { original: 'viewer/Common/vendor/maps/config.js', target: 'Common/vendor/maps/config.js' },
+    { original: 'viewer/Common/vendor/maps/china.js', target: 'Common/vendor/maps/china.js' },
+    { original: 'viewer/Common/vendor/maps/world.js', target: 'Common/vendor/maps/world.js' },
+    // 全国市级地图：点省看下级市用（约 3.7MB，随扩展内置，备份时本地复制）
+    { original: 'viewer/Common/vendor/maps/china-cities.js', target: 'Common/vendor/maps/china-cities.js' },
     // 占位图与图标：查看器按 'Common/images/' 引用
-    { original: 'viewer/images/favicon.ico', target: 'Common/images/favicon.ico' },
-    { original: 'viewer/images/no_cover.gif', target: 'Common/images/no_cover.gif' },
-    { original: 'viewer/images/media_missing.png', target: 'Common/images/media_missing.png' },
+    { original: 'viewer/Common/images/favicon.ico', target: 'Common/images/favicon.ico' },
+    { original: 'viewer/Common/images/no_cover.gif', target: 'Common/images/no_cover.gif' },
+    { original: 'viewer/Common/images/media_missing.png', target: 'Common/images/media_missing.png' },
     // 微信表情：随查看器一并导出到 Common/images/，脱离 jsdelivr 外部 CDN（详见 WX_EMOJI_FILES）
     ...WX_EMOJI_FILES,
 ];
@@ -312,6 +316,21 @@ export async function exportViewerWithVerify(
         logger?.warn?.('查看器可选资源缺失（不影响打开，地图页可能不可用）', { missingOptional });
     } else {
         logger?.info?.('备份查看器已生成', { count: written.length, attempts });
+    }
+
+    // 查看器可打开时，顺带补齐「全国市级地图」（足迹地图点省看下级市用）。
+    // 单个文件约 3.9 MB，查看器按 parent.adcode 切片出省级视图；失败只影响下钻，不阻断备份。
+    if (missingRequired.length === 0) {
+        try {
+            const cityMap = await exportChinaCitiesMap(writer, logger);
+            if (cityMap.mode === 'failed') {
+                logger?.warn?.('全国市级地图不可用，足迹地图将只支持省级视图', { reason: cityMap.reason });
+            }
+        } catch (error) {
+            logger?.warn?.('全国市级地图导出异常（不影响查看器）', {
+                reason: (error as Error)?.message || String(error),
+            });
+        }
     }
 
     return {
