@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { navigate } from '../../router';
+import ModeSwitch from '../ModeSwitch.vue';
 import { usePrivacy } from '../../composables/usePrivacy';
 import { maskContent } from '../../data/mask';
 import type { TopLocation } from '../../data/counts';
@@ -19,7 +20,11 @@ const props = defineProps<{
 }>();
 
 /** 地点 / 城市两个视角：城市由内置全国市级地图按坐标归属算出（不依赖腾讯 Key） */
-const mode = ref<'place' | 'city'>('place');
+const mode = ref('place');
+const MODE_OPTIONS = [
+    { label: '地点', value: 'place' },
+    { label: '城市', value: 'city' },
+];
 
 /** 地名属于位置信息，隐私模式下与其它摘要一样打码；次数是数字，保留 */
 const { hidden: hideSensitive } = usePrivacy();
@@ -47,10 +52,7 @@ function goMore(): void {
         <div class="card-title">
             <span>常驻{{ mode === 'place' ? '地点' : '城市' }}</span>
             <span class="note">{{ mode === 'place' ? '发布/拍摄地点分布' : '按打卡坐标归属' }}</span>
-            <span class="mode-switch">
-                <button type="button" :class="{ on: mode === 'place' }" @click="mode = 'place'">地点</button>
-                <button type="button" :class="{ on: mode === 'city' }" @click="mode = 'city'">城市</button>
-            </span>
+            <mode-switch v-model="mode" :options="MODE_OPTIONS" class="card-mode" />
         </div>
         <div v-if="mode === 'city'" class="list">
             <button
@@ -184,33 +186,7 @@ function goMore(): void {
 .card-more:hover {
     text-decoration: underline;
 }
-/* 地点 / 城市切换：放在标题右侧，不占额外行 */
-.mode-switch {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 2px;
+.card-mode {
     margin-left: auto;
-    font-size: 11px;
-}
-.mode-switch button {
-    border: 0;
-    background: transparent;
-    padding: 1px 4px;
-    font-size: 11px;
-    color: var(--text-secondary, #888);
-    cursor: pointer;
-}
-.mode-switch button:hover {
-    color: var(--text-primary);
-}
-.mode-switch button.on {
-    color: var(--accent);
-    font-weight: 600;
-}
-.mode-switch button + button::before {
-    content: '/';
-    margin-right: 4px;
-    color: var(--border-hover, #c9d1dc);
-    font-weight: 400;
 }
 </style>

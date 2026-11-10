@@ -4,6 +4,8 @@ const props = withDefaults(defineProps<{ defaultOpen?: boolean }>(), { defaultOp
 import { computed, onMounted, ref, watch } from 'vue';
 import { NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui';
 import { loadTopLocations, type TopLocation } from '../data/counts';
+import { loadCityStats, type CityRow } from '../data/cityStats';
+import ModeSwitch from './ModeSwitch.vue';
 import { navigate } from '../router';
 import MessageItem from './items/MessageItem.vue';
 import ArticleItem from './items/ArticleItem.vue';
@@ -50,9 +52,47 @@ onMounted(async () => {
     loading.value = false;
 });
 
-const hasAny = computed(() => topLocations.value.length > 0);
+/** 地点 / 城市两个视角（城市按坐标归属，懒加载内置市级地图） */
+const mode = ref('place');
+const MODE_OPTIONS = [
+    { label: '地点', value: 'place' },
+    { label: '城市', value: 'city' },
+];
+const cityRows = ref<CityRow[]>([]);
+const cityLoading = ref(false);
+let cityLoaded = false;
+async function ensureCity(): Promise<void> {
+    if (cityLoaded) {
+        return;
+    }
+    cityLoaded = true;
+    cityLoading.value = true;
+    try {
+        cityRows.value = await loadCityStats(TOP_N);
+    } catch {
+        cityRows.value = [];
+    } finally {
+        cityLoading.value = false;
+    }
+}
+watch(mode, (value) => {
+    if (value === 'city') {
+        void ensureCity();
+    }
+});
+
+const hasAny = computed(() => (mode.value === 'city'
+    ? cityRows.value.length > 0 || cityLoading.value
+    : topLocations.value.length > 0));
+const cityMax = computed(() => Math.max(0, ...cityRows.value.map((row) => row.count)));
 const maxCount = computed(() => Math.max(0, ...topLocations.value.map((l) => l.count)));
 const summary = computed(() => {
+    if (mode.value === 'city') {
+        if (cityLoading.value) return '正在统计…';
+        if (cityRows.value.length === 0) return '';
+        const top = cityRows.value[0];
+        return `共 ${cityRows.value.length} 个城市 · 最多的是「${top.name}」${top.count} 次`;
+    }
     if (topLocations.value.length === 0) return '';
     const first = topLocations.value[0];
     return `共 ${topLocations.value.length} 个地点 · 最多的是「${first.location}」${first.count} 次`;
@@ -81,19 +121,22 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
         <n-spin v-if="loading" size="small" />
         <template v-else-if="!hasAny">
             <div class="panel-title">
-                常驻地点
-                <span class="panel-note">按发布/拍摄地点聚合的前 {{ TOP_N }} 名</span>
+                {{ mode === 'place' ? '常驻地点' : '常驻城市' }}
+                <span class="panel-note">{{ mode === 'place' ? '按发布/拍摄地点聚合的前 ' + TOP_N + ' 名' : '按打卡坐标归属的城市' }}</span>
+                <mode-switch v-model="mode" :options="MODE_OPTIONS" class="panel-switch" />
             </div>
             <p class="empty">暂无地点信息（内容里未采集到 lbs 定位数据）</p>
         </template>
         <n-collapse v-else :default-expanded-names="props.defaultOpen ? ['locs'] : []">
             <n-collapse-item name="locs">
                 <template #header>
-                    <span class="panel-title">常驻地点</span>
+                    <span class="panel-title">{{ mode === 'place' ? '常驻地点' : '常驻城市' }}</span>
                     <span class="panel-note">{{ summary }}</span>
+                    <mode-switch v-model="mode" :options="MODE_OPTIONS" class="panel-switch" />
                 </template>
 
                 <!-- 横向进度条列表：风格与主页「内容构成」统一 -->
+                <template v-if="mode === 'place'">
                 <div class="loc-bar-chart" title="各地点访问次数：横向条长度按最多地点为基准对比">
                     <div
                         v-for="(loc, idx) in topLocations"
@@ -182,6 +225,40 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
                         </div>
                     </div>
                 </div>
+                </template>
+                <template v-else>
+                    <n-spin v-if="cityLoading" size="small" />
+                    <p v-else-if="cityRows.length === 0" class="empty">
+                        暂无城市数据（缺少内置市级地图，或用的是旧备份）
+                    </p>
+                    <div v-else class="loc-bar-chart" title="各城市打卡次数：点击可在足迹地图上查看">
+                        <div
+                            v-for="(row, idx) in cityRows"
+                            :key="row.name"
+                            class="loc-bar-row city-row"
+                            :title="row.name + '：' + row.count + ' 次 · 占全部打卡点的 ' + row.percent + '%，点击在地图查看'"
+                            @click="navigate('map', { city: row.name })"
+                        >
+                            <div class="loc-bar-head">
+                                <span class="loc-bar-dot" :style="{ background: locationDotColor(idx) }" />
+                                <span class="loc-bar-name" :title="row.name">{{ row.name }}</span>
+                            </div>
+                            <div class="loc-bar-track">
+                                <div
+                                    class="loc-bar-fill"
+                                    :style="{
+                                        width: (cityMax > 0 ? (row.count / cityMax * 100) : 0) + '%',
+                                        ...locationFillStyle(idx),
+                                    }"
+                                />
+                            </div>
+                            <div class="loc-bar-tail">
+                                <span class="loc-bar-count">{{ row.count.toLocaleString() }}</span>
+                                <span class="loc-bar-pct">{{ row.percent }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </n-collapse-item>
         </n-collapse>
     </div>
@@ -409,3 +486,16 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
     }
 }
 </style>
+
+
+/* 视角切换：贴在面板标题右侧 */
+.panel-switch {
+    margin-left: auto;
+    font-weight: 400;
+}
+.city-row {
+    cursor: pointer;
+}
+.city-row:hover .loc-bar-name {
+    color: var(--accent);
+}

@@ -478,7 +478,7 @@ onMounted(async () => {
 
         // 常驻地点：与词条同一批空闲计算
         locationLoading.value = true;
-        loadTopLocations(6)
+        loadTopLocations(5)
             .then((locations) => {
                 topLocations.value = locations;
             })
