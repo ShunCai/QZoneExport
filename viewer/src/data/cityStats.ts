@@ -15,6 +15,25 @@ import { YEAR_MODULES } from './counts';
 import { countByCity, type MapPoint, type RegionCount } from './mapRegions';
 
 const CITY_SCRIPT = './Common/vendor/maps/china-cities.js';
+const CITY_MAP_NAME = 'china-cities';
+
+/**
+ * 首页加载市级地图时没有 echarts（只挂到 window），跳转到地图页后会复用 window 数据
+ * 而不再注入脚本，导致 echarts 里没有注册这张地图（区域切片、城市归属都会失效）。
+ * 这里在拿到数据后补一次注册：echarts 已加载时才做，首页无 echarts 时自然跳过。
+ */
+function ensureRegistered(data: unknown): void {
+    const holder = window as unknown as {
+        echarts?: { getMap?: (name: string) => unknown; registerMap?: (name: string, json: unknown) => void };
+    };
+    const echarts = holder.echarts;
+    if (!data || !echarts?.registerMap) {
+        return;
+    }
+    if (!echarts.getMap?.(CITY_MAP_NAME)) {
+        echarts.registerMap(CITY_MAP_NAME, data);
+    }
+}
 
 export interface CityRow {
     name: string;
@@ -24,20 +43,48 @@ export interface CityRow {
 
 let cityGeoPromise: Promise<any | null> | null = null;
 
-/** 懒加载全国市级地图数据（只加载一次） */
+function currentCityData(): any | null {
+    const holder = window as unknown as { __QZE_CHINA_CITIES__?: any };
+    return holder.__QZE_CHINA_CITIES__ || null;
+}
+
+/**
+ * 把已加载的市级地图补注册进 echarts，返回是否已可用。
+ *
+ * 场景：首页先加载过（当时没有 echarts，脚本里 echarts.registerMap 被跳过），
+ * 之后同页跳到地图页复用的是同一份 window 数据与同一个 script 标签，
+ * 不会再触发 load 事件，所以必须显式补注册，否则 MapPage 里
+ * `echarts.getMap('china-cities')` 为空 → 城市归属表为空 → 按城市筛出来 0 条。
+ */
+export function ensureCityMapRegistered(): boolean {
+    const data = currentCityData();
+    if (!data) {
+        return false;
+    }
+    ensureRegistered(data);
+    const holder = window as unknown as { echarts?: { getMap?: (name: string) => unknown } };
+    return !!holder.echarts?.getMap?.(CITY_MAP_NAME);
+}
+
+/** 懒加载全国市级地图数据（只加载一次；复用缓存时顺带补注册） */
 export function loadChinaCitiesGeoJson(): Promise<any | null> {
     if (cityGeoPromise) {
+        ensureCityMapRegistered();
         return cityGeoPromise;
     }
     cityGeoPromise = new Promise((resolve) => {
         const holder = window as unknown as { __QZE_CHINA_CITIES__?: unknown };
         if (holder.__QZE_CHINA_CITIES__) {
+            ensureRegistered(holder.__QZE_CHINA_CITIES__);
             resolve(holder.__QZE_CHINA_CITIES__);
             return;
         }
         const script = document.createElement('script');
         script.src = CITY_SCRIPT;
-        script.addEventListener('load', () => resolve(holder.__QZE_CHINA_CITIES__ || null));
+        script.addEventListener('load', () => {
+            ensureRegistered(holder.__QZE_CHINA_CITIES__);
+            resolve(holder.__QZE_CHINA_CITIES__ || null);
+        });
         script.addEventListener('error', () => resolve(null));
         document.head.appendChild(script);
     });
