@@ -9,7 +9,8 @@ import { navigate, routeQuery } from '../router';
 import { useTheme } from '../composables/useTheme';
 import { usePrivacy } from '../composables/usePrivacy';
 import { maskContent } from '../data/mask';
-import { assignRegions, countByRegion, type RegionCount } from '../data/mapRegions';
+import { assignRegions, countByCity, countByRegion, type RegionCount } from '../data/mapRegions';
+import { loadChinaCitiesGeoJson, mergeCityCounts } from '../data/cityStats';
 
 /**
  * 足迹面板
@@ -84,6 +85,22 @@ function closePreview(): void {
     selected.value = null;
 }
 
+/** 最常去的城市（按坐标归属到市，懒加载内置市级地图后计算；无数据时退回 POI 口径） */
+const cityTop = ref<{ name: string; count: number } | null>(null);
+async function loadCityTop(): Promise<void> {
+    if (footprints.value.length === 0) {
+        return;
+    }
+    const geoJson = await loadChinaCitiesGeoJson();
+    if (!geoJson) {
+        return;
+    }
+    const ranked = mergeCityCounts(footprints.value, geoJson);
+    if (ranked.length > 0) {
+        cityTop.value = { name: ranked[0]!.name, count: ranked[0]!.value };
+    }
+}
+
 /** 最常去的地点（按地点名聚合 Top1） */
 const topPlace = computed(() => topPlaceOf(footprints.value));
 function focusTopPlace(): void {
@@ -102,6 +119,14 @@ const typeFilter = ref<'' | 'messages' | 'photos'>('');
 const sortDir = ref<'desc' | 'asc'>('desc');
 /** 省份/国家下钻：点地图区域后，列表与散点只留该区域 */
 const drillRegion = ref('');
+/** 省级地图（adcode）：数据驱动下钻，空=全国/世界 */
+const provinceMap = ref('');
+const provinceName = ref('');
+/** 下钻层级栈（省 → 市 …），空表示全国/世界 */
+const levels = ref<Array<{ adcode: string; name: string }>>([]);
+/** 省级视图里再点市 → 按市筛（tid → 市名） */
+const cityOf = ref<Map<string, string>>(new Map());
+const cityFilter = ref('');
 /** tid → 区域显示名（全量点算一次，避免筛选后归属缺失） */
 const regionOf = ref<Map<string, string>>(new Map());
 function matchesDrill(item: Footprint): boolean {
@@ -111,7 +136,154 @@ function toggleDrill(name: string): void {
     drillRegion.value = drillRegion.value === name ? '' : name;
 }
 function clearDrill(): void {
+    if (cityFilter.value) {
+        cityFilter.value = '';
+        return;
+    }
     drillRegion.value = '';
+}
+
+/** 从全国市级地图（china-cities）里按省级归属切出该省的市/区，注册成临时地图 */
+function sliceProvince(adcode: string): void {
+    const all = echarts.getMap('china-cities')?.geoJson;
+    const features = (all?.features || []).filter(
+        (f: any) => String(f.properties?.parent?.adcode) === adcode,
+    );
+    if (features.length) {
+        echarts.registerMap(adcode, { type: 'FeatureCollection', features });
+    }
+}
+
+/** 进入下一级：压栈、切图、重绘 */
+/** 省级 adcode：末四位为 0000（110000 北京、440000 广东…） */
+function isProvinceAdcode(adcode: string): boolean {
+    return /^\d{2}0000$/.test(adcode);
+}
+
+function pushLevel(adcode: string, name: string): void {
+    const firstEntry = levels.value.length === 0;
+    levels.value = [...levels.value, { adcode, name }];
+    provinceMap.value = adcode;
+    provinceName.value = name;
+    cityFilter.value = '';
+    if (firstEntry && isProvinceAdcode(adcode)) {
+        // 列表按「省」筛选只在第一次进入省级视图时设置（regionOf 是省归属）
+        drillRegion.value = name;
+    }
+    void render();
+}
+
+/** 优先用本地 provinces/<adcode>.js（用户自己下的市级数据） */
+async function enterLocalLevel(adcode: string, name: string): Promise<boolean> {
+    if (!echarts.getMap(adcode)) {
+        const ok = await loadScript(`./Common/vendor/maps/provinces/${adcode}.js`)
+            .then(() => !!echarts.getMap(adcode))
+            .catch(() => false);
+        if (!ok) {
+            return false;
+        }
+    }
+    pushLevel(adcode, name);
+    return true;
+}
+
+/** 全国 → 省：用内置 china-cities 按 parent.adcode 切片 */
+async function enterProvinceFromCities(adcode: string, name: string): Promise<boolean> {
+    if (!echarts.getMap('china-cities')) {
+        const ok = await loadScript('./Common/vendor/maps/china-cities.js')
+            .then(() => !!echarts.getMap('china-cities'))
+            .catch(() => false);
+        if (!ok) {
+            return false;
+        }
+    }
+    sliceProvince(adcode);
+    if (!echarts.getMap(adcode)) {
+        return false;
+    }
+    pushLevel(adcode, name);
+    return true;
+}
+
+/**
+ * 点地图区域：能进下一级就进（省 → 市 → 区县），否则降级
+ * 降级行为：全国层 → 放大 + 筛列表；已在下级 → 按该区域名筛列表
+ */
+async function tryDrill(name: string): Promise<void> {
+    const activeMap = provinceMap.value || mapType.value;
+    const geo = echarts.getMap(activeMap)?.geoJson;
+    const feature = geo?.features?.find((f: any) => {
+        const raw = f.properties?.name || '';
+        return raw === name || (MAP_CONFIG_CHINA.KEY_TO_NAME[raw] || '') === name;
+    });
+    const adcode = feature?.properties?.adcode ? String(feature.properties.adcode) : '';
+
+    if (mapType.value === 'china' && adcode) {
+        // 1) 本地已有/可下载的下一级数据（省文件或市文件）
+        if (await enterLocalLevel(adcode, name)) {
+            return;
+        }
+        // 2) 全国层点省：内置全国市级地图切片
+        if (!provinceMap.value && await enterProvinceFromCities(adcode, name)) {
+            return;
+        }
+    }
+
+    if (!provinceMap.value) {
+        toggleDrill(name);
+    } else {
+        cityFilter.value = cityFilter.value === name ? '' : name;
+    }
+}
+
+/** 返回上一级（市 → 省 → 全国） */
+function backOneLevel(): void {
+    const next = levels.value.slice(0, -1);
+    levels.value = next;
+    const top = next[next.length - 1];
+    provinceMap.value = top?.adcode || '';
+    provinceName.value = top?.name || '';
+    cityFilter.value = '';
+    void render();
+}
+
+/**
+ * 按城市名下钻：有该市下级数据 → 市级视图；否则进省视图并按城市筛选
+ * 供首页「常驻城市」跳转使用
+ */
+async function applyCityParam(cityName: string): Promise<void> {
+    const cities = await loadChinaCitiesGeoJson();
+    const feature = cities?.features?.find((f: any) => f.properties?.name === cityName);
+    const adcode = feature?.properties?.adcode ? String(feature.properties.adcode) : '';
+    const parentAdcode = feature?.properties?.parent?.adcode ? String(feature.properties.parent.adcode) : '';
+    if (!adcode) {
+        return;
+    }
+    // 1) 有该市的区县数据 → 直接进入市级视图，并按该市筛选列表
+    if (await enterLocalLevel(adcode, cityName)) {
+        cityFilter.value = cityName;
+        await render();
+        return;
+    }
+    // 2) 退一步：进省级视图，再按城市筛选（省级视图的 cityOf 已按市归属）
+    if (parentAdcode) {
+        const national = echarts.getMap('china')?.geoJson;
+        const province = national?.features?.find((f: any) => String(f.properties?.adcode) === parentAdcode);
+        const provinceName = province?.properties?.name || '';
+        if (await enterProvinceFromCities(parentAdcode, provinceName)) {
+            cityFilter.value = cityName;
+            await render();
+        }
+    }
+}
+
+function backToChina(): void {
+    levels.value = [];
+    provinceMap.value = '';
+    provinceName.value = '';
+    cityFilter.value = '';
+    drillRegion.value = '';
+    void render();
 }
 
 /** 依赖脚本只加载一次（按 src 去重） */
@@ -182,6 +354,9 @@ const filtered = computed(() => {
             return false;
         }
         if (drillRegion.value && !matchesDrill(item)) {
+            return false;
+        }
+        if (cityFilter.value && cityOf.value.get(item.tid) !== cityFilter.value) {
             return false;
         }
         if (word && !`${item.name} ${item.content}`.toLowerCase().includes(word)) {
@@ -287,6 +462,10 @@ function clearMapFocus(): void {
     lastHighlighted = null;
 }
 
+function canExpand(item: Footprint): boolean {
+    // 有表情/图片 token 时也要能展开（clamp 可能藏住图片）
+    return item.content.length > 80 || item.html.includes('<img');
+}
 function isExpanded(tid: string): boolean {
     return expandedIds.value.has(tid);
 }
@@ -313,6 +492,7 @@ function openDetail(fp: Footprint): void {
  * 主题切换、隐私切换时直接复用，不重算 O(点 × 区域 × 顶点)。
  */
 let regionAssignSig = '';
+let cityAssignSig = '';
 const regionCache = new Map<string, RegionCount[]>();
 function regionSignature(points: Footprint[]): string {
     return [
@@ -352,7 +532,7 @@ async function render(): Promise<void> {
         chart.value.on('click', (params: any) => {
             if (params?.componentType === 'series' && params.seriesType === 'map'
                 && params.name && params.name !== '南海诸岛') {
-                toggleDrill(params.name);
+                void tryDrill(params.name);
                 return;
             }
             const item: Footprint | undefined = params?.data?.item;
@@ -362,21 +542,25 @@ async function render(): Promise<void> {
         });
     }
 
-    const nameMap = mapType.value === 'world'
+    // 省级地图（数据驱动下钻）用原始市级名称，不做简称映射
+    const activeMap = provinceMap.value || mapType.value;
+    const nationalNameMap = mapType.value === 'world'
         ? (typeof MAP_CONFIG_WORLD === 'undefined' ? {} : MAP_CONFIG_WORLD.KEY_TO_NAME)
         : (typeof MAP_CONFIG_CHINA === 'undefined' ? {} : MAP_CONFIG_CHINA.KEY_TO_NAME);
+    const nameMap = provinceMap.value ? {} : nationalNameMap;
     const showNameOnWorld = typeof SHOW_NAME_ON_WORLD === 'undefined' ? null : SHOW_NAME_ON_WORLD;
 
     // 国内地图用的是腾讯的火星坐标系（GCJ02），世界地图需转成 WGS84，否则整体偏移
-    const plotted = mapType.value === 'world'
+    const plotted = mapType.value === 'world' && !provinceMap.value
         ? points.map((item) => {
             const [posX, posY] = coordtransform.gcj02towgs84(item.posX, item.posY);
             return { ...item, posX, posY };
         })
         : points;
 
-    const geoJson = echarts.getMap(mapType.value)?.geoJson;
-    // 点 → 省/国家归属：按全量点算一次，供下钻筛选；世界地图需先转 WGS84
+    const geoJson = echarts.getMap(activeMap)?.geoJson;
+    const nationalGeo = echarts.getMap(mapType.value)?.geoJson;
+    // 点 → 省/国家归属：始终按全国/世界地图算，省级视图只改显示、不改列表筛选口径
     const regionSig = `${mapType.value}|${footprints.value.length}`;
     if (regionSig !== regionAssignSig) {
         const base = mapType.value === 'world'
@@ -385,10 +569,22 @@ async function render(): Promise<void> {
                 return { tid: item.tid, posX: x, posY: y };
             })
             : footprints.value.map((item) => ({ tid: item.tid, posX: item.posX, posY: item.posY }));
-        regionOf.value = assignRegions(base, geoJson, nameMap);
+        regionOf.value = assignRegions(base, nationalGeo, nationalNameMap);
         regionAssignSig = regionSig;
     }
-    const cacheKey = regionSignature(points);
+    // tid → 市名：始终按全国市级地图算（与当前视图无关），
+    // 这样「从首页跳转到某市」和「省级视图点市」都能按同一个口径筛列表
+    const citySig = `${footprints.value.length}`;
+    const cities = echarts.getMap('china-cities')?.geoJson;
+    if (cities && citySig !== cityAssignSig) {
+        cityOf.value = assignRegions(
+            footprints.value.map((item) => ({ tid: item.tid, posX: item.posX, posY: item.posY })),
+            cities,
+            {},
+        );
+        cityAssignSig = citySig;
+    }
+    const cacheKey = `${regionSignature(points)}|${activeMap}`;
     let regions = regionCache.get(cacheKey);
     if (!regions) {
         regions = countByRegion(plotted, geoJson, nameMap);
@@ -403,7 +599,20 @@ async function render(): Promise<void> {
     const focusPoints = drillRegion.value
         ? plotted.filter((item) => regionOf.value.get(item.tid) === drillRegion.value)
         : plotted;
-    if (mapType.value === 'china' && focusPoints.length > 3) {
+    // 下钻时按省份自身中心放大，点再少也生效（之前只看打卡点数 >3，湖南 3 条就不放大）
+    if (drillRegion.value) {
+        const feature = geoJson?.features?.find((f: any) => {
+            const raw = f.properties?.name;
+            return raw && (nameMap[raw] || raw) === drillRegion.value;
+        });
+        const center = feature?.properties?.center || feature?.properties?.centroid;
+        if (center) {
+            geoCenter = center;
+            // 真正放大到省级视图；不能被后面的常规自适应覆盖
+            geoZoom = 5;
+        }
+    }
+    if (mapType.value === 'china' && !drillRegion.value && focusPoints.length > 3) {
         // 用 10%~90% 分位而非全量 min/max：少数跨省离群点不该把主视图拉回全国。
         const xs = focusPoints.map((item) => item.posX).sort((a, b) => a - b);
         const ys = focusPoints.map((item) => item.posY).sort((a, b) => a - b);
@@ -459,14 +668,17 @@ async function render(): Promise<void> {
             text: ['常驻', '逗留'],
             calculable: true,
             seriesIndex: 1,
-            inRange: { color: ['lightskyblue', 'yellow', 'orangered'] },
+            inRange: { color: ['#e6f0f8', '#efd49a', '#e08a5c'] },
         }],
         geo: [{
-            map: mapType.value,
+            map: activeMap,
             roam: true,
-            zoom: geoZoom,
-            scaleLimit: { min: 1 },
-            center: geoCenter,
+            // 省级地图由 ECharts 按自身 bbox 自适应，不套用全国视图的 center/zoom
+            ...(provinceMap.value ? {} : {
+                zoom: geoZoom,
+                scaleLimit: { min: 1 },
+                center: geoCenter,
+            }),
             ...(isDark.value ? {
                 itemStyle: { areaColor: '#1a1a24', borderColor: '#3a3a4a', borderWidth: 0.8 },
                 emphasis: {
@@ -485,7 +697,7 @@ async function render(): Promise<void> {
                 show: true,
                 color: isDark.value ? '#aaa' : undefined,
                 formatter: (params: any) => {
-                    if (mapType.value === 'world' && showNameOnWorld
+                    if (mapType.value === 'world' && !provinceMap.value && showNameOnWorld
                         && !Object.prototype.hasOwnProperty.call(showNameOnWorld.NAME_TO_KEY, params.name)) {
                         return '';
                     }
@@ -495,11 +707,21 @@ async function render(): Promise<void> {
             emphasis: { label: { show: true, formatter: (params: any) => params.name } },
             // 南海诸岛/九段线要素保持可见（合规要素不可隐藏），仅小窗里不显示文字标签
             // 九段线要素单独描深蓝、加粗：之前与海面同色才「看不见」
-            regions: [{
-                name: '南海诸岛',
-                label: { show: false },
-                itemStyle: { areaColor: '#f7fbff', borderColor: '#1f5a99', borderWidth: 2 },
-            }],
+            regions: [
+                ...(!provinceMap.value ? [{
+                    name: '南海诸岛',
+                    label: { show: false },
+                    itemStyle: { areaColor: '#f7fbff', borderColor: '#1f5a99', borderWidth: 2 },
+                }] : []),
+                ...(!provinceMap.value && drillRegion.value ? [{
+                    name: drillRegion.value,
+                    itemStyle: { borderColor: '#1f5a99', borderWidth: 2 },
+                }] : []),
+                ...(provinceMap.value && cityFilter.value ? [{
+                    name: cityFilter.value,
+                    itemStyle: { borderColor: '#1f5a99', borderWidth: 2 },
+                }] : []),
+            ],
             nameMap,
         }],
         // 恒有一个 text 元素：切世界地图时文本置空（空数组在 notMerge 下会残留）
@@ -509,7 +731,7 @@ async function render(): Promise<void> {
             bottom: '3%',
             silent: true,
             style: {
-                text: mapType.value === 'china' ? '南海诸岛' : '',
+                text: !provinceMap.value && mapType.value === 'china' ? '南海诸岛' : '',
                 fill: '#1f4f7a',
                 font: '600 12px sans-serif',
             },
@@ -531,9 +753,6 @@ async function render(): Promise<void> {
                         }
                         if (item.time) {
                             lines.push(`打卡时间：${formatTime(item.time)}`);
-                        }
-                        if (item.summary) {
-                            lines.push(`${item.source === 'photos' ? '相片' : '说说'}：${displayText(item.summary)}`);
                         }
                         return lines.join('<br>');
                     },
@@ -610,6 +829,18 @@ async function initMap(): Promise<void> {
         await render();
         window.removeEventListener('resize', onResize);
         window.addEventListener('resize', onResize);
+        // 统计条的「最常去城市」：懒加载内置市级地图后算一次，不阻塞地图渲染
+        const idle = (window as any).requestIdleCallback || ((fn: () => void) => window.setTimeout(fn, 300));
+        idle(() => {
+            void loadCityTop().catch(() => { /* 无市级地图时保持 POI 口径 */ });
+        });
+
+        // 从「常驻城市」跳进来：自动下钻到该市（有区县数据）或进省并按城市筛选
+        if (pendingCity.value) {
+            const city = pendingCity.value;
+            pendingCity.value = '';
+            await applyCityParam(city);
+        }
     } catch (err) {
         console.error('地图加载失败', err);
         mapError.value = (err as Error).message || '未知错误';
@@ -701,7 +932,11 @@ function syncToUrl(): void {
         history.replaceState(null, '', target);
     }
 }
+/** 从首页「常驻城市」跳进来时的待处理城市（地图未就绪前先存着） */
+const pendingCity = ref('');
+
 function applyFromUrl(query: Record<string, string>): void {
+    pendingCity.value = query.city ?? '';
     keyword.value = query.q ?? '';
     typeFilter.value = query.type === 'messages' || query.type === 'photos' ? query.type : '';
     regionFilter.value = query.region ?? '';
@@ -757,9 +992,6 @@ watch(isDark, async () => {
 <template>
     <div class="page-head">
         足迹地图
-        <span v-if="!loading && !dataError" class="head-count">
-            共 {{ footprintCount }} 处打卡，途经 {{ regionCount }} 个{{ mapType === 'world' ? '国家/地区' : '省/市/区' }}
-        </span>
         <n-radio-group v-model:value="mapType" size="small" class="switch">
             <n-radio-button value="china">中国</n-radio-button>
             <n-radio-button value="world">世界</n-radio-button>
@@ -797,9 +1029,18 @@ watch(isDark, async () => {
                     <span class="stat-num">{{ spanYears || '—' }}</span>
                     <span class="stat-label">跨度(年)</span>
                 </div>
-                <div class="stat-item stat-click" title="点击筛选到该地点" @click="focusTopPlace">
+                <div v-if="cityTop" class="stat-item">
+                    <span class="stat-num">{{ displayPlace(cityTop.name) }}</span>
+                    <span class="stat-label">最常去城市 · {{ cityTop.count }} 次</span>
+                </div>
+                <div v-else class="stat-item stat-click" title="点击筛选到该地点" @click="focusTopPlace">
                     <span class="stat-num">{{ topPlace ? displayPlace(topPlace.name) : '—' }}</span>
                     <span class="stat-label">最常去 · {{ topPlace?.count || 0 }} 次</span>
+                </div>
+                <div v-if="!loading && !dataError" class="stat-hint">
+                    {{ levels.length ? '继续点下一级可深入 · 再点同一区域取消筛选' : '按打卡时间排列 · 点地图省份可下钻' }}
+                    <button v-if="levels.length > 1" type="button" @click="backOneLevel">返回上一级</button>
+                    <button v-if="levels.length" type="button" @click="backToChina">返回全国 ×</button>
                 </div>
             </div>
 
@@ -843,7 +1084,10 @@ watch(isDark, async () => {
                             </span>
                             <button type="button" class="fp-preview-close" @click="closePreview">×</button>
                         </div>
-                        <div class="fp-preview-body">{{ displayText(selected.content || selected.summary) }}</div>
+                        <div class="fp-preview-body">
+                            <span v-if="hideSensitive">{{ displayText(selected.content || selected.summary) }}</span>
+                            <span v-else v-html="selected.html" />
+                        </div>
                         <img
                             v-if="selected.thumb && !hideSensitive"
                             :src="selected.thumb"
@@ -856,9 +1100,9 @@ watch(isDark, async () => {
                         </div>
                     </div>
 
-                    <div v-if="drillRegion" class="drill-badge">
-                        已下钻 <b>{{ drillRegion }}</b>
-                        <button type="button" @click="clearDrill">清除 ×</button>
+                    <div v-if="drillRegion || levels.length" class="drill-badge">
+                        {{ levels.length ? levels.map((l) => l.name).join(' / ') + (cityFilter && cityFilter !== levels[levels.length - 1]?.name ? ' · ' + cityFilter : '') : '已下钻 ' + drillRegion }}
+                        <button type="button" @click="clearDrill">清除筛选 ×</button>
                     </div>
 
                     <div class="list-scroll" @scroll="onListScroll">
@@ -884,9 +1128,12 @@ watch(isDark, async () => {
                                     <span class="fp-time">{{ formatTime(item.time) }}</span>
                                 </div>
                                 <div class="fp-content">
-                                    {{ displayText(isExpanded(item.tid) ? item.content : item.summary) }}
+                                    <div class="fp-text" :class="{ 'fp-clamped': !isExpanded(item.tid) }">
+                                        <span v-if="hideSensitive">{{ displayText(item.content) }}</span>
+                                        <span v-else v-html="item.html" />
+                                    </div>
                                     <n-button
-                                        v-if="item.content.length > 80"
+                                        v-if="canExpand(item)"
                                         text
                                         size="tiny"
                                         type="primary"

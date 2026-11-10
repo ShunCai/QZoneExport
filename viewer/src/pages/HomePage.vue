@@ -40,6 +40,7 @@ import { loadWordCounts, type WordCounts } from '../data/wordCounts';
 import { loadRecentInteractions, type RecentInteraction } from '../data/recentInteractions';
 import { loadEmojiStats, type EmojiCount } from '../data/emojiStats';
 import { loadWordCloud, type WordCloudResult } from '../data/wordCloud';
+import { loadCityStats, type CityRow } from '../data/cityStats';
 import { computeGaps, loadTopLocations, type TopLocation } from '../data/counts';
 import { loadNightDialogs, type NightDialog } from '../data/nightCompanions';
 import { buildSpaceProfileRows } from '../data/spaceProfile';
@@ -192,6 +193,9 @@ const wordCloudLoading = ref(false);
 /** 常驻地点（原始地名：深圳 / 茂名市高州市 / 深圳市宝安区…各自计次） */
 const topLocations = ref<TopLocation[]>([]);
 const locationLoading = ref(false);
+/** 常驻城市（用内置全国市级地图按坐标归属算，不依赖腾讯 Key） */
+const cityRows = ref<CityRow[]>([]);
+const cityLoading = ref(false);
 /** 断档统计：直接由已加载的月度聚合推导，零额外成本 */
 const gapStats = computed(() => computeGaps(monthly.value));
 const emojiTotal = ref(0);
@@ -465,6 +469,13 @@ onMounted(async () => {
             .catch(() => { wordCloud.value = { docCount: 0, wordCount: 0, rows: [] }; })
             .finally(() => { wordCloudLoading.value = false; });
 
+        // 常驻城市：懒加载全国市级地图（3.7MB）再按坐标归属，同样放空闲时做
+        cityLoading.value = true;
+        loadCityStats(5)
+            .then((rows) => { cityRows.value = rows; })
+            .catch(() => { cityRows.value = []; })
+            .finally(() => { cityLoading.value = false; });
+
         // 常驻地点：与词条同一批空闲计算
         locationLoading.value = true;
         loadTopLocations(6)
@@ -617,7 +628,12 @@ watch(
                     <home-list-card title="深夜动态" note="凌晨 0–5 点" :items="rankings.night" more-type="night" empty-text="暂无深夜动态" :loading="memoriesLoading" />
                     <home-list-card title="最多点赞" note="按赞数排序" :items="rankings.likes" more-type="likes" empty-text="暂无数据" :loading="memoriesLoading" />
                     <home-list-card title="最多评论" note="按评论数排序" :items="rankings.comments" more-type="comments" empty-text="暂无数据" :loading="memoriesLoading" />
-                    <home-location-card :rows="topLocations" :loading="locationLoading" />
+                    <home-location-card
+                        :rows="topLocations"
+                        :city-rows="cityRows"
+                        :loading="locationLoading"
+                        :city-loading="cityLoading"
+                    />
                 </div>
             </section>
 

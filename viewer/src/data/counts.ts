@@ -507,11 +507,13 @@ export function computeGaps(stats: MonthlyStat): GapStats | null {
     };
     const allGaps: { start: string; end: string; months: number; ongoing: boolean }[] = [];
     for (let i = 1; i < idxs.length; i++) {
-        const months = idxs[i] - idxs[i - 1] - 1;
+        const curr = idxs[i]!;
+        const prev = idxs[i - 1]!;
+        const months = curr - prev - 1;
         if (months > 0) {
             allGaps.push({
-                start: monthAt(idxs[i - 1] + 1),
-                end: monthAt(idxs[i] - 1),
+                start: monthAt(prev + 1),
+                end: monthAt(curr - 1),
                 months,
                 ongoing: false,
             });

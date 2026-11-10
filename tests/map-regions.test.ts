@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assignRegions, countByRegion, inPolygon } from '../viewer/src/data/mapRegions';
+import { assignRegions, countByCity, countByRegion, inPolygon } from '../viewer/src/data/mapRegions';
 
 const square: number[][] = [[0, 0], [10, 0], [10, 10], [0, 10]];
 
@@ -74,5 +74,33 @@ describe('assignRegions', () => {
 
     it('空 geoJson 返回空映射', () => {
         expect(assignRegions([{ tid: 'x', posX: 5, posY: 5 }], null).size).toBe(0);
+    });
+});
+
+
+describe('countByCity', () => {
+    const cityGeo = {
+        features: [
+            // 普通市：广州市（父级广东 440000）
+            { properties: { name: '广州市', parent: { adcode: 440000 } }, geometry: { type: 'Polygon', coordinates: [square] } },
+            // 直辖市下的区：东城区（父级北京 110000）→ 应归并为「北京市」
+            { properties: { name: '东城区', parent: { adcode: 110000 } }, geometry: { type: 'MultiPolygon', coordinates: [[[[20, 20], [30, 20], [30, 30], [20, 30]]]] } },
+        ],
+    };
+
+    it('普通市按市名计，直辖市归并到市一级，并按次数降序', () => {
+        const result = countByCity([
+            { posX: 5, posY: 5 },
+            { posX: 6, posY: 6 },
+            { posX: 25, posY: 25 },
+        ], cityGeo);
+        expect(result).toEqual([
+            { name: '广州市', value: 2 },
+            { name: '北京市', value: 1 },
+        ]);
+    });
+
+    it('空数据返回空数组', () => {
+        expect(countByCity([{ posX: 1, posY: 1 }], null)).toEqual([]);
     });
 });

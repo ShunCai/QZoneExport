@@ -1,6 +1,7 @@
 import { loadList } from './sources';
 import { imageUrl, videoPoster } from './content';
 import { photoUrl, photoTimeOf } from './media';
+import { formatMessageContent, formatText } from './richText';
 
 export interface Footprint {
     /** 唯一键（统一字段名，值来源不同）：说说=message.tid；相片=相片实体键 picKey/lloc/sloc（无则「相册 id+名称」）。注意相片没有稳定的 id 字段，严禁用 photo.id。 */
@@ -15,15 +16,23 @@ export interface Footprint {
     time: any;
     /** 纯文本摘要（去 [表情] 标记，截断展示） */
     summary: string;
-    /** 纯文本全文（展开用） */
+    /** 纯文本全文（搜索 / 隐私脱敏用） */
     content: string;
+    /** 富文本 HTML（先转义再渲染表情 / @ / 话题，可安全 v-html） */
+    html: string;
+    /** 逆地理编码给出的城市（仅开启「刷新微信坐标」的备份才有，用于城市统计优先取值） */
+    cityHint?: string;
     /** 首图/视频封面 URL（无则空串） */
     thumb: string;
 }
 
-/** 说说正文转纯文本（去 [表情]/[图片] 等 token 标记），用于列表预览 */
+/**
+ * 说说正文转纯文本（搜索 / 隐私脱敏用）。
+ * 必须先整段删掉 [em]…[/em]：单独剥方括号会把里面的 e100 留成裸文本。
+ */
 function plainText(message: Record<string, any>): string {
     return String(message.content || '')
+        .replace(/\[em\][^\[]*\[\/em\]/gi, ' ')
         .replace(/\[[^\]]+\]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
@@ -67,6 +76,9 @@ export async function collectFootprints(): Promise<Footprint[]> {
             continue;
         }
         const text = plainText(message);
+        const html = formatMessageContent(message) || formatText(text);
+        const address = message.custom_lbsInfo?.address_component;
+        const cityHint = String(address?.city || address?.province || '').trim() || undefined;
         items.push({
             tid: String(message.tid),
             source: 'messages',
@@ -76,6 +88,8 @@ export async function collectFootprints(): Promise<Footprint[]> {
             time: message.created_time || message.custom_create_time,
             summary: text.slice(0, 80),
             content: text,
+            html,
+            cityHint,
             thumb: firstThumb(message),
         });
     }
@@ -117,6 +131,7 @@ export async function collectFootprints(): Promise<Footprint[]> {
                 time: photoTimeOf(photo),
                 summary: '📷 ' + caption,
                 content: caption,
+                html: formatText(caption),
                 thumb: photoUrl(photo),
             });
         }

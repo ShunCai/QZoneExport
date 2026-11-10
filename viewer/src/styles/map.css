@@ -34,14 +34,19 @@
 }
 .stat-item {
     display: flex;
+    flex: 1 1 0;
     flex-direction: column;
     align-items: center;
-    min-width: 56px;
-    padding: 2px 8px;
+    min-width: 0;
+    padding: 6px 12px;
+    border-right: 1px solid var(--border-light, #e8ebf0);
+}
+.stat-item:last-of-type {
+    border-right: 0;
 }
 .stat-num {
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 600;
     color: var(--text-primary);
     line-height: 1.2;
 }
@@ -93,6 +98,7 @@
     flex: 1;
     overflow-y: auto;
     padding: 8px 10px;
+    background: var(--bg-body, #f7f8fa);
 }
 .list-empty {
     padding: 30px 0;
@@ -103,33 +109,42 @@
 .month-label {
     font-size: 12px;
     font-weight: 600;
-    color: var(--text-muted);
-    padding: 4px 2px;
+    color: var(--text-secondary, #666);
+    /* list-scroll 有 8px 上内边距，sticky top:0 会露一条缝，滚动内容从里面透出来（与筛选条同款问题） */
     position: sticky;
-    top: 0;
-    background: var(--bg-primary, #fff);
-    z-index: 1;
+    top: -8px;
+    z-index: 2;
+    margin: 0 -10px;
+    padding: 8px 12px;
+    /* 与白卡区分：按当前主题的正文色混一点进底色，明暗主题都自动适配 */
+    background: var(--bg-toolbar, #f2f4f7);
+    background: color-mix(in srgb, var(--text-primary) 8%, var(--bg-primary));
+    border-bottom: 1px solid var(--border-light, #e8ebf0);
+    box-shadow: 0 2px 5px var(--shadow-sm, rgba(30, 50, 80, .06));
 }
 .fp-card {
-    padding: 8px 10px;
+    padding: 10px 12px;
     margin-bottom: 8px;
-    border: 1px solid var(--border, #e5e7eb);
+    background: var(--bg-primary, #fff);
+    border: 1px solid var(--border-card, #e5e7eb);
     border-radius: 8px;
+    box-shadow: 0 1px 3px var(--shadow-sm, rgba(30, 50, 80, .06));
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
+    transition: box-shadow 0.15s, border-color 0.15s;
 }
 .fp-card:hover {
-    background: var(--bg-toolbar, #f5f6f8);
-    border-color: var(--border-dashed, #c9d1dc);
+    border-color: var(--border-hover, #c9d1dc);
+    box-shadow: 0 3px 10px var(--shadow-md, rgba(30, 50, 80, .10));
 }
 .fp-head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 8px;
     margin-bottom: 4px;
 }
 .fp-time {
+    margin-left: auto;
     font-size: 12px;
     color: var(--text-muted);
 }
@@ -153,18 +168,11 @@
     border-color: var(--accent, #2080f0);
 }
 .fp-preview {
-    position: absolute;
-    top: 52px;
-    left: 12px;
-    right: 12px;
-    z-index: 5;
+    margin: 0 12px 8px;
+    padding: 10px 12px;
     background: var(--bg-primary, #fff);
     border: 1px solid var(--accent, #2080f0);
-    border-radius: 10px;
-    box-shadow: 0 10px 26px rgba(30, 60, 100, .18);
-    padding: 12px;
-    max-height: 78%;
-    overflow-y: auto;
+    border-radius: 8px;
 }
 .fp-preview-head {
     display: flex;
@@ -296,4 +304,43 @@
     .switch {
         display: none;
     }
+}
+
+
+/* 列表正文富文本：未展开时按行数收起，表情图与文字同高 */
+.fp-text.fp-clamped > span {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.fp-text img,
+.fp-preview-body img {
+    width: 18px;
+    height: 18px;
+    vertical-align: -4px;
+    margin: 0 2px;
+}
+.fp-preview-body img {
+    width: 20px;
+    height: 20px;
+}
+
+
+/* 统计条右侧提示：填掉整行空白，与切换分开放 */
+.stat-hint {
+    margin-left: auto;
+    align-self: center;
+    padding-left: 12px;
+    font-size: 11px;
+    color: var(--text-secondary, #888);
+    white-space: nowrap;
+}
+.stat-hint button {
+    margin-left: 8px;
+    border: 0;
+    background: transparent;
+    color: var(--accent, #2080f0);
+    cursor: pointer;
+    font-size: 11px;
 }

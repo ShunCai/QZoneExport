@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { topPlaceOf, visitCountOf, type Footprint } from '../viewer/src/data/footprints';
 
 function fp(tid: string, name: string, posX = 113, posY = 23): Footprint {
-    return { tid, source: 'messages', name, posX, posY, time: 0, summary: '', content: '', thumb: '' };
+    return { tid, source: 'messages', name, posX, posY, time: 0, summary: '', content: '', html: '', thumb: '' };
 }
 
 describe('topPlaceOf', () => {

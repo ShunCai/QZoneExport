@@ -33,8 +33,12 @@ interface Ring {
 export function inPolygon(point: [number, number], polygon: number[][]): boolean {
     let inside = false;
     for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i++) {
-        const [sx, sy] = polygon[i]!;
-        const [tx, ty] = polygon[j]!;
+        const curr = polygon[i]!;
+        const next = polygon[j]!;
+        const sx = curr[0]!;
+        const sy = curr[1]!;
+        const tx = next[0]!;
+        const ty = next[1]!;
         if ((sx === point[0] && sy === point[1]) || (tx === point[0] && ty === point[1])) {
             return true;
         }
@@ -59,7 +63,9 @@ function buildRings(feature: any): Ring[] {
         .filter((ring) => Array.isArray(ring) && ring.length > 2)
         .map((ring) => {
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            for (const [x, y] of ring) {
+            for (const point of ring) {
+                const x = point[0]!;
+                const y = point[1]!;
                 if (x < minX) minX = x;
                 if (x > maxX) maxX = x;
                 if (y < minY) minY = y;
@@ -143,4 +149,51 @@ export function assignRegions(
         }
     }
     return result;
+}
+
+
+/** 直辖市/特别行政区：这些地方的下一级是「区」，统计城市时要归并到市一级 */
+const MUNICIPALITY_NAMES: Record<string, string> = {
+    '110000': '北京市',
+    '120000': '天津市',
+    '310000': '上海市',
+    '500000': '重庆市',
+    '810000': '香港特别行政区',
+    '820000': '澳门特别行政区',
+};
+
+/**
+ * 按「市」聚合打卡点数量（不依赖 echarts，纯函数）。
+ * 传全国市级 geoJson（china-cities）：普通省用市名，直辖市/特区归并到市一级。
+ */
+export function countByCity(points: MapPoint[], geoJson: any): RegionCount[] {
+    if (!geoJson?.features) {
+        return [];
+    }
+    const regions: { name: string; rings: Ring[] }[] = geoJson.features
+        .map((feature: any) => {
+            const props = feature.properties || {};
+            const parentAdcode = String(props.parent?.adcode ?? '');
+            const name = MUNICIPALITY_NAMES[parentAdcode] || props.name || '';
+            return { name, rings: buildRings(feature) };
+        })
+        .filter((region: { name: string; rings: Ring[] }) => !!region.name && region.rings.length > 0);
+
+    const counts = new Map<string, number>();
+    for (const point of points) {
+        const x = point.posX;
+        const y = point.posY;
+        for (const region of regions) {
+            const hit = region.rings.some((ring) => x >= ring.minX && x <= ring.maxX
+                && y >= ring.minY && y <= ring.maxY
+                && inPolygon([x, y], ring.coords));
+            if (hit) {
+                counts.set(region.name, (counts.get(region.name) || 0) + 1);
+                break;
+            }
+        }
+    }
+    return [...counts.entries()]
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
 }
