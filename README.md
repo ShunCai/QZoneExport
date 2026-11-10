@@ -61,6 +61,7 @@ Firefox 现已正式支持（Manifest V3），可从 [Firefox 扩展商店（AMO
 ## 📖 用户文档
 
 - 使用帮助 / 配置说明 / 常见问题 / 隐私政策：项目 [Wiki](https://github.com/ShunCai/QZoneExport/wiki)
+- 足迹地图底图：阿里云 [DataV.GeoAtlas](https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json) 中国行政区划数据，随查看器离线内置（含南海诸岛要素）
 - 版本说明与离线包：GitHub [Releases](https://github.com/ShunCai/QZoneExport/releases)
 
 ---

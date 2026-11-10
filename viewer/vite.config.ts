@@ -13,12 +13,18 @@ import vue from '@vitejs/plugin-vue';
  * 3. 地图数据是 UMD 包，依赖全局 echarts（故 echarts 用 dist 的 UMD 版而非 npm 入口）。
  */
 function copyMapVendor(): Plugin {
+    // 统一产物布局：查看器资源一律落在 Common/ 下。
+    // 备份目录（index.html 在根）与扩展包内 viewer/ 都按 ./Common/... 引用，
+    // 不再需要运行时双路径回退，也不会在备份目录根多出 vendor/、images/ 副本。
     const files: [string, string][] = [
-        ['../node_modules/echarts/dist/echarts.min.js', 'vendor/echarts.min.js'],
-        ['../viewer/map-vendor/coordtransform.min.js', 'vendor/coordtransform.min.js'],
-        ['../viewer/map-vendor/maps/config.js', 'vendor/maps/config.js'],
-        ['../viewer/map-vendor/maps/world.js', 'vendor/maps/world.js'],
-        ['../viewer/map-vendor/maps/china.js', 'vendor/maps/china.js'],
+        ['../node_modules/echarts/dist/echarts.min.js', 'Common/vendor/echarts.min.js'],
+        ['../viewer/map-vendor/coordtransform.min.js', 'Common/vendor/coordtransform.min.js'],
+        ['../viewer/map-vendor/maps/config.js', 'Common/vendor/maps/config.js'],
+        ['../viewer/map-vendor/maps/world.js', 'Common/vendor/maps/world.js'],
+        ['../viewer/map-vendor/maps/china.js', 'Common/vendor/maps/china.js'],
+        ['../viewer/map-vendor/images/favicon.ico', 'Common/images/favicon.ico'],
+        ['../viewer/map-vendor/images/media_missing.png', 'Common/images/media_missing.png'],
+        ['../viewer/map-vendor/images/no_cover.gif', 'Common/images/no_cover.gif'],
     ];
     return {
         name: 'viewer-copy-map-vendor',
@@ -29,6 +35,10 @@ function copyMapVendor(): Plugin {
             // 清理上一次产物（含旧版落在根目录的 index.js/index.css，避免与新布局 Common/js、Common/css 并存）
             for (const f of ['index.html', 'index.js', 'index.css', 'Common/js/index.js', 'Common/css/index.css']) {
                 try { rmSync(join(out, f)); } catch { /* 不存在则忽略 */ }
+            }
+            // 清掉旧布局遗留的根级 vendor/、images/（都是本次构建可再生的静态资源）
+            for (const d of ['vendor', 'images']) {
+                try { rmSync(join(out, d), { recursive: true }); } catch { /* 不存在则忽略 */ }
             }
         },
         // 写完产物再拷，避开 emptyOutDir 清理

@@ -14,11 +14,13 @@ node_modules/
 *.log
 
 # 查看器构建产物（由 npm run build:viewer 生成，不入版本控制）
+# 布局已统一到 Common/ 下；旧的根级 images/、vendor/ 也一并忽略
 /public/viewer/index.html
 /public/viewer/index.js
 /public/viewer/index.css
 /public/viewer/Common/
 /public/viewer/vendor/
+/public/viewer/images/
 # 开发用样例数据
 /viewer/mock/
 
