@@ -721,7 +721,17 @@ export interface TopLocation {
 type LocationBucket = { count: number; latestTs: number; latestItem: Record<string, any>; kind: DataKey | 'photos'; label: string; route: string };
 
 /** 内部：遍历全部模块收集地点桶；keyOf 决定按「原始地点」还是「城市」聚合 */
-async function collectLocationBuckets(keyOf: (loc: string) => string): Promise<{ buckets: Map<string, LocationBucket>; totalLocated: number }> {
+/** 常驻地点统计的筛选条件（模块 key 集合；空表示全部） */
+export interface TopLocationFilter {
+    kinds?: string[];
+}
+
+async function collectLocationBuckets(
+    keyOf: (loc: string) => string,
+    filter?: TopLocationFilter,
+): Promise<{ buckets: Map<string, LocationBucket>; totalLocated: number }> {
+    const kinds = filter?.kinds ?? [];
+    const accept = (key: string): boolean => kinds.length === 0 || kinds.includes(key);
     const buckets = new Map<string, LocationBucket>();
     let totalLocated = 0;
 
@@ -731,6 +741,9 @@ async function collectLocationBuckets(keyOf: (loc: string) => string): Promise<{
     };
 
     for (const mod of YEAR_MODULES) {
+        if (!accept(mod.key)) {
+            continue;
+        }
         const items = await loadList(mod.key);
         for (const item of items) {
             const loc = locationOf(item);
@@ -757,6 +770,9 @@ async function collectLocationBuckets(keyOf: (loc: string) => string): Promise<{
 
     const albums = await loadList('albums');
     for (const album of albums) {
+        if (!accept('photos')) {
+            break;
+        }
         for (const photo of album.photoList || []) {
             const loc = PHOTO_LOCATION_FIELDS.locationOf(photo);
             if (!loc || !loc.trim()) continue;
@@ -802,7 +818,7 @@ function bucketsToTop(buckets: Map<string, LocationBucket>, totalLocated: number
         }));
 }
 
-export async function loadTopLocations(n = 5): Promise<TopLocation[]> {
-    const { buckets, totalLocated } = await collectLocationBuckets((loc) => loc);
+export async function loadTopLocations(n = 5, filter?: TopLocationFilter): Promise<TopLocation[]> {
+    const { buckets, totalLocated } = await collectLocationBuckets((loc) => loc, filter);
     return bucketsToTop(buckets, totalLocated, n);
 }

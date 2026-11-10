@@ -47,9 +47,36 @@ const LOCATION_COLORS = [
 const loading = ref(true);
 const topLocations = ref<TopLocation[]>([]);
 
+/** 模块筛选（多选；空 = 全部） */
+const KIND_OPTIONS = [
+    { label: '说说', value: 'messages' },
+    { label: '日志', value: 'blogs' },
+    { label: '日记', value: 'diaries' },
+    { label: '视频', value: 'videos' },
+    { label: '分享', value: 'shares' },
+    { label: '收藏', value: 'favorites' },
+    { label: '留言', value: 'boards' },
+    { label: '相片', value: 'photos' },
+];
+const kinds = ref<string[]>([]);
+
+async function reload(): Promise<void> {
+    loading.value = true;
+    try {
+        topLocations.value = await loadTopLocations(TOP_N, { kinds: kinds.value });
+    } finally {
+        loading.value = false;
+    }
+}
+function toggleKind(kind: string): void {
+    kinds.value = kinds.value.includes(kind)
+        ? kinds.value.filter((item) => item !== kind)
+        : [...kinds.value, kind];
+    void reload();
+}
+
 onMounted(async () => {
-    topLocations.value = await loadTopLocations(TOP_N);
-    loading.value = false;
+    await reload();
 });
 
 /** 地点 / 城市两个视角（城市按坐标归属，懒加载内置市级地图） */
@@ -137,6 +164,22 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
 
                 <!-- 横向进度条列表：风格与主页「内容构成」统一 -->
                 <template v-if="mode === 'place'">
+                <div class="loc-filters">
+                    <button
+                        type="button"
+                        class="loc-filter"
+                        :class="{ on: kinds.length === 0 }"
+                        @click="kinds = []; void reload()"
+                    >全部</button>
+                    <button
+                        v-for="opt in KIND_OPTIONS"
+                        :key="opt.value"
+                        type="button"
+                        class="loc-filter"
+                        :class="{ on: kinds.includes(opt.value) }"
+                        @click="toggleKind(opt.value)"
+                    >{{ opt.label }}</button>
+                </div>
                 <div class="loc-bar-chart" title="各地点访问次数：横向条长度按最多地点为基准对比">
                     <div
                         v-for="(loc, idx) in topLocations"
@@ -173,6 +216,12 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
                             <span class="loc-bar-time" :title="'最近一次访问于 ' + loc.latestTime + '（' + loc.label + '）'">
                                 🕒 {{ loc.latestTime.slice(0, 10) }}
                             </span>
+                            <button
+                                type="button"
+                                class="loc-bar-map"
+                                title="在地图上查看该地点"
+                                @click.stop="navigate('map', { region: loc.location })"
+                            >地图</button>
                         </div>
                     </div>
                 </div>
@@ -497,5 +546,48 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
     cursor: pointer;
 }
 .city-row:hover .loc-bar-name {
+    color: var(--accent);
+}
+
+
+/* 模块筛选：小 chip，多选；空 = 全部 */
+.loc-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 4px 0 10px;
+}
+.loc-filter {
+    border: 1px solid var(--border-card, #e5e7eb);
+    background: var(--bg-primary, #fff);
+    color: var(--text-secondary, #666);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 11px;
+    cursor: pointer;
+}
+.loc-filter:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.loc-filter.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+/* 行内的「地图」入口：与 tag 同尺寸，不抢进度条的视觉 */
+.loc-bar-map {
+    border: 1px solid var(--border-card, #e5e7eb);
+    background: transparent;
+    color: var(--text-secondary, #666);
+    border-radius: 4px;
+    padding: 0 6px;
+    font-size: 10px;
+    line-height: 18px;
+    cursor: pointer;
+    margin-left: 6px;
+}
+.loc-bar-map:hover {
+    border-color: var(--accent);
     color: var(--accent);
 }
