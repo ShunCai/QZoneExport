@@ -1,0 +1,299 @@
+/* 容器：撑满、纵向排列统计条 + 分栏 */
+.foot-body {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px 16px;
+    overflow: hidden;
+}
+.foot-loading {
+    align-self: center;
+    margin: 40px 0;
+}
+.foot-error {
+    margin: 16px;
+}
+.head-count {
+    margin-left: 10px;
+    font-size: 12px;
+    font-weight: normal;
+    color: var(--text-muted);
+}
+.switch {
+    margin-left: 14px;
+}
+
+/* 模块 A：概览统计条 */
+.stat-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    background: var(--bg-toolbar, #f5f6f8);
+    border-radius: 8px;
+}
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 56px;
+    padding: 2px 8px;
+}
+.stat-num {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+.stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* 分栏：列表 42% / 地图 58% */
+.foot-layout {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+}
+.foot-list {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 42%;
+    min-width: 280px;
+    overflow: hidden;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 8px;
+}
+.foot-map {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* 模块 B：筛选栏 */
+.toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    background: var(--bg-primary, #fff);
+}
+
+/* 模块 C：时间线列表 */
+.list-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px;
+}
+.list-empty {
+    padding: 30px 0;
+}
+.month-group {
+    margin-bottom: 10px;
+}
+.month-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 4px 2px;
+    position: sticky;
+    top: 0;
+    background: var(--bg-primary, #fff);
+    z-index: 1;
+}
+.fp-card {
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.fp-card:hover {
+    background: var(--bg-toolbar, #f5f6f8);
+    border-color: var(--border-dashed, #c9d1dc);
+}
+.fp-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.fp-time {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.fp-content {
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-primary);
+}
+.fp-expand {
+    margin-left: 6px;
+}
+.stat-click {
+    cursor: pointer;
+}
+.stat-click:hover .stat-num {
+    color: var(--accent, #2080f0);
+}
+.fp-card-sel {
+    border-color: var(--accent, #2080f0);
+}
+.fp-preview {
+    position: absolute;
+    top: 52px;
+    left: 12px;
+    right: 12px;
+    z-index: 5;
+    background: var(--bg-primary, #fff);
+    border: 1px solid var(--accent, #2080f0);
+    border-radius: 10px;
+    box-shadow: 0 10px 26px rgba(30, 60, 100, .18);
+    padding: 12px;
+    max-height: 78%;
+    overflow-y: auto;
+}
+.fp-preview-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.fp-preview-head b {
+    font-size: 13px;
+}
+.fp-preview-head span {
+    color: var(--text-muted, #888);
+    font-size: 11px;
+}
+.fp-preview-close {
+    margin-left: auto;
+    border: 0;
+    background: transparent;
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--text-muted, #888);
+}
+.fp-preview-body {
+    background: var(--bg-toolbar, #f5f6f8);
+    border-radius: 8px;
+    padding: 9px;
+    line-height: 1.6;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.fp-preview-thumb {
+    display: block;
+    max-width: 160px;
+    max-height: 120px;
+    border-radius: 6px;
+    margin-top: 8px;
+}
+.fp-preview-acts {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 10px;
+}
+.drill-badge {
+    margin: 0 12px 8px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    background: var(--brand-soft, #e6f1fb);
+    color: var(--brand, #2080f0);
+    font-size: 11px;
+}
+.drill-badge button {
+    margin-left: 8px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 11px;
+}
+.list-more {
+    padding: 10px 8px 16px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.fp-thumb {
+    display: block;
+    max-width: 96px;
+    max-height: 96px;
+    margin-top: 6px;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+/* 模块 D：地图 */
+.map {
+    position: relative;
+    flex: 1;
+    min-height: 420px;
+    /* 海面降饱和：原来 #c5d6e7 偏蓝，陆地/九段线的对比都被吃掉 */
+    background: var(--bg-map, #eaf1f8);
+}
+.map-empty {
+    margin: auto;
+}
+/* 地图独立加载态：不再让整页 spin 等 2MB 依赖 */
+.map-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary, #fff);
+}
+.map-error {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 3;
+}
+.map-error-hint {
+    margin-top: 4px;
+    font-size: 11px;
+    opacity: 0.85;
+}
+.map-retry,
+.foot-retry {
+    margin-top: 8px;
+}
+
+/* 窄屏：地图过小、交互不便，直接隐藏地图，列表撑满剩余空间 */
+@media (max-width: 900px) {
+    .foot-layout {
+        flex-direction: column;
+    }
+    .foot-list {
+        width: 100%;
+        min-width: 0;
+        max-height: none;
+        flex: 1;
+    }
+    .foot-map {
+        display: none;
+    }
+    .switch {
+        display: none;
+    }
+}
