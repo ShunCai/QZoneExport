@@ -20,10 +20,11 @@ const props = defineProps<{
 }>();
 
 /** 地点 / 城市两个视角：城市由内置全国市级地图按坐标归属算出（不依赖腾讯 Key） */
-const mode = ref('place');
+// 默认看城市：比 POI 名更能回答「我常在哪」；地点作为细化视角
+const mode = ref('city');
 const MODE_OPTIONS = [
-    { label: '地点', value: 'place' },
     { label: '城市', value: 'city' },
+    { label: '地点', value: 'place' },
 ];
 
 /** 地名属于位置信息，隐私模式下与其它摘要一样打码；次数是数字，保留 */

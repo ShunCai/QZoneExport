@@ -1058,9 +1058,13 @@ watch(isDark, async () => {
                     <span class="stat-label">最常去 · {{ topPlace?.count || 0 }} 次</span>
                 </div>
                 <div v-if="!loading && !dataError" class="stat-hint">
-                    {{ levels.length ? '继续点下一级可深入 · 再点同一区域取消筛选' : '按打卡时间排列 · 点地图省份可下钻' }}
+                    <span class="stat-hint-main">{{ levels.length ? '继续点下一级可深入 · 再点同一区域取消筛选' : '按打卡时间排列 · 点地图省份可下钻' }}</span>
                     <button v-if="levels.length > 1" type="button" @click="backOneLevel">返回上一级</button>
                     <button v-if="levels.length" type="button" @click="backToChina">返回全国 ×</button>
+                    <span
+                        class="map-attribution"
+                        :title="'底图来自阿里云 DataV.GeoAtlas（数据源高德开放平台，版本 2021.5）；文件不附审图号、页面声明仅供学习交流。公开使用含地图的截图或衍生产品前，请对照自然资源部标准地图核对国界、台湾与南海诸岛等要素。'"
+                    >底图 © DataV.GeoAtlas（高德 2021.5）· 不附审图号 · 仅供学习交流</span>
                 </div>
             </div>
 
@@ -1180,10 +1184,6 @@ watch(isDark, async () => {
                 <!-- 模块 D：地图（概览） -->
                 <section class="foot-map">
                     <div v-show="mapPoints.length > 0" ref="chartEl" class="map" />
-                    <div
-                        class="map-attribution"
-                        :title="'底图来自阿里云 DataV.GeoAtlas（数据源高德开放平台，版本 2021.5）；文件不附审图号、页面声明仅供学习交流。公开使用含地图的截图或衍生产品前，请对照自然资源部标准地图核对国界、台湾与南海诸岛等要素。'"
-                    >底图 © DataV.GeoAtlas · 2021.5</div>
                     <n-empty
                         v-if="mapPoints.length === 0 && !mapLoading && !mapError"
                         :description="footprintCount === 0 ? '本备份没有带位置的足迹（说说选择地点、或相片带上传/拍摄地点）' : '当前筛选条件下没有足迹'"

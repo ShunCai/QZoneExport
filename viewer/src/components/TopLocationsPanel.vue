@@ -47,15 +47,13 @@ const LOCATION_COLORS = [
 const loading = ref(true);
 const topLocations = ref<TopLocation[]>([]);
 
-/** 模块筛选（多选；空 = 全部） */
+/**
+ * 模块筛选（多选；空 = 全部）
+ * 只列真正带地点字段的模块：说说（lbs）与相片（拍摄/上传地点）。
+ * 日志、日记、视频、分享、收藏、留言在接口里没有 lbs，筛它们永远是空，不列。
+ */
 const KIND_OPTIONS = [
     { label: '说说', value: 'messages' },
-    { label: '日志', value: 'blogs' },
-    { label: '日记', value: 'diaries' },
-    { label: '视频', value: 'videos' },
-    { label: '分享', value: 'shares' },
-    { label: '收藏', value: 'favorites' },
-    { label: '留言', value: 'boards' },
     { label: '相片', value: 'photos' },
 ];
 const kinds = ref<string[]>([]);
@@ -82,8 +80,8 @@ onMounted(async () => {
 /** 地点 / 城市两个视角（城市按坐标归属，懒加载内置市级地图） */
 const mode = ref('place');
 const MODE_OPTIONS = [
-    { label: '地点', value: 'place' },
     { label: '城市', value: 'city' },
+    { label: '地点', value: 'place' },
 ];
 const cityRows = ref<CityRow[]>([]);
 const cityLoading = ref(false);
@@ -184,8 +182,9 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
                     <div
                         v-for="(loc, idx) in topLocations"
                         :key="loc.location"
-                        class="loc-bar-row"
-                        :title="loc.location + '：访问 ' + loc.count + ' 次 · 占所有带地点内容的 ' + loc.percent + '% · 最近访问于 ' + loc.latestTime + '（' + loc.label + '）'"
+                        class="loc-bar-row place-row"
+                        :title="loc.location + '：访问 ' + loc.count + ' 次 · 占所有带地点内容的 ' + loc.percent + '% · 最近访问于 ' + loc.latestTime + '（' + loc.label + '）· 点击在地图查看'"
+                        @click="navigate('map', { region: loc.location })"
                     >
                         <!-- 左侧：圆点 + 地点名 + 模块tag -->
                         <div class="loc-bar-head">
@@ -196,7 +195,7 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
                                 size="small"
                                 :bordered="false"
                                 round
-                                @click="navigate(loc.route)"
+                                @click.stop="navigate(loc.route)"
                             >{{ loc.label }}</n-tag>
                         </div>
                         <!-- 中间：渐变进度条 -->
@@ -216,12 +215,6 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
                             <span class="loc-bar-time" :title="'最近一次访问于 ' + loc.latestTime + '（' + loc.label + '）'">
                                 🕒 {{ loc.latestTime.slice(0, 10) }}
                             </span>
-                            <button
-                                type="button"
-                                class="loc-bar-map"
-                                title="在地图上查看该地点"
-                                @click.stop="navigate('map', { region: loc.location })"
-                            >地图</button>
                         </div>
                     </div>
                 </div>
@@ -534,7 +527,6 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
         min-width: 36px;
     }
 }
-</style>
 
 
 /* 视角切换：贴在面板标题右侧 */
@@ -550,44 +542,40 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
 }
 
 
-/* 模块筛选：小 chip，多选；空 = 全部 */
+/* 模块筛选：文字 tab + 下划线，贴合面板的柔和风格（不用按钮/边框） */
 .loc-filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    align-items: center;
+    gap: 14px;
     margin: 4px 0 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-light, #eee);
 }
 .loc-filter {
-    border: 1px solid var(--border-card, #e5e7eb);
-    background: var(--bg-primary, #fff);
+    border: 0;
+    background: transparent;
+    padding: 0 0 4px;
+    margin-bottom: -5px;
+    font-size: 12px;
     color: var(--text-secondary, #666);
-    border-radius: 999px;
-    padding: 2px 10px;
-    font-size: 11px;
     cursor: pointer;
+    border-bottom: 2px solid transparent;
 }
 .loc-filter:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+    color: #7c6bc4;
 }
 .loc-filter.on {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
+    color: #7c6bc4;
+    font-weight: 600;
+    border-bottom-color: #7c6bc4;
 }
-/* 行内的「地图」入口：与 tag 同尺寸，不抢进度条的视觉 */
-.loc-bar-map {
-    border: 1px solid var(--border-card, #e5e7eb);
-    background: transparent;
-    color: var(--text-secondary, #666);
-    border-radius: 4px;
-    padding: 0 6px;
-    font-size: 10px;
-    line-height: 18px;
+/* 地点行可点击去地图：hover 时给一点反馈，不额外加按钮 */
+.place-row {
     cursor: pointer;
-    margin-left: 6px;
 }
-.loc-bar-map:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+.place-row:hover .loc-bar-name {
+    color: #7c6bc4;
 }
+
+</style>
