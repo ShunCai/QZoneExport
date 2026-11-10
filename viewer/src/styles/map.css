@@ -75,6 +75,7 @@
 .foot-map {
     position: relative;
     display: flex;
+    flex-direction: column;
     flex: 1;
     min-width: 0;
     border: 1px solid var(--border, #e5e7eb);
@@ -347,13 +348,19 @@
 }
 
 
-/* 底图数据来源：与统计条提示同排的常驻小字，完整说明放 title；
-   不放地图右下角——那里已经被「南海诸岛」标注占用 */
-.map-attribution {
-    display: block;
-    margin-top: 2px;
-    color: var(--text-secondary, #888);
+/* 底图数据来源：贴在地图容器底部的版权条（不覆盖地图内容、不与南海诸岛标注冲突） */
+.map-footer {
+    flex: 0 0 auto;
+    height: 24px;
+    line-height: 24px;
+    padding: 0 12px;
     font-size: 10px;
-    line-height: 1.5;
+    color: var(--text-secondary, #888);
+    text-align: left;
+    background: var(--bg-toolbar, #f5f6f8);
+    border-top: 1px solid var(--border-light, #e8ebf0);
     cursor: help;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
