@@ -177,7 +177,6 @@ fileStructureType: 'File', RenameType: 'Default',
     Friends: {
 randomSeconds: { min: 1, max: 2 },
         Interactive: true, ZoneAccess: true, SpecialCare: true,
-        SpecialGroup: ['care', 'access', 'isFriend', 'deleted', '5', '10', '20'],
         SortType: 'QQ',
     },
     // 注：Shares.SourceType 不列入默认（列表庞大），避免新用户保存时写入空数组覆盖内容脚本默认
@@ -282,6 +281,9 @@ export async function loadConfig(): Promise<Record<string, any>> {
     // 语音说说已下线：设置页那个开关已改为只读，这里再把老配置里遗留的 true 归零，
     // 保证从任何入口读到的都是关闭态（采集端遇到 true 也只是白跑一次已失效的接口）
     config.Messages.GetVoice = false;
+    // 「特殊分组」已废弃：它只是把查看器里的筛选条件搬到设置页，采集端从未读取过。
+    // 老配置里可能还留着这个字段，统一删掉，避免以后有人误以为它还生效
+    delete (config.Friends as Record<string, any>).SpecialGroup;
     // 分享来源识别规则：存储中缺失或为空时回退到默认列表。
     // 不能让空列表被保存回去，否则内容脚本读到空数组后默认值不再生效，分享来源将全部识别不出来
     if (!Array.isArray(config.Shares.SourceType) || config.Shares.SourceType.length === 0) {

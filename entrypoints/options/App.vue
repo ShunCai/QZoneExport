@@ -82,23 +82,6 @@ const FRIENDS_SORT_OPTIONS = [
     { label: 'QQ排序', value: 'QQ' },
     { label: '助手排序', value: 'default' },
 ];
-/** 好友特殊分组选项 */
-const SPECIAL_GROUP_OPTIONS = [
-    { label: '特别关心', value: 'care' },
-    { label: '无权访问', value: 'access' },
-    { label: '单向好友', value: 'isFriend' },
-    { label: '已删好友', value: 'deleted' },
-    { label: '五年好友', value: '5' },
-    { label: '十年老友', value: '10' },
-    { label: '廿年旧友', value: '20' },
-    { label: '新的好友', value: 'new' },
-    { label: '首个好友', value: 'first' },
-    { label: '最新好友', value: 'latest' },
-    { label: '互动好友', value: 'intimacy' },
-    { label: '潜水好友', value: 'diving' },
-    { label: '空间过客', value: 'passerby' },
-    { label: '共同群组', value: 'group' },
-];
 /** 相片归纳方式 */
 const PHOTO_STRUCTURE_OPTIONS = [
     { label: '相册', value: 'File' },
@@ -422,16 +405,6 @@ async function doSave(): Promise<void> {
  * （按 QQ 号比对上次备份识别已删除好友，并跳过对既有好友的互动信息重抓）；
  * 已删除好友识别始终运行，与是否增量模式无关。
  */
-
-/* ==================== 好友特殊分组：全选 / 取消全选 ==================== */
-function selectAllSpecialGroups(): void {
-    config.Friends.SpecialGroup = SPECIAL_GROUP_OPTIONS.map((o) => o.value);
-    dirty.value = true;
-}
-function clearAllSpecialGroups(): void {
-    config.Friends.SpecialGroup = [];
-    dirty.value = true;
-}
 
 /* ==================== 弹窗行为配置 ==================== */
 /** 当前选中的弹窗行为（与 chrome.storage.local 的 LaunchFlow 保持一致） */
@@ -1032,20 +1005,6 @@ watch(activeTab, (tab) => {
                                     <n-switch v-model:value="config.Friends.SpecialCare" />
                                     <span class="hint">获取自己特别关心了哪些好友</span>
                                 </n-form-item>
-                                <n-form-item label="特殊分组">
-                                    <div class="sg-row">
-                                        <n-select
-                                            v-model:value="config.Friends.SpecialGroup"
-                                            multiple
-                                            :options="SPECIAL_GROUP_OPTIONS"
-                                            :max-tag-count="5"
-                                            style="flex: 1 1 auto; max-width: 480px;"
-                                        />
-                                        <n-button size="small" tertiary @click="selectAllSpecialGroups">全选</n-button>
-                                        <n-button size="small" tertiary @click="clearAllSpecialGroups">取消全选</n-button>
-                                    </div>
-                                    <span class="hint">部分分组基于互动信息生成，仅适用 HTML 备份</span>
-                                </n-form-item>
                             </n-form>
                         </div>
 
@@ -1453,13 +1412,6 @@ h3 + :deep(.n-divider) {
         margin-top: 4px;
         font-size: 12px;
         line-height: 1.5;
-    }
-    /* 特殊分组：控件与全选/取消全选按钮同一行，空间不足时换行 */
-    .sg-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 8px;
     }
     /* 保存区文字换行 */
     .page-foot .hint {
