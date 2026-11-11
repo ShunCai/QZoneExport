@@ -174,6 +174,19 @@ const CONDITION_GROUPS: ConditionGroup[] = [
 ];
 const ALL_CONDITIONS = CONDITION_GROUPS.flatMap((group) => group.items);
 
+/**
+ * 是否设了自定义备注。
+ * 采集端在没有备注时会把昵称回填进 remark（这份备份 435 人里 45 人 remark === nick），
+ * 直接判断 remark 非空会得出「人人都有备注」的假象，所以要和 nick 比对。
+ */
+function hasOwnRemark(item: Record<string, any>): boolean {
+    const remark = String(item.remark || '').trim();
+    if (!remark) {
+        return false;
+    }
+    return remark !== String(item.nick || item.name || '').trim();
+}
+
 /** 首个/最新好友靠相识时间的极值识别，不统计相识时间为 0 的 */
 const extremes = computed(() => {
     let first: Record<string, any> | null = null;
@@ -224,9 +237,10 @@ function matchSpecial(key: string, item: Record<string, any>): boolean {
             // 是好友但从不在互动用户里（互动数据未算完时不归入，避免误判）
             return !!interactiveUins.value && !interactiveUins.value.has(String(item.uin));
         case 'remark':
-            return !!String(item.remark || '').trim();
+            // 采集端在没有自定义备注时会把昵称写进 remark，所以「有备注」必须排除 remark === nick
+            return hasOwnRemark(item);
         case 'noremark':
-            return !String(item.remark || '').trim();
+            return !hasOwnRemark(item);
         default:
             return true;
     }
@@ -320,17 +334,15 @@ const conditionCounts = computed(() => {
     return counts;
 });
 
-/** 条件是否不可用（互动数据未算完 / 未备份） */
+/**
+ * 条件是否不可用（互动数据未算完 / 未备份）。
+ * 注意 0 命中不隐藏：全部条件常驻显示，0 命中的只是变淡——否则用户会以为「这个筛选项没了」。
+ */
 function conditionDisabled(key: string): boolean {
     if (!INTERACTIVE_DEPENDENT.has(key)) {
         return false;
     }
     return !interactiveSourceOk.value || interactiveUins.value === null;
-}
-
-/** 条件是否展示：有命中、已选中、或因数据缺失需要留个说明 */
-function conditionVisible(key: string): boolean {
-    return conditionDisabled(key) || specialKeys.value.includes(key) || (conditionCounts.value.get(key) || 0) > 0;
 }
 
 function conditionLabel(key: string): string {
@@ -608,10 +620,12 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
                     <button
                         v-for="item in group.items"
                         :key="item.value"
-                        v-show="conditionVisible(item.value)"
                         type="button"
                         class="filter-chip"
-                        :class="{ on: specialKeys.includes(item.value) }"
+                        :class="{
+                            on: specialKeys.includes(item.value),
+                            zero: !specialKeys.includes(item.value) && (conditionCounts.get(item.value) || 0) === 0 && !conditionDisabled(item.value),
+                        }"
                         :disabled="conditionDisabled(item.value)"
                         :title="conditionHint(item.value)"
                         @click="toggleCondition(item.value)"
@@ -721,6 +735,10 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
     cursor: not-allowed;
     border-style: dashed;
     opacity: 0.55;
+}
+/* 当前数据下 0 命中：保留但不抢眼，避免「这个筛选项消失了」的误会 */
+.filter-chip.zero {
+    opacity: 0.5;
 }
 .chip-num {
     font-size: 11px;
