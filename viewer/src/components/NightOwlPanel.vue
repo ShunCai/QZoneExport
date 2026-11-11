@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = withDefaults(defineProps<{ defaultOpen?: boolean }>(), { defaultOpen: false });
+const props = withDefaults(defineProps<{ defaultOpen?: boolean; topN?: number }>(), { defaultOpen: false, topN: 5 });
 
 import { computed, onMounted, ref, watch } from 'vue';
 import { NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui';
@@ -63,8 +63,8 @@ const MODULES: {
     { key: 'visitors', label: '访客', route: 'visitors', timeOf: (item) => item.time },
 ];
 
-/** 展示的「最晚」条数 */
-const TOP_N = 5;
+/** 展示的「最晚」条数：首页卡取 5，回忆清单页传 10 */
+const TOP_N = props.topN;
 
 /** 深夜动态时段配色（参考主页内容构成），柔和紫色系渐变 */
 const NIGHT_COLORS = ['#7c6bc4', '#9988de', '#5e4db0', '#b5a5ee', '#49398e'];

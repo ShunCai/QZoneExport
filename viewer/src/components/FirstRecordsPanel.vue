@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = withDefaults(defineProps<{ defaultOpen?: boolean }>(), { defaultOpen: false });
+const props = withDefaults(defineProps<{ defaultOpen?: boolean; topN?: number }>(), { defaultOpen: false, topN: 5 });
 
 import { computed, onMounted, ref, watch } from 'vue';
 import { NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui';
@@ -49,7 +49,7 @@ const ROUTE_OF: Record<string, string> = {
 /** 参与统计的模块：直接复用 YEAR_MODULES（保证字段回退链完全一致），仅追加 route 字段 */
 const MODULES = YEAR_MODULES.map((m) => ({ ...m, route: ROUTE_OF[m.key] || m.key }));
 
-const TOP_N = 5;
+const TOP_N = props.topN;
 
 const loading = ref(true);
 const items = ref<FirstItem[]>([]);

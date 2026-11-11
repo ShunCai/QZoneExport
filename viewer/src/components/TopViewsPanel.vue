@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = withDefaults(defineProps<{ defaultOpen?: boolean }>(), { defaultOpen: false });
+const props = withDefaults(defineProps<{ defaultOpen?: boolean; topN?: number }>(), { defaultOpen: false, topN: 5 });
 
 import { computed, onMounted, ref, watch } from 'vue';
 import { NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui';
@@ -21,7 +21,8 @@ import VideoItem from './items/VideoItem.vue';
  * 子条目样式统一复用 .memory 结构，与最初的记忆同款。
  */
 
-const TOP_N = 5;
+/** 条目上限：首页卡取 5，回忆清单页传 10 */
+const TOP_N = props.topN;
 
 const loading = ref(true);
 const list = ref<TopRecord[]>([]);

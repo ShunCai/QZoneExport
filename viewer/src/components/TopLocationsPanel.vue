@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = withDefaults(defineProps<{ defaultOpen?: boolean }>(), { defaultOpen: false });
+const props = withDefaults(defineProps<{ defaultOpen?: boolean; topN?: number }>(), { defaultOpen: false, topN: 5 });
 
 import { computed, onMounted, ref, watch } from 'vue';
 import { NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui';
@@ -31,7 +31,8 @@ import VideoItem from './items/VideoItem.vue';
  *  - 下方预览：点击展开折叠后，每个地点下展示最近一次访问的对应条目卡片
  */
 
-const TOP_N = 5;
+/** 条目上限：首页卡取 5，回忆清单页传 10 */
+const TOP_N = props.topN;
 
 /** 地点色板（与主页「内容构成」的 ringColors 色系一致，柔和渐变不刺眼） */
 const LOCATION_COLORS = [

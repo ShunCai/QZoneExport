@@ -12,18 +12,21 @@ import TopLocationsPanel from '../components/TopLocationsPanel.vue';
 /**
  * 回忆清单（完整榜单页）
  *
- * 首页只保留每类前 5 条的紧凑卡片，长清单与完整条目卡全部收在这里。
+ * 首页每类只摆前 5 条的紧凑卡片，这里展开到前 10 条、并保留完整条目卡片。
  * 这样首页不必再挂载 6 个折叠面板（<details> 收起时 Vue 一样会渲染并读数据），
  * 也避免同一批数据在首页出现两套渲染。页面不进侧栏菜单，只从卡片「查看更多」进入。
  */
+/** 榜单条目上限：比首页卡（5）多一倍，页头说明也按这个值写 */
+const MEMORIES_TOP_N = 10;
 const GROUPS = [
+    // 那年今日本身就是全量，不设上限
     { key: 'thatYear', title: '那年今日', note: '往年的今天 · 全站聚合', component: ThatYearTodayPanel },
-    { key: 'night', title: '深夜动态', note: '凌晨 0–5 点', component: NightOwlPanel },
-    { key: 'first', title: '最初的记忆', note: '各模块的第一条记录', component: FirstRecordsPanel },
-    { key: 'likes', title: '最多点赞', note: '按赞数排序', component: TopLikesPanel },
-    { key: 'comments', title: '最多评论', note: '按评论数排序', component: TopCommentsPanel },
-    { key: 'views', title: '最多浏览', note: '按浏览数排序', component: TopViewsPanel },
-    { key: 'locations', title: '常驻地点', note: '发布位置分布', component: TopLocationsPanel },
+    { key: 'night', title: '深夜动态', note: '凌晨 0–5 点', component: NightOwlPanel, topN: MEMORIES_TOP_N },
+    { key: 'first', title: '最初的记忆', note: '各模块的第一条记录', component: FirstRecordsPanel, topN: MEMORIES_TOP_N },
+    { key: 'likes', title: '最多点赞', note: '按赞数排序', component: TopLikesPanel, topN: MEMORIES_TOP_N },
+    { key: 'comments', title: '最多评论', note: '按评论数排序', component: TopCommentsPanel, topN: MEMORIES_TOP_N },
+    { key: 'views', title: '最多浏览', note: '按浏览数排序', component: TopViewsPanel, topN: MEMORIES_TOP_N },
+    { key: 'locations', title: '常驻地点', note: '发布位置分布', component: TopLocationsPanel, topN: MEMORIES_TOP_N },
 ];
 
 const backTo = computed(() => routeQuery.value.from || 'home');
@@ -57,7 +60,7 @@ const orderedGroups = computed(() => {
         <div class="mem-head">
             <button type="button" class="mem-back" @click="navigate(backTo)">← 返回</button>
             <h1>回忆清单</h1>
-            <p>按时间与互动整理出来的完整榜单。首页只显示每类前 5 条。</p>
+            <p>按时间与互动整理出来的完整榜单。首页每类只显示前 5 条，这里展开到前 {{ MEMORIES_TOP_N }} 条；那年今日是全量。</p>
         </div>
 
         <!--
@@ -81,7 +84,12 @@ const orderedGroups = computed(() => {
             </div>
             <!-- v-show 而非 v-if：收起时面板仍挂载，数据不会重复加载，展开是瞬时的 -->
             <div v-show="!collapsed[group.key]">
-                <component :is="group.component" :default-open="true" @summary="(text: string) => onSummary(group.key, text)" />
+                <component
+                    :is="group.component"
+                    :default-open="true"
+                    v-bind="group.topN ? { topN: group.topN } : {}"
+                    @summary="(text: string) => onSummary(group.key, text)"
+                />
             </div>
         </section>
     </div>
