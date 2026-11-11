@@ -873,7 +873,7 @@ watch(activeTab, (tab) => {
                                     <n-switch v-model:value="config.Messages.refreshWeChatLbs" />
                                     <span class="hint">微信朋友圈同步到空间的说说：坐标是手机 GPS，会转成火星坐标并反查地点</span>
                                 </n-form-item>
-                                <n-form-item label="刷新普通说说地点">
+                                <n-form-item label="普通说说地点">
                                     <n-switch v-model:value="config.Messages.refreshAllLbs" />
                                     <span class="hint">其它说说也按坐标反查地点；坐标本身已是火星坐标，不再转换，只更新地点名</span>
                                 </n-form-item>
