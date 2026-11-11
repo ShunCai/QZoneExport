@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { NSelect, NRadioButton, NRadioGroup, NTag, NEmpty, NPagination, NSpin } from 'naive-ui';
 import { loadTimeline, type TimelineEntry } from '../data/timeline';
+import { loadIsOtherSpace, OTHER_SPACE_EXCLUDED_MODULES } from '../data/space';
 import { getModulePref, savePref } from '../data/displayPrefs';
 import { navigate } from '../router';
 import MessageItem from '../components/items/MessageItem.vue';
@@ -27,6 +28,21 @@ const MODULE_OPTIONS: { value: string; label: string }[] = [
 ];
 
 const filterModule = ref('all');
+/**
+ * 看别人空间的备份时，日记/收藏是备份操作者自己的数据，不属于对方空间：
+ * 左侧菜单已隐藏，这里连动态筛选选项和条目一起去掉，避免留下「有 0 条的空选项」。
+ */
+const isOtherSpace = ref(false);
+const visibleModuleOptions = computed(() => (
+    isOtherSpace.value
+        ? MODULE_OPTIONS.filter((o) => !OTHER_SPACE_EXCLUDED_MODULES.includes(o.value))
+        : MODULE_OPTIONS
+));
+const visibleEntries = computed(() => (
+    isOtherSpace.value
+        ? allEntries.value.filter((e) => !OTHER_SPACE_EXCLUDED_MODULES.includes(e.module))
+        : allEntries.value
+));
 const sortOrder = ref<'desc' | 'asc'>(getModulePref('timeline').sortDir);
 /** 排序下拉选项 */
 const sortOptions = [
@@ -44,7 +60,7 @@ const paginate = ref(getModulePref('timeline').paginate ?? true);
 const listBodyRef = ref<HTMLElement | null>(null);
 
 const filtered = computed(() => {
-    let items = allEntries.value;
+    let items = visibleEntries.value;
     if (filterModule.value !== 'all') {
         items = items.filter((e) => e.module === filterModule.value);
     }
@@ -210,14 +226,14 @@ onBeforeUnmount(() => {
 /** 各模块条目数统计（用于筛选下拉旁显示） */
 const moduleCounts = computed(() => {
     const counts: Record<string, number> = {};
-    for (const e of allEntries.value) {
+    for (const e of visibleEntries.value) {
         counts[e.module] = (counts[e.module] || 0) + 1;
     }
     return counts;
 });
 
 /** 模块筛选下拉选项（带实时条数） */
-const moduleFilterOptions = computed(() => MODULE_OPTIONS.map((o) => ({
+const moduleFilterOptions = computed(() => visibleModuleOptions.value.map((o) => ({
     value: o.value,
     label: o.value !== 'all' && moduleCounts.value[o.value] ? `${o.label}（${moduleCounts.value[o.value]}）` : o.label,
 })));
@@ -269,8 +285,13 @@ async function reload(): Promise<void> {
     }
 }
 
-onMounted(() => {
-    reload();
+onMounted(async () => {
+    isOtherSpace.value = await loadIsOtherSpace();
+    // 偏好里可能残留了一个本次要隐藏的模块，先清回「全部」
+    if (isOtherSpace.value && OTHER_SPACE_EXCLUDED_MODULES.includes(filterModule.value)) {
+        filterModule.value = 'all';
+    }
+    await reload();
 });
 
 // 切换排序方向时重新加载数据（resetPaging 由下方 watch([filterModule, loading]) 统一处理）

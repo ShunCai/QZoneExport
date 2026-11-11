@@ -44,6 +44,7 @@ import MapPage from './pages/MapPage.vue';
 import TimelinePage from './pages/TimelinePage.vue';
 import UserAvatar from './components/UserAvatar.vue';
 import { heShe } from './data/pronoun';
+import { isOtherSpace as checkOtherSpace, OTHER_SPACE_EXCLUDED_MODULES } from './data/space';
 
 /** 用户信息（Common/json/user.js），同时给出各模块的条目数 */
 interface UserInfo {
@@ -87,22 +88,13 @@ const MENUS = [
     { key: 'map', label: '地图', group: '足迹' },
 ] as const;
 
-/** 查看他人空间备份时，这些模块不属于对方空间内容，左侧菜单与完整性统计统一排除 */
-const OTHER_SPACE_EXCLUDED = ['diaries', 'friends', 'favorites'];
-
-/** 是否正在查看「他人空间的备份」（Owner ≠ Target）。此时日记/好友/收藏不属对方空间，须隐藏 */
-const isOtherSpace = computed(() => {
-    const u = user.value;
-    if (!u) return false;
-    const owner = u.ownerUin;
-    const target = u.uin;
-    return owner !== undefined && owner !== null && owner !== '' && String(owner) !== String(target);
-});
+/** 是否正在查看「他人空间的备份」（Owner ≠ Target），判断抽到 data/space.ts 供各页复用 */
+const isOtherSpace = computed(() => checkOtherSpace(user.value));
 
 const menuOptions = computed<MenuOption[]>(() => {
     const base = MENUS.filter((m) => {
         // 「互动」统一显示：本人备份需先输入好友 QQ 再统计；他人空间备份自动统计
-        if (OTHER_SPACE_EXCLUDED.includes(m.key)) return !isOtherSpace.value;
+        if (OTHER_SPACE_EXCLUDED_MODULES.includes(m.key)) return !isOtherSpace.value;
         return true;
     });
 

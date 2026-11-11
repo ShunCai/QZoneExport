@@ -10,6 +10,7 @@ import HomeGapCard from '../components/home/HomeGapCard.vue';
 import HomeCareCard from '../components/home/HomeCareCard.vue';
 import HomeNightCard from '../components/home/HomeNightCard.vue';
 import HomeHero from '../components/home/HomeHero.vue';
+import { isOtherSpace as checkOtherSpace, OTHER_SPACE_EXCLUDED_MODULES } from '../data/space';
 import HomeComposition from '../components/home/HomeComposition.vue';
 import HomePeopleTop from '../components/home/HomePeopleTop.vue';
 import HomeBrandBar from '../components/home/HomeBrandBar.vue';
@@ -121,21 +122,12 @@ const CARDS = [
     { key: 'visitors', label: '访客', field: 'visitors', link: '#/visitors', excludeFromTotal: true },
 ];
 
-/** 查看他人空间备份时，这些模块不属于对方空间内容，主页看板（内容构成/完整性）统一排除 */
-const OTHER_SPACE_EXCLUDED = ['diaries', 'friends', 'favorites'];
-
-/** 是否查看他人空间备份（Owner ≠ Target）。见 App.vue 同义判定，保持口径一致 */
-const isOtherSpace = computed(() => {
-    const u = props.user;
-    if (!u) return false;
-    const owner = u.ownerUin;
-    const target = u.uin;
-    return owner !== undefined && owner !== null && owner !== '' && String(owner) !== String(target);
-});
+/** 是否查看他人空间备份（Owner ≠ Target），与左侧菜单、动态筛选共用 data/space.ts */
+const isOtherSpace = computed(() => checkOtherSpace(props.user));
 
 const cards = computed(() => {
     const list = isOtherSpace.value
-        ? CARDS.filter((c) => !OTHER_SPACE_EXCLUDED.includes(c.key))
+        ? CARDS.filter((c) => !OTHER_SPACE_EXCLUDED_MODULES.includes(c.key))
         : CARDS;
     return list.map((item) => ({
         ...item,
