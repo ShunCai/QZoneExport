@@ -10,8 +10,9 @@
  *    统计「有多少条内容出现过这个词」才代表「这个人常说什么」。
  * 3. **必须先剥标记**：`[em]e402[/em]`、UBB、HTML、URL 不清掉，Top 词会是 `e402` 这种垃圾。
  */
-import { loadItems } from './sources';
+import { loadData, loadItems } from './sources';
 import { bodyOf, WORD_MODULES } from './wordCounts';
+import { commentReplies, commentUser, itemComments } from './content';
 
 export interface WordRow {
     word: string;
@@ -106,6 +107,34 @@ export function splitWords(text: string): string[] | null {
 }
 
 /**
+ * 「我」发的评论与回复正文
+ *
+ * 评论是对话、混着别人的话，全量统计会把对方的口头禅算成自己的，所以只取本人发的：
+ * 既补上「我常说什么」缺掉的一大块，也不至于把画像搞脏。
+ * 纯函数，便于单测。
+ */
+export function selfCommentTexts(item: Record<string, any>, me: string): string[] {
+    if (!me) {
+        return [];
+    }
+    const mine = (user: { uin?: string | number }): boolean => (
+        user.uin !== undefined && user.uin !== null && String(user.uin) === me
+    );
+    const out: string[] = [];
+    for (const comment of itemComments(item)) {
+        if (mine(commentUser(comment)) && String(comment.content || '').trim()) {
+            out.push(String(comment.content));
+        }
+        for (const reply of commentReplies(comment)) {
+            if (mine(commentUser(reply)) && String(reply.content || '').trim()) {
+                out.push(String(reply.content));
+            }
+        }
+    }
+    return out;
+}
+
+/**
  * 按「文档频率」统计词频
  *
  * 同一条内容里重复出现的词只算 1 票；不同内容各算 1 票。
@@ -147,7 +176,7 @@ export function countWords(docs: string[], limit = 12): WordCloudResult {
  * 分词要几百毫秒，同一次会话里备份内容不会变，算一次就够。
  * sessionStorage 按 origin 隔离（file:// 下即按目录），每份备份独立；关掉标签页自动清。
  */
-const CACHE_KEY = 'qze_word_cloud_v1';
+const CACHE_KEY = 'qze_word_cloud_v2';
 
 function readCache(): WordCloudResult | null {
     try {
@@ -183,6 +212,9 @@ export async function loadWordCloud(limit = 12): Promise<WordCloudResult> {
         return cached;
     }
     const docs: string[] = [];
+    // 备份操作者（看别人空间时 ownerUin 才是我），用于筛出「我发的评论」
+    const user = await loadData<{ uin?: string | number; ownerUin?: string | number }>('user');
+    const me = String(user?.ownerUin ?? user?.uin ?? '');
     for (const key of WORD_MODULES) {
         let items: Record<string, any>[] = [];
         try {
@@ -195,6 +227,7 @@ export async function loadWordCloud(limit = 12): Promise<WordCloudResult> {
             if (body) {
                 docs.push(body);
             }
+            docs.push(...selfCommentTexts(item, me));
         }
     }
     const data = countWords(docs, limit);

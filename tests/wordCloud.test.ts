@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanText, countWords, isMeaningfulWord, splitWords } from '../viewer/src/data/wordCloud';
+import { cleanText, countWords, isMeaningfulWord, selfCommentTexts, splitWords } from '../viewer/src/data/wordCloud';
 
 describe('cleanText', () => {
     it('剥掉表情 token，不留 e402 这类残渣', () => {
@@ -83,5 +83,38 @@ describe('countWords', () => {
 
     it('空输入返回空结果', () => {
         expect(countWords([])).toEqual({ docCount: 0, wordCount: 0, rows: [] });
+    });
+});
+
+describe('selfCommentTexts', () => {
+    const item = {
+        comments: [
+            { poster: { uin: 111, name: '我' }, content: '今天高考加油' },
+            { poster: { uin: 222, name: '别人' }, content: '别人的话' },
+            { content: '没有 uin 的评论' },
+            { poster: { uin: 111 }, content: '   ' },
+            {
+                poster: { uin: 222 },
+                content: '别人的父评论',
+                replyList: [
+                    { uin: 111, content: '我的回复' },
+                    { uin: 222, content: '对方回复' },
+                ],
+            },
+        ],
+    };
+
+    it('只收本人发的评论与回复，跳过别人的和空内容', () => {
+        expect(selfCommentTexts(item, '111')).toEqual(['今天高考加油', '我的回复']);
+    });
+
+    it('uin 字符串与数字都能对上', () => {
+        expect(selfCommentTexts(item, '111')).toEqual(selfCommentTexts({ ...item, comments: item.comments }, '111'));
+        expect(selfCommentTexts({ comments: [{ poster: { uin: '111' }, content: '字符串 uin' }] }, '111'))
+            .toEqual(['字符串 uin']);
+    });
+
+    it('没有「我」的 uin 时返回空数组', () => {
+        expect(selfCommentTexts(item, '')).toEqual([]);
     });
 });

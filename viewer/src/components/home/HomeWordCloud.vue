@@ -17,6 +17,14 @@ const emit = defineEmits<{ search: [word: string] }>();
 
 const { hidden: hideSensitive } = usePrivacy();
 
+/** 悬浮说明：把口径、不含项、计数方式、过滤规则一次讲清，省得在正文里堆一段话 */
+const HELP_TEXT = [
+    '统计范围：说说、日志、日记、留言、分享的正文，以及你自己发的评论与回复',
+    '不含：标题、别人的评论、昵称、相片描述',
+    '计数：按「出现过的内容条数」算，同一条里重复只算 1 次，不是总次数',
+    '过滤：单字词、纯数字、纯英文词与常见虚词',
+].join('\n');
+
 /** 隐私模式下词语也要打码，否则等于把内容摘要漏出去 */
 function labelOf(word: string): string {
     return hideSensitive.value ? maskContent(word) : word;
@@ -27,6 +35,7 @@ function labelOf(word: string): string {
     <div v-if="props.loading || props.data.rows.length" class="word-strip">
         <div class="strip-head">
             <span class="strip-title">最常用的词</span>
+            <span class="strip-help" :title="HELP_TEXT" aria-label="统计口径说明">i</span>
             <span class="strip-note">
                 {{ props.loading
                     ? '正在统计…'
@@ -51,6 +60,23 @@ function labelOf(word: string): string {
 </template>
 
 <style scoped>
+/* 口径说明入口：小小的圆圈 i，悬浮看完整规则 */
+.strip-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    font-size: 10px;
+    line-height: 1;
+    color: var(--text-secondary);
+    cursor: help;
+    flex: none;
+}
+
 .word-strip {
     display: flex;
     align-items: center;
