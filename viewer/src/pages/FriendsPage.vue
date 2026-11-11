@@ -176,8 +176,9 @@ const ALL_CONDITIONS = CONDITION_GROUPS.flatMap((group) => group.items);
 
 /**
  * 是否设了自定义备注。
- * 采集端在没有备注时会把昵称回填进 remark（这份备份 435 人里 45 人 remark === nick），
+ * QQ 好友数据里没设备注的人，remark 就等于 nick（采集端只是原样落盘，并没有回填）；
  * 直接判断 remark 非空会得出「人人都有备注」的假象，所以要和 nick 比对。
+ * 展示名不受影响：全站取名走 friendNames.ts 的「备注 > 昵称」，两者相等时取谁都一样。
  */
 function hasOwnRemark(item: Record<string, any>): boolean {
     const remark = String(item.remark || '').trim();
@@ -237,7 +238,7 @@ function matchSpecial(key: string, item: Record<string, any>): boolean {
             // 是好友但从不在互动用户里（互动数据未算完时不归入，避免误判）
             return !!interactiveUins.value && !interactiveUins.value.has(String(item.uin));
         case 'remark':
-            // 采集端在没有自定义备注时会把昵称写进 remark，所以「有备注」必须排除 remark === nick
+            // QQ 好友数据里没备注的人 remark 就是 nick，所以「有备注」必须排除两者相等
             return hasOwnRemark(item);
         case 'noremark':
             return !hasOwnRemark(item);
@@ -336,13 +337,27 @@ const conditionCounts = computed(() => {
 
 /**
  * 条件是否不可用（互动数据未算完 / 未备份）。
- * 注意 0 命中不隐藏：全部条件常驻显示，0 命中的只是变淡——否则用户会以为「这个筛选项没了」。
+ * 0 命中的条件不是「没了」，收起态的已选条件也始终可见，避免无从取消。
  */
 function conditionDisabled(key: string): boolean {
     if (!INTERACTIVE_DEPENDENT.has(key)) {
         return false;
     }
     return !interactiveSourceOk.value || interactiveUins.value === null;
+}
+
+/** 条件面板默认收起：列表首屏只留一行已选条件，展开后才是完整的两列条件网格 */
+const filterOpen = ref(false);
+/** 0 命中项默认隐藏，但给一个显式开关，避免「筛选项凭空消失」 */
+const showZero = ref(false);
+const selectedLabels = computed(() => specialKeys.value.map((key) => ({ key, label: conditionLabel(key) })));
+
+/** 展开面板里这个条件是否要摆出来 */
+function conditionVisible(key: string): boolean {
+    return conditionDisabled(key)
+        || specialKeys.value.includes(key)
+        || showZero.value
+        || (conditionCounts.value.get(key) || 0) > 0;
 }
 
 function conditionLabel(key: string): string {
@@ -588,7 +603,7 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
                 </div>
                 <!-- 过客不是好友子集：换数据源看，而不是当条件叠加 -->
                 <div v-if="passerby.length > 0" class="toolbar-group">
-                    <n-radio-group v-model:value="dataset">
+                    <n-radio-group v-model:value="dataset" title="数据源：好友 / 空间过客（非好友互动用户）">
                         <n-radio-button value="friends">好友</n-radio-button>
                         <n-radio-button value="passerby">空间过客（{{ passerby.length }}）</n-radio-button>
                     </n-radio-group>
@@ -611,36 +626,70 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
             </div>
 
             <!--
-                条件筛选：多选、按 AND 叠加（「特别关心」+「十年老友」…）。
+                条件筛选：默认收起成一行，点开是两列条件网格。
                 计数口径 = 在其它已选条件 / QQ 分组 / 关键词之上，再选它还能剩多少人。
             -->
             <div v-if="!isPasserby" class="filter-bar">
-                <div v-for="group in CONDITION_GROUPS" :key="group.label" class="filter-row">
-                    <span class="filter-group-label">{{ group.label }}</span>
+                <div class="filter-head">
                     <button
-                        v-for="item in group.items"
-                        :key="item.value"
                         type="button"
-                        class="filter-chip"
-                        :class="{
-                            on: specialKeys.includes(item.value),
-                            zero: !specialKeys.includes(item.value) && (conditionCounts.get(item.value) || 0) === 0 && !conditionDisabled(item.value),
-                        }"
-                        :disabled="conditionDisabled(item.value)"
-                        :title="conditionHint(item.value)"
-                        @click="toggleCondition(item.value)"
+                        class="filter-toggle"
+                        :aria-expanded="filterOpen"
+                        @click="filterOpen = !filterOpen"
                     >
-                        {{ item.label }}
-                        <span v-if="!conditionDisabled(item.value)" class="chip-num">{{ conditionCounts.get(item.value) || 0 }}</span>
-                        <span v-else class="chip-num">{{ conditionHint(item.value) }}</span>
+                        筛选条件 <span class="filter-caret">{{ filterOpen ? '▴' : '▾' }}</span>
+                        <span v-if="specialKeys.length" class="filter-count">{{ specialKeys.length }}</span>
                     </button>
+                    <button
+                        v-for="item in selectedLabels"
+                        :key="item.key"
+                        type="button"
+                        class="filter-chip on"
+                        :title="'点击移除「' + item.label + '」'"
+                        @click="toggleCondition(item.key)"
+                    >
+                        {{ item.label }} <span class="chip-x">×</span>
+                    </button>
+                    <span v-if="!selectedLabels.length" class="filter-placeholder">可按多个条件叠加筛选</span>
+                    <span class="filter-result">{{ sorted.length }} / {{ list.length }} 位</span>
+                    <button
+                        v-if="specialKeys.length || qqGroup || keyword"
+                        type="button"
+                        class="filter-clear"
+                        @click="clearAllFilters"
+                    >清空</button>
                 </div>
-                <div class="filter-summary">
-                    <span v-if="specialKeys.length">
-                        已选 {{ specialKeys.length }} 个条件（同时满足）· 筛出 {{ sorted.length }} 位
-                    </span>
-                    <span v-else>可多选叠加，例如「特别关心」+「十年老友」</span>
-                    <button v-if="specialKeys.length || qqGroup || keyword" type="button" class="filter-clear" @click="clearAllFilters">清空</button>
+
+                <div v-if="filterOpen" class="filter-panel">
+                    <div class="filter-grid">
+                        <div v-for="group in CONDITION_GROUPS" :key="group.label" class="filter-group">
+                            <div class="filter-group-label">{{ group.label }}</div>
+                            <div class="filter-chips">
+                                <button
+                                    v-for="item in group.items"
+                                    :key="item.value"
+                                    v-show="conditionVisible(item.value)"
+                                    type="button"
+                                    class="filter-chip"
+                                    :class="{ on: specialKeys.includes(item.value) }"
+                                    :disabled="conditionDisabled(item.value)"
+                                    :title="conditionHint(item.value)"
+                                    @click="toggleCondition(item.value)"
+                                >
+                                    {{ item.label }}
+                                    <span v-if="!conditionDisabled(item.value)" class="chip-num">{{ conditionCounts.get(item.value) || 0 }}</span>
+                                    <span v-else class="chip-num">{{ conditionHint(item.value) }}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-foot">
+                        <span>已选 {{ specialKeys.length }} 项 · 同时满足</span>
+                        <label class="filter-zero">
+                            <input v-model="showZero" type="checkbox" /> 显示 0 命中项
+                        </label>
+                        <button type="button" class="filter-clear" @click="filterOpen = false">收起</button>
+                    </div>
                 </div>
             </div>
 
@@ -684,28 +733,78 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
 </template>
 
 <style scoped>
-/* 条件筛选条：多选叠加（AND），一行一组语义，计数实时联动 */
+/* 条件筛选：默认收起成一行，点开是两列条件网格 */
 .filter-bar {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
     margin: 2px 0 12px;
-    padding: 10px 12px;
     border: 1px solid var(--border-light, #e8ebf0);
     border-radius: 8px;
     background: var(--bg-toolbar, #f7f8fa);
 }
-.filter-row {
+.filter-head {
     display: flex;
+    align-items: center;
     flex-wrap: wrap;
+    gap: 8px;
+    padding: 7px 10px;
+}
+.filter-toggle {
+    display: inline-flex;
     align-items: center;
     gap: 6px;
+    padding: 3px 10px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 6px;
+    background: var(--bg-primary, #fff);
+    font-size: 12px;
+    color: var(--text-primary, #333);
+    cursor: pointer;
+}
+.filter-toggle:hover {
+    border-color: #7c6bc4;
+}
+.filter-caret {
+    color: var(--text-secondary, #888);
+}
+.filter-count {
+    min-width: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: rgba(124, 107, 196, 0.14);
+    color: #7c6bc4;
+    font-size: 11px;
+    line-height: 16px;
+    text-align: center;
+}
+.filter-placeholder,
+.filter-result {
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+}
+.filter-result {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}
+.filter-panel {
+    padding: 4px 12px 10px;
+    border-top: 1px solid var(--border-light, #e8ebf0);
+}
+.filter-grid {
+    display: grid;
+    /* 首列按内容宽、次列补剩余：两组紧挨着靠左，别被 50% 均分隔出一大片空白 */
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: 28px;
+    row-gap: 10px;
+    padding: 10px 0;
 }
 .filter-group-label {
-    flex: 0 0 auto;
-    min-width: 26px;
+    margin-bottom: 6px;
     font-size: 11px;
     color: var(--text-secondary, #666);
+}
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 .filter-chip {
     display: inline-flex;
@@ -736,24 +835,31 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
     border-style: dashed;
     opacity: 0.55;
 }
-/* 当前数据下 0 命中：保留但不抢眼，避免「这个筛选项消失了」的误会 */
-.filter-chip.zero {
-    opacity: 0.5;
-}
 .chip-num {
     font-size: 11px;
     font-variant-numeric: tabular-nums;
     opacity: 0.72;
 }
-.filter-summary {
+.chip-x {
+    opacity: 0.6;
+}
+.filter-foot {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 2px;
-    padding-top: 6px;
+    gap: 14px;
+    padding-top: 8px;
     border-top: 1px dashed var(--border-light, #e8ebf0);
     font-size: 12px;
     color: var(--text-secondary, #666);
+}
+.filter-zero {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+.filter-foot .filter-clear {
+    margin-left: auto;
 }
 .filter-clear {
     border: 0;
@@ -765,6 +871,11 @@ const columns = computed<DataTableColumns<Record<string, any>>>(() => {
 }
 .filter-clear:hover {
     text-decoration: underline;
+}
+@media (max-width: 760px) {
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
 }
 .filter-empty {
     display: flex;
