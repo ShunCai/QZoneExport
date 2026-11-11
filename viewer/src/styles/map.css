@@ -206,12 +206,28 @@
     white-space: pre-wrap;
     word-break: break-word;
 }
+/* 粗略坐标提示：列表地点名与地图位置对不上时，这里说明原因 */
+.fp-preview-note {
+    margin-top: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(250, 173, 20, 0.12);
+    color: #ad6800;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* 预览里的缩略图可点开原图（散点 tooltip 里也是这么写的） */
+.fp-preview-thumb-link {
+    display: inline-block;
+    margin-top: 8px;
+    cursor: zoom-in;
+}
 .fp-preview-thumb {
     display: block;
     max-width: 160px;
     max-height: 120px;
     border-radius: 6px;
-    margin-top: 8px;
 }
 .fp-preview-acts {
     display: flex;

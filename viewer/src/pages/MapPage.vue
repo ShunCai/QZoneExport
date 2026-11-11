@@ -79,6 +79,23 @@ const spanYears = ref(0);
 /** 点击卡片/散点后的就地预览（不再直接跳走原文） */
 const selected = ref<Footprint | null>(null);
 const selectedVisits = ref(0);
+/**
+ * 点散点后只看该坐标的全部足迹。
+ * 相片常有「同一坐标连拍/连传多张」，它们在地图上永远重叠、放大也分不开；
+ * 点一下就把这几条一起筛进列表，而不是只选中其中一条。
+ */
+const spotFilter = ref<string | null>(null);
+/** 与散点聚合同一口径（5 位小数），否则浮点尾差会让「同位置 11 条」筛出 5 条 */
+function spotKey(item: Footprint): string {
+    return `${item.posX.toFixed(5)},${item.posY.toFixed(5)}`;
+}
+const spotCount = computed(() => {
+    const spot = spotFilter.value;
+    if (!spot) {
+        return 0;
+    }
+    return footprints.value.filter((fp) => spotKey(fp) === spot).length;
+});
 function selectFootprint(fp: Footprint, visits = 0): void {
     selected.value = fp;
     selectedVisits.value = visits || visitCountOf(footprints.value, fp);
@@ -97,6 +114,8 @@ async function loadCityTop(): Promise<void> {
     if (!geoJson) {
         return;
     }
+    // 市级地图这时才注册进 echarts：补算一次城市归属，否则统计条的「座城市」一直是 —
+    updateCityAssign();
     const ranked = mergeCityCounts(footprints.value, geoJson);
     if (ranked.length > 0) {
         cityTop.value = { name: ranked[0]!.name, count: ranked[0]!.value };
@@ -141,6 +160,9 @@ const photoGapRatio = computed(() => {
 const photoQuota = computed(() => Math.min(PHOTO_LIMIT, Math.max(24, Math.round(photoZoom.value * 12))));
 /** 铺在地图上的相片（near = 被挤到同一位置的相片张数，>1 时 tooltip 提示） */
 interface ShownPhoto extends PhotoMarker {
+    /** 同一坐标（完全重合）的相片张数，含自己——这类点无论放多大都分不开 */
+    same: number;
+    /** 像素上挨得近但坐标不同的张数——放大后会各自分开 */
     near: number;
 }
 /** 候选池上限：只防极端数据（上万张带坐标的相片），真正的显示上限是 PHOTO_LIMIT */
@@ -186,6 +208,7 @@ function clearDrill(): void {
         cityFilter.value = '';
         return;
     }
+    spotFilter.value = null;
     drillRegion.value = '';
 }
 
@@ -332,6 +355,7 @@ function backToChina(): void {
     provinceName.value = '';
     cityFilter.value = '';
     drillRegion.value = '';
+    spotFilter.value = null;
     void render();
 }
 
@@ -389,10 +413,36 @@ function computeStats(items: Footprint[]): void {
     spanYears.value = y1 - y0 + 1;
 }
 
+/**
+ * 统计条的地域/时间口径
+ *
+ * regionOf / cityOf 是 render() 里按**全量**足迹算的 tid → 省/市归属（不随筛选变化），
+ * 地图依赖没加载完时为空，此时显示「—」而不是误导性的 0。
+ */
+const provinceCount = computed(() => (
+    regionOf.value.size === 0
+        ? '—'
+        : new Set([...regionOf.value.values()].filter(Boolean)).size
+));
+const cityCount = computed(() => (
+    cityOf.value.size === 0
+        ? '—'
+        : new Set([...cityOf.value.values()].filter(Boolean)).size
+));
+/** 三个时间格子合并成一格：保留「带坐标足迹」独有的时间跨度，又不和概览页三格重复 */
+const timeSummary = computed(() => (
+    earliest.value && latest.value
+        ? `${new Date(earliest.value).getFullYear()}–${new Date(latest.value).getFullYear()}`
+        : '—'
+));
+
 // —— 筛选 + 排序 + 分组 ——
 const filtered = computed(() => {
     const word = keyword.value.trim().toLowerCase();
     return footprints.value.filter((item) => {
+        if (spotFilter.value && spotKey(item) !== spotFilter.value) {
+            return false;
+        }
         if (typeFilter.value && item.source !== typeFilter.value) {
             return false;
         }
@@ -490,6 +540,11 @@ const typeOptions = [
 const mapPoints = computed(() => {
     const word = keyword.value.trim().toLowerCase();
     return footprints.value.filter((item) => {
+        // 坐标被 QQ 截成整数（如 110, 21）的点不参与地图定位：位置毫无意义，
+        // 画上去会与列表里写的地点名（如「茂名市高州市」）严重矛盾
+        if (item.coarse) {
+            return false;
+        }
         if (typeFilter.value && item.source !== typeFilter.value) {
             return false;
         }
@@ -502,6 +557,9 @@ const mapPoints = computed(() => {
         return true;
     });
 });
+
+/** 参与地域归属的点：剔除粗坐标（否则会把高州的点算进雷州市，省份/城市数也会虚高） */
+const locatedFootprints = computed(() => footprints.value.filter((item) => !item.coarse));
 
 let lastHighlighted: number | null = null;
 let lastHighlightedPhoto: number | null = null;
@@ -554,6 +612,32 @@ function openDetail(fp: Footprint): void {
 let regionAssignSig = '';
 let cityAssignSig = '';
 let countyAssignSig = '';
+
+/**
+ * tid → 市名：始终按全国市级地图算（与当前视图无关），
+ * 这样「从首页跳转到某市」和「省级视图点市」都能按同一个口径筛列表。
+ *
+ * 市级地图是懒加载的，常常在首帧 render() 之后才注册进 echarts；
+ * 所以除 render() 外，loadCityTop() 拿到数据后也要调一次，
+ * 否则 cityOf 一直为空，城市筛选与统计条的「座城市」都出不来。
+ */
+function updateCityAssign(): void {
+    if (typeof echarts === 'undefined') {
+        return;
+    }
+    ensureCityMapRegistered();
+    const cities = echarts.getMap('china-cities')?.geoJson;
+    const sig = `${footprints.value.length}`;
+    if (!cities || sig === cityAssignSig) {
+        return;
+    }
+    cityOf.value = assignRegions(
+        locatedFootprints.value.map((item) => ({ tid: item.tid, posX: item.posX, posY: item.posY })),
+        cities,
+        {},
+    );
+    cityAssignSig = sig;
+}
 const regionCache = new Map<string, RegionCount[]>();
 function regionSignature(points: Footprint[]): string {
     return [
@@ -578,6 +662,7 @@ function photoSeriesData(): any[] {
             value: [marker.posX, marker.posY],
             item: marker.item,
             preview: marker.preview,
+            same: marker.same,
             near: marker.near,
             albumId: marker.albumId,
         };
@@ -661,11 +746,17 @@ function refreshPhotoLayer(): void {
             }
         }
         if (nearest >= 0) {
-            picked[nearest]!.near++;
+            const target = picked[nearest]!;
+            // 坐标完全相同的点永远不会被放大分开，单独计数，别再骗用户「放大可分开」
+            if (marker.posX === target.posX && marker.posY === target.posY) {
+                target.same++;
+            } else {
+                target.near++;
+            }
             continue;
         }
         px.push({ x, y });
-        picked.push({ ...marker, posX: plotX, posY: plotY, near: 1 });
+        picked.push({ ...marker, posX: plotX, posY: plotY, same: 1, near: 0 });
     }
     photoShown.value = picked;
     syncPhotoLayer();
@@ -722,6 +813,11 @@ async function render(): Promise<void> {
             }
             const item: Footprint | undefined = params?.data?.item;
             if (item?.tid) {
+                // 同坐标多条时把列表筛到该位置：否则点一次只能看到其中一条，
+                // 而它们在地图上永远重叠（坐标完全相同），用户会以为「只剩一张」
+                const key = spotKey(item);
+                const sameSpot = footprints.value.filter((fp) => spotKey(fp) === key);
+                spotFilter.value = sameSpot.length > 1 ? key : null;
                 selectFootprint(item, params?.data?.count ?? 0);
             }
         });
@@ -751,35 +847,23 @@ async function render(): Promise<void> {
     const regionSig = `${mapType.value}|${footprints.value.length}`;
     if (regionSig !== regionAssignSig) {
         const base = mapType.value === 'world'
-            ? footprints.value.map((item) => {
+            ? locatedFootprints.value.map((item) => {
                 const [x, y] = coordtransform.gcj02towgs84(item.posX, item.posY);
                 return { tid: item.tid, posX: x, posY: y };
             })
-            : footprints.value.map((item) => ({ tid: item.tid, posX: item.posX, posY: item.posY }));
+            : locatedFootprints.value.map((item) => ({ tid: item.tid, posX: item.posX, posY: item.posY }));
         regionOf.value = assignRegions(base, nationalGeo, nationalNameMap);
         regionAssignSig = regionSig;
     }
-    // tid → 市名：始终按全国市级地图算（与当前视图无关），
-    // 这样「从首页跳转到某市」和「省级视图点市」都能按同一个口径筛列表
-    const citySig = `${footprints.value.length}`;
-    // 首页可能已加载过市级地图但当时没有 echarts：每帧补一次注册，保证城市归属口径可用
-    ensureCityMapRegistered();
-    const cities = echarts.getMap('china-cities')?.geoJson;
-    if (cities && citySig !== cityAssignSig) {
-        cityOf.value = assignRegions(
-            footprints.value.map((item) => ({ tid: item.tid, posX: item.posX, posY: item.posY })),
-            cities,
-            {},
-        );
-        cityAssignSig = citySig;
-    }
+    // tid → 市名：按全国市级地图算，无论当前是哪个下钻视图
+    updateCityAssign();
     // 市级视图（当前地图不是省级）里按当前地图建立 tid → 区县名，供「点区县」筛选。
     // 注意不能用 levels 长度判断：从首页直接跳某市时 levels 只有 1 层（省这一层被跳过）。
     const countyView = !!provinceMap.value && !isProvinceAdcode(provinceMap.value);
     const countySig = `${activeMap}|${footprints.value.length}`;
     if (countyView && countySig !== countyAssignSig) {
         countyOf.value = assignRegions(
-            footprints.value.map((item) => ({ tid: item.tid, posX: item.posX, posY: item.posY })),
+            locatedFootprints.value.map((item) => ({ tid: item.tid, posX: item.posX, posY: item.posY })),
             geoJson,
             {},
         );
@@ -1010,10 +1094,13 @@ async function render(): Promise<void> {
                             `我的相片：<b>${displayPlace(item.name)}</b>`,
                             `时间：${formatTime(item.time)}`,
                         ];
-                        if ((params.data.near || 0) > 1) {
-                            lines.push(`此处共 <b>${params.data.near}</b> 张相片，放大可分开看`);
+                        if ((params.data.same || 0) > 1) {
+                            lines.push(`同位置共 <b>${params.data.same}</b> 张相片（坐标完全相同），点击左侧会一起列出`);
                         }
-                        lines.push('<span style="opacity:.7">点击查看大图</span>');
+                        if ((params.data.near || 0) > 0) {
+                            lines.push(`附近还有 <b>${params.data.near}</b> 张，放大可分开看`);
+                        }
+                        lines.push('<span style="opacity:.7">点击在左侧预览 · 缩略图可点开原图</span>');
                         return lines.join('<br>');
                     },
                 },
@@ -1260,27 +1347,30 @@ watch(isDark, async () => {
         </n-alert>
 
         <template v-else>
-            <!-- 模块 A：概览统计条 -->
+            <!-- 模块 A：概览统计条（口径都写在 title 里，免得「处打卡」被当成去重地点数） -->
             <div class="stat-bar">
-                <div class="stat-item">
+                <div class="stat-item" title="带坐标的说说与相片总数：一条内容算一条，不去重；相片按实体键跨相册去重。坐标被截成整数的记录仍计入，但不参与地图定位与地域归属">
                     <span class="stat-num">{{ footprintCount }}</span>
-                    <span class="stat-label">处打卡</span>
+                    <span class="stat-label">条足迹</span>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" title="按打卡地点名（POI）去重后的数量，不是城市也不是省份">
                     <span class="stat-num">{{ regionCount }}</span>
                     <span class="stat-label">个地点</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-num">{{ earliest ? new Date(earliest).getFullYear() : '—' }}</span>
-                    <span class="stat-label">最早</span>
+                <div
+                    class="stat-item"
+                    :title="mapType === 'world' ? '按世界地图归属统计的国家/地区数' : '按全国地图归属统计的省级行政区数'"
+                >
+                    <span class="stat-num">{{ provinceCount }}</span>
+                    <span class="stat-label">{{ mapType === 'world' ? '个国家/地区' : '个省份' }}</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-num">{{ latest ? new Date(latest).getFullYear() : '—' }}</span>
-                    <span class="stat-label">最晚</span>
+                <div class="stat-item" title="按内置全国市级地图归属的市级行政区数（仅境内坐标可归属）">
+                    <span class="stat-num">{{ cityCount }}</span>
+                    <span class="stat-label">座城市</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-num">{{ spanYears || '—' }}</span>
-                    <span class="stat-label">跨度(年)</span>
+                <div class="stat-item" title="只统计带坐标的足迹：说说取发表时间，相片取拍摄时间（拍摄优先、上传兜底）；与概览按全站发表时间/上传时间的口径不同">
+                    <span class="stat-num">{{ timeSummary }}</span>
+                    <span class="stat-label">足迹年份 · {{ spanYears || '—' }} 年</span>
                 </div>
                 <div v-if="cityTop" class="stat-item">
                     <span class="stat-num">{{ displayPlace(cityTop.name) }}</span>
@@ -1337,25 +1427,34 @@ watch(isDark, async () => {
                             </span>
                             <button type="button" class="fp-preview-close" @click="closePreview">×</button>
                         </div>
+                        <div v-if="selected.coarse" class="fp-preview-note">
+                            这条记录只有粗略坐标（经纬度被截成整数），地图上未定位
+                        </div>
                         <div class="fp-preview-body">
                             <span v-if="hideSensitive">{{ displayText(selected.content || selected.summary) }}</span>
                             <span v-else v-html="selected.html" />
                         </div>
-                        <img
+                        <a
                             v-if="selected.thumb && !hideSensitive"
-                            :src="selected.thumb"
-                            class="fp-preview-thumb"
-                            alt=""
-                        />
+                            :href="selected.thumb"
+                            target="_blank"
+                            rel="noreferrer"
+                            class="fp-preview-thumb-link"
+                            title="点击查看原图"
+                        >
+                            <img :src="selected.thumb" class="fp-preview-thumb" alt="" />
+                        </a>
                         <div class="fp-preview-acts">
                             <n-button size="small" @click="closePreview">关闭</n-button>
                             <n-button size="small" type="primary" @click="openDetail(selected)">查看原文 →</n-button>
                         </div>
                     </div>
 
-                    <div v-if="drillRegion || levels.length" class="drill-badge">
-                        {{ levels.length ? levels.map((l) => l.name).join(' / ') + (cityFilter && cityFilter !== levels[levels.length - 1]?.name ? ' · ' + cityFilter : '') : '已下钻 ' + drillRegion }}
-                        <button type="button" @click="clearDrill">清除筛选 ×</button>
+                    <div v-if="drillRegion || levels.length || spotFilter" class="drill-badge">
+                        <template v-if="spotFilter">同位置 {{ spotCount }} 条足迹</template>
+                        <template v-else>{{ levels.length ? levels.map((l) => l.name).join(' / ') + (cityFilter && cityFilter !== levels[levels.length - 1]?.name ? ' · ' + cityFilter : '') : '已下钻 ' + drillRegion }}</template>
+                        <button v-if="spotFilter && !drillRegion && !levels.length" type="button" @click="spotFilter = null">清除筛选 ×</button>
+                        <button v-else type="button" @click="clearDrill">清除筛选 ×</button>
                     </div>
 
                     <div class="list-scroll" @scroll="onListScroll">
@@ -1378,6 +1477,7 @@ watch(isDark, async () => {
                                 <div class="fp-head">
                                     <n-tag size="small" :bordered="false" :type="item.source === 'photos' ? 'warning' : 'info'">{{ item.source === 'photos' ? '相片' : '说说' }}</n-tag>
                                     <n-tag size="small" :bordered="false" type="info">{{ displayPlace(item.name) }}</n-tag>
+                                    <n-tag v-if="item.coarse" size="small" :bordered="false" type="warning">位置粗略</n-tag>
                                     <span class="fp-time">{{ formatTime(item.time) }}</span>
                                 </div>
                                 <div class="fp-content">
