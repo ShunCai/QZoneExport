@@ -73,10 +73,11 @@ const hero = computed(() => {
                     <span class="gap-percent">（{{ props.stats.silentPercent }}%）</span>
                 </span>
             </div>
-            <div class="gap-row">
-                <span class="gap-label">高峰月</span>
+            <div class="gap-row gap-row-wide" title="按内容条数统计的月度峰值：说说等内容一条算一条，相片按张逐张计数（不含「说说和日志相册」自动归档的配图）">
+                <span class="gap-label">内容最多的月</span>
                 <span class="gap-value">
                     {{ props.stats.peakMonth.month }} · {{ props.stats.peakMonth.count }} 条
+                    <span class="gap-note">含相片逐张计数</span>
                 </span>
             </div>
             <div class="gap-row">
@@ -209,6 +210,15 @@ const hero = computed(() => {
     font-variant-numeric: tabular-nums;
 }
 .gap-percent {
+    color: var(--text-secondary);
+}
+/* 「内容最多的月」比其它行标题长，单独放宽；口径说明用弱化小字跟在后面 */
+.gap-row-wide .gap-label {
+    width: 76px;
+}
+.gap-note {
+    margin-left: 6px;
+    font-size: 11px;
     color: var(--text-secondary);
 }
 </style>
