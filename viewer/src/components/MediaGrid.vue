@@ -6,6 +6,7 @@ import { escapeHtml, formatText } from '../data/richText';
 import { commentEntriesHtml } from '../data/commentHtml';
 import { usePrivacy } from '../composables/usePrivacy';
 import type { MediaItem } from '../data/media';
+import VideoThumb from './VideoThumb.vue';
 const { hidden: hideSensitive } = usePrivacy();
 
 /**
@@ -441,21 +442,13 @@ async function openViewer(media: MediaItem, options?: { expandComments?: boolean
                     <span class="stat-item">评论 {{ media.stats?.comments || 0 }}</span>
                 </span>
             </a>
-            <!-- 空间视频：展示封面，点击弹出带评论的播放窗（与相片看大图同一套交互） -->
-            <div
+            <!-- 空间视频：封面可能失效（QQ 有时给黑场帧），交给 VideoThumb 抽本地视频首帧 -->
+            <video-thumb
                 v-else-if="media.type === 'video'"
-                class="media media-cover media-playable"
-                title="点击播放"
+                :media="media"
+                :stats="media.stats"
                 @click="openViewer(media)"
-            >
-                <img v-if="media.poster" :src="media.poster" loading="lazy" decoding="async" />
-                <span v-else class="media-noposter">无封面</span>
-                <span class="play-badge">▶</span>
-                <span v-if="hasStats(media)" class="media-stats">
-                    <span class="stat-item">赞 {{ media.stats?.likes || 0 }}</span>
-                    <span class="stat-item">评论 {{ media.stats?.comments || 0 }}</span>
-                </span>
-            </div>
+            />
             <!-- 图片：带统计角标时需包一层定位容器 -->
             <div v-else-if="hasStats(media)" class="media media-cover media-playable" @click="openViewer(media)">
                 <img :src="media.thumb || media.src" loading="lazy" decoding="async" />
