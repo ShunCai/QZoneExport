@@ -4,13 +4,14 @@
  * 汇集所有模块（说说、日志、日记、相册/相片、视频、留言、分享、收藏）的内容，
  * 按发表时间/上传时间统一排序，支持按模块过滤。
  *
- * 相片批量归类：同一相册内、相邻时间窗口内（默认 1 小时）的相片合并为一条「上传动态」，
- * 描述取该批相片共同描述（全相同则显示，否则不显示）。
+ * 相片批量归类：优先按相片自带的 batchId（同一批上传）合并，老相片没有批次号时
+ * 才退回相邻 1 小时时间窗口；描述取该批相片共同描述（全相同则显示，否则不显示）。
  */
 import { loadItems } from './sources';
 import { formatTime, timeValue } from './format';
 import { isFeedAlbum } from './counts';
 import { resolvePhotoTime } from './media';
+import { groupPhotoBatches } from './photoBatches';
 import type { DataKey } from './sources';
 
 /** 单条时间轴条目 */
@@ -153,7 +154,8 @@ export async function loadTimeline(
 
 /**
  * 加载相片并批量归并
- * 同一相册内，按上传时间排序后，相邻时间窗口内（默认 1 小时）的归为一批。
+ * 优先用相片自带的 batchId（同一批上传），没有 batchId 的老相片才退回 1 小时时间窗口。
+ * 详见 data/photoBatches.ts。
  */
 async function loadPhotoBatches(mod: ModuleDef): Promise<TimelineEntry[]> {
     const albums = await loadItems('albums');
@@ -165,38 +167,9 @@ async function loadPhotoBatches(mod: ModuleDef): Promise<TimelineEntry[]> {
         const photos: Record<string, any>[] = album.photoList || [];
         if (photos.length === 0) continue;
 
-        // 按上传时间排序
-        const sorted = [...photos].sort((a, b) => {
-            const ta = timeValue(mod.timeOf(a));
-            const tb = timeValue(mod.timeOf(b));
-            return ta - tb;
-        });
-
-        // 按时间窗口分批
-        let batch: Record<string, any>[] = [];
-        let batchStartTime = 0;
-
-        for (const photo of sorted) {
-            const ts = timeValue(mod.timeOf(photo));
-            if (!ts) continue;
-
-            if (batch.length === 0) {
-                batch = [photo];
-                batchStartTime = ts;
-            } else if (ts - batchStartTime <= PHOTO_BATCH_WINDOW_SEC * 1000) {
-                batch.push(photo);
-            } else {
-                // 当前批次结束，生成条目
-                const entry = createPhotoBatchEntry(mod, album, batch);
-                if (entry) entries.push(entry);
-                // 开始新批次
-                batch = [photo];
-                batchStartTime = ts;
-            }
-        }
-
-        // 最后一批
-        if (batch.length > 0) {
+        for (const batch of groupPhotoBatches(photos, mod.timeOf, {
+            windowMs: PHOTO_BATCH_WINDOW_SEC * 1000,
+        })) {
             const entry = createPhotoBatchEntry(mod, album, batch);
             if (entry) entries.push(entry);
         }

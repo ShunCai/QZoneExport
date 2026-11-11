@@ -4,9 +4,10 @@ const props = withDefaults(defineProps<{ defaultOpen?: boolean }>(), { defaultOp
 import { computed, onMounted, ref, watch } from 'vue';
 import { NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui';
 import { loadItems, type DataKey } from '../data/sources';
-import { formatTime, timeValue } from '../data/format';
+import { formatTime } from '../data/format';
 import { thatYearToday } from '../data/thatYearToday';
 import { resolvePhotoTime } from '../data/media';
+import { groupPhotoBatches } from '../data/photoBatches';
 import { navigate } from '../router';
 import MessageItem from './items/MessageItem.vue';
 import ArticleItem from './items/ArticleItem.vue';
@@ -94,25 +95,11 @@ onMounted(async () => {
         }
     }
 
-    // 相片藏在每个相册的 photoList 里，逐个相册处理，顺带按时间聚簇合并批量上传
+    // 相片藏在每个相册的 photoList 里，按上传批次合并（优先 batchId，与动态页同一口径）
     const albums = await loadItems<Record<string, any>>('albums');
     for (const album of albums) {
         for (const group of thatYearToday(album.photoList || [], photoTimeOf)) {
-            const sorted = [...group.items].sort((a, b) => timeValue(photoTimeOf(a)) - timeValue(photoTimeOf(b)));
-            const batches: Record<string, any>[][] = [];
-            let batch: Record<string, any>[] = [];
-            for (const photo of sorted) {
-                const previous = batch[batch.length - 1];
-                if (previous && timeValue(photoTimeOf(photo)) - timeValue(photoTimeOf(previous)) > PHOTO_MERGE_GAP) {
-                    batches.push(batch);
-                    batch = [];
-                }
-                batch.push(photo);
-            }
-            if (batch.length > 0) {
-                batches.push(batch);
-            }
-            for (const each of batches) {
+            for (const each of groupPhotoBatches(group.items, photoTimeOf, { windowMs: PHOTO_MERGE_GAP })) {
                 memories.push({
                     kind: 'photos',
                     label: '相片',
