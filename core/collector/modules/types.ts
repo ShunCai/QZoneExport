@@ -56,6 +56,11 @@ export interface MessagesConfig extends ModuleBaseConfig {
     FilterKeyWords: string[];
     /** 刷新朋友圈坐标信息 */
     refreshWeChatLbs: boolean;
+    /**
+     * 非微信同步的说说也补一次地点信息（只反查地址/地点名，不动坐标）。
+     * 这些说说的坐标本身已是 GCJ02，再走坐标转换会整体偏移，故只调逆地址解析。
+     */
+    refreshAllLbs?: boolean;
     /** 是否获取语音说说 */
     GetVoice: boolean;
     Comments: CommentsConfig;

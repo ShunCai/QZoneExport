@@ -314,7 +314,7 @@ export class MessagesCollector implements ModuleCollector {
         // 处理坐标数据（依赖所有条目已采集完毕）
         await env.report('location', 0, items.length);
         dealLbs(items);
-        await this.refreshWeChatLbsInfo(items);
+        await this.refreshLbsInfo(items);
         await env.report('location', items.length, items.length);
 
         // 导出数据文件（Viewer读取 json/messages.js；JSON导出额外生成汇总文件）
@@ -431,7 +431,7 @@ export class MessagesCollector implements ModuleCollector {
         const items = await this.runCollection(ctx, true);
         await env.report('location', 0, items.length);
         dealLbs(items);
-        await this.refreshWeChatLbsInfo(items);
+        await this.refreshLbsInfo(items);
         await env.report('location', items.length, items.length);
         await env.report('export', 0, 1);
         await writeModuleOutputs(env, {
@@ -720,12 +720,21 @@ export class MessagesCollector implements ModuleCollector {
     }
 
     /**
-     * 刷新微信同步说说的坐标信息（移植自 messages.js refreshWeChatLbsInfo L1095-1160）
+     * 刷新说说的坐标/地点信息（移植自 messages.js refreshWeChatLbsInfo L1095-1160）
+     *
+     * 两类来源处理方式不同：
+     * - 微信同步的说说：坐标是手机 GPS（WGS84），先 toTxLbs 转成腾讯火星系（GCJ02）再反查地址；
+     * - 普通说说（refreshAllLbs 开启时）：坐标本来就是 GCJ02，**只反查地址、不动坐标**，
+     *   否则会被当成 WGS84 再转一次，整体偏出几百米。
+     *
+     * 坐标会覆盖地点名（recommend / address），同名地点在腾讯侧改名后这里也会跟着变，
+     * 所以默认关闭，由用户在设置页显式开启。
      */
-    private async refreshWeChatLbsInfo(items: MessageItem[]): Promise<void> {
+    private async refreshLbsInfo(items: MessageItem[]): Promise<void> {
         const env = this.env;
         const cfg = env.config.Messages;
-        if (!cfg.refreshWeChatLbs || !env.config.Dev.Maps.TxKey) {
+        const allScope = !!cfg.refreshAllLbs;
+        if ((!cfg.refreshWeChatLbs && !allScope) || !env.config.Dev.Maps.TxKey) {
             return;
         }
         let done = 0;
@@ -733,23 +742,33 @@ export class MessagesCollector implements ModuleCollector {
             if (!isNewItem(item) || item.custom_lbsInfo) {
                 continue;
             }
-            if (!isWeChat(item) || !item.lbs || !item.lbs.idname) {
-                // 非微信来源或没有坐标信息的跳过
+            const wechat = isWeChat(item);
+            if (!wechat && !allScope) {
+                continue;
+            }
+            const lat = Number(item.lbs?.pos_y);
+            const lng = Number(item.lbs?.pos_x);
+            // 没有坐标 / 越界 / (0,0) 附近的占位值（QQ 会给 pos_x = pos_y = 0.00009）都不必反查
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)
+                || Math.abs(lat) > 90 || Math.abs(lng) > 180
+                || (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01)) {
                 continue;
             }
             await env.tick();
-            try {
-                const txCall = toTxLbs(env.config, item.lbs.pos_y!, item.lbs.pos_x!);
-                const txRes = await env.requester.getJson<any>(txCall.url, txCall.params);
-                if (txRes.status === 0) {
-                    item.lbs.pos_y = txRes.locations[0].lat;
-                    item.lbs.pos_x = txRes.locations[0].lng;
+            if (wechat) {
+                try {
+                    const txCall = toTxLbs(env.config, lat, lng);
+                    const txRes = await env.requester.getJson<any>(txCall.url, txCall.params);
+                    if (txRes.status === 0) {
+                        item.lbs!.pos_y = txRes.locations[0].lat;
+                        item.lbs!.pos_x = txRes.locations[0].lng;
+                    }
+                } catch (error) {
+                    env.logger.error(`转换微信GPS坐标到腾讯火星系坐标异常 | tid=${item.tid}`, error instanceof Error ? error.message : String(error));
                 }
-            } catch (error) {
-                env.logger.error(`转换微信GPS坐标到腾讯火星系坐标异常 | tid=${item.tid}`, error instanceof Error ? error.message : String(error));
             }
             try {
-                const lbsCall = lbsInfo(env.config, item.lbs.pos_y!, item.lbs.pos_x!);
+                const lbsCall = lbsInfo(env.config, item.lbs!.pos_y!, item.lbs!.pos_x!);
                 const lbsRes = await env.requester.getJson<any>(lbsCall.url, lbsCall.params);
                 if (lbsRes.status === 0) {
                     const result = lbsRes.result;
@@ -757,10 +776,10 @@ export class MessagesCollector implements ModuleCollector {
                     const formatted = result?.formatted_addresses;
                     const recommend = formatted?.recommend;
                     if (recommend) {
-                        item.lbs.idname = recommend;
+                        item.lbs!.idname = recommend;
                     }
                     if (result?.address) {
-                        item.lbs.name = result.address;
+                        item.lbs!.name = result.address;
                     }
                 }
             } catch (error) {

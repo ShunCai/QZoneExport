@@ -132,7 +132,7 @@ export const MODULE_DEFAULTS: Record<string, any> = {
 pageSize: 20, randomSeconds: { min: 1, max: 2 },
         IncrementInherit: true, IncrementType: 'Full', IncrementTime: DEFAULT_INCREMENT_TIME,
         isFilterKeyword: false, FilterKeyWords: MESSAGES_FILTER_WORDS,
-        refreshWeChatLbs: false, GetVoice: false,
+        refreshWeChatLbs: false, refreshAllLbs: false, GetVoice: false,
         Like: { inherit: true, isGet: false, randomSeconds: { min: 1, max: 2 } },
         Comments: { inherit: true, isGet: true, pageSize: 20, randomSeconds: { min: 1, max: 2 } },
         Visitor: { inherit: true, isGet: false, pageSize: 24, randomSeconds: { min: 1, max: 2 } },
@@ -279,6 +279,9 @@ export async function loadConfig(): Promise<Record<string, any>> {
         config[name] = deepDefaults(config[name], MODULE_DEFAULTS[name]);
     }
     normalizeStringArray(config.Messages, 'FilterKeyWords', 'Messages.FilterKeyWords');
+    // 语音说说已下线：设置页那个开关已改为只读，这里再把老配置里遗留的 true 归零，
+    // 保证从任何入口读到的都是关闭态（采集端遇到 true 也只是白跑一次已失效的接口）
+    config.Messages.GetVoice = false;
     // 分享来源识别规则：存储中缺失或为空时回退到默认列表。
     // 不能让空列表被保存回去，否则内容脚本读到空数组后默认值不再生效，分享来源将全部识别不出来
     if (!Array.isArray(config.Shares.SourceType) || config.Shares.SourceType.length === 0) {

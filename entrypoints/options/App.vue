@@ -220,7 +220,9 @@ const downloaderHint = computed(() => (isDiskDownload.value
     : '文件由所选下载器保存到它自己的目录'));
 
 /** 已开启刷新微信坐标但未配置腾讯地图 Key（此时开关不生效，需提醒） */
-const needMapKey = computed(() => !!config.Messages?.refreshWeChatLbs && !config.Dev?.Maps?.TxKey);
+const needMapKey = computed(() => (
+    !!(config.Messages?.refreshWeChatLbs || config.Messages?.refreshAllLbs) && !config.Dev?.Maps?.TxKey
+));
 
 // 分享来源识别规则编辑器：弹窗内改副本，确定后才回写到配置
 const showSourceEditor = ref(false);
@@ -364,9 +366,11 @@ async function onSave(): Promise<void> {
     saving.value = true;
     hideSaveStatus();
     try {
+        // 语音说说已下线：开关只读，顺手把老配置里遗留的 true 归零，避免配置与实际行为不一致
+        config.Messages.GetVoice = false;
         // 必填校验：腾讯地图 Key（开启「刷新微信坐标」时必须有）
         if (needMapKey.value) {
-            showSaveStatus('error', '请填写腾讯地图 Key：开启「刷新微信坐标」后必须提供，否则坐标无法刷新。可在腾讯位置服务控制台申请。');
+            showSaveStatus('error', '请填写腾讯地图 Key：开启「刷新微信坐标」或「刷新普通说说地点」后必须提供，否则无法刷新。可在腾讯位置服务控制台申请。');
             saving.value = false;
             return;
         }
@@ -867,16 +871,25 @@ watch(activeTab, (tab) => {
 
                                 <n-form-item label="刷新微信坐标">
                                     <n-switch v-model:value="config.Messages.refreshWeChatLbs" />
-                                    <span class="hint">刷新微信朋友圈同步到空间的说说的坐标信息，需腾讯地图 Key</span>
+                                    <span class="hint">微信朋友圈同步到空间的说说：坐标是手机 GPS，会转成火星坐标并反查地点</span>
                                 </n-form-item>
-                                <n-form-item v-if="config.Messages.refreshWeChatLbs" label="腾讯地图 Key" required>
-                                    <n-input v-model:value="config.Dev.Maps.TxKey" type="password" show-password-on="click" style="max-width: 360px;" placeholder="用于坐标转换与坐标转描述" />
-                                    <span v-if="needMapKey" class="hint warn-hint">必填。未填写时坐标不会被刷新，请到<a href="https://lbs.qq.com/" target="_blank">腾讯位置服务控制台</a>申请</span>
-                                    <span v-else class="hint">仅用于本项坐标刷新，不会用于其它用途</span>
+                                <n-form-item label="刷新普通说说地点">
+                                    <n-switch v-model:value="config.Messages.refreshAllLbs" />
+                                    <span class="hint">其它说说也按坐标反查地点；坐标本身已是火星坐标，不再转换，只更新地点名</span>
+                                </n-form-item>
+                                <n-form-item v-if="config.Messages.refreshWeChatLbs || config.Messages.refreshAllLbs" label="腾讯地图 Key" required>
+                                    <div class="map-key-box">
+                                        <n-input v-model:value="config.Dev.Maps.TxKey" type="password" show-password-on="click" placeholder="用于坐标转换与坐标转描述" />
+                                        <span v-if="needMapKey" class="hint warn-hint">必填。未填写时不会刷新，请到<a href="https://lbs.qq.com/" target="_blank">腾讯位置服务控制台</a>申请</span>
+                                        <span v-else class="hint">仅用于本项刷新，不会用于其它用途</span>
+                                        <span class="hint">配额：逆地址解析约 1 万次/日，超限当天会失败并跳过；每条间隔 0.5 秒，全量 3000 条约需 25 分钟</span>
+                                        <span class="hint warn-hint">会改地点名：反查结果会覆盖原有地点名，同一地点在腾讯侧改名后备份里也会跟着变（如「A 小区」→「B 广场」）；已有备份不会回填</span>
+                                    </div>
                                 </n-form-item>
                                 <n-form-item label="语音说说">
-                                    <n-switch v-model:value="config.Messages.GetVoice" />
-                                    <span class="hint">QQ 空间已下线语音说说功能，历史数据也无法正常下载</span>
+                                    <!-- 功能已下线：只保留条目让用户知道它存在，开关恒为关闭且不可操作 -->
+                                    <n-switch :value="false" disabled />
+                                    <span class="hint">QQ 空间已下线语音说说功能，历史数据也无法正常下载；该开关仅作说明，始终保持关闭</span>
                                 </n-form-item>
                                 <n-form-item label="屏蔽关键词">
                                     <n-switch v-model:value="config.Messages.isFilterKeyword" />
@@ -1333,6 +1346,18 @@ h3 + :deep(.n-divider) {
     justify-content: flex-end;
     gap: 10px;
 }
+/* 坐标刷新：Key 与多条说明竖排，说明不再挤成一行 */
+.map-key-box {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    max-width: 560px;
+}
+.map-key-box .hint {
+    margin-left: 0;
+}
+
 .modal-footer .hint {
     flex: 1;
     margin-left: 0;
