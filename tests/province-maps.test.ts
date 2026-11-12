@@ -4,6 +4,7 @@ import {
     PROVINCE_ADCODES,
     buildChinaCitiesScript,
     buildProvinceMapScript,
+    collectCityAdcodes,
     exportChinaCitiesMap,
 } from '../core/export/province-maps';
 
@@ -66,5 +67,47 @@ describe('exportChinaCitiesMap', () => {
         const result = await exportChinaCitiesMap(writer);
         expect(result.mode).toBe('failed');
         expect(result.reason).toContain('503');
+    });
+});
+
+describe('collectCityAdcodes', () => {
+    /** 一个 2°×2° 的矩形市（level=city、childrenNum=5） */
+    const cityFeature = {
+        type: 'Feature',
+        properties: { adcode: 440900, name: '茂名市', level: 'city', childrenNum: 5, parent: { adcode: 440000 } },
+        geometry: {
+            type: 'MultiPolygon',
+            coordinates: [[[[110.0, 21.0], [112.0, 21.0], [112.0, 23.0], [110.0, 23.0], [110.0, 21.0]]]],
+        },
+    };
+    /** 直辖市的区（level=district）：省级切片已含，不需要单独的区县文件 */
+    const districtFeature = {
+        type: 'Feature',
+        properties: { adcode: 110101, name: '东城区', level: 'district', childrenNum: 0, parent: { adcode: 110000 } },
+        geometry: {
+            type: 'MultiPolygon',
+            coordinates: [[[[116.0, 39.8], [117.0, 39.8], [117.0, 40.2], [116.0, 40.2], [116.0, 39.8]]]],
+        },
+    };
+    const chinaCities = { features: [cityFeature, districtFeature] };
+
+    it('落在市边界内的点返回该市 adcode', () => {
+        expect(collectCityAdcodes([{ posX: 110.733452, posY: 21.845022 }], chinaCities)).toEqual(['440900']);
+    });
+
+    it('边界外的点返回空（如 0° 附近的占位坐标）', () => {
+        expect(collectCityAdcodes([{ posX: 0.00009, posY: 0.00009 }], chinaCities)).toEqual([]);
+        expect(collectCityAdcodes([{ posX: 130, posY: 45 }], chinaCities)).toEqual([]);
+    });
+
+    it('同一市的多条足迹只返回一个 adcode（去重）', () => {
+        expect(collectCityAdcodes([
+            { posX: 110.5, posY: 21.5 },
+            { posX: 111.5, posY: 22.5 },
+        ], chinaCities)).toEqual(['440900']);
+    });
+
+    it('直辖市的区与无下级的要素被忽略（省级切片已覆盖）', () => {
+        expect(collectCityAdcodes([{ posX: 116.5, posY: 40.0 }], chinaCities)).toEqual([]);
     });
 });

@@ -27,7 +27,13 @@
  */
 
 import type { FileWriter } from '../fs/writer';
-import { exportChinaCitiesMap } from './province-maps';
+import { exportChinaCitiesMap, exportDistrictMapsForPoints, type GeoPoint } from './province-maps';
+
+/** 足迹地图「市→区县」数据的输入：本次备份的足迹点 + DataV 拉取通道 */
+export interface ViewerDistrictInput {
+    points: GeoPoint[];
+    fetchText: (url: string) => Promise<string>;
+}
 import type { ModuleBackupRow } from '../store/backup-db';
 
 /** 个人档信息（必填字段最小化，多余字段原样透传） */
@@ -277,6 +283,7 @@ export async function exportViewerWithVerify(
     writer: FileWriter,
     userInfo: UserInfo,
     logger?: ExportLogger,
+    district?: ViewerDistrictInput,
 ): Promise<ViewerExportResult> {
     let attempts = 1;
     let usedFallbackIndex = false;
@@ -322,9 +329,21 @@ export async function exportViewerWithVerify(
     // 单个文件约 3.9 MB，查看器按 parent.adcode 切片出省级视图；失败只影响下钻，不阻断备份。
     if (missingRequired.length === 0) {
         try {
-            const cityMap = await exportChinaCitiesMap(writer, logger);
+            const cityMap = await exportChinaCitiesMap(writer, logger, { needGeoJson: !!district, fetchText: district?.fetchText });
             if (cityMap.mode === 'failed') {
                 logger?.warn?.('全国市级地图不可用，足迹地图将只支持省级视图', { reason: cityMap.reason });
+            }
+            // 按足迹点归属补齐「市 → 区县」地图：只下载有足迹的市（几 KB~几十 KB/个），
+            // 已存在的文件自动跳过；失败不阻断备份，缺失的市点进去仍是省级切片视图。
+            if (cityMap.geoJson && district && district.points.length > 0) {
+                const districts = await exportDistrictMapsForPoints(
+                    writer, district.points, cityMap.geoJson, district.fetchText, logger,
+                );
+                if (districts.written > 0) {
+                    logger?.info?.('足迹地图区县数据已补齐', {
+                        written: districts.written, skipped: districts.skipped, failed: districts.failed,
+                    });
+                }
             }
         } catch (error) {
             logger?.warn?.('全国市级地图导出异常（不影响查看器）', {
@@ -357,11 +376,12 @@ export async function exportOthers(
     logger?: ExportLogger,
     backupRows?: ModuleBackupRow[],
     uin?: number | string,
+    district?: ViewerDistrictInput,
 ): Promise<ViewerExportResult> {
     await exportUserProfile(writer, userInfo);
     await exportAssistantConfig(writer, config);
     if (backupRows && backupRows.length > 0 && uin != null) {
         await exportBackupHistory(writer, backupRows, uin);
     }
-    return exportViewerWithVerify(writer, userInfo, logger);
+    return exportViewerWithVerify(writer, userInfo, logger, district);
 }

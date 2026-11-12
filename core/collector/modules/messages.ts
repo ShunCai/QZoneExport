@@ -8,6 +8,7 @@ import {
     messageVoiceInfo,
     toTxLbs,
 } from '../../qzone-api/clients';
+import { serializeParams, type ParamValue } from '../../qzone-api/request';
 import { formatDate, getCommentCount, sortBy, toJson, unionItems } from '../../shared/utils';
 import { isFullBackup, isNewItem, unionBackedUpItems, type IncrementItem } from '../increment';
 import type { CollectContext, ModuleCollector } from '../pipeline';
@@ -727,8 +728,8 @@ export class MessagesCollector implements ModuleCollector {
      * - 普通说说（refreshAllLbs 开启时）：坐标本来就是 GCJ02，**只反查地址、不动坐标**，
      *   否则会被当成 WGS84 再转一次，整体偏出几百米。
      *
-     * 坐标会覆盖地点名（recommend / address），同名地点在腾讯侧改名后这里也会跟着变，
-     * 所以默认关闭，由用户在设置页显式开启。
+     * 地点名口径：二级地标（landmark_l2）优先、推荐地址兜底；完整地址不覆盖 name。
+     * 同一地点在腾讯侧改名后这里也会跟着变，所以默认关闭，由用户在设置页显式开启。
      */
     private async refreshLbsInfo(items: MessageItem[]): Promise<void> {
         const env = this.env;
@@ -738,12 +739,21 @@ export class MessagesCollector implements ModuleCollector {
             return;
         }
         let done = 0;
+        let doneWeChat = 0;
+        // 跳过原因计数：日志里给一条汇总，避免「开了开关却一条没转」时无从排查
+        const skip = { notNew: 0, refreshed: 0, notWeChat: 0, badCoord: 0 };
         for (const item of items) {
-            if (!isNewItem(item) || item.custom_lbsInfo) {
+            if (!isNewItem(item)) {
+                skip.notNew++;
+                continue;
+            }
+            if (item.custom_lbsInfo) {
+                skip.refreshed++;
                 continue;
             }
             const wechat = isWeChat(item);
             if (!wechat && !allScope) {
+                skip.notWeChat++;
                 continue;
             }
             const lat = Number(item.lbs?.pos_y);
@@ -752,42 +762,63 @@ export class MessagesCollector implements ModuleCollector {
             if (!Number.isFinite(lat) || !Number.isFinite(lng)
                 || Math.abs(lat) > 90 || Math.abs(lng) > 180
                 || (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01)) {
+                skip.badCoord++;
                 continue;
             }
             await env.tick();
+            // MV3 的 content script fetch 按页面 origin 算 CORS，apis.map.qq.com 必然 Failed to fetch，
+            // 这两次调用必须走 background 代理（env.lbsProxy，由 engine-bridge 注入）；无代理场景回退 requester
+            const viaProxy = !!env.lbsProxy;
+            const getJson = async (call: { url: string; params: Record<string, ParamValue> }): Promise<any> => {
+                if (viaProxy) {
+                    const text = await env.lbsProxy!(call.url + (call.url.includes('?') ? '&' : '?') + serializeParams(call.params));
+                    return toJson<any>(text);
+                }
+                return env.requester.getJson<any>(call.url, call.params);
+            };
             if (wechat) {
                 try {
                     const txCall = toTxLbs(env.config, lat, lng);
-                    const txRes = await env.requester.getJson<any>(txCall.url, txCall.params);
+                    const txRes = await getJson(txCall);
                     if (txRes.status === 0) {
                         item.lbs!.pos_y = txRes.locations[0].lat;
                         item.lbs!.pos_x = txRes.locations[0].lng;
                     }
                 } catch (error) {
-                    env.logger.error(`转换微信GPS坐标到腾讯火星系坐标异常 | tid=${item.tid}`, error instanceof Error ? error.message : String(error));
+                    env.logger.error(`转换微信GPS坐标到腾讯火星系坐标异常 | tid=${item.tid} | ${viaProxy ? 'background代理' : '页面直连'}`, error instanceof Error ? error.message : String(error));
                 }
             }
             try {
                 const lbsCall = lbsInfo(env.config, item.lbs!.pos_y!, item.lbs!.pos_x!);
-                const lbsRes = await env.requester.getJson<any>(lbsCall.url, lbsCall.params);
+                const lbsRes = await getJson(lbsCall);
                 if (lbsRes.status === 0) {
                     const result = lbsRes.result;
                     item.custom_lbsInfo = result;
-                    const formatted = result?.formatted_addresses;
-                    const recommend = formatted?.recommend;
-                    if (recommend) {
-                        item.lbs!.idname = recommend;
-                    }
-                    if (result?.address) {
-                        item.lbs!.name = result.address;
+                    // 地名口径（选定 A：地标优先）——二级地标最接近 QQ 原始 POI 名的语义，
+                    // 如「水斗老围村3区」，而不是带定位修饰的完整推荐地址；取不到再回退推荐地址。
+                    // 完整地址（result.address）不再覆盖 name：保留 QQ 原始 name，避免露出整行长地址。
+                    const landmark = result?.address_reference?.landmark_l2?.title;
+                    const recommend = result?.formatted_addresses?.recommend;
+                    const title = landmark || recommend;
+                    if (title) {
+                        item.lbs!.idname = title;
                     }
                 }
             } catch (error) {
-                env.logger.error(`请求坐标信息异常 | tid=${item.tid}`, error instanceof Error ? error.message : String(error));
+                env.logger.error(`请求坐标信息异常 | tid=${item.tid} | ${viaProxy ? 'background代理' : '页面直连'}`, error instanceof Error ? error.message : String(error));
             }
             done++;
+            if (wechat) {
+                doneWeChat++;
+            }
             await env.report('location', done, items.length);
             await env.sleep(500);
         }
+        // 候选为零也要留痕：把每类跳过原因摊开，谁都能看出是「没调用」还是「调了失败」
+        env.logger.info(
+            `说说地点刷新：刷新 ${done} 条（微信 ${doneWeChat} / 普通 ${done - doneWeChat}），`
+            + `跳过 ${skip.notNew + skip.refreshed + skip.notWeChat + skip.badCoord} 条`
+            + `（非新增 ${skip.notNew}、已刷新过 ${skip.refreshed}、普通说说未开启 ${skip.notWeChat}、坐标无效 ${skip.badCoord}）`,
+        );
     }
 }

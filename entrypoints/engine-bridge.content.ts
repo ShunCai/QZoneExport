@@ -24,8 +24,27 @@ import { DownloadsBackend } from '../core/fs/downloads-writer';
 import { autoFileSuffix } from '../core/net/suffix';
 import { installDownloadManager, type DownloadManager } from '../core/downloader/manager';
 import { exportModuleMarkdown, resetMarkdownRootIndex } from '../core/export/markdown';
-import { exportOthers, type UserInfo, type ViewerExportResult } from '../core/export/site';
+import { exportOthers, type UserInfo, type ViewerDistrictInput, type ViewerExportResult } from '../core/export/site';
 import { fetchTargetUserInfo, mergeTargetUserInfo } from '../core/export/user-info';
+
+/**
+ * 腾讯地图 / DataV 的 background 代理：content script（qzone 页面上下文）直连
+ * apis.map.qq.com / geo.datav.aliyun.com 会被 CORS 拦（Failed to fetch），
+ * background 有 <all_urls> 特权可直连。collector 与查看器导出共用。
+ */
+const lbsProxyFetchText = (url: string): Promise<string> => new Promise<string>((resolve, reject) => {
+    chrome.runtime.sendMessage({ type: 'lbs_proxy', url }, (res: any) => {
+        if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+            return;
+        }
+        if (!res || !res.ok) {
+            reject(new Error(res?.error || `lbs_proxy HTTP ${res?.status ?? '?'}`));
+            return;
+        }
+        resolve(res.text);
+    });
+});
 
 // content script 通过 window 上的全局变量与注入面板/引擎通信，补充索引签名以合法访问
 declare global {
@@ -299,7 +318,7 @@ async function runBackup(
     const engine = window['__QZ_ENGINE__'] as {
         available(): boolean;
         pending(config: unknown): Promise<unknown>;
-        start(opts: Record<string, unknown>): Promise<{ state: string; counts: Record<string, number> }>;
+        start(opts: Record<string, unknown>): Promise<{ state: string; counts: Record<string, number>; footprintPoints?: Array<{ posX: number; posY: number }> }>;
     } | undefined;
     const targetUin = getTargetUin();
     // 重置 MarkDown 根 index.md 累加态：确保本次备份的根索引只含本备份实际导出的模块
@@ -382,7 +401,12 @@ async function runBackup(
             const userInfo = { ...target, ...result.counts, isOwner: target.uin === owner.uin, ownerUin: owner.uin || target.uin };
             // 恢复 V2「备份完成后把增量 JSON 同步导出」行为：读取刚落盘的增量备份行
             const backupRows = await sharedBackupDb.getRows(targetUin);
-            viewer = (await api.exportOthers(userInfo, qzoneConfig, backupRows, targetUin)) as ViewerExportResult | undefined;
+            // 足迹点由 engine 在写模块产物时收集（见 engine.ts writeJsonToJs 拦截）——
+            // 不能在这里读 window.messages：writeJsonToJs 只写备份文件，从不注入页面全局
+            viewer = (await api.exportOthers(userInfo, qzoneConfig, backupRows, targetUin, {
+                points: result.footprintPoints || [],
+                fetchText: lbsProxyFetchText,
+            })) as ViewerExportResult | undefined;
         } else {
             console.error('备份收尾异常：exportOthers 接口不可用，备份查看器未生成');
             logBackup('ERROR', targetUin, '备份收尾异常：exportOthers 接口不可用，备份查看器未生成');
@@ -583,7 +607,13 @@ export default defineContentScript({
             },
             isDiskMode(): boolean { return sharedDisk.isEnabled(); },
             getRootName(): string { return sharedWriter.getRootFolderName(); },
-            async exportOthers(userInfo: unknown, config: unknown, backupRows?: unknown, uin?: unknown): Promise<ViewerExportResult> {
+            async exportOthers(
+                userInfo: unknown,
+                config: unknown,
+                backupRows?: unknown,
+                uin?: unknown,
+                district?: { points: Array<{ posX: number; posY: number }>; fetchText: (url: string) => Promise<string> },
+            ): Promise<ViewerExportResult> {
                 ensureDm();
                 // 查看器生成失败不抛异常，结果回传给编排层决定如何提示
                 return exportOthers(
@@ -593,6 +623,7 @@ export default defineContentScript({
                     console,
                     backupRows as ModuleBackupRow[] | undefined,
                     uin as number | string | undefined,
+                    district as ViewerDistrictInput | undefined,
                 );
             },
             getWriter(): FileWriter { return sharedWriter; },
@@ -751,6 +782,8 @@ export default defineContentScript({
                 targetNickname: options.targetNickname as string | undefined,
                 // 采集引擎日志桥接到 DownloadManager，使「日志」Tab 可见采集报错（不再只有控制台可见）
                 logger: makeEngineLogger(ctx.targetUin),
+                // 腾讯地图/DataV 拉取统一走 background 代理（content 直连会被 CORS 拦）
+                lbsProxy: lbsProxyFetchText,
                 // 必须走 background 代理：content script 的 IndexedDB 属于 QQ空间页面 origin，
                 // 直接写会导致 Options 页面（扩展 origin）的「增量备份」表格永远读不到数据
                 backupDb: sharedBackupDb,

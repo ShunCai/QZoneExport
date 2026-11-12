@@ -708,6 +708,27 @@ export default defineBackground(() => {
     // P3：新引擎的保活开关消息
     // 必须显式 sendResponse：旧背景页监听器对未识别类型也会 return true，
     // 若无人回复，内容脚本侧 sendMessage 的 Promise 会一直 pending
+    /**
+     * 腾讯地图 API 代理：MV3 的 content script fetch 按页面 origin 算 CORS，
+     * apis.map.qq.com 不带 ACAO 必然 Failed to fetch；background 有 <all_urls> 特权可直连。
+     * 白名单只放腾讯地图域名，避免变成开放代理。
+     */
+    chrome.runtime.onMessage.addListener((request: any, _sender, sendResponse) => {
+        if (!request || request.type !== 'lbs_proxy') {
+            return;
+        }
+        const url = String(request.url || '');
+        if (!/^https:\/\/(apis\.map\.qq\.com|geo\.datav\.aliyun\.com)\//.test(url)) {
+            sendResponse({ ok: false, error: '仅允许代理腾讯地图 API' });
+            return;
+        }
+        fetch(url)
+            .then(async (res) => ({ ok: res.ok, status: res.status, text: await res.text() }))
+            .then((data) => sendResponse(data))
+            .catch((e: unknown) => sendResponse({ ok: false, error: (e as Error).message || String(e) }));
+        return true; // 异步 sendResponse
+    });
+
     chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         // Firefox 兼容：MDN 明确「勿把 async 函数传给 onMessage」——async 监听器返回的 Promise 会被当作
         // 响应，覆盖内部 sendResponse（Chrome 忽略 Promise 用 sendResponse，故仅 Firefox 中招）。

@@ -232,6 +232,11 @@ export interface CollectorEnv {
     config: QzoneBackupConfig;
     /** 统一请求器 */
     requester: Requester;
+    /**
+     * 腾讯地图 API 代理（background 直连，绕开 MV3 content script 的 CORS 限制）。
+     * 未提供时 refreshLbsInfo 退回 requester（页面上下文，Chrome 下会 Failed to fetch）。
+     */
+    lbsProxy?: (url: string) => Promise<string>;
     /** 分级日志器（诊断信息统一收口，可随备份导出） */
     logger: Logger;
     /** 暂停/取消检查点（透传 pipeline CollectContext.tick） */

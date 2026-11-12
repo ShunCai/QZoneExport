@@ -110,6 +110,8 @@ export interface BackupEngineOptions {
     sleepFn?: (ms: number) => Promise<void>;
     /** 可注入的fetch（测试用） */
     fetchFn?: typeof fetch;
+    /** 腾讯地图 API 代理（MV3 下 content script 直连 apis.map.qq.com 会被 CORS 拦截） */
+    lbsProxy?: (url: string) => Promise<string>;
     /** 可注入的日志器（测试用；不传则引擎自建） */
     logger?: Logger;
 }
@@ -132,6 +134,8 @@ export interface BackupCounts {
 export interface BackupResult {
     state: PipelineState;
     counts: BackupCounts;
+    /** 本次备份的带坐标足迹点（供查看器导出按市补齐区县地图） */
+    footprintPoints?: Array<{ posX: number; posY: number }>;
 }
 
 /** 产物为数组时取数组，否则空数组 */
@@ -155,6 +159,8 @@ export class BackupEngine {
     private readonly backupDb: BackupHistoryStore;
     private readonly requester: Requester;
     private pipeline?: Pipeline;
+    /** 写模块产物时顺带收集的带坐标足迹点（供区县地图导出） */
+    private districtPoints: Array<{ posX: number; posY: number }> = [];
     /** 最近一次 run/prepare 构建的采集环境（手动重试重采复用，避免重建 host/requester） */
     private env?: CollectorEnv;
     /** 最近一次 run/prepare 构建的采集器列表（手动重试重采复用同一批实例） */
@@ -488,7 +494,7 @@ export class BackupEngine {
             // 错误按分类汇总，再将日志导出写入备份目录（写失败不影响备份主体）
             this.logErrorSummary();
             await this.writeLog(host);
-            return { state, counts: { ...this.counts } };
+            return { state, counts: { ...this.counts }, footprintPoints: this.districtPoints };
         } finally {
             this.stopHeartBeat();
             // 资源清理：停止保活心跳、释放 url.cn 解析缓存、移除跨世界日志桥接监听
@@ -599,6 +605,7 @@ export class BackupEngine {
             ctx,
             config,
             requester: this.requester,
+            lbsProxy: this.options.lbsProxy,
             logger: this.logger,
             tick: () => this.currentTick(),
             report: (phase, done, total, failed, label, subject) => {
@@ -622,6 +629,28 @@ export class BackupEngine {
                 if (this.currentModule) {
                     await this.checkpointStore.saveStaging(ctx.targetUin, this.currentModule, data);
                     this.recordCount(this.currentModule, data);
+                }
+                // 顺带收集带坐标的足迹点（说说 lbs + 相片 lbs），供收尾按市补齐区县地图。
+                // 注意：不能在编排层读 window——writeJsonToJs 只写备份文件，不注入页面全局
+                if (global === 'messages' && Array.isArray(data)) {
+                    for (const item of data) {
+                        const x = Number(item?.lbs?.pos_x);
+                        const y = Number(item?.lbs?.pos_y);
+                        if (Number.isFinite(x) && Number.isFinite(y)) {
+                            this.districtPoints.push({ posX: x, posY: y });
+                        }
+                    }
+                } else if (global === 'albums' && Array.isArray(data)) {
+                    for (const album of data) {
+                        for (const photo of (album?.photoList || []) as Record<string, any>[]) {
+                            const l = photo?.custom_lbs || photo?.lbs || photo?.shootGeo;
+                            const x = Number(l?.pos_x);
+                            const y = Number(l?.pos_y);
+                            if (Number.isFinite(x) && Number.isFinite(y)) {
+                                this.districtPoints.push({ posX: x, posY: y });
+                            }
+                        }
+                    }
                 }
                 await host.writeJsonToJs(global, data, path);
             },

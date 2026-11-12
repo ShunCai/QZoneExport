@@ -855,7 +855,7 @@ watch(activeTab, (tab) => {
                                         <n-input v-model:value="config.Dev.Maps.TxKey" type="password" show-password-on="click" placeholder="用于坐标转换与坐标转描述" />
                                         <span v-if="needMapKey" class="hint warn-hint">必填。未填写时不会刷新，请到<a href="https://lbs.qq.com/" target="_blank">腾讯位置服务控制台</a>申请</span>
                                         <span v-else class="hint">仅用于本项刷新，不会用于其它用途</span>
-                                        <span class="hint">配额：逆地址解析约 1 万次/日，超限当天会失败并跳过；每条间隔 0.5 秒，全量 3000 条约需 25 分钟</span>
+                                        <span class="hint">配额：逆地址解析与坐标转换各 6,000 次/日（个人开发者，同一账号所有 Key 共享），超限当天会失败并跳过；微信说说每条要转坐标 + 反查共 2 次调用，普通说说只反查 1 次；每条间隔 0.5 秒，全量 3000 条约需 25 分钟</span>
                                         <span class="hint warn-hint">会改地点名：反查结果会覆盖原有地点名，同一地点在腾讯侧改名后备份里也会跟着变（如「A 小区」→「B 广场」）；已有备份不会回填</span>
                                     </div>
                                 </n-form-item>

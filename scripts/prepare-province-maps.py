@@ -56,8 +56,12 @@ def load_index() -> list[dict]:
     """从内置 china-cities.js 里取全国市级要素（含 adcode / name / parent）"""
     with io.open(CITY_INDEX, encoding='utf-8') as f:
         text = f.read()
-    marker = "registerMap('china-cities',"
+    # 文件格式：...var data=<geojson>;...echarts.registerMap('china-cities',data);...
+    # geojson 是平衡的 JSON 对象，从 "var data=" 后的第一个 '{' 开始配对括号
+    marker = "var data="
     start = text.index(marker) + len(marker)
+    while start < len(text) and text[start] != '{':
+        start += 1
     depth = 0
     end = None
     for i in range(start, len(text)):
