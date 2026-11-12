@@ -72,12 +72,13 @@ function itemInteractiveUsers(item: Record<string, any>, module: string): Intera
         }
     } else if (module === 'Visitors') {
         // 访客本人及其带出的其他访客
+        // 注意：访客接口的名字字段是 name（不是 nickname），之前取错字段导致过客全部只显示 QQ 号
         if (item.uin) {
-            users.push({ uin: String(item.uin), name: item.nickname });
+            users.push({ uin: String(item.uin), name: item.nickname || item.name });
         }
         for (const sub of item.uins || []) {
             if (sub.uin) {
-                users.push({ uin: String(sub.uin), name: sub.name || sub.nick });
+                users.push({ uin: String(sub.uin), name: sub.name || sub.nick || sub.nickname });
             }
         }
     }

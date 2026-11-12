@@ -54,7 +54,10 @@ function maskedNick(item: Record<string, any>): string {
                 <span v-else v-html="formatSummary(friendNick(props.item))"></span>
             </div>
             <div class="friend-meta">
-                <span>{{ hideSensitive ? maskUin(props.item.uin) : props.item.uin }}</span>
+                <!-- 朋友网（pengyou.com，已下线）用户可以评论空间内容，接口给的 uin 是 40 位加密 ID；
+                     直接展示只会铺满卡片，这里改标「朋友网」，昵称仍是真实名字 -->
+                <span v-if="/^\d+$/.test(String(props.item.uin || ''))">{{ hideSensitive ? maskUin(props.item.uin) : props.item.uin }}</span>
+                <n-tag v-else size="small" :bordered="false" type="info">朋友网</n-tag>
                 <span>{{ props.item.groupName || '未分组' }}</span>
                 <span v-if="props.item.addFriendTime">相识于 {{ formatDay(props.item.addFriendTime) }}</span>
                 <span v-if="props.item.intimacyScore">亲密度 {{ props.item.intimacyScore }}</span>

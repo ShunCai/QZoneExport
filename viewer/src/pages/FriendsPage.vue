@@ -103,8 +103,11 @@ onMounted(async () => {
         const users = await collectInteractiveUsers();
         const friendUins = new Set(list.value.map((item) => String(item.uin)));
         interactiveUins.value = new Set(users.map((user) => user.uin));
-        // 空间过客：在互动用户里、但不是好友（他们不在 friends 列表里，单独保存）
-        passerby.value = users.filter((user) => !friendUins.has(user.uin));
+        // 空间过客：在互动用户里、但不是好友（他们不在 friends 列表里，单独保存）。
+        // FriendItem 的显示链是「备注 → 昵称 → QQ」，互动用户的名字在 name 字段，映射成 nick 才显示得出来。
+        passerby.value = users
+            .filter((user) => !friendUins.has(user.uin))
+            .map((user) => ({ ...user, nick: user.name || '' }));
     } catch (error) {
         console.warn('收集互动用户失败', error);
     }
