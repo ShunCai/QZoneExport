@@ -398,9 +398,13 @@ export class MessagesCollector implements ModuleCollector {
                 const text = await env.requester.get(call.url, call.params);
                 const data = toJson<any>(text, /^_preloadCallback\(/);
                 if (data.code && data.code != 0) {
-                    env.logger.warn('获取单页的说说列表异常 | code=' + data.code, data.msg || '');
+                    // 明确的业务失败必须抛错让该页进 failed/补偿，不能伪装成「成功空页」——
+                    // 曾导致重试后失败页消失、数据静默少一页
+                    throw new Error(`获取单页的说说列表失败 | code=${data.code} | ${data.msg || ''}`);
                 }
                 if (!data.msglist || data.msglist.length === 0) {
+                    // code=0 的空 msglist 可能是合法末页，也可能是接口抖动；
+                    // 统一由 collectPagedList 的「非末页空页」判定兜底，这里不擅自抛错
                     return { items: [], total: data.total || 0 };
                 }
                 return { items: convertMessages(data.msglist, env.ctx.targetUin), total: data.total || 0 };
@@ -812,7 +816,11 @@ export class MessagesCollector implements ModuleCollector {
                 doneWeChat++;
             }
             await env.report('location', done, items.length);
-            await env.sleep(500);
+            // 坐标阶段要跑几十分钟，每 50 条在日志里留一次进度，避免「99% 不动」被当成卡死
+            if (done % 50 === 0) {
+                env.logger.info(`说说地点刷新进度 | 已刷新 ${done} 条 / 已扫描 ${items.length} 条中的 ${done + skip.notNew + skip.refreshed + skip.notWeChat + skip.badCoord} 条`);
+            }
+            await env.sleep(150);
         }
         // 候选为零也要留痕：把每类跳过原因摊开，谁都能看出是「没调用」还是「调了失败」
         env.logger.info(

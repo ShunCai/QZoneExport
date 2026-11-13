@@ -33,7 +33,13 @@ import { fetchTargetUserInfo, mergeTargetUserInfo } from '../core/export/user-in
  * background 有 <all_urls> 特权可直连。collector 与查看器导出共用。
  */
 const lbsProxyFetchText = (url: string): Promise<string> => new Promise<string>((resolve, reject) => {
+    // SW 被系统回收 / 消息丢失时 callback 永不触发，Promise 会永久挂起（表现为备份卡死）；
+    // 20s 超时兜底，超时后该条按失败跳过，不拖住整个坐标/地图阶段
+    const timer = setTimeout(() => {
+        reject(new Error('lbs_proxy 超时（20s）：背景页可能已被回收或请求无响应'));
+    }, 20_000);
     chrome.runtime.sendMessage({ type: 'lbs_proxy', url }, (res: any) => {
+        clearTimeout(timer);
         if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
             return;

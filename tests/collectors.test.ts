@@ -1,11 +1,11 @@
 // @vitest-environment happy-dom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import 'fake-indexeddb/auto';
 import { Requester } from '../core/qzone-api/request';
 import { Logger } from '../core/shared/logger';
 import type { CollectContext } from '../core/collector/pipeline';
 import type { CollectorEnv, MediaTask, QzoneBackupConfig } from '../core/collector/modules/types';
-import { hasNextPage, isGetNextPage, collectPagedList, MediaTaskRegistry, collectLikes } from '../core/collector/modules/helpers';
+import { hasNextPage, isGetNextPage, collectPagedList, findPageGaps, recordSimplePage, MediaTaskRegistry, collectLikes } from '../core/collector/modules/helpers';
 import { MessagesCollector, convertMessages, dealLbs, filterKeyWords, isMatchFilterKey } from '../core/collector/modules/messages';
 import { BoardsCollector } from '../core/collector/modules/boards';
 import { FriendsCollector } from '../core/collector/modules/friends';
@@ -20,6 +20,7 @@ import { makeDownloadUrl, normalizeForDedup } from '../core/shared/url';
 import { DL_DOWNLOADED_SEP } from '../core/collector/checkpoint';
 import { PageLedger } from '../core/collector/reliability';
 import type { KvArea } from '../core/store/backup-db';
+import { syncModuleFilterOptions } from '../entrypoints/backup-panel/utils';
 
 /**
  * 模块采集器单测（P3）
@@ -1089,5 +1090,108 @@ describe('相片 Detail 模式：运行内重试 + 失败游标', () => {
         const failRec = recorded[recorded.length - 1];
         expect(failRec.state).toBe('failed'); // 运行内重试不计入 retryCount，保留可重试性
         expect(failRec.cursor).toBe('startPicKey');
+    });
+});
+
+describe('分页空页防护（回归：重试后失败页消失但数据少一页）', () => {
+    it('非末页返回空页时判异常、不写空槽位', async () => {
+        const { env } = makeEnv([]);
+        const errors: string[] = [];
+        const spy = vi.spyOn(env.logger, 'error').mockImplementation((msg: string) => { errors.push(msg); });
+        const items = await collectPagedList<any>({
+            env, moduleCfg: env.config.Messages, phase: 'list',
+            fetchPage: async (pageIndex) => {
+                if (pageIndex === 1) return { items: [], total: 6 }; // 接口抖动：中间页返回空
+                return { items: [{ id: pageIndex * 2 }, { id: pageIndex * 2 + 1 }], total: 6 };
+            },
+        });
+        expect(errors.some((e) => e.includes('page=1'))).toBe(true); // 空页不再静默当成功
+        expect(items.map((item) => item.id)).toEqual([0, 1, 4, 5]); // 空槽位不占位，后续页照采
+        spy.mockRestore();
+    });
+
+    it('total 未知(=0) 的空页不误判为异常', async () => {
+        const { env } = makeEnv([]);
+        const errors: string[] = [];
+        const spy = vi.spyOn(env.logger, 'error').mockImplementation((msg: string) => { errors.push(msg); });
+        const items = await collectPagedList<any>({
+            env, moduleCfg: env.config.Messages, phase: 'list',
+            fetchPage: async () => ({ items: [], total: 0 }),
+        });
+        expect(items).toEqual([]);
+        expect(errors).toEqual([]);
+        spy.mockRestore();
+    });
+
+    it('findPageGaps：中间空槽位与缺槽位算缺口，末页空不算', () => {
+        expect(findPageGaps(new Map<number, unknown[]>([[0, [1, 2]], [1, []], [2, [3]]]))).toEqual([1]);
+        expect(findPageGaps(new Map<number, unknown[]>([[0, [1]], [2, [3]]]))).toEqual([1]);
+        expect(findPageGaps(new Map<number, unknown[]>([[0, [1, 2]], [1, []]]))).toEqual([]);
+    });
+});
+
+describe('recordSimplePage：留言/分享/访客补页级记账', () => {
+    const makeCtx = () => {
+        const store: Record<string, unknown> = {};
+        const area: KvArea = {
+            async get(keys) {
+                if (keys === null) return { ...store };
+                const result: Record<string, unknown> = {};
+                for (const k of (Array.isArray(keys) ? keys : [keys])) if (store[k] !== undefined) result[k] = store[k];
+                return result;
+            },
+            async set(items) { Object.assign(store, items); },
+            async remove(keys) { for (const k of (Array.isArray(keys) ? keys : [keys])) delete store[k]; },
+        };
+        const ledger = new PageLedger(area);
+        const ctx = { uin: 1001, ledger, batchId: 'b1' } as unknown as CollectContext;
+        return { ledger, ctx };
+    };
+
+    it('成功页写 success + 正确条数，模块键进账本', async () => {
+        const { ledger, ctx } = makeCtx();
+        await recordSimplePage(ctx, 'Boards', 0, 20, 60, 20);
+        const r = await ledger.get('1001', 'Boards', 0);
+        expect(r!.state).toBe('success');
+        expect(r!.itemCount).toBe(20);
+        expect(r!.expectedCount).toBe(20);
+    });
+
+    it('失败页写 failed + 错误信息（供明细重试）', async () => {
+        const { ledger, ctx } = makeCtx();
+        await recordSimplePage(ctx, 'Shares', 2, 0, 60, 20, true, 'HTTP 500');
+        const r = await ledger.get('1001', 'Shares', 2);
+        expect(r!.state).toBe('failed');
+        expect(r!.lastError).toBe('HTTP 500');
+    });
+
+    it('非末页空页按 expected 判 missing，不伪装成功', async () => {
+        const { ledger, ctx } = makeCtx();
+        await recordSimplePage(ctx, 'Boards', 1, 0, 60, 20);
+        expect((await ledger.get('1001', 'Boards', 1))!.state).toBe('missing');
+    });
+
+    it('服务端分页（pageSize=0）期望未知，空页不误报 missing', async () => {
+        const { ledger, ctx } = makeCtx();
+        await recordSimplePage(ctx, 'Visitors', 0, 0, 0, 0);
+        expect((await ledger.get('1001', 'Visitors', 0))!.state).toBe('success');
+    });
+});
+
+describe('syncModuleFilterOptions：相册子项归位且不丢独立筛选项', () => {
+    it('Photos:* 不再全排末尾，留言/分享/访客可见；每个相册仍可单独筛选', () => {
+        const sel = document.createElement('select');
+        const mods = ['Messages', 'Photos:a', 'Boards', 'Photos', 'Videos', 'Photos:b', 'Shares', 'Visitors'];
+        syncModuleFilterOptions(sel, 'all', mods, { 'Photos:a': '相册：A', 'Photos:b': '相册：B' });
+        const values = [...sel.options].map((o) => o.value);
+        expect(values[0]).toBe('all');
+        expect(values).toContain('Boards');
+        expect(values).toContain('Shares');
+        expect(values).toContain('Visitors');
+        expect(values.filter((v) => v.startsWith('Photos:'))).toEqual(['Photos:a', 'Photos:b']);
+        // 相册子项归到 Photos 的位置（在 Videos/Boards 之前），不再全排 999 末尾把尾部占满
+        expect(values.indexOf('Photos:b')).toBeLessThan(values.indexOf('Boards'));
+        expect(values[values.length - 1]).toBe('Visitors');
+        expect(sel.options[values.indexOf('Photos:a')]!.textContent).toBe('相册：A');
     });
 });

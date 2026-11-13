@@ -186,7 +186,11 @@ export const Compensator = {
             try {
                 const page = await fetchPage(rec.pageIndex);
                 const actual = page.items.length;
-                const expected = deriveExpectedCount(page.total, rec.pageIndex, pageSize);
+                // 重采时接口若没带 total（total=0），deriveExpectedCount 返回 0 会让
+                // FailureDetector 跳过 missing 判定，把空页误判成 success（失败页消失但数据仍缺）。
+                // 用首次采集记录的期望条数 / pageSize 兜底。
+                const expected = deriveExpectedCount(page.total, rec.pageIndex, pageSize)
+                    || rec.expectedCount || pageSize;
                 const state = FailureDetector.classify({
                     hadError: false,
                     actual,

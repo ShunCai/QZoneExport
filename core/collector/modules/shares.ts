@@ -13,6 +13,7 @@ import {
     isGetNextPage,
     MediaTaskRegistry,
     randomSleep,
+    recordSimplePage,
     writeModuleOutputs,
 } from './helpers';
 import { isGetLike, isGetVisitor, type CollectorEnv, type SharesConfig } from './types';
@@ -225,7 +226,7 @@ export class SharesCollector implements ModuleCollector {
         await env.report('export', 1, 1);
     }
 
-    async collect(_ctx: CollectContext): Promise<void> {
+    async collect(ctx: CollectContext): Promise<void> {
         const env = this.env;
         const cfg = env.config.Shares;
         const registry = new MediaTaskRegistry(env, this.module);
@@ -256,6 +257,8 @@ export class SharesCollector implements ModuleCollector {
                 total = total || shareInfo.total || 0;
                 items = unionItems(items, newItems);
                 await env.report('list', items.length, total || -1, undefined, undefined, { done: items.length, total: total || -1 });
+                // 分享页码从 1 开始，账本统一按 0-based 记
+                await recordSimplePage(ctx, this.module, page - 1, newItems.length, total, cfg.pageSize);
 
                 // 逐页穿插处理详情（只处理新条目）
                 const actuallyNew = newItems.filter(isNewFilter);
@@ -286,7 +289,9 @@ export class SharesCollector implements ModuleCollector {
                     break;
                 }
             } catch (error) {
-                env.logger.error(`获取分享列表异常 | page=${page}`, error instanceof Error ? error.message : String(error));
+                const msg = error instanceof Error ? error.message : String(error);
+                env.logger.error(`获取分享列表异常 | page=${page}`, msg);
+                await recordSimplePage(ctx, this.module, page - 1, 0, total, cfg.pageSize, true, msg);
                 env.fail();
             }
             page++;

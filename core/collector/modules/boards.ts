@@ -2,7 +2,7 @@ import { boardList } from '../../qzone-api/clients';
 import { hashString, parseDate, sortBy, toHttp, toJson, unionItems } from '../../shared/utils';
 import { isFullBackup, isNewItem, unionBackedUpItems, type IncrementItem } from '../increment';
 import type { CollectContext, ModuleCollector } from '../pipeline';
-import { AvatarTaskRegistry, buildOldItemFilter, hasNextPage, isGetNextPage, MediaTaskRegistry, randomSleep, resolveMediaSuffix, writeModuleOutputs } from './helpers';
+import { AvatarTaskRegistry, buildOldItemFilter, hasNextPage, isGetNextPage, MediaTaskRegistry, randomSleep, recordSimplePage, resolveMediaSuffix, writeModuleOutputs } from './helpers';
 import type { CollectorEnv } from './types';
 
 /**
@@ -69,7 +69,7 @@ export class BoardsCollector implements ModuleCollector {
         await env.report('export', 1, 1);
     }
 
-    async collect(_ctx: CollectContext): Promise<void> {
+    async collect(ctx: CollectContext): Promise<void> {
         const env = this.env;
         const cfg = env.config.Boards;
         const registry = new MediaTaskRegistry(env, this.module);
@@ -118,6 +118,7 @@ export class BoardsCollector implements ModuleCollector {
                 pageItems = data.commentList || [];
                 boardInfo.items = unionItems(boardInfo.items, pageItems);
                 await env.report('list', boardInfo.items.length, boardInfo.total || -1, undefined, undefined, { done: boardInfo.items.length, total: boardInfo.total || -1 });
+                await recordSimplePage(ctx, this.module, pageIndex, pageItems.length, boardInfo.total, cfg.pageSize);
                 // 本页拉完立即处理该页留言的图片（登记即开下载，与后续翻页并行；过滤旧备份条目）
                 await this.handlePageItems(pageItems.filter(isNewFilter), registry);
                 // 每页落盘 staging，供断点续传恢复
@@ -126,7 +127,9 @@ export class BoardsCollector implements ModuleCollector {
                     break;
                 }
             } catch (error) {
-                env.logger.error(`获取留言列表异常 | page=${pageIndex + 1}`, error instanceof Error ? error.message : String(error));
+                const msg = error instanceof Error ? error.message : String(error);
+                env.logger.error(`获取留言列表异常 | page=${pageIndex + 1}`, msg);
+                await recordSimplePage(ctx, this.module, pageIndex, 0, boardInfo.total, cfg.pageSize, true, msg);
                 env.fail();
             }
             pageIndex++;

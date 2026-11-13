@@ -2,7 +2,7 @@ import { visitorList } from '../../qzone-api/clients';
 import { toJson, unionItems } from '../../shared/utils';
 import { isNewItem, isPreBackupPos, unionBackedUpItems, type IncrementItem } from '../increment';
 import type { CollectContext, ModuleCollector } from '../pipeline';
-import { AvatarTaskRegistry, MediaTaskRegistry, randomSleep, writeModuleOutputs } from './helpers';
+import { AvatarTaskRegistry, MediaTaskRegistry, randomSleep, recordSimplePage, writeModuleOutputs } from './helpers';
 import type { CollectorEnv } from './types';
 import type { VisitorRecord } from './models';
 
@@ -64,7 +64,7 @@ export class VisitorsCollector implements ModuleCollector {
         await env.report('export', 1, 1);
     }
 
-    async collect(_ctx: CollectContext): Promise<void> {
+    async collect(ctx: CollectContext): Promise<void> {
         const env = this.env;
         const cfg = env.config.Visitors;
         const registry = new MediaTaskRegistry(env, this.module);
@@ -108,6 +108,8 @@ export class VisitorsCollector implements ModuleCollector {
                 }
                 visitorInfo.items = unionItems(visitorInfo.items, items);
                 await env.report('list', visitorInfo.items.length, visitorInfo.total || -1, undefined, undefined, { done: visitorInfo.items.length, total: visitorInfo.total || -1 });
+                // 访客由服务端按 totalPage 分页、每页条数不定 → total/pageSize 传 0（期望未知，不误报 missing）
+                await recordSimplePage(ctx, this.module, page - 1, items.length, 0, 0);
                 // 每页落盘 staging，供断点续传恢复（nextPage 记录「下一页页码」，续传从此继续）
                 visitorInfo.nextPage = page + 1;
                 await env.saveStaging(this.module, visitorInfo);
@@ -117,7 +119,9 @@ export class VisitorsCollector implements ModuleCollector {
                     break;
                 }
             } catch (error) {
-                env.logger.error(`获取访客列表异常 | page=${page}`, error instanceof Error ? error.message : String(error));
+                const msg = error instanceof Error ? error.message : String(error);
+                env.logger.error(`获取访客列表异常 | page=${page}`, msg);
+                await recordSimplePage(ctx, this.module, page - 1, 0, 0, 0, true, msg);
                 env.fail();
             }
             if (page >= visitorInfo.totalPage) {

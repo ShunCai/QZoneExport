@@ -18,6 +18,7 @@ import {
 import { isFullBackup, isCustom, isLast, isPreBackupPos, type IncrementConfig, type IncrementItem } from '../increment';
 import { DL_DOWNLOADED_SEP } from '../checkpoint';
 import { Compensator, FailureDetector, deriveExpectedCount, DEFAULT_MAX_RETRY, type PageLedger } from '../reliability';
+import type { CollectContext } from '../pipeline';
 import type { CollectorEnv, ModuleBaseConfig, RandomSeconds } from './types';
 
 /**
@@ -48,6 +49,21 @@ export async function randomSleep(env: CollectorEnv, rs: RandomSeconds): Promise
 /** 是否存在下一页（移植自 common.js hasNextPage L1228-1230） */
 export function hasNextPage(pageIndex: number, pageSize: number, total: number, items: unknown[]): boolean {
     return items.length < total && pageIndex * pageSize < total;
+}
+
+/**
+ * 页映射完整性：找出缺槽位，以及「槽位存在但内容为空」的中间页。
+ * 空槽位等同于缺口（曾导致空页被当成成功、数据静默少一页）；
+ * 末页允许为空——接口常以空 msglist 表示结束，不能误报。
+ */
+export function findPageGaps(pageMap: Map<number, unknown[]>): number[] {
+    const present = [...pageMap.keys()].sort((a, b) => a - b);
+    const maxPi = present.length ? present[present.length - 1]! : -1;
+    const gaps: number[] = [];
+    for (let g = 0; g <= maxPi; g++) {
+        if (!pageMap.has(g) || (g < maxPi && (pageMap.get(g) ?? []).length === 0)) gaps.push(g);
+    }
+    return gaps;
 }
 
 /**
@@ -183,6 +199,12 @@ export async function collectPagedList<T extends IncrementItem>(options: PagedLi
             const page = await fetchPage(pi);
             const pageItems = page.items || [];
             if (page.total > 0) total = page.total;
+            // 非末页却返回空页：接口抖动时不能写空数组占位，否则该页数据静默丢失、
+            // 且页映射完整性检查也看不出来。抛错让其进 failed，交给运行内/手动补偿重采。
+            // total 未知(=0) 时不判，避免 total 缺失/虚高时误伤合法末页。
+            if (pageItems.length === 0 && total > 0 && getItems().length < total) {
+                throw new Error(`非末页返回空页 | page=${pi} | 已采=${getItems().length} | total=${total}`);
+            }
             pageMap.set(pi, pageItems);
             await recordPage(pi, false, undefined, pageItems.length, 0);
             if (afterPage) {
@@ -294,13 +316,9 @@ export async function collectPagedList<T extends IncrementItem>(options: PagedLi
     // ④ 诊断：页映射完整性（缺口即「失败且未补偿」的页，曾导致 slice 反推取到错误尾部）
     {
         const present = [...pageMap.keys()].sort((a, b) => a - b);
-        const maxPi = present.length ? present[present.length - 1]! : -1;
-        const gaps: number[] = [];
-        for (let g = 0; g <= maxPi; g++) {
-            if (!pageMap.has(g)) gaps.push(g);
-        }
+        const gaps = findPageGaps(pageMap);
         if (gaps.length) {
-            env.logger.warn(`[页映射完整性] 共 ${present.length} 页，缺口=${gaps.length}（${gaps.slice(0, 20).join(',')}${gaps.length > 20 ? '…' : ''}），缺口页将在运行内/手动补偿重采`);
+            env.logger.warn(`[页映射完整性] 共 ${present.length} 页，缺口/空槽位=${gaps.length}（${gaps.slice(0, 20).join(',')}${gaps.length > 20 ? '…' : ''}），缺口页将在运行内/手动补偿重采`);
         } else {
             env.logger.info(`[页映射完整性] 共 ${present.length} 页，无缺口`);
         }
@@ -1133,4 +1151,40 @@ export function buildOldItemFilter<T extends IncrementItem>(oldItems: T[] | unde
         const key = String(it.tid ?? it.blogId ?? it.blogid ?? it.vid ?? it.shuoshuoid ?? it.id ?? '');
         return !oldKeys.has(key) || key === '';
     };
+}
+
+
+/**
+ * 给不走 collectPagedList 的模块补页级记账（Boards / Shares / Visitors）。
+ *
+ * 这几个模块有自己的翻页循环（对象产物 / HTML 分页 / 服务端 totalPage），无法直接复用
+ * collectPagedList，但采集明细的清单与「按模块筛选」下拉都依赖 ledger 的页记录——
+ * 不记账就既看不到清单行、也选不到该模块。此函数只写账本，不碰数据流/进度。
+ *
+ * @param total    接口返回的总条目数；未知传 0
+ * @param pageSize 每页条数；服务端分页（如访客）传 0 → expected=0（不判 missing，避免误报）
+ */
+export async function recordSimplePage(
+    ctx: CollectContext,
+    module: string,
+    pageIndex: number,
+    actual: number,
+    total: number,
+    pageSize: number,
+    hadError = false,
+    error?: string,
+): Promise<void> {
+    const ledger = ctx.ledger;
+    if (!ledger) return;
+    const expected = pageSize > 0 ? deriveExpectedCount(total, pageIndex, pageSize) : 0;
+    const state = FailureDetector.classify({
+        hadError, lastError: error, actual, expected,
+        retryCount: 0, maxRetry: DEFAULT_MAX_RETRY,
+    });
+    await ledger.record(String(ctx.uin), module, {
+        uin: String(ctx.uin), module, pageIndex,
+        batchId: ctx.batchId, fetchedAt: Date.now(),
+        state, itemCount: actual, expectedCount: expected,
+        retryCount: 0, lastError: error,
+    });
 }

@@ -389,3 +389,47 @@ describe('PageLedger.clearUin：全新备份清空上一轮账本', () => {
         expect(await ledger.get(uin, 'Messages', 0)).toBeUndefined();
     });
 });
+
+describe('Compensator：重采空页且接口无 total 时不得洗白失败页', () => {
+    const setup = async (expectedCount: number) => {
+        const area = memoryKvArea();
+        const ledger = new PageLedger(area);
+        const uin = '1001';
+        const module = 'Messages';
+        const batchId = makeBatchId();
+        await ledger.record(uin, module, {
+            uin, module, pageIndex: 1, batchId, fetchedAt: Date.now(),
+            state: 'failed', itemCount: 0, expectedCount, retryCount: 0, lastError: 'boom',
+        });
+        return { ledger, uin, module, batchId };
+    };
+
+    it('expectedCount=20：空响应 + total=0 不记 success、不覆盖槽位，失败页保留', async () => {
+        const { ledger, uin, module, batchId } = await setup(20);
+        const applied: number[] = [];
+        const result = await Compensator.compensate({
+            ledger, uin, module, batchId, pageSize: 20, maxRetry: 5,
+            fetchPage: async () => ({ items: [], total: 0 }),
+            applyPage: (pi) => { applied.push(pi); },
+            rebuild: () => [], afterPage: async () => {}, sleep: async () => {},
+        });
+        expect(applied).toEqual([]);
+        expect(result.compensated).toBe(0);
+        expect((await ledger.get(uin, module, 1))!.state).not.toBe('success');
+        expect(result.remaining).toBeGreaterThan(0);
+    });
+
+    it('expectedCount=0（首次也没 total）：pageSize 兜底，同样不洗白', async () => {
+        const { ledger, uin, module, batchId } = await setup(0);
+        const applied: number[] = [];
+        const result = await Compensator.compensate({
+            ledger, uin, module, batchId, pageSize: 20, maxRetry: 5,
+            fetchPage: async () => ({ items: [], total: 0 }),
+            applyPage: (pi) => { applied.push(pi); },
+            rebuild: () => [], afterPage: async () => {}, sleep: async () => {},
+        });
+        expect(applied).toEqual([]);
+        expect(result.compensated).toBe(0);
+        expect((await ledger.get(uin, module, 1))!.state).not.toBe('success');
+    });
+});

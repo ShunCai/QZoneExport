@@ -58,12 +58,15 @@ const MODULE_ORDER: string[] = MODULES.map((m) => m.value);
  * 若当前选择值已不在新集合中（例如明细数据变化），修正为 'all' 并返回。
  */
 export function syncModuleFilterOptions(sel: HTMLSelectElement, current: string, modules: string[], labelMap?: Record<string, string>): string {
+    // 相册子项键是 `Photos:<albumId>`（每个相册一个可筛选值），原按「找不到 → 999」全排末尾，
+    // 几十个相册会把下拉尾部占满、淹没后面的模块。归到 Photos 的位置即可，值与筛选语义不变。
+    const orderOf = (m: string): number => {
+        const base = m.startsWith('Photos:') ? 'Photos' : m;
+        const i = MODULE_ORDER.indexOf(base);
+        return i < 0 ? 999 : i;
+    };
     const wanted = Array.from(new Set((modules || []).filter(Boolean)))
-        .sort((a, b) => {
-            const ia = MODULE_ORDER.indexOf(a);
-            const ib = MODULE_ORDER.indexOf(b);
-            return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
-        });
+        .sort((a, b) => orderOf(a) - orderOf(b) || a.localeCompare(b, 'zh'));
     const sig = wanted.join('�');
     if (sel.dataset.sig !== sig) {
         const opts = ['<option value="all">全部模块</option>']
