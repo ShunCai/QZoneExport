@@ -34,8 +34,11 @@ function labelOf(word: string): string {
 <template>
     <div v-if="props.loading || props.data.rows.length" class="word-strip">
         <div class="strip-head">
-            <span class="strip-title">最常用的词</span>
-            <span class="strip-help" :title="HELP_TEXT" aria-label="统计口径说明">i</span>
+            <!-- strip-head 是 column 布局：标题与 i 必须包成一行容器，否则 i 会独占一行 -->
+            <div class="strip-title-row">
+                <span class="strip-title">最常用的词</span>
+                <span class="strip-help" :title="HELP_TEXT" aria-label="统计口径说明">i</span>
+            </div>
             <span class="strip-note">
                 {{ props.loading
                     ? '正在统计…'
@@ -60,6 +63,13 @@ function labelOf(word: string): string {
 </template>
 
 <style scoped>
+/* 标题行：让圆圈 i 紧跟标题，而不是被 column 布局排成单独一行 */
+.strip-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 /* 口径说明入口：小小的圆圈 i，悬浮看完整规则 */
 .strip-help {
     display: inline-flex;
@@ -67,7 +77,6 @@ function labelOf(word: string): string {
     justify-content: center;
     width: 14px;
     height: 14px;
-    margin-right: 4px;
     border: 1px solid var(--border);
     border-radius: 50%;
     font-size: 10px;

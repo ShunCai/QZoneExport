@@ -5,6 +5,7 @@ import 'photoswipe/style.css';
 import { escapeHtml, formatText } from '../data/richText';
 import { commentEntriesHtml } from '../data/commentHtml';
 import { usePrivacy } from '../composables/usePrivacy';
+import { maskContent } from '../data/mask';
 import type { MediaItem } from '../data/media';
 import VideoThumb from './VideoThumb.vue';
 const { hidden: hideSensitive } = usePrivacy();
@@ -218,6 +219,20 @@ function infoHtml(media?: MediaItem): string {
     return `<div class="pswp-media-info">${parts.join('')}</div>`;
 }
 
+/**
+ * 大图下方常驻的相片描述（方案 A）：与评论面板里的 pswp-media-desc 并存。
+ * 只做展示：剥 UBB/HTML 由 formatText 负责，长文截断 120 字，隐私模式打码，
+ * 乱码内容不自动改写（与评论面板保持同一口径）。
+ */
+function captionHtml(index: number): string {
+    const item = viewables.value[index];
+    const raw = String(item?.info?.desc || '').trim();
+    if (!raw) return '';
+    const clipped = raw.length > 120 ? raw.slice(0, 120) + '…' : raw;
+    const safe = hideSensitive.value ? maskContent(clipped) : clipped;
+    return `<div class="pswp-media-caption-text">${formatText(safe)}</div>`;
+}
+
 /** 评论面板内容（面板在 PhotoSwipe 的 DOM 里，只能给 HTML 字符串）
  *
  * 评论正文与昵称来自他人输入，故一律先经 escapeHtml / formatText 转义后再拼接，
@@ -297,6 +312,23 @@ async function openViewer(media: MediaItem, options?: { expandComments?: boolean
     const hasThumbBar = viewables.value.length > 1 && !!thumbsHtml;
 
     pswp.on('uiRegister', () => {
+        // 大图下方常驻描述条：不依赖评论面板展开；无描述时整条隐藏，不占位置
+        pswp.ui?.registerElement({
+            name: 'mediaCaption',
+            appendTo: 'root',
+            order: 7,
+            onInit: (element) => {
+                element.className = 'pswp-media-caption'
+                    + (hasThumbBar ? ' pswp-media-caption--thumbs' : '');
+                const render = () => {
+                    const html = captionHtml(pswp.currIndex);
+                    element.innerHTML = html;
+                    element.style.display = html ? '' : 'none';
+                };
+                render();
+                pswp.on('change', render);
+            },
+        });
         // 评论面板
         pswp.ui?.registerElement({
             name: 'comments',

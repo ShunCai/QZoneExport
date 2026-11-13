@@ -720,6 +720,42 @@ mark.gs-mark {
 }
 
 /* 底部缩略图条 */
+/* 大图下方常驻描述条（与评论面板里的描述并存） */
+.pswp-media-caption {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    z-index: 6;
+    display: flex;
+    justify-content: center;
+    padding: 6px 16px;
+    pointer-events: none;
+}
+.pswp-media-caption--thumbs {
+    bottom: 78px;
+}
+.pswp--with-comments .pswp-media-caption {
+    right: var(--pswp-comments-width);
+}
+.pswp-media-caption-text {
+    max-width: min(720px, 80vw);
+    max-height: 3.2em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    padding: 4px 12px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    word-break: break-word;
+}
+
 .pswp-thumbnails {
     position: absolute;
     bottom: 0;

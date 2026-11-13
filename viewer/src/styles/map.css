@@ -221,7 +221,46 @@
 .fp-preview-thumb-link {
     display: inline-block;
     margin-top: 8px;
+    padding: 0;
+    border: 0;
+    background: none;
     cursor: zoom-in;
+}
+
+/* 当前页视频弹层（替代新标签页打开） */
+.fp-video-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.82);
+}
+.fp-video-box {
+    position: relative;
+    max-width: 90vw;
+    max-height: 85vh;
+}
+.fp-video-box video {
+    display: block;
+    max-width: 90vw;
+    max-height: 85vh;
+    border-radius: 6px;
+}
+.fp-video-close {
+    position: absolute;
+    top: -14px;
+    right: -14px;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    color: #333;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
 }
 .fp-preview-thumb {
     display: block;

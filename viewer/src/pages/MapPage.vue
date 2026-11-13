@@ -9,6 +9,7 @@ import { navigate, routeQuery } from '../router';
 import { useTheme } from '../composables/useTheme';
 import { usePrivacy } from '../composables/usePrivacy';
 import { maskContent } from '../data/mask';
+import { openImageLightbox } from '../data/lightbox';
 import { assignRegions, countByCity, countByRegion, type RegionCount } from '../data/mapRegions';
 import { ensureCityMapRegistered, loadChinaCitiesGeoJson, mergeCityCounts } from '../data/cityStats';
 import { pickPhotoMarkers, type PhotoMarker } from '../data/photoMarkers';
@@ -79,6 +80,25 @@ const spanYears = ref(0);
 /** 点击卡片/散点后的就地预览（不再直接跳走原文） */
 const selected = ref<Footprint | null>(null);
 const selectedVisits = ref(0);
+/** 当前页播放的视频地址（空串=未打开） */
+const previewVideo = ref('');
+
+/**
+ * 预览缩略图点击：图片走 PhotoSwipe 灯箱、视频走当前页弹层播放，
+ * 不再 target="_blank" 把用户丢出查看器（file:// 下新标签还常触发路径/编码问题）。
+ */
+function openPreviewMedia(item: Footprint): void {
+    const src = item.thumb;
+    if (!src) return;
+    if (/\.(mp4|m4v|mov|webm|avi|mkv|m3u8)(\?|$)/i.test(src)) {
+        previewVideo.value = src;
+        return;
+    }
+    void openImageLightbox([{ src, thumb: item.preview || src }]);
+}
+function closePreviewVideo(): void {
+    previewVideo.value = '';
+}
 /**
  * 点散点后只看该坐标的全部足迹。
  * 相片常有「同一坐标连拍/连传多张」，它们在地图上永远重叠、放大也分不开；
@@ -1434,19 +1454,26 @@ watch(isDark, async () => {
                             <span v-if="hideSensitive">{{ displayText(selected.content || selected.summary) }}</span>
                             <span v-else v-html="selected.html" />
                         </div>
-                        <a
+                        <button
                             v-if="selected.thumb && !hideSensitive"
-                            :href="selected.thumb"
-                            target="_blank"
-                            rel="noreferrer"
+                            type="button"
                             class="fp-preview-thumb-link"
-                            title="点击查看原图"
+                            title="点击查看大图 / 播放视频"
+                            @click="openPreviewMedia(selected)"
                         >
-                            <img :src="selected.thumb" class="fp-preview-thumb" alt="" />
-                        </a>
+                            <!-- 视频相片的 thumb 是 .mp4 本体（不能当图片解码），预览一律优先 preview(.jpeg) -->
+                            <img :src="selected.preview || selected.thumb" class="fp-preview-thumb" alt="" />
+                        </button>
                         <div class="fp-preview-acts">
                             <n-button size="small" @click="closePreview">关闭</n-button>
                             <n-button size="small" type="primary" @click="openDetail(selected)">查看原文 →</n-button>
+                        </div>
+                    </div>
+                    <!-- 当前页视频播放（点遮罩或 × 关闭，不再新开标签页） -->
+                    <div v-if="previewVideo" class="fp-video-overlay" @click.self="closePreviewVideo">
+                        <div class="fp-video-box">
+                            <video :src="previewVideo" controls autoplay playsinline />
+                            <button type="button" class="fp-video-close" @click="closePreviewVideo">×</button>
                         </div>
                     </div>
 
@@ -1495,8 +1522,8 @@ watch(isDark, async () => {
                                     >{{ isExpanded(item.tid) ? '收起' : '展开' }}</n-button>
                                 </div>
                                 <img
-                                    v-if="item.thumb && !hideSensitive"
-                                    :src="item.thumb"
+                                    v-if="(item.preview || item.thumb) && !hideSensitive"
+                                    :src="item.preview || item.thumb"
                                     class="fp-thumb"
                                     alt=""
                                     loading="lazy"
