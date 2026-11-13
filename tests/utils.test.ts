@@ -44,6 +44,19 @@ describe('toJson JSONP剥壳', () => {
     it('彻底非法时抛出异常', () => {
         expect(() => toJson('<html>oops</html>')).toThrow();
     });
+
+    it('jsonrepair 兜底：相册接口未闭合字符串 + 字符串内裸换行', () => {
+        // 复刻 shine0_Callback 的脏响应：desc 值缺闭合引号、内含裸换行，
+        // JSON.parse / 反斜杠修复 / JSON5 都失败，只有最后一级能保住后续字段
+        const dirty = 'shine0_Callback({"code":0,"data":{"photoList":['
+            + '{"desc":"第一行\n第二行,\n         "forum":0,"id":7}]}});';
+        const res = toJson<any>(dirty, /^shine0_Callback\(/);
+        expect(res.code).toBe(0);
+        expect(res.data.photoList).toHaveLength(1);
+        expect(res.data.photoList[0].id).toBe(7);
+        expect(res.data.photoList[0].forum).toBe(0);
+        expect(res.data.photoList[0].desc).toContain('第一行');
+    });
 });
 
 describe('URL工具', () => {

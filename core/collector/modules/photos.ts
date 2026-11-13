@@ -948,7 +948,10 @@ export class PhotosCollector implements ModuleCollector {
             // 先取相册第一页的相片列表，再以第一张相片递归详情列表
             let firstPagePhotos: PhotoItem[] = [];
             try {
-                const call = imageList(env.ctx, env.config, String(album.id), 0);
+                // Detail 模式下这次旧接口调用只用来拿 data.topic（封面/url）和第一张相片的 picKey，
+                // 其余相片全靠浮层接口递归补回。pageNum=1 可把 cgi_list_photo 的脏 desc
+                // （未转义/未闭合字符串）命中面从整页压到 1 张，且不丢任何相片。
+                const call = imageList(env.ctx, env.config, String(album.id), 0, 1);
                 const text = await env.requester.get(call.url, call.params);
                 const res = toJson<any>(text, /^shine0_Callback\(/);
                 const data = res.data || {};

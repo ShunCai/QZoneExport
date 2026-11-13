@@ -6,6 +6,7 @@ import type { CollectorEnv, QzoneBackupConfig } from '../core/collector/modules/
 import type { CollectContext } from '../core/collector/pipeline';
 import { PhotosCollector } from '../core/collector/modules/photos';
 import { isGetNextPage } from '../core/collector/modules/helpers';
+import { imageList } from '../core/qzone-api/clients';
 
 const OLD = '2023-01-01 00:00:00';
 const BACKUP = '2024-06-01 00:00:00';
@@ -204,5 +205,21 @@ describe('相册/相片增量备份实证', () => {
         expect(album.photoList.find((p: any) => p.id === 101).isNewItem).toBe(false);
         expect(album.photoList.find((p: any) => p.id === 102).isNewItem).toBe(false);
         expect(album.photoList.find((p: any) => p.id === 103).isNewItem).toBe(true);
+    });
+});
+
+describe('imageList 首页只取 1 张（缩小 cgi_list_photo 脏数据命中面）', () => {
+    it('传 pageNum=1 时只影响本页条数，pageStart 与 URL 不变', () => {
+        const cfg = makePhotosConfig();
+        const ctx = { gtk: 1, targetUin: 2, ownerUin: 3, route: 102, token: 'tk' } as any;
+        const first = imageList(ctx, cfg, 'album1', 0, 1);
+        expect(first.url).toContain('cgi_list_photo');
+        expect(first.params.pageNum).toBe(1);
+        expect(first.params.pageStart).toBe(0);
+        expect(first.params.topicId).toBe('album1');
+        // 其它调用不传 pageNum 时仍按配置（90）并按页偏移
+        const normal = imageList(ctx, cfg, 'album1', 2);
+        expect(normal.params.pageNum).toBe(cfg.Photos.Images.pageSize);
+        expect(normal.params.pageStart).toBe(2 * cfg.Photos.Images.pageSize);
     });
 });

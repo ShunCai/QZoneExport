@@ -488,7 +488,14 @@ export function albumComments(ctx: Ctx, cfg: Cfg, albumId: string, page: number)
     };
 }
 
-export function imageList(ctx: Ctx, cfg: Cfg, topicId: string, page: number): ApiCall {
+export function imageList(
+    ctx: Ctx,
+    cfg: Cfg,
+    topicId: string,
+    page: number,
+    /** 本页条数；缺省用配置值。首页只需 topic + 第一张 picKey，传 1 可缩小脏数据命中面 */
+    pageNum: number = cfg.Photos.Images.pageSize,
+): ApiCall {
     return {
         url: REST_URLS.IMAGES_LIST_URL,
         params: {
@@ -502,7 +509,7 @@ export function imageList(ctx: Ctx, cfg: Cfg, topicId: string, page: number): Ap
             noTopic: 0,
             uin: ctx.ownerUin,
             pageStart: page * cfg.Photos.Images.pageSize,
-            pageNum: cfg.Photos.Images.pageSize,
+            pageNum,
             skipCmtCount: 0,
             singleurl: 1,
             batchId: '',
