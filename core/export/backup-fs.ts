@@ -126,6 +126,12 @@ export function createDirectoryHandleFs(root: DirHandle): BackupFs {
                 await writeTextFile(root, relPath, text);
             }
         },
+        async writeJs(relPath: string, globalName: string, data: unknown): Promise<void> {
+            // .js 数据文件的变量名不能按文件名猜：留言为 boardInfo、访客为 visitorInfo
+            // （查看器 DATA_SOURCES 按此读取），写错变量名会导致查看器读到空数据。
+            const text = JSON.stringify(data);
+            await writeTextFile(root, relPath, `window.${globalName} = ${text};`);
+        },
 
         async exists(relPath: string): Promise<boolean> {
             const resolved = await resolveFile(root, relPath, false);

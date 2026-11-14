@@ -23,6 +23,8 @@ export interface BackupFs {
     readJson(relPath: string): Promise<unknown | null>;
     /** 写回 json 数据（实现按扩展名决定写 .json 文本或 .js 包裹） */
     writeJson(relPath: string, data: unknown): Promise<void>;
+    /** 写回 .js 数据文件：显式指定全局变量名（留言 boardInfo / 访客 visitorInfo 不能按文件名猜） */
+    writeJs(relPath: string, globalName: string, data: unknown): Promise<void>;
     /** 文件是否存在 */
     exists(relPath: string): Promise<boolean>;
     /** 读取二进制媒体（不存在返回 null） */
@@ -65,6 +67,8 @@ export interface ModuleRule {
     jsonFile: string;
     /** 主体 ID 候选字段（按顺序取第一个非空） */
     idFields: string[];
+    /** 写回 .js 时的全局变量名——与查看器 DATA_SOURCES 一致（Boards→boardInfo、Visitors→visitorInfo，不能按文件名猜） */
+    globalName: string;
 }
 
 /**
@@ -73,19 +77,19 @@ export interface ModuleRule {
  * 或对象型（Boards/Visitors 为 {items:[...], total, ...}）。
  */
 export const MODULE_RULES: ModuleRule[] = [
-    { module: 'Messages', dir: 'Messages', jsonFile: 'messages.json', idFields: ['tid'] },
-    { module: 'Blogs', dir: 'Blogs', jsonFile: 'blogs.json', idFields: ['blogId', 'blogid'] },
-    { module: 'Diaries', dir: 'Diaries', jsonFile: 'diaries.json', idFields: ['blogId', 'blogid'] },
-    { module: 'Shares', dir: 'Shares', jsonFile: 'shares.json', idFields: ['id', 'shuoshuoid'] },
+    { module: 'Messages', globalName: 'messages', dir: 'Messages', jsonFile: 'messages.json', idFields: ['tid'] },
+    { module: 'Blogs', globalName: 'blogs', dir: 'Blogs', jsonFile: 'blogs.json', idFields: ['blogId', 'blogid'] },
+    { module: 'Diaries', globalName: 'diaries', dir: 'Diaries', jsonFile: 'diaries.json', idFields: ['blogId', 'blogid'] },
+    { module: 'Shares', globalName: 'shares', dir: 'Shares', jsonFile: 'shares.json', idFields: ['id', 'shuoshuoid'] },
     // 注意：相册主体（AlbumItem）的主键字段是 id（不是 albumId），albumId 是相片上的字段。
     // 若只写 ['albumId','albumid']，extractId 会永远取不到主键而退回 JSON 兜底，
     // 导致新旧备份里「同一个相册」永远匹配不上、被误报成「旧备份独有的相册」。
-    { module: 'Photos', dir: 'Albums', jsonFile: 'albums.json', idFields: ['id', 'albumId', 'albumid'] },
-    { module: 'Videos', dir: 'Videos', jsonFile: 'videos.json', idFields: ['vid'] },
-    { module: 'Favorites', dir: 'Favorites', jsonFile: 'favorites.json', idFields: ['id'] },
-    { module: 'Friends', dir: 'Friends', jsonFile: 'friends.json', idFields: ['uin'] },
-    { module: 'Boards', dir: 'Boards', jsonFile: 'boards.json', idFields: ['id', 'uin'] },
-    { module: 'Visitors', dir: 'Visitors', jsonFile: 'visitors.json', idFields: ['uin', 'id'] },
+    { module: 'Photos', globalName: 'albums', dir: 'Albums', jsonFile: 'albums.json', idFields: ['id', 'albumId', 'albumid'] },
+    { module: 'Videos', globalName: 'videos', dir: 'Videos', jsonFile: 'videos.json', idFields: ['vid'] },
+    { module: 'Favorites', globalName: 'favorites', dir: 'Favorites', jsonFile: 'favorites.json', idFields: ['id'] },
+    { module: 'Friends', globalName: 'friends', dir: 'Friends', jsonFile: 'friends.json', idFields: ['uin'] },
+    { module: 'Boards', globalName: 'boardInfo', dir: 'Boards', jsonFile: 'boards.json', idFields: ['id', 'uin'] },
+    { module: 'Visitors', globalName: 'visitorInfo', dir: 'Visitors', jsonFile: 'visitors.json', idFields: ['uin', 'id'] },
 ];
 
 /**
@@ -120,9 +124,25 @@ function itemsOf(data: any): any[] {
 /** 取主体展示标题（用于差异清单） */
 function titleOf(item: any): string {
     if (!item || typeof item !== 'object') return '';
-    return String(
+    const text = String(
         item.content ?? item.title ?? item.name ?? item.albumname ?? item.nickname ?? item.nick ?? item.custom_content ?? '',
-    ).slice(0, 40);
+    ).trim();
+    if (text) return text.slice(0, 40);
+    // 转发说说没有自己的正文（content 是转发者的评语，常为空）——
+    // 显示被转发的原说说内容才有辨识度（rt_con 是 {conlist, content} 对象或字符串），
+    // 来源主人作附注；都没有再退「转发的说说」，别把 tid 摆出来
+    if (item.rt_tid) {
+        const from = String(item.rt_uinname || item.rt_uin || '').trim();
+        const rawOriginal = item.rt_con && typeof item.rt_con === 'object'
+            ? String(item.rt_con.content ?? '')
+            : String(item.rt_con ?? '');
+        const original = rawOriginal.replace(/\s+/g, ' ').trim();
+        if (original) {
+            return `转发 ${from || '好友'} 的说说：${original.slice(0, 26)}${original.length > 26 ? '…' : ''}`;
+        }
+        if (from) return `转发的说说（来自 ${from}）`;
+    }
+    return '';
 }
 
 /** 主体唯一标识：优先用指定 ID 字段，否则整条 JSON（整条去重，避免错并） */
@@ -583,7 +603,7 @@ async function mergeModule(
         res.newCount = res.addedItems;
         if (!dryRun) {
             await newFs.writeJson(jsonPath, oldRaw);
-            await newFs.writeJson(jsPath, oldRaw);
+            await newFs.writeJs(jsPath, rule.globalName, oldRaw);
         }
         return res;
     }
@@ -624,7 +644,7 @@ async function mergeModule(
             (merged as any).total = mergedItems.length;
         }
         await newFs.writeJson(jsonPath, merged);
-        await newFs.writeJson(jsPath, merged);
+        await newFs.writeJs(jsPath, rule.globalName, merged);
     }
     return res;
 }

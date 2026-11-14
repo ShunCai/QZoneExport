@@ -16,6 +16,9 @@ class MemFs implements BackupFs {
     async writeJson(p: string, data: unknown): Promise<void> {
         this.json.set(p, data);
     }
+    async writeJs(p: string, _globalName: string, data: unknown): Promise<void> {
+        this.json.set(p, data);
+    }
     async exists(p: string): Promise<boolean> {
         return this.files.has(p) || this.json.has(p);
     }
