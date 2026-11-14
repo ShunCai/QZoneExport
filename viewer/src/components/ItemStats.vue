@@ -55,7 +55,9 @@ const showVisitors = ref(false);
             <p v-if="likes.length < likeCount" class="modal-note">
                 共 {{ likeCount }} 人点赞，备份到 {{ likes.length }} 人的名单
             </p>
-            <user-list :users="likes" empty-text="没有点赞名单" />
+            <div class="users-modal-body">
+                <user-list :users="likes" empty-text="没有点赞名单" />
+            </div>
         </n-modal>
 
         <n-modal v-model:show="showCommentsModal" preset="card" title="评论" style="width: 620px;">
@@ -68,7 +70,9 @@ const showVisitors = ref(false);
             <p v-if="visitors.length < views" class="modal-note">
                 共 {{ views }} 次浏览，备份到 {{ visitors.length }} 人的名单
             </p>
-            <user-list :users="visitors" empty-text="没有访问名单" />
+            <div class="users-modal-body">
+                <user-list :users="visitors" empty-text="没有访问名单" />
+            </div>
         </n-modal>
     </div>
 </template>
@@ -98,6 +102,11 @@ const showVisitors = ref(false);
 }
 /* 评论弹窗内容限高可滚，避免评论多时弹窗被撑得看不到头 */
 .comments-modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+/* 点赞 / 最近访问弹窗同款限高：名单长时内部滚动，弹窗不被撑出屏幕 */
+.users-modal-body {
     max-height: 60vh;
     overflow-y: auto;
 }
