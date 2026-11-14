@@ -37,9 +37,11 @@ export function isFeedAlbum(album: Record<string, any>): boolean {
     return String(album?.name ?? '').trim() === '说说和日志相册';
 }
 
-/** 单相册的相片数；「说说和日志相册」按 0 计（不参与照片总数） */
+/**
+ * 单相册的相片数：与 QQ 空间相册页的相片总数口径一致（含「说说和日志相册」与视频相片）。
+ * 「说说和日志相册」支持独立上传，是真实资产；活跃类统计不含该相册（见各统计函数内过滤）。
+ */
 export function albumPhotoCount(album: Record<string, any>): number {
-    if (isFeedAlbum(album)) return 0;
     return album?.photoList?.length || album?.total || 0;
 }
 
@@ -231,9 +233,10 @@ export async function loadInteractionStats(): Promise<InteractionStats> {
         totalComments += itemComments(board).length;
     }
 
-    // 相片的互动
+    // 相片的互动（统计类：不含「说说和日志相册」）
     const albums = await loadList('albums');
     for (const album of albums) {
+        if (isFeedAlbum(album)) continue;
         const photos = album.photoList || [];
         for (const photo of photos) {
             totalLikes += likeTotal(photo);
@@ -284,8 +287,7 @@ export function computeMediaStats(
     };
 
     for (const album of albums) {
-        // 「说说和日志相册」的相片不计入媒体统计（与照片总数口径一致）
-        if (isFeedAlbum(album)) continue;
+        // 媒体统计与 QQ 相册相片总数同口径（含「说说和日志相册」与视频相片）
         for (const photo of album.photoList || []) {
             stat.photos++;
             const path = photo.custom_filepath || photo.custom_pre_filepath || photo.custom_url || photo.url;

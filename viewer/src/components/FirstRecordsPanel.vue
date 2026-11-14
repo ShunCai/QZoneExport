@@ -5,6 +5,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { NCollapse, NCollapseItem, NSpin, NTag } from 'naive-ui';
 import { loadItems, loadList, type DataKey } from '../data/sources';
 import { YEAR_MODULES, PHOTO_TIME_FIELDS, isFeedAlbum } from '../data/counts';
+import { groupPhotoBatches } from '../data/photoBatches';
 import { formatTime, timeValue, isValidTimestampMs } from '../data/format';
 import { navigate } from '../router';
 import MessageItem from './items/MessageItem.vue';
@@ -81,9 +82,10 @@ onMounted(async () => {
     const albums = await loadList('albums');
     for (const album of albums) {
         if (isFeedAlbum(album)) continue;
+        // 批次归并与动态列表同一口径（相片含视频相片，与 QQ 相片总数口径一致）
         const photos = album.photoList || [];
-        for (const photo of photos) {
-            const raw = PHOTO_TIME_FIELDS.timeOf(photo);
+        for (const batch of groupPhotoBatches(photos, PHOTO_TIME_FIELDS.timeOf)) {
+            const raw = PHOTO_TIME_FIELDS.timeOf(batch[0]!);
             const ts = timeValue(raw);
             if (isValidTimestampMs(ts)) {
                 all.push({
@@ -92,7 +94,7 @@ onMounted(async () => {
                     route: ROUTE_OF.photos,
                     time: formatTime(raw),
                     ts,
-                    item: { ...photo, __album: album }, // 保留所属相册信息
+                    item: { ...batch[0], __album: album, __batchCount: batch.length },
                 });
             }
         }
@@ -165,7 +167,8 @@ watch(statText, (text) => emit('summary', text), { immediate: true });
                                 />
                                 <div class="photo-info">
                                     <div class="photo-name">
-                                        {{ entry.item.name || (entry.item.__album ? '《' + (entry.item.__album.name || '相册') + '》的一张照片' : '一张老照片') }}
+                                        <template v-if="entry.item.__batchCount > 1">《{{ entry.item.__album?.name || '相册' }}》上传了 {{ entry.item.__batchCount }} 张相片</template>
+                                        <template v-else>{{ entry.item.name || (entry.item.__album ? '《' + (entry.item.__album.name || '相册') + '》的一张照片' : '一张老照片') }}</template>
                                     </div>
                                     <div class="photo-meta">
                                         <span v-if="entry.item.__album?.name" class="photo-album-tag">📂 {{ entry.item.__album.name }}</span>

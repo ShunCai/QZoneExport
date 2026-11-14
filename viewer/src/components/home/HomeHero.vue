@@ -108,7 +108,7 @@ function openAlbum(cover: CoverPhoto): void {
                     <div class="v" :class="{ 'is-loading': statsLoading }">{{ statsLoading ? '正在统计…' : media.photos.toLocaleString() }}</div>
                     <div class="l">
                         相片
-                        <span class="info" title="不含「说说和日志相册」">i</span>
+                        <span class="info" title="与 QQ 空间相册统计口径一致（含「说说和日志相册」）">i</span>
                     </div>
                 </div>
                 <div class="kpi">
