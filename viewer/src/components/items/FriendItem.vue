@@ -43,6 +43,7 @@ function maskedNick(item: Record<string, any>): string {
             <div class="friend-name">
                 <span v-if="hideSensitive">{{ maskedDisplayName(props.item) }}</span>
                 <span v-else v-html="formatSummary(friendDisplayName(props.item))"></span>
+                <n-tag v-if="props.item.deleted" size="tiny" :bordered="false" type="error">已删除</n-tag>
                 <n-tag v-if="props.item.care" size="tiny" :bordered="false" type="warning">特别关心</n-tag>
                 <n-tag v-if="props.item.isFriend === 0" size="tiny" :bordered="false">已不是好友</n-tag>
                 <n-tag v-if="props.item.access === false" size="tiny" :bordered="false" type="error">无权限</n-tag>

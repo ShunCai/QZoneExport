@@ -37,6 +37,35 @@ class MemFs implements BackupFs {
 const enc = (s: string) => new Uint8Array([...s].map((c) => c.charCodeAt(0)));
 
 describe('合并备份引擎', () => {
+    it('Friends 合并：旧有新无的好友打 deleted 标记，共有好友清除标记', async () => {
+        const oldFs = new MemFs();
+        const newFs = new MemFs();
+        const friendsJson = 'Friends/json/friends.json';
+        const friendsJs = 'Friends/json/friends.js';
+        const oldFriends = { total: 2, items: [
+            { uin: 111, nick: '还在的', deleted: true },  // 上次合并打的标记，本次名单里还在 → 应清除
+            { uin: 222, nick: '被删的' },                  // 本次全量名单没有 → 打 deleted
+        ] };
+        const newFriends = { total: 2, items: [
+            { uin: 111, nick: '还在的' },
+            { uin: 333, nick: '新好友' },
+        ] };
+        await oldFs.writeJson(friendsJson, oldFriends);
+        await oldFs.writeJson(friendsJs, oldFriends);
+        await newFs.writeJson(friendsJson, newFriends);
+        await newFs.writeJson(friendsJs, newFriends);
+
+        const { modules } = await mergeBackups(oldFs, newFs, { modules: ['Friends'] });
+        const m = modules.find((x) => x.module === 'Friends')!;
+        expect(m.addedItems).toBe(1); // 仅 222 并入
+        const merged = newFs.json.get(friendsJson) as any;
+        expect(merged.total).toBe(3);
+        const byUin = new Map<number, any>(merged.items.map((x: any) => [Number(x.uin), x]));
+        expect(byUin.get(222).deleted).toBe(true);   // 旧有新无 → 已删除
+        expect(byUin.get(111).deleted).toBe(false);  // 本次名单还在 → 清除标记
+        expect(byUin.get(333).deleted).toBeUndefined();
+    });
+
     it('仅旧有主体整体并入新备份', async () => {
         const oldFs = new MemFs();
         const newFs = new MemFs();

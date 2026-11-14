@@ -547,7 +547,7 @@ export async function mergeBackups(
     const totalAddedChildren = modules.reduce((s, m) => s + m.addedChildRecords, 0);
     const totalAddedPhotos = modules.reduce((s, m) => s + m.addedPhotos, 0);
     logLines.unshift(
-        `合并完成：并入主体 ${totalAddedItems} 条，增量子项 ${totalAddedChildren} 条，新增相片 ${totalAddedPhotos} 张，补齐媒体 ${mediaCopied} 个。`,
+        `合并完成（以下合计为本次勾选的 ${rules.length} 个模块）：并入主体 ${totalAddedItems} 条，增量子项 ${totalAddedChildren} 条，新增相片 ${totalAddedPhotos} 张，补齐媒体 ${mediaCopied} 个。`,
     );
     return { modules, log: logLines.join('\n') };
 }
@@ -597,11 +597,18 @@ async function mergeModule(
         const id = extractId(o, rule.idFields);
         const n = mapNew.get(id);
         if (!n) {
-            // 仅旧有主体：整体并入
-            mergedItems.push(o);
+            // 仅旧有主体：整体并入。
+            // Friends 是全量好友快照：旧备份有、新备份（本次全量名单）没有 → 该好友在此期间被删除，
+            // 打上 deleted 标记（查看器好友页的「已删好友」筛选与卡片「已删除」标签都读 item.deleted）。
+            mergedItems.push(rule.module === 'Friends' ? { ...o, deleted: true } : o);
             res.addedItems++;
         } else {
-            // 共有主体：增量合并子项（social=评论/点赞/浏览；photos=相片，单独计数）
+            // 共有主体：增量合并子项（social=评论/点赞/浏览；photos=相片，单独计数）。
+            // Friends 的 deleted 标记按新快照显式清除：人还在本次名单里就不是「已删除」。
+            // 必须无条件清（合并产物会被写回备份，下一轮合并时旧条目会带着上次的 deleted:true 进来）。
+            if (rule.module === 'Friends') {
+                (n as Record<string, any>).deleted = false;
+            }
             const r = mergeChildArrays(o, n);
             res.addedChildRecords += r.social;
             res.addedPhotos += r.photos;
