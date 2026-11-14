@@ -398,12 +398,39 @@ export function computeOwnerTargetInteraction(
     }
 
     // ============ 相册 / 相片（相片挂在 album.photoList 下） ============
-    const photos = albums.flatMap((a) => a.photoList || []);
+    const photos = albums.flatMap((a) => (a.photoList || []).map((p: Record<string, any>) => ({ ...p, __album: a })));
     countMyLikes(albums, 'album', (a) => asNum(a.uploadtime ?? a.uploadTime ?? a.pubtime), (a) => 'album:' + (a.id ?? a.uploadtime));
     countMyLikes(photos, 'photo', (p) => asNum(resolvePhotoTime(p, 'upload')), (p) => 'photo:' + (p.lloc ?? p.id ?? p.uploadtime));
 
     // ============ 分享 ============
-    countMyLikes(shares, 'share', (s) => asNum(s.shareTime ?? s.custom_create_time), (s) => 'share:' + (s.shareId ?? s.id));
+    // 分享的评论与回复：此前只统计了点赞，分享上的评论/回复完全不进互动面板，
+    // 导致「互动最多的人」榜单（扫分享评论）与面板（不扫）口径不一致。
+    for (const share of shares) {
+        const itemKey = 'share:' + (share.shareId ?? share.id ?? share.custom_create_time);
+        let iParticipated = false;
+        let taRepliedToMe = false;
+
+        for (const c of itemComments(share)) {
+            const cu = commentUser(c);
+            if (toStr(cu.uin) === ownerUin) {
+                markOwnerName(cu.name);
+                iParticipated = true;
+                addEntry('share', 'comment', share, commentTime(c), 'me', itemKey);
+            }
+            for (const r of commentReplies(c)) {
+                const ru = commentUser(r);
+                if (toStr(cu.uin) === ownerUin && toStr(ru.uin) === targetUin) {
+                    markTargetName(ru.name);
+                    taRepliedToMe = true;
+                    addEntry('share', 'reply', share, replyTime(r), 'ta', itemKey);
+                }
+            }
+        }
+
+        countMyLikes(shares, 'share', (s) => asNum(s.shareTime ?? s.custom_create_time), (s) => 'share:' + (s.shareId ?? s.id));
+
+        if (iParticipated && taRepliedToMe) convItemKeys.add(itemKey);
+    }
 
     // ============ 视频 ============
     countMyLikes(videos, 'video', (v) => asNum(v.uploadtime ?? v.uploadTime), (v) => 'video:' + (v.vid ?? v.id));

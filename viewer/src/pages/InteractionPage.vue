@@ -20,6 +20,9 @@ import OwnerTargetInteraction from '../components/OwnerTargetInteraction.vue';
 import MessageItem from '../components/items/MessageItem.vue';
 import ArticleItem from '../components/items/ArticleItem.vue';
 import BoardItem from '../components/items/BoardItem.vue';
+import ShareItem from '../components/items/ShareItem.vue';
+import VideoItem from '../components/items/VideoItem.vue';
+import PhotoBatchItem from '../components/items/PhotoBatchItem.vue';
 import UserAvatar from '../components/UserAvatar.vue';
 
 const props = defineProps<{
@@ -470,11 +473,25 @@ function whoHtml(e: InteractionEntry): string {
     return formatNickname(name);
 }
 
+/** 条目类型 → 中文（动词宾语用；分享/相片/相册此前被一律写成「说说」） */
+function entryTypeName(type: InteractionEntry['type']): string {
+    switch (type) {
+        case 'message': return '说说';
+        case 'blog': return '日志';
+        case 'board': return '留言板';
+        case 'share': return '分享';
+        case 'video': return '视频';
+        case 'photo': return '相片';
+        case 'album': return '相册';
+        default: return '内容';
+    }
+}
+
 function actionText(e: InteractionEntry): string {
     switch (e.category) {
-        case 'comment': return '评论了说说';
+        case 'comment': return '评论了' + entryTypeName(e.type);
         case 'reply': return '回复了';
-        case 'like': return '点赞了';
+        case 'like': return '点赞了' + entryTypeName(e.type);
         case 'board': return '留言了';
         default: return '互动了';
     }
@@ -882,6 +899,9 @@ watch(filtered, () => { pulseKey.value++; });
                             <message-item v-if="row.e.type === 'message'" :item="row.e.item" />
                             <article-item v-else-if="row.e.type === 'blog'" :item="row.e.item" config-key="Blogs" />
                             <board-item v-else-if="row.e.type === 'board'" :item="row.e.item" />
+                            <share-item v-else-if="row.e.type === 'share'" :item="row.e.item" />
+                            <video-item v-else-if="row.e.type === 'video'" :item="row.e.item" />
+                            <photo-batch-item v-else-if="row.e.type === 'photo' && row.e.item.__album" :album="row.e.item.__album" :photos="[row.e.item]" />
                             <div v-else class="ip-compact-entry">
                                 <span class="ip-compact-title">{{ entryTitle(row.e) }}</span>
                             </div>
