@@ -10,8 +10,9 @@
  *    统计「有多少条内容出现过这个词」才代表「这个人常说什么」。
  * 3. **必须先剥标记**：`[em]e402[/em]`、UBB、HTML、URL 不清掉，Top 词会是 `e402` 这种垃圾。
  */
-import { loadData, loadItems } from './sources';
-import { bodyOf, WORD_MODULES } from './wordCounts';
+import { loadData, loadItems, loadList } from './sources';
+import { isFeedAlbum } from './counts';
+import { bodyOf, cleanBody, WORD_MODULES } from './wordCounts';
 import { commentReplies, commentUser, itemComments } from './content';
 
 export interface WordRow {
@@ -216,6 +217,20 @@ export async function loadWordCloud(limit = 12): Promise<WordCloudResult> {
     const user = await loadData<{ uin?: string | number; ownerUin?: string | number }>('user');
     const me = String(user?.ownerUin ?? user?.uin ?? '');
     for (const key of WORD_MODULES) {
+        if (key === 'photos') {
+            // 相片描述按「净化后的唯一文本」计入：同一批次上传的描述完全相同，重复文本会让高频词失真。
+            const albums = await loadList('albums');
+            const uniqueTexts = new Set<string>();
+            for (const album of albums) {
+                if (isFeedAlbum(album)) continue;
+                for (const photo of album.photoList || []) {
+                    const text = cleanBody(bodyOf(key, photo));
+                    if (text) uniqueTexts.add(text);
+                }
+            }
+            docs.push(...uniqueTexts);
+            continue;
+        }
         let items: Record<string, any>[] = [];
         try {
             items = await loadItems(key);

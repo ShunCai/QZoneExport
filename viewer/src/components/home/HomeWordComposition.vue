@@ -65,7 +65,7 @@ function percentText(percent: number): string {
                     <span class="pct">{{ percentText(row.percent) }}</span>
                 </button>
             </div>
-            <p class="word-note">字数不含标题与相片视频；条长 = 占全站文字的百分比</p>
+            <p class="word-note">字数不含标题；相片与视频计入其描述；条长 = 占全站文字的百分比</p>
         </template>
         <p v-else-if="loading" class="empty">正在统计…</p>
         <p v-else class="empty">暂无文字内容</p>

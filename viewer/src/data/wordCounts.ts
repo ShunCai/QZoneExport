@@ -11,7 +11,8 @@
  * 2. **不用 `plainText` 逐层剥**：那套十几次 replace 在 1.4 万条留言的 HTML 上要 800ms+。
  *    计数不需要中间结果，一个合并了所有「噪声」的正则替换一次即可（实测降到 60ms 级）。
  */
-import { loadItems } from './sources';
+import { loadItems, loadList } from './sources';
+import { isFeedAlbum } from './counts';
 import { MODULE_LABEL } from './summary';
 
 export interface WordCountRow {
@@ -34,10 +35,14 @@ const BODY_FIELDS: Record<string, string[]> = {
     diaries: ['html', 'content'],
     boards: ['htmlContent', 'ubbContent', 'content'],
     shares: ['desc', 'content'],
+    // 视频的文字产出是描述（独立条目，与说说/日志同口径，不做唯一化）
+    videos: ['desc'],
+    // 相片的文字产出是描述；相片名属于「标题」类，按本卡口径不计
+    photos: ['desc'],
 };
 
 /** 参与统计的模块：只有这些模块有「正文」 */
-export const WORD_MODULES = ['messages', 'blogs', 'diaries', 'boards', 'shares'] as const;
+export const WORD_MODULES = ['messages', 'blogs', 'diaries', 'boards', 'shares', 'videos', 'photos'] as const;
 
 /**
  * 计入「非文字」的部分，一次替换掉：
@@ -45,10 +50,15 @@ export const WORD_MODULES = ['messages', 'blogs', 'diaries', 'boards', 'shares']
  */
 const NOISE = /\[em\]e\d+\[\/em\]|\[img[^\]]*\][\s\S]*?\[\/img\]|\[video[^\]]*\][\s\S]*?\[\/video\]|\[\/?[a-zA-Z][^\]]*\]|<[^>]*>|&[a-zA-Z#0-9]+;|\s/g;
 
+/** 剥掉表情 / 标记 / 空白后的正文文本（计数与去重的公共步骤） */
+export function cleanBody(value: unknown): string {
+    const raw = String(value ?? '');
+    return raw ? raw.replace(NOISE, '') : '';
+}
+
 /** 正文字数：剥掉标记与空白后按字符（非字节）计数 */
 export function countChars(value: unknown): number {
-    const raw = String(value ?? '');
-    return raw ? raw.replace(NOISE, '').length : 0;
+    return cleanBody(value).length;
 }
 
 /** 取该模块的正文（第一个非空字段），标题不算 */
@@ -75,6 +85,27 @@ export function sumChars(key: string, items: Record<string, any>[]): WordCountRo
 export async function loadWordCounts(): Promise<WordCounts> {
     const rows: WordCountRow[] = [];
     for (const key of WORD_MODULES) {
+        if (key === 'photos') {
+            // 相片的描述藏在各相册的 photoList 里；自动归档的「说说和日志相册」不计——
+            // 那批配图的文字已由「说说 / 日志」模块统计，避免同一句话算两次。
+            // 相片含视频相片（与 QQ 相片总数口径一致）；同一批次上传的相片描述完全相同，
+            // 按「净化后的文本」去重，只有真正不同的描述才计入字数。
+            const albums = await loadList('albums');
+            const uniqueTexts = new Set<string>();
+            for (const album of albums) {
+                if (isFeedAlbum(album)) continue;
+                for (const photo of album.photoList || []) {
+                    const text = cleanBody(photo.desc);
+                    if (text) uniqueTexts.add(text);
+                }
+            }
+            let chars = 0;
+            for (const text of uniqueTexts) chars += text.length;
+            if (chars > 0) {
+                rows.push({ key, label: MODULE_LABEL[key] ?? key, chars });
+            }
+            continue;
+        }
         const row = sumChars(key, await loadItems(key));
         if (row.chars > 0) {
             rows.push(row);
