@@ -50,7 +50,7 @@ const showVisitors = ref(false);
             浏览 {{ views }}
         </span>
 
-        <n-modal v-model:show="showLikes" preset="card" title="点赞" style="width: 460px;">
+        <n-modal v-model:show="showLikes" preset="card" title="点赞" style="width: 460px;" :auto-focus="false">
             <!-- 名单可能少于总数：接口只返回前若干个点赞人 -->
             <p v-if="likes.length < likeCount" class="modal-note">
                 共 {{ likeCount }} 人点赞，备份到 {{ likes.length }} 人的名单
@@ -60,13 +60,13 @@ const showVisitors = ref(false);
             </div>
         </n-modal>
 
-        <n-modal v-model:show="showCommentsModal" preset="card" title="评论" style="width: 620px;">
+        <n-modal v-model:show="showCommentsModal" preset="card" title="评论" style="width: 620px;" :auto-focus="false">
             <div class="comments-modal-body">
                 <comment-list :comments="commentList" :user-of="commentUser" :replies-of="commentReplies" />
             </div>
         </n-modal>
 
-        <n-modal v-model:show="showVisitors" preset="card" title="最近访问" style="width: 460px;">
+        <n-modal v-model:show="showVisitors" preset="card" title="最近访问" style="width: 460px;" :auto-focus="false">
             <p v-if="visitors.length < views" class="modal-note">
                 共 {{ views }} 次浏览，备份到 {{ visitors.length }} 人的名单
             </p>
