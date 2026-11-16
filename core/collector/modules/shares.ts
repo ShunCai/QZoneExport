@@ -15,6 +15,8 @@ import {
     randomSleep,
     recordSimplePage,
     writeModuleOutputs,
+    shouldCollectLikes,
+    shouldCollectVisitors,
 } from './helpers';
 import { isGetLike, isGetVisitor, type CollectorEnv, type SharesConfig } from './types';
 import { LIMITS } from '../../shared/constants';
@@ -269,14 +271,14 @@ export class SharesCollector implements ModuleCollector {
                 if (isGetLike(cfg)) {
                     env.logger.info(`[明细并发] 分享点赞 | 待处理=${actuallyNew.length} | 上限=${(env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY}`);
                     await runPool(actuallyNew, async (item) => {
-                        if (item.likes !== undefined) return;
+                        if (!shouldCollectLikes(item)) return;
                         await collectLikes(env, item, cfg.Like, this.avatars);
                     }, { concurrency: (env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY });
                 }
                 if (isGetVisitor(cfg)) {
                     env.logger.info(`[明细并发] 分享访客 | 待处理=${actuallyNew.length} | 上限=${(env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY}`);
                     await runPool(actuallyNew, async (item) => {
-                        if (item.custom_visitor !== undefined) return;
+                        if (!shouldCollectVisitors(item)) return;
                         item.custom_visitor = await collectItemVisitors(env, cfg.Visitor, (idx) =>
                             shareVisitors(env.ctx, env.config, item.id, idx),
                         );

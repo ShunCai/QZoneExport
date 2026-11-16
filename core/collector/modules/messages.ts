@@ -23,6 +23,8 @@ import {
     MediaTaskRegistry,
     randomSleep,
     writeModuleOutputs,
+    shouldCollectLikes,
+    shouldCollectVisitors,
 } from './helpers';
 import { addVideoTasks } from './video-tasks';
 import { isGetLike, isGetVisitor, type CollectorEnv } from './types';
@@ -298,13 +300,13 @@ export class MessagesCollector implements ModuleCollector {
         if (listDone) {
             if (hasLike) {
                 await runPool(items, async (item) => {
-                    if (item.likes !== undefined) return;
+                    if (!shouldCollectLikes(item)) return;
                     await collectLikes(env, item, cfg.Like, this.avatars);
                 }, { concurrency: (env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY });
             }
             if (hasVisitor) {
                 await runPool(items, async (item) => {
-                    if (item.custom_visitor !== undefined) return;
+                    if (!shouldCollectVisitors(item)) return;
                     item.custom_visitor = await collectItemVisitors(env, cfg.Visitor, (idx) =>
                         messageVisitors(env.ctx, env.config, item.tid, idx),
                         this.avatars);
@@ -374,14 +376,14 @@ export class MessagesCollector implements ModuleCollector {
                     // 限流并发，避免单页条目裸 Promise.all 打爆接口；诊断日志打印并发扇出数
                     env.logger.info(`[明细并发] 点赞 | page=${pageIndex} | 待处理=${actuallyNew.length} | 上限=${(env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY}`);
                     await step('点赞', () => runPool(actuallyNew, async (item) => {
-                        if (item.likes !== undefined) return;
+                        if (!shouldCollectLikes(item)) return;
                         await collectLikes(env, item, cfg.Like, this.avatars);
                     }, { concurrency: (env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY }));
                 }
                 if (hasVisitor) {
                     env.logger.info(`[明细并发] 访客 | page=${pageIndex} | 待处理=${actuallyNew.length} | 上限=${(env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY}`);
                     await step('访客', () => runPool(actuallyNew, async (item) => {
-                        if (item.custom_visitor !== undefined) return;
+                        if (!shouldCollectVisitors(item)) return;
                         item.custom_visitor = await collectItemVisitors(env, cfg.Visitor, (idx) =>
                             messageVisitors(env.ctx, env.config, item.tid, idx), this.avatars);
                     }, { concurrency: (env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY }));

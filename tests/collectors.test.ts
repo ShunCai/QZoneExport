@@ -5,7 +5,7 @@ import { Requester } from '../core/qzone-api/request';
 import { Logger } from '../core/shared/logger';
 import type { CollectContext } from '../core/collector/pipeline';
 import type { CollectorEnv, MediaTask, QzoneBackupConfig } from '../core/collector/modules/types';
-import { hasNextPage, isGetNextPage, collectPagedList, findPageGaps, recordSimplePage, MediaTaskRegistry, collectLikes } from '../core/collector/modules/helpers';
+import { hasNextPage, isGetNextPage, collectPagedList, findPageGaps, recordSimplePage, shouldCollectLikes, shouldCollectVisitors, MediaTaskRegistry, collectLikes } from '../core/collector/modules/helpers';
 import { MessagesCollector, convertMessages, dealLbs, filterKeyWords, isMatchFilterKey } from '../core/collector/modules/messages';
 import { BoardsCollector } from '../core/collector/modules/boards';
 import { FriendsCollector } from '../core/collector/modules/friends';
@@ -1193,5 +1193,38 @@ describe('syncModuleFilterOptions：相册子项归位且不丢独立筛选项',
         expect(values.indexOf('Photos:b')).toBeLessThan(values.indexOf('Boards'));
         expect(values[values.length - 1]).toBe('Visitors');
         expect(sel.options[values.indexOf('Photos:a')]!.textContent).toBe('相册：A');
+    });
+});
+
+describe('shouldCollectLikes：点赞名单续传去重守卫', () => {
+    it('列表解析初始化的空数组必须重试（分享点赞全漏的根因）', () => {
+        expect(shouldCollectLikes({ likes: [] })).toBe(true);
+    });
+    it('缺字段的条目要采集', () => {
+        expect(shouldCollectLikes({})).toBe(true);
+    });
+    it('已有非空名单才跳过，避免增量续传重复请求', () => {
+        expect(shouldCollectLikes({ likes: [{ uin: 1 }] })).toBe(false);
+    });
+    it('非数组的脏值按未采过处理，保持健壮', () => {
+        expect(shouldCollectLikes({ likes: null })).toBe(true);
+        expect(shouldCollectLikes({ likes: 3 })).toBe(true);
+    });
+});
+
+describe('shouldCollectVisitors：浏览名单续传去重守卫', () => {
+    it('空名单对象（合并/增量旧条目常见）必须重试', () => {
+        expect(shouldCollectVisitors({ custom_visitor: { viewCount: 5, totalNum: 5, list: [] } })).toBe(true);
+    });
+    it('缺字段 / 空对象要采集', () => {
+        expect(shouldCollectVisitors({})).toBe(true);
+        expect(shouldCollectVisitors({ custom_visitor: {} })).toBe(true);
+    });
+    it('已有非空名单才跳过', () => {
+        expect(shouldCollectVisitors({ custom_visitor: { list: [{ uin: 1 }] } })).toBe(false);
+    });
+    it('脏值按未采过处理', () => {
+        expect(shouldCollectVisitors({ custom_visitor: null })).toBe(true);
+        expect(shouldCollectVisitors({ custom_visitor: 'x' })).toBe(true);
     });
 });

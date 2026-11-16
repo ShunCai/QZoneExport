@@ -11,7 +11,7 @@ import {
 } from '../../shared/utils';
 import { isFullBackup, isNewItem, unionBackedUpItems, type IncrementItem } from '../increment';
 import type { CollectContext, ModuleCollector } from '../pipeline';
-import { addCommentEmotionTasks, buildOldItemFilter, collectLikes, collectPagedList, forEachNewItemBatch, hasNextPage, isGetNextPage, MediaTaskRegistry, randomSleep, writeModuleOutputs } from './helpers';
+import { addCommentEmotionTasks, buildOldItemFilter, collectLikes, collectPagedList, forEachNewItemBatch, hasNextPage, isGetNextPage, MediaTaskRegistry, randomSleep, shouldCollectLikes, writeModuleOutputs } from './helpers';
 import { addVideoTasks, type VideoLike } from './video-tasks';
 import { isGetLike, type CollectorEnv } from './types';
 import type { CommentRecord, LikeRecord } from './models';
@@ -204,7 +204,7 @@ export class VideosCollector implements ModuleCollector {
                 if (isGetLike(cfg)) {
                     env.logger.info(`[明细并发] 视频点赞 | page=${pageIndex} | 待处理=${actuallyNew.length} | 上限=${(env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY}`);
                     await runPool(actuallyNew, async (video) => {
-                        if (video.likes !== undefined) return;
+                        if (!shouldCollectLikes(video)) return;
                         await collectLikes(env, video, cfg.Like);
                     }, { concurrency: (env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY });
                 }

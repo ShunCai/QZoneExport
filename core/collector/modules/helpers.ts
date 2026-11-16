@@ -338,6 +338,17 @@ export interface LikeableItem extends IncrementItem {
  * 获取单条目的全部点赞记录（begin_uin 游标翻页）
  * 移植自 common.js getModulesLikeList（L1300-1336）
  */
+/**
+ * 是否仍需拉取点赞名单。
+ *
+ * 分享等列表解析会给条目初始化 `likes: []`；旧实现用「字段存在即跳过」做续传去重，
+ * 结果空数组也被当成「已采过」，点赞接口一次都不请求（MV2 是无条件请求，故历史数据有赞）。
+ * 只有**已有非空名单**才算采过；空数组或缺字段都允许重试。
+ */
+export function shouldCollectLikes(item: { likes?: unknown }): boolean {
+    return !(Array.isArray(item.likes) && item.likes.length > 0);
+}
+
 export async function collectLikes(
     env: CollectorEnv,
     item: LikeableItem,
@@ -413,6 +424,18 @@ export interface ItemVisitor {
  * 移植自各模块 getItemAllVisitorsList（如 messages.js L970-1012）
  * @param buildCall 构造某页的访客接口调用（各模块 appid 不同）
  */
+/**
+ * 是否仍需拉取最近访问名单（与 shouldCollectLikes 同构）。
+ *
+ * 旧实现用「custom_visitor 字段存在即跳过」做续传去重；合并/增量后的旧条目常带
+ * `{viewCount, totalNum, list: []}` 这种空名单对象，会被误判成「已采过」而不再补采集。
+ * 只有**非空访客名单**才算采过；空对象 / 空 list / 脏值都允许重试。
+ */
+export function shouldCollectVisitors(item: { custom_visitor?: unknown }): boolean {
+    const summary = item.custom_visitor as { list?: unknown } | null | undefined;
+    return !(Array.isArray(summary?.list) && summary.list.length > 0);
+}
+
 export async function collectItemVisitors(
     env: CollectorEnv,
     visitorCfg: { pageSize: number; randomSeconds: RandomSeconds },

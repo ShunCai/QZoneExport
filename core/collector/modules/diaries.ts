@@ -16,6 +16,8 @@ import {
     MediaTaskRegistry,
     randomSleep,
     writeModuleOutputs,
+    shouldCollectLikes,
+    shouldCollectVisitors,
 } from './helpers';
 import { isGetLike, isGetVisitor, type CollectorEnv } from './types';
 import { LIMITS } from '../../shared/constants';
@@ -84,13 +86,13 @@ export class DiariesCollector implements ModuleCollector {
             const hasVisitor = isGetVisitor(cfg);
             if (hasLike) {
                 await runPool(items, async (item) => {
-                    if (item.likes !== undefined) return;
+                    if (!shouldCollectLikes(item)) return;
                     await collectLikes(env, item, cfg.Like, this.avatars);
                 }, { concurrency: (env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY });
             }
             if (hasVisitor) {
                 await runPool(items, async (item) => {
-                    if (item.custom_visitor !== undefined) return;
+                    if (!shouldCollectVisitors(item)) return;
                     item.custom_visitor = await collectItemVisitors(env, cfg.Visitor, (idx) =>
                         diaryVisitors(env.ctx, env.config, String(item.blogid), idx),
                     );
@@ -156,14 +158,14 @@ export class DiariesCollector implements ModuleCollector {
                     if (hasLike) {
                         env.logger.info(`[明细并发] 日记点赞 | page=${pageIndex} | 待处理=${actuallyNew.length} | 上限=${(env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY}`);
                         await runPool(actuallyNew, async (item) => {
-                            if (item.likes !== undefined) return;
+                            if (!shouldCollectLikes(item)) return;
                             await collectLikes(env, item, cfg.Like, this.avatars);
                         }, { concurrency: (env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY });
                     }
                     if (hasVisitor) {
                         env.logger.info(`[明细并发] 日记访客 | page=${pageIndex} | 待处理=${actuallyNew.length} | 上限=${(env.config.Common as any)?.itemDetailConcurrency ?? LIMITS.ITEM_DETAIL_CONCURRENCY}`);
                         await runPool(actuallyNew, async (item) => {
-                            if (item.custom_visitor !== undefined) return;
+                            if (!shouldCollectVisitors(item)) return;
                             item.custom_visitor = await collectItemVisitors(env, cfg.Visitor, (idx) =>
                                 diaryVisitors(env.ctx, env.config, String(item.blogid), idx),
                             );
